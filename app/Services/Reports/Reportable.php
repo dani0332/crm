@@ -131,8 +131,21 @@ trait Reportable
 
     protected function getQuoteType($request)
     {
-        // Return the 'lob' parameter from the request if it exists, otherwise return the user's product name
-        return $request['lob'] ?? $this->getUserPorductName();
+        /**
+         * The `lob` filter coming from the UI contains a *product name* (for example: "Health", "Cyber Insurance").
+         * Internally, retention & reporting logic works with quote type *codes* (see `quoteTypeCode`).
+         *
+         * - If the request already contains a LOB, normalise it from product name → quote type code.
+         * - If no LOB is provided, fall back to the logged‑in user's single product (if any),
+         *   again normalising it to the corresponding quote type code.
+         */
+        $lob = $request['lob'] ?? $this->getUserPorductName();
+
+        if (empty($lob)) {
+            return null;
+        }
+
+        return quoteTypeCode::getQuoteTypeCodeFromProductName($lob);
     }
 
     private function isAdvisorManager()
@@ -175,7 +188,9 @@ trait Reportable
             quoteTypeCode::CORPLINE => quoteTypeCode::CORPLINE,
             quoteTypeCode::GroupMedical => quoteTypeCode::GroupMedical,
             quoteTypeCode::SAVINGS => quoteTypeCode::SAVINGS,
+            quoteTypeCode::CYBER => quoteTypeCode::CYBER,
 
+            quoteTypeCode::Device => quoteTypeCode::Device,
         ];
     }
 
@@ -194,6 +209,8 @@ trait Reportable
             quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
             quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
             quoteTypeCode::SAVINGS => ! Auth::user()->hasRole(RolesEnum::SavingsAdvisor),
+            quoteTypeCode::CYBER => ! Auth::user()->hasRole(RolesEnum::CyberAdvisor),
+            quoteTypeCode::Device => ! Auth::user()->hasRole(RolesEnum::SmartPhoneAdvisor),
         ];
 
         // Return the filter options with their visibility settings

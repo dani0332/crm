@@ -10,6 +10,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Models\CarQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use Carbon\Carbon;
 
 /**
  * Payment test assertion helper.
@@ -35,7 +36,7 @@ class PaymentTestAssertionHelper
             ->and($payment->created_by)->toBe($expectedUserId)
             ->and($payment->updated_by)->toBe($expectedUserId)
             ->and($payment->paymentable_id)->toBe($carQuote->id)
-            ->and($payment->paymentable_type)->toBe(\App\Models\CarQuote::class);
+            ->and($payment->paymentable_type)->toBe(CarQuote::class);
     }
 
     /**
@@ -50,8 +51,8 @@ class PaymentTestAssertionHelper
             ->and((float) $paymentSplit->payment_amount)->toBe($expectedAmount)
             ->and($paymentSplit->discount_value)->toBe(0)
             ->and($paymentSplit->sr_no)->toBe(1)
-            ->and($paymentSplit->payment_method)->toBe(\App\Enums\PaymentMethodsEnum::InsurerPayment)
-            ->and($paymentSplit->payment_status_id)->toBe(\App\Enums\PaymentStatusEnum::NEW);
+            ->and($paymentSplit->payment_method)->toBe(PaymentMethodsEnum::InsurerPayment)
+            ->and($paymentSplit->payment_status_id)->toBe(PaymentStatusEnum::NEW);
     }
 
     /**
@@ -83,7 +84,7 @@ class PaymentTestAssertionHelper
     ): void {
         // Handle collection_date - it might be a string or Carbon instance
         $collectionDate = is_string($payment->collection_date)
-            ? \Carbon\Carbon::parse($payment->collection_date)
+            ? Carbon::parse($payment->collection_date)
             : $payment->collection_date;
 
         expect($payment->code)->toBe($carQuote->code)

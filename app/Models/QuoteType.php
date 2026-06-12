@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\QuoteTypeId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
@@ -15,6 +16,26 @@ class QuoteType extends Model
     public function scopeWithActive($query)
     {
         return $query->where('is_active', 1);
+    }
+
+    /**
+     * Scope to filter quote types for claims module
+     */
+    public function scopeForClaims($query)
+    {
+        return $query->whereIn('id', [
+            QuoteTypeId::Car,
+            QuoteTypeId::Travel,
+            QuoteTypeId::Home,
+            QuoteTypeId::Pet,
+            QuoteTypeId::Bike,
+            QuoteTypeId::Cycle,
+            QuoteTypeId::Jetski,
+            QuoteTypeId::Business,
+            QuoteTypeId::Yacht,
+            QuoteTypeId::Health,
+            QuoteTypeId::Life,
+        ]);
     }
 
     public function getCreatedAtAttribute($table)

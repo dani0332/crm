@@ -70,8 +70,8 @@ These rules define the patterns, conventions, and best practices for working wit
 3. **RDX (Rider Medical Cover)** - Medical cover for riders/passengers
 
 **IMPORTANT NOTES:**
-- **AP Prepayment Receipt Creation is DISABLED**: Lines 216-222 commented out in implementation
-- **AP Payment Application is DISABLED**: Lines 249-254 commented out in implementation
+- **AP Prepayment Receipt Creation is DISABLED**: AP receipt creation block commented out in `SageApiEmbeddedProductService::bookEmbeddedProductOnSage()` (around lines 218–225)
+- **AP Payment Application is DISABLED**: `applyPaymentAPInvoices` block commented out in same method (around lines 251–257)
 - **Product Differentiation**: ECB uses different API method (issuePolicy vs viewQuotePolicy)
 - **Revenue Account**: EP uses 40010 (vs 40001/40002 for main policies)
 - **Optional Fields**: OPTFIELD1-3 used for EP metadata (tax invoice, product code, policy number)
@@ -430,20 +430,23 @@ These rules define the patterns, conventions, and best practices for working wit
 **Reference:** `SageApiService::scheduleSageProcesses()` in `app/Services/SageApiService.php`
 
 **Process:**
-1. Query `SageProcess` table for PENDING status
-2. Filter by `insurance_provider_id` if provided
-3. Order by `created_at` (oldest first - FIFO)
-4. Loop through each pending process
-5. Dispatch appropriate job based on request type:
-   - `BookEmbeddedProductOnSageJob` for embedded products
-   - `BookPolicyOnSageJob` for main leads and send updates
-6. All jobs dispatched to `insly` queue
+1. Acquire Cache lock using `SageEnum::SAGE_PROCESS_LOCK_KEY` (20 seconds TTL) to prevent concurrent scheduler runs
+2. Query `SageProcess` for status IN (PENDING; and TIMEOUT if `isSageRetryTimeoutEnabled()` is true)
+3. Exclude any `insurance_provider_id` that already has a process in `SAGE_PROCESS_PROCESSING_STATUS` (one booking per insurer at a time)
+4. Filter by `insurance_provider_id` when argument provided (targeted scheduling)
+5. Order by `created_at`, then `groupBy('insurance_provider_id')` — so one pending process per insurer is selected (oldest per insurer)
+6. For each selected process: validate request JSON and required fields (`sagePayload`, `requestPayload`, `sageProcessRequestType`), then dispatch job by type:
+   - `BookPolicyOnSageJob` for main lead booking (`SAGE_PROCESS_BOOK_POLICY_REQUEST`)
+   - `SendUpdateSageJob` for send update/endorsement (`SAGE_PROCESS_SEND_UPDATE_REQUEST`)
+   - `PostPrepaymentToSageJob` for NRA/post-payment receipt (`SAGE_PROCESS_POST_PREPAYMENT_REQUEST`)
+   - `BookEmbeddedProductOnSageJob` for embedded products (`SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST`)
+7. All jobs dispatched to `insly` queue
 
 **Key Points:**
-- Always call scheduleSageProcesses() after process completion or failure
-- Filters by insurer_id when provided for targeted scheduling
-- Processes oldest pending requests first (FIFO)
-- Automatically dispatches appropriate job type
+- Always call `scheduleSageProcesses()` after process completion or failure (and in job `failed()`)
+- Timeout retry: when Application Storage key `SAGE_TIMEOUT_RETRY_ENABLED` is enabled, TIMEOUT status processes are also picked for retry
+- One process per insurer per scheduler run (groupBy); prevents same insurer from having multiple concurrent Sage jobs
+- Validates decoded request (model_type, model_id for book policy; model for send update/EP) before dispatch
 - Uses 'insly' queue for all Sage operations
 
 ## Payload Factory Patterns
@@ -858,14 +861,16 @@ These rules define the patterns, conventions, and best practices for working wit
 ### HTML Documentation (public/docs/booking-process/)
 Detailed visual documentation is available in the following files:
 
-1. **index.html** - Main documentation index with all section links
+1. **index.html** - Main documentation index with all section links and 9 core process steps
 2. **customer-verification.html** - Customer creation and verification process
 3. **receipt-creation.html** - Prepayment/receipt creation (including NRA use case)
 4. **ar-invoice-lifecycle.html** - AR invoice creation for upfront, split, and non-upfront cases
 5. **ap-invoice-lifecycle.html** - AP invoice creation for upfront, split, and non-upfront cases
 6. **payment-mapping.html** - Payment application for upfront, split, and non-upfront cases
-7. **main-lead-sendupdate.html** - Main lead booking and send update processing
+7. **main-lead-sendupdate.html** - Main lead booking and send update processing (BookPolicyOnSageJob, SendUpdateSageJob)
 8. **embedded-product-booking.html** - Embedded product booking (ECB, MDX, RDX)
+9. **payment-proforma.html** - Proforma payment request generation and document flow
+10. **sage-failed-processes.html** - Sage failed processes management, filtering, export, and troubleshooting
 
 ### Documentation UI Guidelines
 - **styles.css** - Centralized stylesheet (no inline styles)
@@ -886,9 +891,14 @@ Detailed visual documentation is available in the following files:
 
 These cursor rules provide a comprehensive, up-to-date guide for working with the Sage Integration system. Following these patterns will ensure consistency, maintainability, and reliability in Sage-related development work.
 
-**Last Updated**: October 13, 2025
+**Last Updated**: February 2025
 
 **Major Updates in This Version:**
+- **Sage Process Scheduling**: Documented Cache lock, timeout retry (SAGE_TIMEOUT_RETRY_ENABLED), groupBy insurance_provider_id (one process per insurer), all four job types (BookPolicyOnSageJob, SendUpdateSageJob, PostPrepaymentToSageJob, BookEmbeddedProductOnSageJob)
+- **Documentation references**: Added payment-proforma.html and sage-failed-processes.html to HTML documentation list
+- **Embedded Product**: Clarified line ranges for commented AP receipt/application blocks
+
+**Previous Version (October 13, 2025):**
 - **NRA (Non-Regular Approval)** receipt creation fully documented
 - **Main Lead & Send Update Processing** comprehensive workflow patterns added
 - **Prepayment/Receipt terminology** clarified (they are the SAME thing)

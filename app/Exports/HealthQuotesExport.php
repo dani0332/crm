@@ -3,6 +3,9 @@
 namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
+use App\Enums\HealthPlanTypeEnum;
+use App\Enums\HealthQuoteDigitalSignatory;
+use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\QuoteTypeId;
 use App\Services\BranchAssignmentService;
 use App\Services\CRUDService;
@@ -74,6 +77,7 @@ class HealthQuotesExport implements CsvExportableInterface
             'Age Bands',
             'FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?',
             'TYPE OF PLAN',
+            'PLAN NAME',
             'Provider Name',
             'RENEWAL BATCH',
             'PREVIOUS POLICY EXPIRY DATE',
@@ -85,6 +89,8 @@ class HealthQuotesExport implements CsvExportableInterface
             'ADVISOR CAR TEAM(s)',
             'PRIVATE CLIENT',
             'IMCRM SUB-SOURCE',
+            'Signatory',
+            'UAE PASS API Status',
         ];
     }
 
@@ -107,7 +113,7 @@ class HealthQuotesExport implements CsvExportableInterface
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             isset($quote->healthQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->healthQuoteRequestDetail->advisor_assigned_date)) : '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-            $quote->health_team_type,
+            $quote->health_team_type ?? $quote->notional_team,
             $quote->healthQuoteRequestDetail?->transapp_code,
             $quote->healthQuoteRequestDetail?->lostReason?->text,
             $quote->price_starting_from,
@@ -124,6 +130,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->nationality?->text,
             Carbon::parse($quote->dob)->age,
             $quote->customer_type,
+            HealthPlanTypeEnum::typeText($quote->health_plan_type_id),
             $quote->plan?->text,
             $quote->insuranceProvider?->text,
             $quote->renewalBatchModel?->name,
@@ -136,6 +143,8 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->car_teams ?? 'N/A',
             $quote->customer->pcp_tag_formatted ?? '',
             $quote->subSource?->text,
+            HealthQuoteDigitalSignatory::displayLabel($quote->digital_signatory),
+            HealthQuoteUaePassApiStatus::displayLabel($quote->uae_pass_api_status),
         ];
     }
 

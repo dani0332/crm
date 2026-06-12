@@ -100,8 +100,8 @@ const props = defineProps({
     default: [],
   },
   isFuncsEnabled: {
-    type: Array,
-    default: [],
+    type: Object,
+    default: () => ({}),
   },
   realQuote: Object,
   // For car commercial vehicles
@@ -109,7 +109,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isAllianceProvider: {
+  isQatarProvider: {
+    type: Boolean,
+    default: false,
+  },
+  canBypassPlanLock: {
     type: Boolean,
     default: false,
   },
@@ -151,8 +155,13 @@ const isLifePlanDetailsEnabled = computed(() => {
   );
 });
 
-// for life only
+// for life only and savings
 const exchangeRate = ref(props.quoteRequest?.life_quote?.exchange_rate ?? 0);
+
+// using computed to track the exchange rate changes
+const savingExchangeRate = computed(() => {
+  return props.quoteRequest?.savings_quote?.exchange_rate ?? 0;
+});
 
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -161,6 +170,8 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.SAVINGS,
+  quoteTypeCodeEnum.Device,
+  quoteTypeCodeEnum.CYBER,
 ]; //Ecommerce LOBs
 
 if (
@@ -184,15 +195,31 @@ const showLackingPayment = () => {
 };
 
 const getInitalAmountForLifeLOB = () => {
-  if (props.quoteRequest?.quote_customer_plan?.plan?.currency !== 'AED') {
-    const premiumInAED =
-      Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
-    return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
-  } else {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency === 'AED') {
     return (
-      props.quoteRequest.premium * props.quoteRequest?.life_quote?.payment_term
+      props.quoteRequest.premium *
+      (props.quoteRequest?.life_quote?.payment_term < 0
+        ? 1
+        : props.quoteRequest?.life_quote?.payment_term)
     );
   }
+
+  const premiumInAED =
+    Math.round(props.quoteRequest.premium * exchangeRate.value * 100) / 100;
+  return premiumInAED * props.quoteRequest?.life_quote?.payment_term;
+};
+
+const getInitalAmountForSavingsLOB = () => {
+  if (props.quoteRequest?.quote_customer_plan?.plan?.currency === 'AED') {
+    return (
+      props.quoteRequest.premium *
+      props.quoteRequest?.savings_quote?.payment_term
+    );
+  }
+  const premiumInAED =
+    Math.round(props.quoteRequest.premium * savingExchangeRate.value * 100) /
+    100;
+  return premiumInAED * props.quoteRequest?.savings_quote?.payment_term;
 };
 
 // Check quoteType and set initialAmount.value accordingly
@@ -215,6 +242,8 @@ if (props.sendUpdate) {
   !props.isPlanDetailSectionEnabled
 ) {
   initialAmount.value = getInitalAmountForLifeLOB();
+} else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
+  initialAmount.value = getInitalAmountForSavingsLOB();
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else if (
@@ -270,6 +299,8 @@ if (
   initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
+} else if (props.quoteType == quoteTypeCodeEnum.Device) {
+  initalPlanDetails = props?.quoteRequest?.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Home) {
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
@@ -280,6 +311,8 @@ if (
 ) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
+  initalPlanDetails = props?.quoteRequest?.insurance_provider_plan;
+} else if (props.quoteType == quoteTypeCodeEnum.CYBER) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
@@ -436,6 +469,23 @@ const addPaymentModal = async () => {
     return;
   }
 
+  // Check exchange rate for Savings LOB - must be checked before plan selection
+  if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
+    const savingsCurrency =
+      props.quoteRequest?.quote_customer_plan?.plan?.currency;
+    if (
+      savingsCurrency &&
+      savingsCurrency !== 'AED' &&
+      (savingExchangeRate.value == null || savingExchangeRate.value == 0)
+    ) {
+      notification.error({
+        title: 'Please lock the exchange rate first',
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   if (
     (totalPrice.value > 0 && planDetail.value) ||
     (totalPrice.value > 0 && props.sendUpdate)
@@ -505,6 +555,7 @@ const addPaymentModal = async () => {
     quoteTypeCodeEnum.Cycle,
     quoteTypeCodeEnum.Yacht,
     quoteTypeCodeEnum.SAVINGS,
+    quoteTypeCodeEnum.Device,
   ];
 
   if (
@@ -539,6 +590,20 @@ const addPaymentModal = async () => {
     paymentFormUpdateData.frequency =
       paymentTermToFrequency[props.quoteRequest?.life_quote?.payment_term] ||
       paymentFrequencyEnum.UPFRONT;
+  } else if (
+    props.quoteType === quoteTypeCodeEnum.SAVINGS &&
+    props.quoteRequest?.savings_quote?.payment_term
+  ) {
+    // Special handling for savings quotes - map payment term to frequency
+    const paymentTermToFrequency = {
+      12: paymentFrequencyEnum.MONTHLY,
+      3: paymentFrequencyEnum.QUARTERLY,
+      2: paymentFrequencyEnum.SEMI_ANNUAL,
+      1: paymentFrequencyEnum.UPFRONT,
+    };
+    paymentFormUpdateData.frequency =
+      paymentTermToFrequency[props.quoteRequest?.savings_quote?.payment_term] ||
+      paymentFrequencyEnum.UPFRONT;
   } else {
     paymentFormUpdateData.frequency = paymentFrequencyEnum.UPFRONT;
   }
@@ -551,8 +616,11 @@ const addPaymentModal = async () => {
   createPaymentFormRef.value.handleCollectionTypeChange();
   createPaymentFormRef.value.calculatePaymentBreakup();
 
-  // Trigger frequency change for life quotes to update payment schedule
-  if (props.quoteType === quoteTypeCodeEnum.Life) {
+  // Trigger frequency change for life and savings quotes to update payment schedule
+  if (
+    props.quoteType === quoteTypeCodeEnum.Life ||
+    props.quoteType === quoteTypeCodeEnum.SAVINGS
+  ) {
     createPaymentFormRef.value.handleFrequencyChange();
   }
 
@@ -810,21 +878,6 @@ onMounted(() => {
   showLackingPayment();
 });
 
-const isChildPaymentDeletable = computed(() => {
-  if (props.payments.length !== 2) return false;
-  const childPaymentNotAuthorised = [
-    paymentStatusEnum.PENDING,
-    paymentStatusEnum.NEW,
-    paymentStatusEnum.DRAFT,
-    paymentStatusEnum.OVERDUE,
-  ].includes(props.payments[1].payment_status_id);
-  return (
-    props.quoteType == quoteTypeCodeEnum.Travel &&
-    page.props?.aboveAgeMembers &&
-    childPaymentNotAuthorised
-  );
-});
-
 const setPaymentInitialPrice = () => {
   if (paymentMethodsFormReplicated.value.status !== 'edit') {
     if (props.isPlanDetailEnabled) {
@@ -845,6 +898,8 @@ const setPaymentInitialPrice = () => {
       props.quoteType === quoteTypeCodeEnum.Life
     ) {
       initialAmount.value = getInitalAmountForLifeLOB();
+    } else if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
+      initialAmount.value = getInitalAmountForSavingsLOB();
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
@@ -857,6 +912,8 @@ const setPaymentInitialPrice = () => {
 const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (props.quoteType == quoteTypeCodeEnum.Device) {
+    initalPlanDetails = props?.quoteRequest?.insurance_provider_plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
@@ -872,6 +929,8 @@ const setPlanDetail = () => {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
+  } else if (props.quoteType == quoteTypeCodeEnum.CYBER) {
+    initalPlanDetails = props.quoteRequest.insurance_provider_plan;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
@@ -1117,6 +1176,7 @@ watch(
           :quoteDocuments="quoteDocuments"
           :totalPrice="totalPrice"
           :planDetail="planDetail"
+          :canBypassPlanLock="canBypassPlanLock"
           @add-payment-modal="addPaymentModal"
         />
 
@@ -1145,7 +1205,6 @@ watch(
                     :payment="payment"
                     :index="index"
                     :isExpanded="expandedPaymentRows[index]"
-                    :isChildPaymentDeletable="isChildPaymentDeletable"
                     :isLackingPayment="is_lacking_payment"
                     :isApproveConfirmed="isApproveConfirmedReplicated"
                     :capturePaymentValidationInProcess="
@@ -1157,7 +1216,7 @@ watch(
                     :sendUpdate="sendUpdate"
                     :quoteType="quoteType"
                     :isCapBtnEnabled="isCapBtnEnabled"
-                    :isAllianceProvider="isAllianceProvider"
+                    :isQatarProvider="isQatarProvider"
                     :isEditPaymentEnabled="isEditPaymentEnabled"
                     @toggle-expand="toggleExpand"
                     @edit-payment="editPaymentModal"
@@ -1307,7 +1366,7 @@ watch(
         <AmlApprovalModal
           v-model="isAmlApprovalRequired"
           :quote-type-id="
-            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+            page.props.quoteTypeId ?? props.sendUpdate?.quote_type_id
           "
           :quote-request-id="props.quoteRequest.id"
           :is-processing="paymentMethodsFormReplicated.processing"
@@ -1353,7 +1412,7 @@ watch(
           :quote-id="props.quoteRequest.id"
           :quote-uuid="props.quoteRequest.uuid"
           :quote-type-id="
-            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+            page.props.quoteTypeId ?? props.sendUpdate?.quote_type_id
           "
           :send-update-id="props.sendUpdate?.id"
           @update:model-value="closeVoidPaymentModal"

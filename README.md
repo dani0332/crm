@@ -2,7 +2,7 @@
  
 Staging Pipeline Status = [![Build Status](https://dev.azure.com/insurancemarketafia/org-afia/_apis/build/status%2Fstaging%2Fimcrm.stg.build?branchName=develop)](https://dev.azure.com/insurancemarketafia/org-afia/_build/latest?definitionId=44&branchName=develop)
 
-## About Blanka - IMCRM.
+## About Blanka - IMCRM
 
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes
 
@@ -57,7 +57,7 @@ Make sure to run `yarn prod` before every push so the assets are compiled with t
 
 **Code Formatting**
 
-This project has pint configured, make sure to run `composer pint:fix` before every push to the code repo.
+This project has pint configured, make sure to runs `composer pint:fix` before every push to the code repo.
 
 **Getting Deployment Logs**
 

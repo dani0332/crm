@@ -59,4 +59,21 @@ return [
     | Here you may configure your Sage API settings.
     |
     */
+
+    /*
+    |--------------------------------------------------------------------------
+    | Alfred Coins (InsuranceMarket webhook)
+    |--------------------------------------------------------------------------
+    |
+    | Dispatched when a quote reaches PolicyBooked ( see QuotePolicyBooked event).
+    |
+    */
+    'alfred_coins' => [
+        'insurancemarket_webhook' => [
+            'url' => env('ALFRED_COINS_INSURANCEMARKET_WEBHOOK_URL', 'https://api-stage-alfredcoins.myalfred.me/webhook/upload/imcrm'),
+            'private_key' => env('ALFRED_COINS_INSURANCEMARKET_PRIVATE_KEY'),
+            'timeout' => (int) env('ALFRED_COINS_INSURANCEMARKET_TIMEOUT', 15),
+        ],
+    ],
+
 ];

@@ -5,6 +5,7 @@ namespace App\Traits\QuoteTraits;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\MotorRevivalEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -52,6 +53,7 @@ trait QuoteAllocatable
 
     public function markLeadAllocationFailed()
     {
+
         if ($this->advisor_id) {
             // if advisor is already assigned then we don't need to mark it as failed
 
@@ -241,7 +243,31 @@ trait QuoteAllocatable
     {
         return (bool) $this->ai_advisor_required;
     }
+    public function markLeadAllocationFailedForClaim()
+    {
 
+        if ($this->manager_id) {
+            // if manager is already assigned then we don't need to mark it as failed
+            return;
+        }
+
+        if ($this->lead_allocation_failed_at) {
+            self::withoutEvents(function () {
+                $this->update([
+                    'lead_allocation_started_at' => null,
+                ]);
+            });
+
+            return; // Already marked as failed
+        }
+
+        self::withoutEvents(function () {
+            $this->update([
+                'lead_allocation_failed_at' => now(),
+                'lead_allocation_started_at' => null,
+            ]);
+        });
+    }
     public function assignToAIAdvisor()
     {
         if ($this->isAIAdvisorAssigned()) {
@@ -275,5 +301,97 @@ trait QuoteAllocatable
     public function isReAssignment()
     {
         return in_array($this->assignment_type, [AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD]);
+    }
+
+    // similar to eligibleForAllocation but checks sic_advisor_requested via cyberQuote relation.
+    public function scopeEligibleForAllocationCyber(Builder $query): Builder
+    {
+        return $query->where(function ($mainQuery) {
+            $mainQuery
+                // AIG Cyber leads with advisor requested or payment authorized/declined
+                ->where(function ($aigQuery) {
+                    $aigQuery->isAIG(QuoteTypes::CYBER)
+                        ->advisorRequestedOrPaymentAuthorizedOrDeclinedCyber();
+                })
+                // OR Non-AIG Cyber leads
+                ->orWhere(function ($otherLeads) {
+                    $otherLeads->isNotAIG(QuoteTypes::CYBER);
+                    $otherLeads->where(function ($sq) {
+                        $sq
+                            ->where(fn ($x) => $x->sicFlowDisabled())
+                            // SIC flow enabled with advisor requested or payment
+                            ->orWhere(fn ($x) => $x->sicFlowEnabled()->advisorRequestedOrPaymentAuthorizedOrDeclinedCyber());
+                    });
+                });
+        })->orWhere->leadAllocationFailed();
+    }
+
+    /**
+     * Scope: quotes with payment authorized 24+ hours ago and no documents.
+     *
+     * Business Rule: Assign advisor if 24+ hours have passed since payment authorization
+     * AND no documents have been uploaded at all.
+     */
+    public function scopeWherePaymentAuthorizedWithNoDocuments(Builder $query): Builder
+    {
+        return $query->whereHas('payments', function ($paymentQuery) {
+            $paymentQuery->whereNotNull('authorized_at')
+                ->where('authorized_at', '<=', now()->subHours(24));
+        })->whereDoesntHave('documents');
+    }
+
+    /**
+     * Check if this quote has payment authorized 24+ hours ago with no documents.
+     * Instance-level wrapper for scopeWherePaymentAuthorizedWithNoDocuments.
+     * Used in VerifyLeadPreChecksPipe for cyber backup allocation.
+     */
+    public function hasPaymentAuthorizedWithNoDocuments(): bool
+    {
+        return static::where('uuid', $this->uuid)->wherePaymentAuthorizedWithNoDocuments()->exists();
+    }
+
+    public function isAllocationFailed(): bool
+    {
+        return ! empty($this->lead_allocation_failed_at);
+    }
+
+    public function scopeForRetryAllocationCyber(Builder $query, string $allocationStartDate, string $to): Builder
+    {
+        $extendedStartDate = now()->subDays(14)->toDateTimeString();
+
+        return $query->with('cyberQuote:id,personal_quote_id,sic_advisor_requested')
+            ->where(function ($sq) use ($allocationStartDate, $to, $extendedStartDate) {
+                $sq->whereBetween('created_at', [$allocationStartDate, $to])
+                    ->orWhere(function ($inner) use ($extendedStartDate, $to) {
+                        $inner->wherePaymentAuthorizedWithNoDocuments()
+                            ->whereBetween('created_at', [$extendedStartDate, $to]);
+                    });
+            });
+    }
+
+    public function isRevivalCommsIntentHighOrMedium(): bool
+    {
+        if ($this->source !== LeadSourceEnum::REVIVAL) {
+            return false;
+        }
+
+        $detail = $this->carQuoteRequestDetail;
+
+        if (! filled($detail?->engagement_level) || ! filled($detail?->engagement_level_updated_at)) {
+            return false;
+        }
+
+        $updatedAt = Carbon::parse($detail->engagement_level_updated_at);
+
+        return match ($detail->engagement_level) {
+            MotorRevivalEnum::INTENT_HIGH->value => now()->greaterThan($updatedAt->copy()->addMinutes(MotorRevivalEnum::ILA_HIGH_INTENT_WAIT_MINUTES)),
+            MotorRevivalEnum::MEDIUM_INTENT->value => now()->greaterThan($updatedAt->copy()->addHours(MotorRevivalEnum::ILA_MEDIUM_INTENT_WAIT_HOURS)),
+            default => false,
+        };
+    }
+
+    public function isRevivalReinstated(): bool
+    {
+        return $this->source === LeadSourceEnum::REVIVAL_REINSTATED;
     }
 }

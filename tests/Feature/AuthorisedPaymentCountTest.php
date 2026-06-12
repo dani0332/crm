@@ -1,8 +1,11 @@
 <?php
 
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Events\AuthorisedPaymentCountUpdated;
+use App\Models\CarQuote;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\Team;
@@ -11,6 +14,7 @@ use App\Models\UserTeams;
 use App\Repositories\PaymentRepository;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Str;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
@@ -20,9 +24,10 @@ beforeEach(function () {
     $this->actingAs($this->user);
 
     // Create an advisor user
-    $this->advisor = TestDataSeeder::createUser([
+    // Create an advisor user with CarAdvisor role so getAuthorisePaymentCount includes Car quote types
+    $this->advisor = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor, [
         'name' => 'Test Advisor',
-        'email' => 'advisor@test.com',
+        'email' => fake()->unique()->safeEmail(),
     ]);
 
     // Create a team and assign advisor to it (required for count query)
@@ -40,7 +45,7 @@ beforeEach(function () {
         'advisor_id' => $this->advisor->id,
         'quote_type_id' => QuoteTypeId::Car,
         'code' => 'TEST-QUOTE-'.uniqid(),
-        'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+        'uuid' => Str::uuid()->toString(),
         'first_name' => 'Test',
         'last_name' => 'User',
         'email' => 'test@example.com',
@@ -59,7 +64,7 @@ test('notification service broadcasts authorised payment count when webhook is c
         'paymentable_id' => $this->personalQuote->id,
         'paymentable_type' => PersonalQuote::class,
         'payment_status_id' => PaymentStatusEnum::AUTHORISED,
-        'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
+        'payment_methods_code' => PaymentMethodsEnum::BankTransfer,
         'total_price' => 1000,
         'total_amount' => 1000,
         'authorized_at' => now(),
@@ -103,17 +108,17 @@ test('notification service does not broadcast when quote has no authorised payme
 
 test('notification service does not broadcast for non-personal quotes', function () {
     // Create a CarQuote (not PersonalQuote)
-    $carQuote = \App\Models\CarQuote::factory()->create([
+    $carQuote = CarQuote::factory()->create([
         'advisor_id' => $this->advisor->id,
         'code' => 'CAR-QUOTE-'.uniqid(),
-        'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+        'uuid' => Str::uuid()->toString(),
     ]);
 
     // Create a payment with AUTHORISED status
     Payment::create([
         'code' => $carQuote->code,
         'paymentable_id' => $carQuote->id,
-        'paymentable_type' => \App\Models\CarQuote::class,
+        'paymentable_type' => CarQuote::class,
         'payment_status_id' => PaymentStatusEnum::AUTHORISED,
         'total_price' => 1000,
         'total_amount' => 1000,
@@ -135,7 +140,7 @@ test('authorised payment count is calculated correctly for advisor', function ()
             'advisor_id' => $this->advisor->id,
             'quote_type_id' => QuoteTypeId::Car,
             'code' => 'TEST-QUOTE-'.$i.'-'.uniqid(),
-            'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+            'uuid' => Str::uuid()->toString(),
             'first_name' => 'Test',
             'last_name' => 'User'.$i,
             'email' => 'test'.$i.'@example.com',
@@ -149,7 +154,7 @@ test('authorised payment count is calculated correctly for advisor', function ()
             'paymentable_id' => $quote->id,
             'paymentable_type' => PersonalQuote::class,
             'payment_status_id' => PaymentStatusEnum::AUTHORISED,
-            'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
+            'payment_methods_code' => PaymentMethodsEnum::BankTransfer,
             'total_price' => 1000,
             'total_amount' => 1000,
             'authorized_at' => now(),
@@ -161,7 +166,7 @@ test('authorised payment count is calculated correctly for advisor', function ()
         'advisor_id' => $this->advisor->id,
         'quote_type_id' => QuoteTypeId::Car,
         'code' => 'TEST-QUOTE-2-'.uniqid(),
-        'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+        'uuid' => Str::uuid()->toString(),
         'first_name' => 'Test',
         'last_name' => 'User',
         'email' => 'test2@example.com',
@@ -175,7 +180,7 @@ test('authorised payment count is calculated correctly for advisor', function ()
         'paymentable_id' => $anotherQuote->id,
         'paymentable_type' => PersonalQuote::class,
         'payment_status_id' => PaymentStatusEnum::AUTHORISED,
-        'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
+        'payment_methods_code' => PaymentMethodsEnum::BankTransfer,
         'total_price' => 1000,
         'total_amount' => 1000,
         'authorized_at' => now(),
@@ -196,7 +201,7 @@ test('authorised payment count excludes non-authorized payments', function () {
         'paymentable_id' => $this->personalQuote->id,
         'paymentable_type' => PersonalQuote::class,
         'payment_status_id' => PaymentStatusEnum::AUTHORISED,
-        'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
+        'payment_methods_code' => PaymentMethodsEnum::BankTransfer,
         'total_price' => 1000,
         'total_amount' => 1000,
         'authorized_at' => now(),
@@ -207,7 +212,7 @@ test('authorised payment count excludes non-authorized payments', function () {
         'paymentable_id' => $this->personalQuote->id,
         'paymentable_type' => PersonalQuote::class,
         'payment_status_id' => PaymentStatusEnum::PENDING,
-        'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
+        'payment_methods_code' => PaymentMethodsEnum::BankTransfer,
         'total_price' => 1000,
         'total_amount' => 1000,
     ]);
@@ -217,7 +222,7 @@ test('authorised payment count excludes non-authorized payments', function () {
         'paymentable_id' => $this->personalQuote->id,
         'paymentable_type' => PersonalQuote::class,
         'payment_status_id' => PaymentStatusEnum::PAID,
-        'payment_methods_code' => \App\Enums\PaymentMethodsEnum::BankTransfer,
+        'payment_methods_code' => PaymentMethodsEnum::BankTransfer,
         'total_price' => 1000,
         'total_amount' => 1000,
     ]);

@@ -238,6 +238,10 @@ class RuleService extends BaseService
 
     public function getEmailsByLeadSource($leadSource, $quoteTypeId)
     {
+        if (empty($leadSource)) {
+            return [];
+        }
+
         $rules = app(RuleService::class)->getUsersByLeadSourceRules($leadSource, $quoteTypeId);
         if (count($rules) > 0) {
             $userIds = app(RuleService::class)->getUserIdsFromRuleRecords($rules);
@@ -248,26 +252,24 @@ class RuleService extends BaseService
 
         return [];
     }
-    public function getFicRulesUsers()
+    public function getFicRulesUsers(QuoteTypes $quoteType)
     {
         return Rule::join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->where('rules.is_active', 1)
             ->where('rules.rule_type', RuleTypeEnum::FIC)
+            ->where('rules.quote_type_id', $quoteType->id())
             ->distinct()
             ->pluck('rule_users.user_id')
             ->toArray();
     }
 
-    public function getRuleUserIds(QuoteTypes $quoteType, bool $excludeVehicleUseRule = false): mixed
+    public function getRuleUserIds(QuoteTypes $quoteType)
     {
         return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->where('rules.quote_type_id', $quoteType->id())
             ->where('rules.is_active', 1)
             ->distinct()
-            ->when($quoteType === QuoteTypes::CAR && $excludeVehicleUseRule, function ($query) {
-                $query->where('rule_type', '!=', RuleTypeEnum::VEHICLE_USE);
-            })
             ->pluck('rule_users.user_id')
             ->toArray();
     }

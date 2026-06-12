@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GIG Car API Integration - Complete Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #e53e3e 0%, #dd6b20 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #e53e3e;
+      }
+
+      .section h3 {
+        color: #e53e3e;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #34495e;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .endpoint-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left: 4px solid #e53e3e;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .endpoint-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .method-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 0.9em;
+        color: white;
+        background: #e53e3e;
+      }
+
+      .endpoint-url {
+        font-family: 'Courier New', monospace;
+        font-size: 1.1em;
+        color: #2c3e50;
+        font-weight: 600;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 15px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.6;
+      }
+
+      .code-block.json {
+        background: #1e1e1e;
+      }
+
+      .code-block pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .info-box {
+        background: #ffe5e5;
+        border-left: 4px solid #e53e3e;
+        padding: 15px 20px;
+        border-radius: 5px;
+        margin: 15px 0;
+      }
+
+      .info-box.warning {
+        background: #fff3cd;
+        border-left-color: #ffc107;
+      }
+
+      .info-box strong {
+        color: #e53e3e;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .info-box.warning strong {
+        color: #856404;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      table th {
+        background: #e53e3e;
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+      }
+
+      table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      table tr:hover {
+        background: #f8f9fa;
+      }
+
+      .nav-links {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-links h3 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+      }
+
+      .nav-links a {
+        display: inline-block;
+        background: linear-gradient(135deg, #e53e3e 0%, #dd6b20 100%);
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        margin: 5px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .nav-links a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .endpoint-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/index.html">🚗 Car</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/gig/index.html">GIG (AXA)</a>
+        <span>></span>
+        <span>API Integration</span>
+      </div>
+
+      <div class="header">
+        <h1>🔌 GIG Car API Integration</h1>
+        <p>Complete API Documentation for GIG Car Insurance Policy Issuance</p>
+      </div>
+
+      <div class="nav-links">
+        <h3>📚 Navigation</h3>
+        <a href="/docs/policy-automation/car/gig/index.html"
+          >← Back to Overview</a
+        >
+        <a href="/docs/policy-automation/car/gig/architecture.html"
+          >Architecture →</a
+        >
+        <a href="/docs/policy-automation/car/gig/automation-flow.html"
+          >Automation Flow →</a
+        >
+        <a href="/docs/policy-automation/car/gig/configuration.html"
+          >Configuration →</a
+        >
+      </div>
+
+      <!-- Authentication & Authorization -->
+      <div class="section">
+        <h2>🔐 OAuth 2.0 Authentication</h2>
+
+        <p>
+          All GIG API requests require OAuth 2.0 authentication using client
+          credentials flow. The access token is cached in Redis to minimize API
+          calls and improve performance.
+        </p>
+
+        <div class="info-box">
+          <strong>Authentication Method</strong>
+          OAuth 2.0 Client Credentials flow with Bearer token authentication
+        </div>
+
+        <h3>OAuth Token Endpoint</h3>
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge">POST</span>
+            <span class="endpoint-url"
+              >{GIG_API_AUTH_BASE_URL}/oauth/token</span
+            >
+          </div>
+
+          <h4>Request Headers</h4>
+          <div class="code-block">
+            <pre>Content-Type: application/x-www-form-urlencoded</pre>
+          </div>
+
+          <h4>Request Payload</h4>
+          <div class="code-block">
+            <pre>
+client_id={GIG_API_AUTH_CLIENT_ID}
+&client_secret={GIG_API_AUTH_CLIENT_SECRET}
+&grant_type=client_credentials
+&audience=integration-platform</pre
+            >
+          </div>
+
+          <h4>Response Structure</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expires_in": 3600,
+  "token_type": "Bearer"
+}</pre
+            >
+          </div>
+
+          <h4>Token Caching</h4>
+          <ul>
+            <li>
+              <strong>Cache Key:</strong>
+              <code>AXA_POLICY_ISSUANCE_API_ACCESS_TOKEN</code>
+            </li>
+            <li><strong>Cache Store:</strong> Redis</li>
+            <li>
+              <strong>TTL:</strong> Set from <code>expires_in</code> value
+              (seconds)
+            </li>
+            <li>
+              <strong>Refresh:</strong> Automatic refresh when token expires or
+              missing
+            </li>
+          </ul>
+        </div>
+
+        <h3>Required Headers for Authenticated Requests</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Header Name</th>
+              <th>Description</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Authorization</code></td>
+              <td>Bearer token from OAuth endpoint</td>
+              <td><code>Bearer {access_token}</code></td>
+            </tr>
+            <tr>
+              <td><code>opCo</code></td>
+              <td>Operating company code</td>
+              <td><code>GULF</code></td>
+            </tr>
+            <tr>
+              <td><code>sourceApplication</code></td>
+              <td>Source application identifier</td>
+              <td><code>OLS</code></td>
+            </tr>
+            <tr>
+              <td><code>Content-Type</code></td>
+              <td>Request content type</td>
+              <td><code>application/json</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- API Base URL & Configuration -->
+      <div class="section">
+        <h2>🌐 API Base URL & Configuration</h2>
+
+        <h3>Base URL Structure</h3>
+        <div class="code-block">
+          <pre>{GIG_API_BASE_URL}/apis/gulf-motor-v3-vs/motor</pre>
+        </div>
+
+        <div class="info-box">
+          <strong>Environment Variable</strong>
+          <code>GIG_API_BASE_URL</code> - Base URL for GIG API (e.g.,
+          <code>https://api.gig.ae</code>)
+        </div>
+
+        <h3>API Timeout Configuration</h3>
+        <ul>
+          <li><strong>Default Timeout:</strong> 30 seconds</li>
+          <li>
+            <strong>Retry Attempts:</strong> 5 retries (GET, PATCH, AUTH), 1
+            retry (POST)
+          </li>
+          <li><strong>Retry Delay:</strong> 10 seconds between retries</li>
+        </ul>
+      </div>
+
+      <!-- API Endpoints -->
+      <div class="section">
+        <h2>📡 API Endpoints</h2>
+
+        <p>
+          The GIG Car Insurance API provides three main endpoints for policy
+          issuance automation:
+        </p>
+
+        <!-- Endpoint 1: Upload Documents -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge">POST</span>
+            <span class="endpoint-url">/v1/insurance-documents</span>
+          </div>
+
+          <h4>Purpose</h4>
+          <p>
+            Uploads customer documents (Car Registration Card, Emirates ID,
+            Driving License) to GIG's document management system.
+          </p>
+
+          <h4>Request Headers</h4>
+          <div class="code-block">
+            <pre>
+Authorization: Bearer {access_token}
+opCo: GULF
+sourceApplication: OLS
+Content-Type: application/json</pre
+            >
+          </div>
+
+          <h4>Request Payload Structure</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "referenceType": "quotation",
+  "referenceValue": "QUOTE123456",
+  "documentType": {
+    "code": "DT01",
+    "value": "Car Registration Document"
+  },
+  "documentContent": "base64_encoded_document_content",
+  "documentName": "unique_id_car_registration.pdf",
+  "mimeType": "application/pdf"
+}</pre
+            >
+          </div>
+
+          <h4>Request Payload Fields</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>referenceType</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Always "quotation"</td>
+              </tr>
+              <tr>
+                <td><code>referenceValue</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Quote's insurer quote number</td>
+              </tr>
+              <tr>
+                <td><code>documentType.code</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Document type code (DT01, DT02, DT03)</td>
+              </tr>
+              <tr>
+                <td><code>documentType.value</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Document type name</td>
+              </tr>
+              <tr>
+                <td><code>documentContent</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Base64 encoded document content</td>
+              </tr>
+              <tr>
+                <td><code>documentName</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Unique document name</td>
+              </tr>
+              <tr>
+                <td><code>mimeType</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>
+                  Document MIME type (application/pdf, image/jpeg, image/png)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Document Type Codes</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Document Type</th>
+                <th>IMCRM Code</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>DT01</code></td>
+                <td>Car Registration Document (Mulkiya)</td>
+                <td><code>CAR_REGISTRATION_CARD</code></td>
+                <td>Required</td>
+              </tr>
+              <tr>
+                <td><code>DT02</code></td>
+                <td>Driving License</td>
+                <td><code>DRIVING_LICENSE</code></td>
+                <td>Required</td>
+              </tr>
+              <tr>
+                <td><code>DT03</code></td>
+                <td>National ID (Emirates ID)</td>
+                <td><code>CAR_EMIRATE_ID</code></td>
+                <td>Required; supports multiple documents (front/back)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="info-box">
+            <strong>📋 Document Upload Requirements</strong>
+            <ul style="margin-top: 10px; padding-left: 25px">
+              <li>
+                Supports multiple documents per type (e.g., Emirates ID
+                front/back)
+              </li>
+              <li>
+                All documents of a type must succeed for that type to be marked
+                as uploaded
+              </li>
+              <li>Documents are base64 encoded before upload</li>
+            </ul>
+          </div>
+
+          <h4>Response Structure</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "status": "success",
+  "message": "Document uploaded successfully"
+}</pre
+            >
+          </div>
+        </div>
+
+        <!-- Endpoint 2: Issue Policy -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge">POST</span>
+            <span class="endpoint-url">/v3/policies</span>
+          </div>
+
+          <div
+            class="info-box"
+            style="
+              background: linear-gradient(135deg, #d4edda, #c3e6cb);
+              border-left-color: #27ae60;
+              margin-bottom: 20px;
+            "
+          >
+            <strong style="color: #155724">💳 Pre-Captured Payment</strong>
+            <p
+              style="
+                color: #155724;
+                margin-top: 10px;
+                margin-bottom: 0;
+                line-height: 1.7;
+              "
+            >
+              <strong>Payment is already captured BEFORE this API call.</strong>
+              Auto-capture executes during split payment approval process via
+              <code>SplitPaymentService->processSplitPaymentApprove()</code>. If
+              capture fails, automation is prevented from starting and quote is
+              marked with <code>AUTO_CAPTURE_FAILED</code> status. Only payment
+              amount and mode are sent in this request - no transaction_id is
+              used.
+            </p>
+          </div>
+
+          <h4>Purpose</h4>
+          <p>
+            Creates a car insurance policy with GIG using quote ID and payment
+            information.
+          </p>
+
+          <h4>Request Headers</h4>
+          <div class="code-block">
+            <pre>
+Authorization: Bearer {access_token}
+opCo: GULF
+sourceApplication: OLS
+Content-Type: application/json</pre
+            >
+          </div>
+
+          <h4>Request Payload Structure</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "quoteId": "QUOTE123456",
+  "isActive": "true",
+  "payment": {
+    "paymentMode": {
+      "code": "CT068",
+      "value": "Upfront Commission Partner Payment"
+    },
+    "paymentAmount": {
+      "amount": 1500.00,
+      "currencyCode": "AED"
+    }
+  }
+}</pre
+            >
+          </div>
+
+          <h4>Request Payload Fields</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>quoteId</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Quote's insurer quote number</td>
+              </tr>
+              <tr>
+                <td><code>isActive</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Always "true"</td>
+              </tr>
+              <tr>
+                <td><code>payment.paymentMode.code</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Payment mode code (CT068)</td>
+              </tr>
+              <tr>
+                <td><code>payment.paymentMode.value</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Payment mode description</td>
+              </tr>
+              <tr>
+                <td><code>payment.paymentAmount.amount</code></td>
+                <td>number</td>
+                <td>Yes</td>
+                <td>Payment amount</td>
+              </tr>
+              <tr>
+                <td><code>payment.paymentAmount.currencyCode</code></td>
+                <td>string</td>
+                <td>Yes</td>
+                <td>Currency code (AED)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Response Structure</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "data": {
+    "policyId": "POL123456789",
+    "documents": [
+      {
+        "docId": "DOC001",
+        "name": "Tax invoice"
+      },
+      {
+        "docId": "DOC002",
+        "name": "Tax invoice by buyer"
+      },
+      {
+        "docId": "DOC003",
+        "name": "Receipt with reference"
+      },
+      {
+        "docId": "DOC004",
+        "name": "Motor Insurance Policy Schedule"
+      },
+      {
+        "docId": "DOC005",
+        "name": "Certificate of Insurance"
+      }
+    ]
+  }
+}</pre
+            >
+          </div>
+        </div>
+
+        <!-- Endpoint 3: Get Document -->
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method-badge">GET</span>
+            <span class="endpoint-url">/v1/insurance-documents/document</span>
+          </div>
+
+          <h4>Purpose</h4>
+          <p>
+            Downloads policy documents from GIG using document ID, reference
+            type, and reference value.
+          </p>
+
+          <h4>Request Headers</h4>
+          <div class="code-block">
+            <pre>
+Authorization: Bearer {access_token}
+opCo: UAE
+documentType: {document_id}
+referenceType: policy
+referenceValue: {policy_id}
+Accept: application/json</pre
+            >
+          </div>
+
+          <h4>Query Parameters</h4>
+          <p>This endpoint uses headers instead of query parameters:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Header</th>
+                <th>Description</th>
+                <th>Example</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>opCo</code></td>
+                <td>Operating company</td>
+                <td><code>UAE</code></td>
+              </tr>
+              <tr>
+                <td><code>documentType</code></td>
+                <td>Document ID from policy issuance response</td>
+                <td><code>DOC001</code></td>
+              </tr>
+              <tr>
+                <td><code>referenceType</code></td>
+                <td>Reference type (always "policy")</td>
+                <td><code>policy</code></td>
+              </tr>
+              <tr>
+                <td><code>referenceValue</code></td>
+                <td>Policy ID from policy issuance</td>
+                <td><code>POL123456789</code></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Response Structure</h4>
+          <div class="code-block json">
+            <pre>
+{
+  "document": {
+    "name": "Tax invoice",
+    "content": "base64_encoded_document_content"
+  }
+}</pre
+            >
+          </div>
+
+          <div class="info-box warning">
+            <strong>⚠️ Rate Limiting</strong>
+            A 10-second delay is implemented between document downloads to
+            respect API rate limits.
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Handling -->
+      <div class="section">
+        <h2>⚠️ Error Handling</h2>
+
+        <h3>Error Response Structure</h3>
+        <div class="code-block json">
+          <pre>
+{
+  "message": "Error description",
+  "description": "Detailed error message"
+}</pre
+          >
+        </div>
+
+        <h3>Common Error Scenarios</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>HTTP Status</th>
+              <th>Error Scenario</th>
+              <th>Handling</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>401</td>
+              <td>Unauthorized - Invalid or expired token</td>
+              <td>Refresh OAuth token and retry</td>
+            </tr>
+            <tr>
+              <td>400</td>
+              <td>Bad Request - Invalid payload</td>
+              <td>Validate payload structure and required fields</td>
+            </tr>
+            <tr>
+              <td>404</td>
+              <td>Not Found - Document or quote not found</td>
+              <td>Verify quote/policy ID and document IDs</td>
+            </tr>
+            <tr>
+              <td>500</td>
+              <td>Internal Server Error</td>
+              <td>Retry with exponential backoff</td>
+            </tr>
+            <tr>
+              <td>Timeout</td>
+              <td>Request timeout</td>
+              <td>Retry up to configured max retries</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong
+            >GIG Car Insurance Automation - API Integration
+            Documentation</strong
+          >
+        </p>
+        <p>Part of the Policy Issuance Automation System</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Version 1.0 | Last Updated: February 2026 | Production Ready
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

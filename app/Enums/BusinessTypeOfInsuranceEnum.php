@@ -41,4 +41,5 @@ final class BusinessTypeOfInsuranceEnum extends Enum
     const SME_INSURANCE = 'SME Insurance';
     const MONEY_INSURANCE = 'Money Insurance';
     const FIDELITY_GUARANTEE = 'Fidelity Guarantee';
+    const POLITICAL_VIOLENCE = 'Political Violence';
 }

@@ -61,6 +61,11 @@ final class QuoteDocumentsEnum extends Enum
         return [self::CAR_TAX_INVOICE, self::POLICY_SCHEDULE];
     }
 
+    public static function getEpSentToCustomerDocTypes(): array
+    {
+        return [self::POLICY_SCHEDULE];
+    }
+
     public static function getWatermarkableDocTypeCodes($shortCode): array
     {
         return match ($shortCode) {

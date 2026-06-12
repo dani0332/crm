@@ -19,6 +19,8 @@ use App\Enums\EmirateEnum;
 use App\Enums\EpEcbExcludeVehicleEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\HealthQuoteDigitalSignatory;
+use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
@@ -58,10 +60,13 @@ use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\CarTypeInsurance;
+use App\Models\ClaimStatus;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
+use App\Models\HealthQuote;
+use App\Models\HealthUMAFResponse;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -92,6 +97,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
+use App\Services\CommunicationEventLogService;
 use App\Services\CRUDService;
 use App\Services\CustomerAddressService;
 use App\Services\CustomerService;
@@ -114,6 +120,7 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteJourneyService;
 use App\Services\Quotes\SavingsQuoteService;
+use App\Services\RenewalsUploadService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
@@ -127,10 +134,12 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CRUDController extends Controller
@@ -322,8 +331,8 @@ class CRUDController extends Controller
             $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
             $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
 
-            $supportUsers = app(\App\Services\UserService::class)->getSupportUsers([
-                'product_filter' => \App\Enums\QuoteTypes::HEALTH,
+            $supportUsers = app(UserService::class)->getSupportUsers([
+                'product_filter' => QuoteTypes::HEALTH,
                 'include_role_in_name' => true,
                 'return_format' => 'collection',
             ]);
@@ -333,7 +342,7 @@ class CRUDController extends Controller
 
             $canAssignClientSupport = Auth::user()->can(PermissionsEnum::ASSIGN_CLIENT_SUPPORT)
                 && Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD)
-                && Auth::user()->hasProduct(\App\Enums\QuoteTypes::HEALTH->value);
+                && Auth::user()->hasProduct(QuoteTypes::HEALTH->value);
 
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
@@ -356,6 +365,9 @@ class CRUDController extends Controller
                 'canAssignLeadAdvisor' => $canAssignLeadAdvisor,
                 'canAssignClientSupport' => $canAssignClientSupport,
                 'supportUsers' => $supportUsers,
+                'dropdownSource' => $dropdownSource,
+                'healthSignatoryFilterOptions' => HealthQuoteDigitalSignatory::filterDropdown(),
+                'healthUaePassApiStatusFilterOptions' => HealthQuoteUaePassApiStatus::filterDropdown(),
             ]);
         }
 
@@ -640,7 +652,7 @@ class CRUDController extends Controller
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
-     * @return \Inertia\Response
+     * @return Response
      */
     public function show($id, Request $request)
     {
@@ -909,6 +921,8 @@ class CRUDController extends Controller
                 $carTypeofInsurance = CarTypeInsurance::select('id', 'text')->find($record->car_type_insurance_id) ?? null;
                 $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Car));
 
+                $communicationEventLogs = app(CommunicationEventLogService::class)->getLogsForQuoteUuid($record->uuid);
+
                 return inertia('PersonalQuote/Car/Show', compact([
                     'record',
                     'sendUpdateOptions',
@@ -1012,6 +1026,7 @@ class CRUDController extends Controller
                     'rtaConfigurationData',
                     'LIVAEnums',
                     'carTypeofInsurance',
+                    'communicationEventLogs',
                 ]));
             }
 
@@ -1254,12 +1269,28 @@ class CRUDController extends Controller
 
                 $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
 
+                $healthUmafResponse = HealthUMAFResponse::where('quote_uuid', $record->uuid)->first();
+                $record->isSTPCase = $healthUmafResponse && $healthUmafResponse?->stp_rating ? $healthUmafResponse?->stp_rating['is_stp'] : null;
+                $record->api_issuance_status = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
+                $record->insurer_api_status = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
+
+                // $record is a DB::table() stdClass — Eloquent relations can't be used; manual lookup is intentional.
+                $record->previous_quote = $record->previous_quote_id
+                    ? HealthQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
+                    : null;
+                $archivedDocuments = $this->quoteDocumentService->getArchivedDocuments($quoteType, $record->id);
+
+                // Health show uses DB::table() entity (not Eloquent), so model appends are not applied; set label here.
+                $record->signatory_text = HealthQuoteDigitalSignatory::displayLabel($record->digital_signatory ?? null);
+                $record->uae_pass_api_status_text = HealthQuoteUaePassApiStatus::displayLabel($record->uae_pass_api_status ?? null);
+
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
                     'emailStatuses' => $emailStatuses,
                     'quote' => $record,
                     'isAUHLead' => $isAUHLead,
                     'hasPecTag' => $hasPecTag,
+                    'canBypassPlanLock' => $this->healthQuoteService->canBypassPlanLock($record, $payments),
                     'amlStatusName' => $amlStatusName,
                     'sendUpdateOptions' => $sendUpdateOptions,
                     'sendUpdateLogs' => $sendUpdateLogs,
@@ -1336,6 +1367,7 @@ class CRUDController extends Controller
                     'paymentGatewayEnum' => $paymentGatewayEnum,
                     'isFuncsEnabled' => $isFuncsEnabled,
                     'branchOptions' => EmirateEnum::getBranchMapping(),
+                    'archivedDocuments' => $archivedDocuments,
                 ]);
             } else {
                 return view('shared.show', compact([
@@ -1719,6 +1751,9 @@ class CRUDController extends Controller
         if (strpos($url, 'savings')) {
             $this->genericModel->modelType = 'Savings';
         }
+        if (strpos($url, 'device')) {
+            $this->genericModel->modelType = 'Device';
+        }
     }
 
     private function fillModelByModelType($type, Request $request)
@@ -1728,7 +1763,8 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS];
+
+        $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER, quoteTypeCode::Device];
         if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Savings';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
@@ -2097,14 +2133,6 @@ class CRUDController extends Controller
         return $leadHistory;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getLeadHistoryLogs(Request $request)
-    {
-        return $this->crudService->getLeadHistoryLogs($request->quoteTypeId, $request->recordId);
-    }
-
     public function searchLead(Request $request)
     {
         if ($request->has('modelType') && $request->modelType && $request->term && $request->status) {
@@ -2193,11 +2221,12 @@ class CRUDController extends Controller
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
         $request = (object) $policyDetailRequest->validated();
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_QUOTE_POLICY, $request->quote_code ?? null);
+
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
-        info('Quote Code: '.$quoteModel->code.' fn: updateQuotePolicy called');
 
         $quoteModel->update([
             'policy_number' => $request->quote_policy_number ?? '',
@@ -2242,10 +2271,10 @@ class CRUDController extends Controller
         $centralService = app(CentralService::class);
         $centralService->synchronizePaymentInformation($quoteModel);
         $centralService->updateQuoteInformation($request->modelType, $request->quote_id);
-        info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
+        LoggerService::info('Policy detail updated successfully');
         if (in_array($quoteModel->quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer])) {
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($quoteModel, $payment, $request->modelType);
-            info('Quote Code: '.$quoteModel->code.' BIN Generated for transactional leads');
+            LoggerService::info('BIN Generated for transactional leads');
         }
 
         return redirect()->back()->with([
@@ -2274,7 +2303,7 @@ class CRUDController extends Controller
      * export selected plans to PDF.
      *
      * @param  Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function exportCarPdf($quoteType, ExportPlansPdfRequest $request)
     {
@@ -2293,7 +2322,7 @@ class CRUDController extends Controller
      * export selected plans to PDF.
      *
      * @param  Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function exportHealthPdf($quoteType, ExportPlansPdfRequest $request)
     {
@@ -2403,6 +2432,10 @@ class CRUDController extends Controller
         // get Car quote by uuid using model
         $carQuote = CarQuote::where('uuid', $request->quote_uuid)->first();
 
+        LoggerService::info(self::class.' - sendEmailOneClickBuy - Car Quote: ', extra: [
+            'carQuote' => $carQuote,
+        ]);
+
         $previousAdvisor = null;
         if (! empty($carQuote->previous_advisor_id)) {
             $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
@@ -2422,8 +2455,15 @@ class CRUDController extends Controller
 
             return response()->json(['success' => 'OCB email sent to customer']);
         }
+        $renewalsUploadService = app(RenewalsUploadService::class);
+        $latestUpdateRenewalQuoteProcess = $carQuote->latestUpdateRenewalQuoteProcess;
+        $isTransitionableLead = $latestUpdateRenewalQuoteProcess
+            ? $renewalsUploadService->isTransitionableLeadWithCurrentData($latestUpdateRenewalQuoteProcess)
+            : false;
+        $isRenewalHistorical = $renewalsUploadService->resolveIsRenewalHistorical($carQuote, $isTransitionableLead);
+
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
-        $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true, true);
+        $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true, false, $isRenewalHistorical);
 
         info('sendEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
 
@@ -2434,7 +2474,7 @@ class CRUDController extends Controller
 
         $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
-        $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+        $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR?->id);
 
         info('sendEmailOneClickBuy OCB email data built for quote uuid: '.$request->quote_uuid);
         if ($carQuote->isSuppressIntroEmail() && $carQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
@@ -2442,6 +2482,10 @@ class CRUDController extends Controller
 
             return;
         }
+        if ($isTransitionableLead) {
+            $emailData->currentInsurer = '';
+        }
+
         $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
 
         if ($responseCode == 201) {
@@ -2505,7 +2549,7 @@ class CRUDController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\ClaimsStatus  $claimsStatus
+     * @param  ClaimStatus  $claimStatus
      * @return \Illuminate\Http\Response
      */
     private function getCarMakeDropdown()

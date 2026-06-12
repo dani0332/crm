@@ -30,6 +30,7 @@
         "cypress-file-upload": "^5.0.8",
         "highcharts": "^11.2.0",
         "highcharts-vue": "^1.4.3",
+        "html-to-image": "^1.11.13",
         "laravel-echo": "^1.16.1",
         "laravel-vite-plugin": "^1.2.0",
         "markdown-it": "^14.0.0",

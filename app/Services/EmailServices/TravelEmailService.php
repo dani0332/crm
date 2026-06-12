@@ -395,19 +395,19 @@ class TravelEmailService extends BaseService
         }
     }
 
-    public function sendTravelAllianceFailedAllocationEmail($lead)
+    public function sendTravelQatarFailedAllocationEmail($lead)
     {
         $advisor = User::where('id', $lead->advisor_id)->first();
 
-        $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_ALLIANCE_FAILED_ALLOCATION);
-        $travelEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL)->first();
+        $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_QATAR_FAILED_ALLOCATION);
+        $travelEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL)->first();
         if ($travelEvent) {
             $response = app(BirdService::class)->triggerWebHookRequest($travelEvent->value, $emailData);
-            info("sendTravelAllianceFailedAllocationEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+            info("sendTravelQatarFailedAllocationEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
 
             return $response->status_code;
         } else {
-            info("sendTravelAllianceFailedAllocationEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            info("sendTravelQatarFailedAllocationEmail workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
         }
 
         return null;
@@ -499,7 +499,7 @@ class TravelEmailService extends BaseService
             }
 
             return null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('AIGWorkflow-Error: while sending workflow for travel', exception: $e);
             throw $e;
         }
@@ -636,7 +636,7 @@ class TravelEmailService extends BaseService
 
                     return '';
                 }
-            } catch (\Exception $urlException) {
+            } catch (Exception $urlException) {
                 LoggerService::error(self::class.' - attachTravelOCBPDFToEmail - Failed to generate temporary URL: '.$urlException->getMessage().' for uuid: '.$quoteUID, exception: $urlException);
 
                 return '';
@@ -680,7 +680,7 @@ class TravelEmailService extends BaseService
 
             // Use the existing private method with the fetched plans
             return $this->attachTravelOCBPDFToEmail($quoteUID, $quotePlans);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Log the error details
             LoggerService::error(self::class." - Error: attachTravelOCBPDF - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);
 
@@ -696,7 +696,7 @@ class TravelEmailService extends BaseService
                 $travelQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $travelQuote->save();
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error(self::class." - Error: updateTravelQuoteStatus - Error updating travel quote status | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $uuid], exception: $e);
         }
     }

@@ -1,8 +1,8 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { reactive } from 'vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -62,12 +62,11 @@ const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\PersonalQuote';
-
+const genericRequestEnum = page.props.genericRequestEnum;
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
-const historyLoading = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const { isRequired, emiratesNumber } = useRules();
 const hasRole = role => useHasRole(role);
@@ -147,8 +146,10 @@ const customerProfileForm = useForm({
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
-    page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ??
-    null,
+    page.props.quote?.latest_insured?.id_type ===
+    genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote?.latest_insured?.id_number
+      : null,
   company_name:
     page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
     null,
@@ -212,8 +213,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -238,7 +239,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -248,7 +249,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -486,6 +487,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SOURCE</dt>
+                <dd>{{ quote.source }}</dd>
+              </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
@@ -613,6 +618,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CURRENTLY INSURED WITH</dt>
+                <dd>{{ quote?.currently_insured_with?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
@@ -1165,7 +1174,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         firstName: quote.first_name,
         lastName: quote.last_name,
         companyName: quote.company_name,
-        currentlyInsuredWith: null,
+        currentlyInsuredWith: quote.currently_insured_with,
       }"
       :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
       :insuranceProviders="insuranceProviders"
@@ -1204,7 +1213,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
       @onAddUpdate="onAddUpdate"
     />
 
-    <LeadHistory :quote="quote" :expanded="sectionExpanded" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <FtcEmailTrack
       :quoteType="$page.props.modelType"

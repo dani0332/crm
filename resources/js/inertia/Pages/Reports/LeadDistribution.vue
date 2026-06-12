@@ -145,16 +145,6 @@ const cleanFilters = filters => {
   return filters;
 };
 
-function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
-    } else {
-      filters[key] = params[key];
-    }
-  }
-}
-
 const setDefaultValues = () => {
   if (page.props.defaultFilters && !params['page']) {
     Object.keys(page.props.defaultFilters).forEach(key => {
@@ -167,7 +157,7 @@ const setDefaultValues = () => {
 
 onMounted(() => {
   setDefaultValues();
-  setQueryStringFilters();
+  setQueryStringFilters(params, filters);
   onLobChange(filters.lob, true);
 
   isMounted.value = true;

@@ -24,8 +24,10 @@ class PaymentSplitsObserver
      */
     public function updated(PaymentSplits $paymentSplits): void
     {
-        // As the vat calculation changes according to frequency so cannot apply isDirty('payment_amount')
-        $this->updateSplitPriceVat($paymentSplits);
+        // Check if any of these columns are dirty
+        if ($paymentSplits->isDirty('payment_amount')) {
+            $this->updateSplitPriceVat($paymentSplits);
+        }
     }
 
     /**

@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Enums\FilterTypes;
 use App\Enums\GenderEnum;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -16,10 +17,15 @@ use App\Traits\QuoteTraits\PersonalQuotable;
 use App\Traits\SpatieActivityLog;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\Config;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -55,10 +61,10 @@ class PersonalQuote extends Model implements AuditableContract
         'is_renewal_tier_email_sent' => FilterTypes::EXACT,
         'is_early_renewal' => FilterTypes::EXACT,
     ];
-    protected $appends = ['age', 'gender_label', 'pc_qualified_formatted'];
+    protected $appends = ['age', 'gender_label', 'pc_qualified_formatted', 'api_issuance_status', 'insurer_api_status'];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
@@ -96,7 +102,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function paymentStatus()
     {
@@ -104,7 +110,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function quoteDetail()
     {
@@ -112,15 +118,25 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function advisor()
     {
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
+    public function previousAdvisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'previous_advisor_id');
+    }
+
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function quoteType()
     {
@@ -128,9 +144,19 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
+     * car quote request relation.
+     *
+     * @return HasOne
+     */
+    public function carQuote()
+    {
+        return $this->hasOne(CarQuote::class, 'uuid', 'uuid');
+    }
+
+    /**
      * bike quote request relation.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function bikeQuote()
     {
@@ -138,15 +164,14 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function jetskiQuote()
     {
         return $this->hasOne(JetskiQuote::class);
     }
-
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function cycleQuote()
     {
@@ -154,7 +179,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function petQuote()
     {
@@ -162,7 +187,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function yachtQuote()
     {
@@ -170,11 +195,16 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function lifeQuote()
     {
         return $this->hasOne(LifeQuote::class);
+    }
+
+    public function vehicleDriverDetail(): MorphOne
+    {
+        return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
     }
 
     /**
@@ -193,7 +223,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function createdBy()
     {
@@ -201,7 +231,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function updatedBy()
     {
@@ -233,7 +263,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function nationality()
     {
@@ -266,7 +296,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
     public function documents()
     {
@@ -274,7 +304,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
     public function payments()
     {
@@ -282,7 +312,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function currentlyInsuredWith()
     {
@@ -290,25 +320,11 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function customer()
     {
         return $this->belongsTo(Customer::class);
-    }
-
-    // TODO: Remove this function and use latestInsured() instead
-    public function lastInsured()
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // Foreign key on customer_insured table...
-            'id',               // Foreign key on insured table...
-            'id',               // Local key on personal_quotes table...
-            'insured_id'        // Local key on customer_insured table...
-        )
-            ->where('customer_insured.quote_type_id', $this->quote_type_id);
     }
 
     public function leadHistory()
@@ -324,13 +340,13 @@ class PersonalQuote extends Model implements AuditableContract
     public function quoteRequestEntityMapping()
     {
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
-            ->whereIn('quote_type_id', [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Home]);
+            ->whereIn('quote_type_id', getPersonalQuoteTypeIds());
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
-            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet]);
+            ->whereIn('quote_type_id', getPersonalQuoteTypeIds());
     }
 
     public function notes()
@@ -388,6 +404,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasOne(SavingsQuote::class);
     }
 
+    public function businessQuote(): BelongsTo
+    {
+        return $this->belongsTo(BusinessQuote::class, 'quote_id', 'id');
+    }
+
     public function age(): Attribute
     {
         return Attribute::make(
@@ -415,24 +436,12 @@ class PersonalQuote extends Model implements AuditableContract
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet]);
+            ->whereIn('quote_type_id', getPersonalQuoteTypeIds())
+            ->active();
     }
 
-    // Get all insured records for this quote (multiple AML screenings)
-    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
-    {
-        return $this->hasManyThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id
-            'id', // insured.id
-            'id', // personal_quotes.id
-            'insured_id' // customer_insured.insured_id
-        );
-    }
-
-    // Get the latest/most recent insured record for this quote
-    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    // Get the active insured record for this quote
+    public function latestInsured(): HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
@@ -441,13 +450,15 @@ class PersonalQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
-        )->latest('customer_insured.updated_at');
+        )
+            ->whereIn('customer_insured.quote_type_id', getPersonalQuoteTypeIds())
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()
     {
         return $this->hasMany(KycLog::class, 'quote_request_id', 'id')
-            ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet])->withTrashed();
+            ->whereIn('quote_type_id', getPersonalQuoteTypeIds())->withTrashed();
     }
 
     public function homeQuote()
@@ -462,7 +473,7 @@ class PersonalQuote extends Model implements AuditableContract
 
     public function insuranceProviderPlan()
     {
-        return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id', 'sub_type_id']);
+        return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'code', 'text', 'provider_id', 'sub_type_id']);
     }
 
     public function quoteCustomerPlan()
@@ -525,6 +536,16 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
+     * Get all related passport/visa detail records via the quoteable polymorphic relation.
+     *
+     * @return MorphMany
+     */
+    public function passportVisaDetails(): MorphOne
+    {
+        return $this->morphOne(PassportVisaDetail::class, 'quoteable')->latest('updated_at');
+    }
+
+    /**
      * Check if any payment has IPL in its splits
      */
     public function hasInsurerPaymentLink(): bool
@@ -539,7 +560,7 @@ class PersonalQuote extends Model implements AuditableContract
     /**
      * Get all payments that have IPL splits
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getPaymentsWithInsurerPaymentLink()
     {
@@ -553,7 +574,7 @@ class PersonalQuote extends Model implements AuditableContract
     /**
      * Get the last payment with an IPL split
      *
-     * @return \App\Models\Payment|null
+     * @return Payment|null
      */
     public function getLastPaymentWithInsurerPaymentLink()
     {
@@ -568,7 +589,7 @@ class PersonalQuote extends Model implements AuditableContract
     /**
      * Get all IPL payment splits across all payments
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getAllInsurerPaymentLinkSplits()
     {
@@ -587,6 +608,78 @@ class PersonalQuote extends Model implements AuditableContract
     public function ftcEmailLogs(): MorphMany
     {
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
+    }
+
+    public function deviceQuote()
+    {
+        return $this->hasOne(DeviceQuote::class, 'personal_quote_id', 'id')->with('deviceMake', 'deviceModel');
+    }
+
+    // *********************** Cyber Quote ***********************
+
+    public function cyberQuote()
+    {
+        return $this->hasOne(CyberQuote::class, 'personal_quote_id', 'id');
+    }
+
+    public function cyberPlanDetail()
+    {
+        return $this->hasOne(CyberQuotePlanDetail::class, 'quoteUuid', 'uuid')->where('planId', $this->plan_id);
+    }
+
+    public function cyberPolicyWording()
+    {
+        return $this->hasOne(PolicyWording::class, 'plan_id', 'plan_id');
+    }
+
+    /**
+     * Check if booking has failed
+     *
+     * @return bool
+     */
+    public function isBookingFailed()
+    {
+        return $this->insurer_api_status_id === PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
+    }
+
+    /**
+     * Get the policy issuance for this quote
+     *
+     * @return MorphOne
+     */
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
+    }
+
+    /**
+     * Check if policy issuance has failed
+     *
+     * @return bool
+     */
+    public function isPolicyIssuanceFailed()
+    {
+        return in_array($this->insurer_api_status_id, app(abstract: PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+    }
+
+    /**
+     * Get the API issuance status for this quote
+     *
+     * @return string|null
+     */
+    public function getApiIssuanceStatusAttribute()
+    {
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
+    }
+
+    /**
+     * Get the insurer API status for this quote
+     *
+     * @return string|null
+     */
+    public function getInsurerApiStatusAttribute()
+    {
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this->insurer_api_status_id) : null;
     }
 
     public function subSource()
@@ -616,4 +709,14 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return config('constants.AFIA_WEBSITE_DOMAIN').'/'.strtolower(QuoteTypes::getName($this->quote_type_id)->value).'-insurance/quote/'.$this->uuid;
     }
+    public function amlAutomation()
+    {
+        return $this->hasOne(AmlAutomation::class, 'code', 'code');
+    }
+
+    public function isAutomationCompleted()
+    {
+        return $this->policyIssuance?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
+    }
+
 }

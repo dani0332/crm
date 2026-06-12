@@ -30,7 +30,7 @@ class Rule extends Model implements AuditableContract
     /**
      * get rule details function
      */
-    public function ruleDetail(): hasOne
+    public function ruleDetail(): HasOne
     {
         return $this->hasOne(
             RuleDetail::class,

@@ -121,9 +121,10 @@ class JetskiQuoteRepository extends BaseRepository
     {
         $quoteTypeId = QuoteTypes::JETSKI->id();
 
-        return $this->byQuoteTypeId($quoteTypeId)
+        $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
+                'previousQuote:id,uuid,code',
                 'jetskiQuote',
                 'nationality',
                 'advisor',
@@ -141,6 +142,8 @@ class JetskiQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 }])->firstOrFail();
+
+        return $quote;
     }
 
     /**

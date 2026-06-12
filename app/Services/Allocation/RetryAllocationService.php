@@ -18,6 +18,7 @@ use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\BuyLeads\BuyLeadService;
+use App\Services\BuyLeads\CatARevivalAllocationPriorityService;
 use App\Services\Logger\LoggerService;
 
 class RetryAllocationService
@@ -84,13 +85,18 @@ class RetryAllocationService
                     });
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', $exemptedLeadSources)
+            ->where(function ($q) use ($exemptedLeadSources) {
+                $q->whereNotIn('source', $exemptedLeadSources)
+                    ->orWhere(fn ($revival) => $revival->whereRevivalIntentRetryEligible());
+            })
             ->orderByDesc('created_at')
             ->where(function ($q) {
                 $q->eligibleForAllocation(QuoteTypes::CAR);
                 $q->orWhere(function ($sq) {
                     $sq->whereNull('advisor_id')->where('ai_advisor_required', true);
                 });
+                $q->orWhere(fn ($sq) => $sq->whereRevivalIntentRetryEligible());
+                $q->orWhere(fn ($sq) => $sq->whereRevivalReinstatedRetryEligible());
             })
             ->take($chunkSize);
 
@@ -122,7 +128,11 @@ class RetryAllocationService
             ]);
 
             // Only apply teamId if the payment status is AUTHORIZED
-            $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
+            $revivalSources = [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID];
+            $currentTeamId = false;
+            if ($lead->payment_status_id == PaymentStatusEnum::AUTHORISED && ! in_array($lead->source, $revivalSources)) {
+                $currentTeamId = $teamId;
+            }
 
             QuoteTypes::CAR->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
             $processedRecords++;
@@ -137,6 +147,14 @@ class RetryAllocationService
         $processedRecords = 0;
         LoggerService::info(self::class.': Executing car revival quote allocation for cat A nationalities');
         $nationalityIds = BuyLeadService::getNationalitiesIds(QuoteTypes::CAR_CAT_A);
+
+        if ($nationalityIds === []) {
+            LoggerService::warning(self::class.'::executeCarRevivalAllocation - No CAT A nationalities configured; skipping');
+
+            return;
+        }
+
+        $carValueOrderExpr = CatARevivalAllocationPriorityService::effectiveCarValueExpressionSql('car_quote_request');
 
         $leads = CarQuote::query()
             ->whereIn('nationality_id', $nationalityIds)
@@ -155,21 +173,35 @@ class RetryAllocationService
                 'advisor_id',
                 'tier_id',
                 'car_value',
+                'car_value_tier',
+                'created_at',
             ])
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->orderByDesc('car_value')
+            ->orderByRaw('('.$carValueOrderExpr.') DESC')
+            ->orderBy('created_at', 'asc')
             ->take($chunkSize);
 
         $leads->logRawSql();
 
-        // Get the teamId once before the loop
-        $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        $teamId = getTeamId(TeamNameEnum::ORGANIC);
 
         $leads = $leads->get();
-        LoggerService::info(self::class.':executeCarRevivalAllocation: Found '.count($leads).' leads to process');
+        LoggerService::info(self::class.':executeCarRevivalAllocation: Found '.count($leads).' CAT A Revival leads to process');
 
-        foreach ($leads as $lead) {
+        if ($leads->isNotEmpty()) {
+            LoggerService::info(self::class.':executeCarRevivalAllocation: Priority queue (highest car value first)', extra: [
+                'queue' => $leads->map(fn ($l, $index) => [
+                    'priority' => $index + 1,
+                    'uuid' => $l->uuid,
+                    'effective_car_value' => CatARevivalAllocationPriorityService::effectiveCarValue($l),
+                    'car_value' => $l->car_value,
+                    'created_at' => $l->created_at,
+                ])->values()->all(),
+            ]);
+        }
+
+        foreach ($leads as $index => $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             if ($lead->tier_id == TiersIdEnum::TIER_R && ! $lead->hasCarValue()) {
@@ -178,7 +210,13 @@ class RetryAllocationService
                 continue;
             }
 
-            LoggerService::info(self::class.': Processing car quote allocation', extra: [
+            LoggerService::info(self::class.': Processing CAT A Revival car quote allocation', extra: [
+                'priority_position' => $index + 1,
+                'total_in_queue' => $leads->count(),
+                'uuid' => $lead->uuid,
+                'effective_car_value' => CatARevivalAllocationPriorityService::effectiveCarValue($lead),
+                'car_value' => $lead->car_value,
+                'car_value_tier' => $lead->car_value_tier,
                 'payment_status_id' => $lead->payment_status_id,
                 'source' => $lead->source,
                 'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
@@ -188,6 +226,7 @@ class RetryAllocationService
                 'quote_status_id' => $lead->quote_status_id,
             ]);
 
+            // All revival sources should be assigned to ORGANIC team
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
 
@@ -356,17 +395,32 @@ class RetryAllocationService
         $processedRecords = 0;
         $leads = $quoteType->model()::whereNull('advisor_id')
             ->select('uuid', 'payment_status_id', 'quote_status_id', 'lead_allocation_failed_at', 'source')
-            ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->when($quoteType->isPersonalQuote(), function ($q) use ($quoteType) {
                 $q->where('quote_type_id', $quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->when($quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
-                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
+                    ->whereNotNull('health_plan_type_id')
+                    ->whereNotNull('number_of_employees');
             })
             ->when($quoteType === QuoteTypes::CORPLINE, function ($q) {
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
+            ->when($quoteType === QuoteTypes::CYBER, function ($q) use ($allocationStartDate, $to) {
+                $q->forRetryAllocationCyber($allocationStartDate, $to);
+            }, function ($q) use ($allocationStartDate, $to) {
+                $q->whereBetween('created_at', [$allocationStartDate, $to]);
+            })
+            ->when($quoteType === QuoteTypes::DEVICE, function ($q) {
+                $q->with('deviceQuote:id,personal_quote_id,sic_advisor_requested');
+            })
+            ->when($quoteType === QuoteTypes::LIFE, function ($q) {
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->where('source', '!=', LeadSourceEnum::REVIVAL)
+                        ->orWhereNull('source');
+                });
             })
             ->take($chunkSize);
 
@@ -378,15 +432,22 @@ class RetryAllocationService
         foreach ($leads as $lead) {
             LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
+            $isPaid = $lead->isPaymentAuthorizedOrDeclined();
+            $sicRequested = $quoteType === QuoteTypes::CYBER ? $lead->cyberQuote?->sic_advisor_requested ?? false : false;
+
             LoggerService::info(self::class.': Processing quote allocation', extra: [
                 'quote_type' => $quoteType->value,
                 'payment_status_id' => $lead->payment_status_id,
                 'quote_status_id' => $lead->quote_status_id,
                 'lead_allocation_failed_at' => $lead->lead_allocation_failed_at,
                 'source' => $lead->source,
+                'isPaid' => $isPaid,
+                'sicAdvisorRequested' => $sicRequested,
             ]);
+
             $quoteType->allocate(uuid: $lead->uuid);
             $processedRecords++;
+
             LoggerService::info(self::class.': Processed quote allocation', extra: [
                 'quote_type' => $quoteType->value,
             ]);

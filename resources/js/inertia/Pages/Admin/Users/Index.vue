@@ -12,6 +12,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const user = page.props.auth.user;
 const impersonatingUser = page.props.impersonatingUser;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+const notification = useNotifications('toast');
 
 const filters = reactive({
   email: '',
@@ -24,6 +25,21 @@ const filters = reactive({
 const loader = reactive({
   table: false,
 });
+
+/** Local active state by user id; reverted on API error so ItemToggler stays in sync with DB */
+const activeStateByUserId = reactive({});
+
+watch(
+  () => props.users?.data,
+  data => {
+    if (data) {
+      data.forEach(u => {
+        activeStateByUserId[u.id] = u.is_active;
+      });
+    }
+  },
+  { immediate: true },
+);
 
 const tableHeader = [
   { text: 'Employee Code', value: 'employee_code' },
@@ -74,6 +90,30 @@ function setQueryStringFilters() {
       filters[key] = params[key];
     }
   }
+}
+
+function onToggleActiveStatus(status, id) {
+  loader.table = true;
+
+  axios
+    .post('/admin/update-user-state', { id, status })
+    .then(res => {
+      activeStateByUserId[id] = status;
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      activeStateByUserId[id] = !status;
+      notification.error({
+        title: err.response?.data?.message ?? 'Failed to update user status',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      loader.table = false;
+    });
 }
 
 // Inline toggle function - will set to val if different, or empty if same value
@@ -207,11 +247,13 @@ onMounted(() => {
         {{ updated_at ? dateFormat(updated_at) : 'N/A' }}
       </span>
     </template>
-    <template #item-is_active="{ is_active }">
+    <template #item-is_active="{ is_active, id }">
       <div class="text-center">
-        <x-tag size="sm" :color="is_active ? 'success' : 'error'">
-          {{ is_active ? 'Yes' : 'No' }}
-        </x-tag>
+        <ItemToggler
+          :is-active="activeStateByUserId[id] ?? is_active"
+          :id="id"
+          @toggle="onToggleActiveStatus($event.active, id)"
+        />
       </div>
     </template>
     <template #item-roles="item">

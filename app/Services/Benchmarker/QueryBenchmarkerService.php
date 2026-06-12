@@ -57,7 +57,7 @@ class QueryBenchmarkerService
 
     public function runQuery(string $query): array
     {
-        $this->validateQuery($query);
+        // $this->validateQuery($query);
 
         // Check if query already has a LIMIT clause
         $hasLimit = preg_match('/\blimit\s+\d+(?:\s*,\s*\d+)?\b/i', $query);

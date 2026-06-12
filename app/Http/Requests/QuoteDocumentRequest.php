@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\DocumentTypeCategory;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
@@ -75,6 +76,8 @@ class QuoteDocumentRequest extends FormRequest
             $memberDetailId = request()->member_detail_id;
             $documentTypeCode = request()->document_type_code;
             $quoteTypes = [quoteTypeCode::Health, quoteTypeCode::Travel];
+            $documentType = DocumentType::where('code', $documentTypeCode)->first();
+            $category = $documentType?->category;
 
             // check for quote records if exists
             if (! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid)) {
@@ -83,8 +86,22 @@ class QuoteDocumentRequest extends FormRequest
                 return;
             }
 
+            // Validation for member detail id in case of Health
+            if ($quoteType == quoteTypeCode::Health && $category == DocumentTypeCategory::MEMBER && empty($memberDetailId)) {
+                $validator->errors()->add('member_detail_id', 'Member detail id is required for Health Insurance type');
+
+                return;
+            }
+
             // check for maximum number of files uploaded against selected quote and document type
-            if ($this->documentType && $quote->documents->where('document_type_code', $documentTypeCode)->count() >= $this->documentType->max_files) {
+            $quoteDocuments = $quote->documents->where('document_type_code', $documentTypeCode);
+
+            // Apply member detail id if provided (for health, later can work for any other lob)
+            if ($memberDetailId && $memberDetailId != 0) {
+                $quoteDocuments = $quoteDocuments->where('member_detail_id', $memberDetailId);
+            }
+
+            if ($this->documentType && $quoteDocuments->count() >= $this->documentType->max_files) {
                 $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
 
                 return; // Stop validation if max files exceeded
@@ -126,7 +143,14 @@ class QuoteDocumentRequest extends FormRequest
                     }
                 } else {
                     // validate if payment is authorized
-                    if (request()->quoteType != strtolower(quoteTypeCode::Travel) && isset($quote->insurance_provider_id)) {
+                    if (request()->quoteType != strtolower(quoteTypeCode::Travel) && isset($quote->insurance_provider_id)
+                        && ! (
+                            // Exempt validation only for Life + ALNC; all other LOBs still run the checks above when those clauses pass.
+                            request()->quoteType == strtolower(quoteTypeCode::Life)
+                            && $quote->insuranceProvider?->code === InsuranceProviderEnum::ALNC->value
+                        )
+                    ) {
+
                         if (! $this->isPlanBProviderSelected($quote)) {
                             if (empty($quote->payment) ||
                                 ($quote->payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&

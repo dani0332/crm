@@ -49,6 +49,7 @@ const planDetailsForm = useForm({
   insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || null,
   id: props.sendUpdateLog?.id,
   code: props.sendUpdateLog?.code,
+  total_vat_amount: props.sendUpdateLog?.total_vat_amount || null,
 });
 
 const isPlanDetails = computed(() => {
@@ -91,6 +92,9 @@ const updatePriceWithVat = () => {
   planDetailsForm.price_vat_applicable = roundDecimal(priceVatApplicable);
   planDetailsForm.price_vat_not_applicable = roundDecimal(
     priceVatNotApplicable,
+  );
+  planDetailsForm.total_vat_amount = roundDecimal(
+    (priceVatApplicable * vat) / 100,
   );
 };
 

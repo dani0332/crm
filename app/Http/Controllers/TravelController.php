@@ -51,7 +51,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Travel\QatarInsuranceService;
 use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -59,7 +59,10 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Inertia\Response;
@@ -278,13 +281,15 @@ class TravelController extends Controller
         $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($record, self::TYPE);
 
         $insuranceProvider = $record?->plan?->insuranceProvider ?? $record->insuranceProvider;
-        if ($insuranceProvider?->code === InsuranceProviderEnum::ALNC->value) {
-            $travelType = $record->direction_code === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND ? TravelQuoteEnum::ALLIANCE_OUT_BOUND : TravelQuoteEnum::ALLIANCE_IN_BOUND;
-            $record->days_cover_for = (new AllianceInsuranceService)->calculateCoverDaysForExpiryDate($record, $travelType);
+        if ($insuranceProvider?->code === InsuranceProviderEnum::QIC->value) {
+            $travelType = $record->direction_code === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND ? TravelQuoteEnum::QATAR_OUT_BOUND : TravelQuoteEnum::QATAR_IN_BOUND;
+            $record->days_cover_for = (new QatarInsuranceService)->calculateCoverDaysForExpiryDate($record, $travelType);
         }
 
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel));
+
+        $record->load('previousQuote:id,uuid,code');
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -364,7 +369,7 @@ class TravelController extends Controller
             'lockStatusOfPolicyIssuanceSteps' => $lockStatusOfPolicyIssuanceSteps,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
-            'isAllianceProvider' => $insuranceProvider?->code === InsuranceProviderEnum::ALNC->value,
+            'isQatarProvider' => $insuranceProvider?->code === InsuranceProviderEnum::QIC->value,
             'customerAddressData' => $customerAddressData,
         ]);
     }
@@ -434,7 +439,7 @@ class TravelController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(StoreTravelRequest $request)
@@ -526,7 +531,7 @@ class TravelController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -630,7 +635,7 @@ class TravelController extends Controller
     /**
      * process upload and create import.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function renewalsUploadCreate(TravelRenewalsUploadRequest $request)
     {

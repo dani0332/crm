@@ -5,11 +5,19 @@ namespace App\Services;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Http\Controllers\V2\CentralController;
+use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PaymentStatusHistory;
+use App\Models\PaymentStatusLog;
+use App\Models\QuoteStatusLog;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PaymentService extends BaseService
 {
@@ -22,31 +30,25 @@ class PaymentService extends BaseService
      */
     public function processMasterPayment($payment, $quoteObject, $isCreditCardEnabled = true)
     {
-        LoggerService::info('fn:processMasterPayment - PaymentService');
-        $infoMessage = 'Quote Code: '.$payment->code;
-        $priceWithVat = round($quoteObject->price_with_vat, 2);
-        $capturedAmount = $payment->captured_amount;
-        $discountValue = $payment->discount_value;
-        $totalPaymentAmount = $capturedAmount + $discountValue;
-        $initialDifference = $priceWithVat - $totalPaymentAmount;
-        $difference = round($initialDifference, 2);
-
-        $infoMessage .= 'CA: '.$capturedAmount.' DV: '.$discountValue.' TA: '.$totalPaymentAmount.' ';
-        $infoMessage .= 'ID: '.$difference.' ';
-
-        LoggerService::info('Message Information', extra: ['infoMessage' => $infoMessage]);
-
-        $this->setPaymentStatusBasedOnPrice($priceWithVat, $payment, $difference);
+        $priceWithVat = round((float) ($quoteObject->price_with_vat ?? 0), 2);
+        $this->setPaymentStatusBasedOnPrice($priceWithVat, $payment);
 
         $payment->total_price = $priceWithVat;
-        $this->setTotalAmount($payment);
+        $priceVatApplicable = (float) ($quoteObject->price_vat_applicable ?? 0);
+        $priceVatNotApplicable = (float) ($quoteObject->price_vat_not_applicable ?? 0);
+        $payment->price_vat_applicable = $priceVatApplicable + $priceVatNotApplicable;
+        $payment->price_vat = (float) ($quoteObject->vat ?? $quoteObject->total_vat_amount ?? 0);
+
+        $this->setTotalAmount(payment: $payment);
 
         if (! $isCreditCardEnabled && $payment->payment_methods_code == PaymentMethodsEnum::CreditCard && $payment->isInsurerPayment() && ! in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
             $payment->payment_methods_code = PaymentMethodsEnum::InsurerPayment;
         }
 
         if ($payment->isDirty()) {
-            $payment->save();
+            Payment::withoutEvents(function () use ($payment) {
+                $payment->save();
+            });
         }
     }
 
@@ -54,13 +56,12 @@ class PaymentService extends BaseService
      * This method will set payment status in payment table
      * This method trigger when policy details section update
      */
-    public function setPaymentStatusBasedOnPrice($priceWithVat, $payment, $difference): void
+    public function setPaymentStatusBasedOnPrice($priceWithVat, $payment): void
     {
-        LoggerService::info('fn:setPaymentStatusBasedOnPrice - Start - PaymentService');
         if ($payment->payment_methods_code != PaymentMethodsEnum::CreditApproval) {
-            $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
+            $captureAndDiscount = round((float) ($payment->captured_amount ?? 0) + (float) ($payment->discount_value ?? 0), 2);
             // If status is partially paid & total price is less than price with vat then set status to partially paid
-            if (in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED]) && $payment->total_price < $priceWithVat) {
+            if ($captureAndDiscount < $priceWithVat && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::AUTHORISED])) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
             } elseif ($priceWithVat <= $captureAndDiscount) {
                 $payment->payment_status_id = PaymentStatusEnum::PAID;
@@ -75,8 +76,8 @@ class PaymentService extends BaseService
     {
         LoggerService::info('Quote Code: '.$payment->code.' Updating TA frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::NEW, PaymentStatusEnum::OVERDUE])) {
-            $totalPrice = $payment->total_price;
-            $discountValue = $payment->discount_value;
+            $totalPrice = (float) ($payment->total_price ?? 0);
+            $discountValue = (float) ($payment->discount_value ?? 0);
             $totalAmount = $totalPrice - $discountValue;
             info('Quote Code: '.$payment->code.' updateTotalAmount - totalPrice: '.$totalPrice.', discountValue: '.$discountValue.', totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
@@ -155,5 +156,58 @@ class PaymentService extends BaseService
                 'message' => 'Prepayment posting failed, please try again later.',
             ];
         }
+    }
+
+    /**
+     * Deletes all payments for the Health quote (splits, logs, parent/child rows) and reverts lead to Application Pending.
+     * Call only after {@see HealthQuoteService::canBypassPlanLock()} is true for the same quote and payments.
+     */
+    public function resetHealthManagePayments($quote, string $reason): void
+    {
+        DB::transaction(function () use ($quote, $reason) {
+            $oldQuoteStatus = $quote->quote_status_id;
+
+            $paymentCodes = $quote->payments()->pluck('code')->all();
+
+            foreach ($paymentCodes as $paymentCode) {
+                $this->deleteHealthPaymentCascade($paymentCode);
+            }
+
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::ApplicationPending,
+                'payment_status_id' => null,
+                'is_quote_locked' => false,
+                'transaction_approved_at' => null,
+                'reason_for_reset' => $reason,
+            ]);
+
+            if ($oldQuoteStatus !== null && $quote->quote_status_id != $oldQuoteStatus) {
+                QuoteStatusLog::create([
+                    'quote_type_id' => QuoteTypeId::Health,
+                    'quote_request_id' => $quote->id,
+                    'current_quote_status_id' => $quote->quote_status_id,
+                    'previous_quote_status_id' => $oldQuoteStatus,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+            }
+
+            LoggerService::info('Reset manage payments: payments removed and quote reverted to Application Pending', [
+                'quote_code' => $quote->code,
+                'reason' => $reason,
+            ]);
+        });
+    }
+
+    private function deleteHealthPaymentCascade(string $paymentCode): void
+    {
+        $paymentSplits = PaymentSplits::where('code', $paymentCode)->get();
+        foreach ($paymentSplits as $paymentSplit) {
+            $paymentSplit->documents()->forceDelete();
+        }
+        PaymentSplits::where('code', $paymentCode)->delete();
+        PaymentStatusHistory::where('payment_code', $paymentCode)->delete();
+        PaymentStatusLog::where('payment_code', $paymentCode)->delete();
+        Payment::where('code', $paymentCode)->delete();
     }
 }

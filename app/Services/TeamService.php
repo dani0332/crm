@@ -25,12 +25,12 @@ class TeamService extends BaseService
 
     public function getEntityPlainByName($name)
     {
-        return Team::where('name', $name)->first();
+        return Team::where('code', $name)->active()->first();
     }
 
     public function getEntityPlain($id)
     {
-        return Team::where('id', $id)->first();
+        return Team::where('id', $id)->active()->first();
     }
 
     public function saveTeams(Request $request)

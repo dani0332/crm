@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -161,6 +162,8 @@ class ActivitiesService extends BaseService
             quoteTypeCode::GroupMedical => QuoteTypeId::Business,
             quoteTypeCode::CompanyCar => QuoteTypeId::CompanyCar,
             quoteTypeCode::SAVINGS => QuoteTypeId::Savings,
+            quoteTypeCode::Device => QuoteTypeId::Device,
+            quoteTypeCode::CYBER => QuoteTypeId::Cyber,
         ];
 
         $modelType = ucwords($modelType);
@@ -205,12 +208,43 @@ class ActivitiesService extends BaseService
      * @param  string  $title
      * @param  string  $description
      * @param  string  $dueDate
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function createActivityApi($entityUId, $quoteTypeId, $activityType, $title, $description, $dueDate)
     {
+        LoggerService::info('Activities API create request received', extra: [
+            'entity_uuid' => $entityUId,
+            'quote_type_id' => $quoteTypeId,
+            'activity_type' => $activityType ? strtoupper((string) $activityType) : null,
+        ]);
+
         $modelType = $this->getModelType($quoteTypeId);
+
+        if (! $modelType) {
+            LoggerService::warning('Activities API create rejected: invalid quote type', extra: [
+                'entity_uuid' => $entityUId,
+                'quote_type_id' => $quoteTypeId,
+            ]);
+
+            return response()->json([
+                'message' => 'Invalid or unknown quote type ID.',
+            ], 422);
+        }
+
         $record = $this->getRecord($entityUId, $modelType);
+
+        if (! $record) {
+            LoggerService::warning('Activities API create rejected: entity not found', extra: [
+                'entity_uuid' => $entityUId,
+                'quote_type_code' => $modelType->code,
+                'quote_type_id' => $quoteTypeId,
+            ]);
+
+            return response()->json([
+                'message' => 'No quote or entity found for the given UUID and quote type.',
+            ], 404);
+        }
+
         $existingActivity = $this->getExistingActivity($entityUId);
         $systemUser = $this->getSystemUser();
 
@@ -220,12 +254,17 @@ class ActivitiesService extends BaseService
                 return $reassignResult;
             }
 
+            LoggerService::info('Activities API create blocked: existing open activity found', extra: [
+                'entity_uuid' => $entityUId,
+                'quote_type_code' => $modelType->code,
+            ]);
+
             return response()->json([
                 'message' => 'An existing activity was found. Please Mark Done the current activity before creating a new one.',
             ], 409);
         }
 
-        $this->createApiActivity(
+        $activity = $this->createApiActivity(
             $entityUId,
             $activityType,
             $title,
@@ -240,6 +279,13 @@ class ActivitiesService extends BaseService
         if ($record->advisor_id) {
             $this->triggerNotification($activityType, $record, $url);
         }
+
+        LoggerService::info('Activities API create completed successfully', extra: [
+            'entity_uuid' => $entityUId,
+            'quote_type_code' => $modelType->code,
+            'activity_uuid' => $activity->uuid,
+            'assignee_id' => $activity->assignee_id,
+        ]);
 
         return response()->json(['message' => 'Activity has been Created'], 200);
     }
@@ -292,14 +338,22 @@ class ActivitiesService extends BaseService
     private function handleExistingActivity($existingActivity, $systemUser, $record)
     {
         if ($existingActivity->assignee_id == $systemUser?->id) {
-            if (! empty($record->advisor_id)) {
+            if (! empty($record?->advisor_id)) {
                 $existingActivity->assignee_id = $record->advisor_id;
                 $existingActivity->save();
+                LoggerService::info('Activities API existing activity reassigned to advisor', extra: [
+                    'existing_activity_uuid' => $existingActivity->uuid,
+                    'advisor_id' => $record->advisor_id,
+                ]);
 
                 return response()->json([
                     'message' => 'Activity has been Reassigned to Advisor '.$record->advisor_id,
                 ], 200);
             }
+
+            LoggerService::warning('Activities API existing activity cannot be reassigned: missing advisor', extra: [
+                'existing_activity_uuid' => $existingActivity->uuid,
+            ]);
 
             return response()->json([
                 'message' => 'No advisor has been assigned to this lead.',
@@ -314,8 +368,12 @@ class ActivitiesService extends BaseService
      */
     private function buildActivityUrl($modelType, $record)
     {
+        if ($modelType === null || $record === null) {
+            return url('/');
+        }
+
         $quoteTypeCode = strtolower($modelType->code);
-        if ($modelType->code == QuoteTypeCode::Business) {
+        if ($modelType->code == quoteTypeCode::Business) {
             $path = "quotes/business/{$record->uuid}";
         } elseif (checkPersonalQuotes($modelType->code)) {
             $path = "personal-quotes/{$quoteTypeCode}/{$record->uuid}";
@@ -384,7 +442,7 @@ class ActivitiesService extends BaseService
         }
         $dueDate = isset($dueDate) ? Carbon::parse($dueDate)->format('Y-m-d H:i:s') : null;
         $activity->due_date = isset($dueDate) ? $dueDate : Carbon::now();
-        $activity->assignee_id = isset($record->advisor_id) ? $record->advisor_id : $systemUserId;
+        $activity->assignee_id = $record?->advisor_id ?? $systemUserId;
         $activity->description = isset($description) ? $description : null;
         $activity->title = $title;
         $activity->quote_status_id = $record?->quote_status_id ?? null;

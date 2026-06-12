@@ -4,16 +4,22 @@ namespace App\Http\Requests;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
 use App\Models\SendUpdateLog;
 use App\Repositories\InsuranceProviderRepository;
 use App\Rules\NotZero;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\SendUpdateLogService;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest
 {
+    use GenericQueriesAllLobs;
+
     protected object $sendUpdate;
     /**
      * Determine if the user is authorized to make this request.
@@ -26,7 +32,7 @@ class SaveBookingDetailsRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -112,6 +118,15 @@ class SaveBookingDetailsRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
+            $quoteType = QuoteTypes::getName($this->sendUpdate->quote_type_id)?->value;
+            $quote = null;
+            if ($quoteType) {
+                $quote = $this->getQuoteObjectBy($quoteType, $this->sendUpdate->quote_uuid, 'uuid');
+            }
+
+            if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($quote ?: null)) {
+                $validator->errors()->add('error', PlaceholderPrimaryEmail::message());
+            }
 
             //        Price not applicable enabled when the endorsement will be Life, Business, Health
             //        Price vat applicable and total vat amount enabled when the endorsement will not be Life

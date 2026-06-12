@@ -21,6 +21,7 @@ use App\Services\Traits\Inboundable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
+use Postmark\Inbound;
 
 class InboundEmailsHookService extends BaseService
 {
@@ -51,7 +52,7 @@ class InboundEmailsHookService extends BaseService
                 return apiResponse([], Response::HTTP_UNAUTHORIZED, 'Unauthorized Access');
             }
 
-            $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
+            $inbound = new Inbound(file_get_contents('php://input'));
 
             $subject = $inbound->Subject();
             LoggerService::info(self::class." - process: Webhook Received with Subject: {$subject}");
@@ -114,7 +115,7 @@ class InboundEmailsHookService extends BaseService
                 $this->handleSicReplyToILA($lead);
 
                 return apiResponse([], Response::HTTP_OK, 'Car Handled for SIC to ILA Successfully!');
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 LoggerService::error(self::class." - handleCar: Error occurred in SIC Reply to ILA for uuid {$lead->uuid}", [
                     'message' => $e->getMessage(),
                     'line' => $e->getLine(),

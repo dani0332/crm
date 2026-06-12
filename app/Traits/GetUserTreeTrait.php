@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -36,8 +37,20 @@ trait GetUserTreeTrait
             $user = auth()->user();
         }
 
+        if ($productType == QuoteTypes::DEVICE->value) {
+            $productType = QuoteTypes::DEVICE->getTeams()[0]->value;
+            /** Below getProductNameFromQuoteTypeCode is essentially redundant if we're doing ->getTeams() here */
+        }
+
         $childUserIds = [$userId];
-        $productTeam = $this->getProductByName($productType ?? quoteTypeCode::Car);
+        $productName = $productType ?? quoteTypeCode::Car;
+        $productName = quoteTypeCode::getProductNameFromQuoteTypeCode($productName);
+        $productTeam = $this->getProductByName($productName);
+
+        if (! $productTeam) {
+            return [$userId];
+        }
+
         $rolesArray = [
             RolesEnum::CarManager,
             RolesEnum::BikeManager,
@@ -51,8 +64,11 @@ trait GetUserTreeTrait
             RolesEnum::CorplineManager,
             RolesEnum::GMManager,
             RolesEnum::LeadPool,
+            RolesEnum::CyberManager,
+            RolesEnum::SmartPhoneManager,
         ];
         if ($user && $user->hasAnyRole($rolesArray) || $user->hasAnyPermission($allowedPermissions)) {
+            /** get all members of user's assigned team */
             $userAllTeams = DB::table('teams')
                 ->join('user_team', 'user_team.team_id', 'teams.id')
                 ->where('user_id', $userId)

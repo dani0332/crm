@@ -5,17 +5,24 @@ namespace App\Http\Controllers\API\V1;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\GetEpWorkflowDataRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Jobs\AddressReminderJob;
 use App\Jobs\EP\SendEPJob;
 use App\Models\CustomerAddress;
 use App\Models\EmbeddedProduct;
+use App\Services\EmbeddedTransactionService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class EmbeddedProductController extends Controller
 {
     use GenericQueriesAllLobs;
+
+    public function __construct(
+        private readonly EmbeddedTransactionService $embeddedTransactionService
+    ) {}
 
     public function sendDocument(EmbeddedProducDocumentRequest $request)
     {
@@ -40,4 +47,12 @@ class EmbeddedProductController extends Controller
         return apiResponse(null, Response::HTTP_OK, '');
     }
 
+    public function getEpWorkflowData(GetEpWorkflowDataRequest $request): JsonResponse
+    {
+        return $this->embeddedTransactionService->getEpRetargetingReminderData(
+            (int) $request->quoteId,
+            (int) $request->quoteTypeId,
+            $request->embeddedTransactionCode,
+        );
+    }
 }

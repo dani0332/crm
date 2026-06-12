@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class DragAndDropUpdateLeadStatusRequest extends FormRequest
@@ -19,7 +20,7 @@ class DragAndDropUpdateLeadStatusRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -44,7 +45,7 @@ class DragAndDropUpdateLeadStatusRequest extends FormRequest
     {
         $validator->after(function ($validator) {
 
-            if (in_array(request()->get('data')['to']['quote_status_id'], [QuoteStatusEnum::TransactionApproved, quoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])) {
+            if (in_array(request()->get('data')['to']['quote_status_id'], [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])) {
                 $validator->errors()->add('value', 'Transaction approval is required');
             }
 

@@ -18,7 +18,7 @@ const advisorOptions = computed(() => {
 });
 
 const dateFormat = date => {
-  return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
+  return date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 };
 
 const page = usePage();
@@ -123,6 +123,7 @@ const tableHeader = [
   { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
   { text: 'Lead Level PC Tag', value: 'pc_qualified' },
+  { text: 'Nationality', value: 'nationality.text' },
   { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 const tableHeader2 = [
@@ -133,8 +134,12 @@ const tableHeader2 = [
   { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
   { text: 'PREVIOUS POLICY START DATE', value: 'previous_policy_start_date' },
   { text: 'PREVIOUS POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
-  { text: 'PREVIOUS GROSS PREMIUM', value: 'previous_quote_policy_premium' },
+  {
+    text: 'Previous Total Price with VAT',
+    value: 'previous_quote_policy_premium',
+  },
   { text: 'Lead Level PC Tag', value: 'pc_qualified' },
+  { text: 'Nationality', value: 'nationality.text' },
   { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 
@@ -145,12 +150,22 @@ const businessHeaders = [
   { text: 'SUB TYPE', value: 'subtype' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'PREVIOUS POLICY NUMBER', value: 'previous_quote_policy_number' },
-  { text: 'POLICY START DATE', value: 'policy_start_date' },
-  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
-  { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'POLICY START DATE', value: 'previous_policy_start_date' },
+  { text: 'POLICY EXPIRY DATE', value: 'previous_policy_expiry_date' },
+  { text: 'GROSS PREMIUM', value: 'previous_quote_policy_premium' },
   { text: 'Lead Level PC Tag', value: 'pc_qualified' },
+  { text: 'Nationality', value: 'nationality.text' },
   { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
+
+const cqfProductIds = [1, 2, 6, 7, 9, 10];
+
+const activeHeaders = computed(() => {
+  const product = Number(filters.product);
+  if (product === 5) return businessHeaders;
+  if (cqfProductIds.includes(product)) return tableHeader2;
+  return tableHeader;
+});
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -253,23 +268,17 @@ const permissionsEnum = page.props.permissionsEnum;
     <DataTable
       table-class-name="tablefixed"
       :loading="loader.table"
-      :headers="
-        filters.product == 1
-          ? tableHeader2
-          : filters.product == 5
-            ? businessHeaders
-            : tableHeader
-      "
+      :headers="activeHeaders"
       :items="quotes.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
     >
-      <template #item-code="{ code, uuid }">
+      <template #item-code="{ code }">
         {{ code }}
       </template>
 
-      <template #item-advisor="item">
+      <template #item-advisor>
         {{ getProductName(filters.product) }}
       </template>
       <template #item-subtype="item">
@@ -291,11 +300,10 @@ const permissionsEnum = page.props.permissionsEnum;
       <template #item-nationality="{ nationality }">
         {{ nationality?.text }}
       </template>
-      <template #item-currently_insured_with="{ currently_insured_with }">
+      <template #item-currently_insured_with="item">
         {{
-          currently_insured_with?.text
-            ? currently_insured_with.text
-            : currently_insured_with
+          (item.currently_insured_with?.text ?? item.currently_insured_with) ??
+          item.personal_quote?.currently_insured_with?.text
         }}
       </template>
       <template #item-pc_qualified="{ pc_qualified }">
@@ -304,10 +312,16 @@ const permissionsEnum = page.props.permissionsEnum;
       <template #item-customer_pcp_tag="{ customer }">
         {{ customer?.pcp_tag == 1 ? 'Yes' : 'No' }}
       </template>
+      <template #item-previous_policy_start_date="{ previous_policy_start_date }">
+        {{ dateFormat(previous_policy_start_date) }}
+      </template>
+      <template #item-previous_policy_expiry_date="{ previous_policy_expiry_date }">
+        {{ dateFormat(previous_policy_expiry_date) }}
+      </template>
     </DataTable>
 
     <Pagination
-      v-if="quotes.total > 0"
+      v-if="quotes.data?.length > 0"
       :links="{
         next: quotes.next_page_url,
         prev: quotes.prev_page_url,

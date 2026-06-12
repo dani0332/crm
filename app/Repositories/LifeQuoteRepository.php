@@ -68,9 +68,6 @@ class LifeQuoteRepository extends BaseRepository
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
             'othersInfo' => $data['others_info'],
-            'height' => $data['height'],
-            'weight' => $data['weight'],
-            'bmi' => $data['bmi'],
             'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
@@ -86,6 +83,12 @@ class LifeQuoteRepository extends BaseRepository
             'additionalNotes' => $data['notes'] ?? null,
         ];
 
+        foreach (['height', 'weight', 'bmi'] as $field) {
+            if (isset($data[$field]) && $data[$field] !== null && is_numeric($data[$field])) {
+                $lifeQuote[$field] = $data[$field];
+            }
+        }
+
         LoggerService::info('saveLifeQuote: ', [
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
@@ -96,12 +99,15 @@ class LifeQuoteRepository extends BaseRepository
 
         if (isset($response->quoteUID)) {
             $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
-            $quote->lifeQuote()->update([
-                'height' => $lifeQuote['height'],
-                'weight' => $lifeQuote['weight'],
-                'bmi' => $lifeQuote['bmi'],
-                'age' => $lifeQuote['age'],
-            ]);
+            $updateData = ['age' => $lifeQuote['age']];
+
+            foreach (['height', 'weight', 'bmi'] as $field) {
+                if (isset($lifeQuote[$field])) {
+                    $updateData[$field] = $lifeQuote[$field];
+                }
+            }
+
+            $quote->lifeQuote()->update($updateData);
         }
 
         return $response;
@@ -204,14 +210,14 @@ class LifeQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->with(['advisor', 'quoteStatus', 'nationality', 'customer'])
-            ->filter()
+            ->filter(paginate: false)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
     }
 
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuote.previousAdvisor', 'lifeQuote.lifeQuoteRequestDetail.lostReason',
+        $quote = $this->where($column, $value)->with(['previousQuote:id,uuid,code', 'advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuote.lifeQuoteRequestDetail.lostReason',
             'lifeQuote.purposeOfInsurance', 'lifeQuote.children', 'lifeQuote.currency', 'lifeQuote.insuranceTenure', 'lifeQuote.numberOfYears', 'lifeQuote.maritalStatus',
             'lifeQuote.paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
             'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod',
@@ -235,7 +241,6 @@ class LifeQuoteRepository extends BaseRepository
                     'purposeOfInsurance',
                     'insuranceTenure',
                     'numberOfYears',
-                    'previousAdvisor',
                 ]);
             },
             'quoteDetail.lostReason:id,text',
@@ -275,7 +280,7 @@ class LifeQuoteRepository extends BaseRepository
         $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;

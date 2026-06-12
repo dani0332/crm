@@ -134,13 +134,15 @@ class YachtQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
+                'previousQuote:id,uuid,code',
+                'renewalBatchModel',
                 'yachtQuote',
                 'advisor',
                 'advisor.primaryBranch',
                 'transactionType',
                 'nationality',
                 'quoteDetail.lostReason',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'insuranceProvider',
                 'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
@@ -159,6 +161,7 @@ class YachtQuoteRepository extends BaseRepository
                 'createdBy',
                 'updatedBy',
                 'customer.additionalContactInfo',
+                'currentlyInsuredWith:id,text',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
@@ -178,7 +181,7 @@ class YachtQuoteRepository extends BaseRepository
         $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latest_insured'])) {
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
@@ -208,6 +211,7 @@ class YachtQuoteRepository extends BaseRepository
             'advisor.primaryBranch',
             'paymentStatus',
             'payments',
+            'nationality',
             'quoteDetail',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::YACHT->id());
@@ -278,7 +282,7 @@ class YachtQuoteRepository extends BaseRepository
             return 0;
         }
 
-        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->paginate()->withQueryString();
         if (! $forTotalLeadsCount && ! $forExport) {
             $this->postProcessYachtQuotes($result);
         }
@@ -327,8 +331,8 @@ class YachtQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'customer'])
-            ->filter()
+        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'nationality', 'customer'])
+            ->filter(paginate: false)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
     }

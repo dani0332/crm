@@ -15,6 +15,7 @@ use App\Enums\TeamTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
+use App\Models\InsuranceProvider;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
@@ -26,6 +27,7 @@ use App\Services\Request;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -274,6 +276,11 @@ class RenewalBatchReportService extends BaseService
             $isRenewals = true;
         }
 
+        // Get active insurance providers
+        $insuranceProviders = $this->getCachedInsuranceProviders()
+            ->map(fn ($provider) => ['value' => $provider->id, 'label' => $provider->text])
+            ->toArray();
+
         return [
             'advisors' => $carAdvisors,
             'segments' => $segments,
@@ -283,6 +290,7 @@ class RenewalBatchReportService extends BaseService
             'isBDM' => $isBDM,
             'isMCR' => $isMCR,
             'isRenewals' => $isRenewals,
+            'insuranceProviders' => $insuranceProviders,
         ];
     }
 
@@ -489,6 +497,19 @@ class RenewalBatchReportService extends BaseService
             $query->where('car_quote_request.vehicle_use', $filters->vehicle_use);
         }
 
+        // Currently Insured With filter
+        if (isset($filters->currently_insured_with) && ! empty($filters->currently_insured_with)) {
+            $insurerIds = is_array($filters->currently_insured_with)
+                ? $filters->currently_insured_with
+                : [$filters->currently_insured_with];
+
+            $insurerNames = $this->getInsuranceProviderNamesByIds($insurerIds);
+
+            if (! empty($insurerNames)) {
+                $query->whereIn('car_quote_request.currently_insured_with', $insurerNames);
+            }
+        }
+
         /**
          * segment wise carsold and early renewal
          */
@@ -680,6 +701,16 @@ class RenewalBatchReportService extends BaseService
             $query->whereIn('health_quote_request.renewal_batch', $batchNo);
         } else {
             $query->whereIn('health_quote_request.renewal_batch', $dataBatches ?? $renewalBatches);
+        }
+
+        // Currently Insured With filter for Health - health_quote_request uses ID column directly
+        if (isset($filters->currently_insured_with) && ! empty($filters->currently_insured_with)) {
+            $insurerIds = is_array($filters->currently_insured_with)
+                ? $filters->currently_insured_with
+                : [$filters->currently_insured_with];
+
+            // Health quotes store IDs directly, so use them as-is
+            $query->whereIn('health_quote_request.currently_insured_with_id', $insurerIds);
         }
 
         return $query;
@@ -1054,6 +1085,34 @@ class RenewalBatchReportService extends BaseService
             $authUserIsAdvisor,
         ];
 
+    }
+
+    /**
+     * Get all active insurance providers with caching
+     *
+     * @return Collection
+     */
+    protected function getCachedInsuranceProviders()
+    {
+        return Cache::remember('active_insurance_providers_collection', now()->addDay(), function () {
+            return InsuranceProvider::where('is_active', 1)
+                ->select('id', 'text')
+                ->orderBy('text')
+                ->get();
+        });
+
+    }
+
+    /**
+     * Get insurance provider names by IDs
+     */
+    protected function getInsuranceProviderNamesByIds(array $insurerIds): array
+    {
+        $providers = $this->getCachedInsuranceProviders();
+
+        return $providers->whereIn('id', $insurerIds)
+            ->pluck('text')
+            ->toArray();
     }
 
     public function getAllNonMotorBatches()

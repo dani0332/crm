@@ -1,13 +1,15 @@
 <script setup>
+import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
+import { useSavingsPlans } from '@/inertia/Composables/useSavingsPlans';
 import { createReusableTemplate } from '@vueuse/core';
-import { reactive } from 'vue';
-import SelectPlan from '../../Components/SelectPlan.vue';
+import { onMounted, reactive } from 'vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import AvailablePlans from './Partials/AvailablePlans.vue';
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -51,6 +53,10 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   emailStatuses: Array,
+  ecomSavingsInsuranceQuoteUrl: String,
+  websiteURL: String,
+  lookUpData: Object,
+  localLookups: Object,
 });
 
 const page = usePage();
@@ -60,12 +66,12 @@ const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\PersonalQuote';
-
+const modelClassSavings = 'App\\Models\\SavingsQuote';
+const genericRequestEnum = page.props.genericRequestEnum;
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
-const historyLoading = ref(false);
 
 const { isRequired } = useRules();
 const hasRole = role => useHasRole(role);
@@ -73,7 +79,6 @@ const notification = useNotifications('toast');
 
 const modals = reactive({
   duplicate: false,
-  planDetails: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -93,6 +98,30 @@ const openDuplicate = () => {
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
+// Initialize useSavingsPlans composable for helper functions and ecom logic
+const {
+  getPaymentTermTitle,
+  formatNumber,
+  calculateTotalAnnualPrice,
+  ecomDetail,
+  planExchangeRate,
+  sharedAvailablePlans,
+  getEcomDisplayPrice,
+  totalAnnualPrice,
+  getTotalAnnualPriceAED,
+  updateEcomDetailFromPlans,
+  totalPriceAED,
+} = useSavingsPlans({
+  quote: computed(() => props.quote),
+  localLookups: computed(() => props.localLookups),
+  lookUpData: computed(() => props.lookUpData),
+  insuranceProviders: computed(() => props.insuranceProviders),
+  notification,
+});
+
+// Alias for compatibility
+const numberFormat = formatNumber;
 
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
@@ -132,6 +161,35 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const selectedInsuranceProviderPlan = computed(() => {
+  const plan = props.quote?.insurance_provider_plan;
+
+  if (Array.isArray(plan)) {
+    return plan[0] ?? null;
+  }
+
+  return plan ?? null;
+});
+
+const selectedInsuranceProviderPlanCode = computed(() => {
+  return selectedInsuranceProviderPlan.value?.code ?? null;
+});
+
+const passportOcrEligiblePlanCodes = computed(() => {
+  return page.props.ocrEligiblePlanCodes?.PP ?? []; //PP = passport
+});
+
+// Show passport fields only when an eligible plan (by code) is selected on quote
+const shouldShowPassportFields = computed(() => {
+  if (!selectedInsuranceProviderPlanCode.value) {
+    return false;
+  }
+
+  return passportOcrEligiblePlanCodes.value.includes(
+    selectedInsuranceProviderPlanCode.value,
+  );
+});
+
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -139,16 +197,27 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  insured_first_name: page.props.quote?.latest_insured?.first_name,
+  insured_last_name: page.props.quote?.latest_insured?.last_name,
+  emirates_id_number:
+    page.props.quote?.latest_insured?.id_number &&
+    applyEmiratesNumberMasking(page.props.quote.latest_insured.id_number),
   emirates_id_expiry_date:
-    page.props.quote?.customer.emirates_id_expiry_date || null,
+    page.props.quote?.latest_insured?.insured_kyc?.id_expiry_date,
+
+  passport_number:
+    page.props.quote.passport_visa_details?.passport_number ?? null,
+  passport_country:
+    page.props.quote.passport_visa_details?.passport_country ?? null,
+  passport_expiry_date:
+    page.props.quote.passport_visa_details?.passport_expiry_date ?? null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
-    page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ??
-    null,
+    page.props.quote?.latest_insured?.id_type ===
+    genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote?.latest_insured?.id_number
+      : null,
   company_name:
     page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
     null,
@@ -212,8 +281,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -238,7 +307,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -248,7 +317,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -273,7 +342,6 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
-  onLoadAvailablePlansData();
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
@@ -289,389 +357,14 @@ const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
 
-const availablePlansTable = reactive({
-  data: [],
-  isLoading: false,
-  columns: [
-    {
-      text: 'Provider Name',
-      value: 'providerName',
-    },
-    {
-      text: 'Plans',
-      value: 'name',
-    },
-    {
-      text: 'Investment Frequency',
-      value: 'investmentFrequency',
-    },
-    {
-      text: 'Minimum Investment',
-      value: 'minimumInvestment',
-    },
-    {
-      text: 'Policy Term (Years)',
-      value: 'policyTerm',
-    },
-    {
-      text: 'Price',
-      value: 'price',
-    },
-    {
-      text: 'Action',
-      value: 'action',
-    },
-  ],
-});
-
-// const selectedPlans = ref([]); // Commented out - checkboxes disabled
-const selectedPlanType = ref(null);
-const toggleLoader = ref(false); // Still needed for individual plan toggles
-const viewButtonLoading = ref(false);
-const planDetails = ref(null);
-
-// Form for individual plan updates
-const planForm = useForm({
-  quote_uuid: '',
-  plan_id: '',
-  provider_name: '',
-  actual_premium: 0,
-  insurer_quote_no: '',
-  is_disabled: false,
-  is_manual_update: false,
-  current_url: '',
-});
-
-const normalPlansIds = reactive({
-  ids: [],
-});
-const seniorPlansIds = reactive({
-  ids: [],
-});
-
-// Define tabs for plan details modal
-const planDetailsTabs = ref([
-  { index: 0, label: 'Plan Details' },
-  { index: 1, label: 'Eligibility' },
-  { index: 2, label: 'Included Benefits' },
-  { index: 3, label: 'Key Features Document' },
-  { index: 4, label: 'Policy Wordings' },
-]);
-
-const selectedProviderPlan = ref({
-  id: page.props?.quote?.plan_id,
-  planName: page.props?.quote?.plans?.name,
-  providerName: page.props?.quote?.plans?.providerName,
-  premium: page.props?.quote?.plans?.premium,
-});
-
+// Handle plan selected event from AvailablePlans component
 const handlePlanSelected = plan => {
-  selectedProviderPlan.value.id = plan.id;
-  selectedProviderPlan.value.planName = plan.planName;
-  selectedProviderPlan.value.providerName = plan.providerName;
-  selectedProviderPlan.value.premium = plan.premium;
   router.reload({
     preserveState: true,
     preserveScroll: true,
     only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
   });
-  onLoadAvailablePlansData();
 };
-
-const onLoadAvailablePlansData = async () => {
-  availablePlansTable.isLoading = true;
-  let data = {
-    jsonData: true,
-  };
-  let url = `/quotes/savings/available-plans/${page.props.quote.uuid}`;
-  axios
-    .post(url, data)
-    .then(res => {
-      // Process the response data to flatten regular and lumpsum plans
-      const processedPlans = [];
-
-      // Process regular plans
-      if (res.data.regular && Array.isArray(res.data.regular)) {
-        res.data.regular.forEach(plan => {
-          const processedPlan = {
-            ...plan,
-            investmentFrequency: 'Regular',
-            currency: plan.currencyName || 'USD',
-            minimumInvestment: getEligibilityValue(
-              plan,
-              'minimumInvestmentAmount',
-            ),
-            policyTerm: getEligibilityValue(plan, 'policyTerm'),
-            isManualUpdate: plan.isManualUpdate || false,
-            isDisabled: plan.isDisabled || false,
-            // Add properties needed by SelectPlan component
-            actualPremium: plan.actualPremium, // Keep actual value - advisor must manually set premium to enable selection
-            insuranceProviderId: plan.providerId || plan.insuranceProviderId,
-            providerCode: plan.providerCode,
-          };
-          processedPlans.push(processedPlan);
-        });
-      }
-
-      // Process lumpsum plans
-      if (res.data.lumpsum && Array.isArray(res.data.lumpsum)) {
-        res.data.lumpsum.forEach(plan => {
-          const processedPlan = {
-            ...plan,
-            investmentFrequency: 'Lumpsum',
-            currency: plan.currencyName || 'USD',
-            minimumInvestment: getEligibilityValue(
-              plan,
-              'minimumInvestmentAmount',
-            ),
-            policyTerm: getEligibilityValue(plan, 'policyTerm'),
-            isManualUpdate: plan.isManualUpdate || false,
-            isDisabled: plan.isDisabled || false,
-            // Add properties needed by SelectPlan component
-            actualPremium: plan.actualPremium, // Keep actual value - advisor must manually set premium to enable selection
-            insuranceProviderId: plan.providerId || plan.insuranceProviderId,
-            providerCode: plan.providerCode,
-          };
-          processedPlans.push(processedPlan);
-        });
-      }
-
-      availablePlansTable.data = processedPlans;
-    })
-    .catch(err => {
-      console.log(err);
-      availablePlansTable.data = [];
-    })
-    .finally(() => {
-      availablePlansTable.isLoading = false;
-    });
-};
-
-// Helper function to extract value from eligibility array
-const getEligibilityValue = (plan, code) => {
-  // Check if eligibilities property exists (new API format)
-  if (plan?.eligibilities && Array.isArray(plan.eligibilities)) {
-    const found = plan.eligibilities.find(item => item.code === code);
-    return found ? found.value : 'N/A';
-  }
-
-  return 'N/A';
-};
-
-// Commented out - bulk actions disabled since checkboxes are hidden
-// const onTogglePlans = toggle => {
-//   toggleLoader.value = true;
-
-//   const planIds = useArrayUnique(
-//     selectedPlans.value.map(p => {
-//       return p.id;
-//     }),
-//   ).value;
-
-//   axios
-//     .post(route('manualPlanToggle', { quoteType: 'savings' }), {
-//       modelType: 'Savings',
-//       planIds: planIds,
-//       quote_uuid: page.props.quote.uuid,
-//       toggle: toggle,
-//     })
-//     .then(response => {
-//       notification.success({
-//         title: 'Plans has been updated',
-//         position: 'top',
-//       });
-//       onLoadAvailablePlansData();
-//       router.reload({
-//         preserveScroll: true,
-//       });
-//     })
-//     .catch(error => {
-//       notification.error({
-//         title: error,
-//         position: 'top',
-//       });
-//     })
-//     .finally(() => {
-//       toggleLoader.value = false;
-//       selectedPlans.value = [];
-//     });
-// };
-
-const getPlanDetails = id => {
-  viewButtonLoading.value = true;
-  try {
-    // Find the plan in the current data instead of making an API call
-    const foundPlan = availablePlansTable.data.find(plan => plan.id === id);
-    if (foundPlan) {
-      planDetails.value = foundPlan;
-      modals.planDetails = true;
-      viewButtonLoading.value = false;
-    } else {
-      // Fallback to API call if plan not found in current data
-      axios
-        .get(`/savings/${page.props.quote.uuid}/plan_details/${id}`)
-        .then(res => {
-          // The API now returns the correct investmentFrequency, so we don't need to process it
-          planDetails.value = res.data;
-          modals.planDetails = true;
-          viewButtonLoading.value = false;
-        })
-        .catch(err => {
-          notification.error({
-            title: 'Error',
-            message: 'Plan Details Not Found',
-            position: 'top',
-          });
-          console.log(err);
-          viewButtonLoading.value = false;
-        });
-    }
-  } catch (err) {
-    console.log(err);
-    notification.error({
-      title: 'Error',
-      message: 'Something went wrong',
-      position: 'top',
-    });
-    viewButtonLoading.value = false;
-  }
-};
-
-const onLoadAvailablePlansDataAndPlanDetails = async () => {
-  await onLoadAvailablePlansData();
-  // Refresh plan details if modal is open
-  if (modals.planDetails && planDetails.value) {
-    getPlanDetails(planDetails.value.id);
-  }
-};
-
-const { copy, copied } = useClipboard();
-const onCopyText = text => {
-  copy(text);
-  if (copied)
-    notification.success({
-      title: 'Link copied to clipboard',
-      position: 'top',
-    });
-};
-
-const selectedPlanIds = computed(() => {
-  return [];
-});
-
-// Create reusable template for manual toggle like Car
-const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
-  createReusableTemplate();
-
-// Manual toggle state
-const isManualUpdate = ref(false);
-const toggleManualLoader = ref(false);
-
-const onToggleManual = () => {
-  toggleManualLoader.value = true;
-  setTimeout(() => {
-    toggleManualLoader.value = false;
-  }, 300);
-};
-
-const onToggleIndividualPlan = () => {
-  if (!planDetails.value) return;
-
-  toggleLoader.value = true;
-
-  axios
-    .post(route('manualPlanToggle', { quoteType: 'savings' }), {
-      modelType: 'Savings',
-      planIds: [planDetails.value.id],
-      quote_uuid: page.props.quote.uuid,
-      toggle: planDetails.value.isDisabled,
-    })
-    .then(response => {
-      notification.success({
-        title: 'Plan has been updated',
-        position: 'top',
-      });
-      onLoadAvailablePlansDataAndPlanDetails();
-    })
-    .catch(error => {
-      notification.error({
-        title: 'Error updating plan',
-        position: 'top',
-      });
-      // Reset the toggle state on error
-      planDetails.value.isDisabled = !planDetails.value.isDisabled;
-    })
-    .finally(() => {
-      toggleLoader.value = false;
-    });
-};
-
-const onUpdateIndividualPlan = () => {
-  if (!planDetails.value) return;
-
-  // Update form with current plan details
-  planForm.quote_uuid = page.props.quote.uuid;
-  planForm.plan_id = planDetails.value.id;
-  planForm.provider_name = planDetails.value.providerName;
-  planForm.actual_premium = planDetails.value.actualPremium || 0;
-  planForm.insurer_quote_no = planDetails.value.insurerQuoteNo || '';
-  planForm.is_disabled = planDetails.value.isDisabled;
-  planForm.is_manual_update = planDetails.value.isManualUpdate;
-  planForm.current_url = usePage().url;
-
-  // Submit the form
-  planForm.post(route('savingsPlanUpdate'), {
-    preserveScroll: true,
-    onSuccess: () => {
-      onLoadAvailablePlansDataAndPlanDetails();
-    },
-    onError: errors => {
-      Object.keys(errors).forEach(function (key) {
-        notification.error({
-          title: errors[key],
-          position: 'top',
-        });
-      });
-    },
-  });
-};
-
-// Centralized tooltip mappings for plan details
-const PLAN_TOOLTIP_MAPPINGS = {
-  eligibility: {
-    'Entry age': 'Eligible age to buy the plan',
-    'Policy term (years)': 'Policy duration available for the plan',
-    'Minimum investment': 'Minimum amount of investment required',
-  },
-  includedBenefits: {
-    'Flexible premium payments':
-      'Monthly, quarterly, semi-annual, or annual options',
-    'Added life insurance coverage': 'Financial security for loved ones',
-    'Investment options': 'Wide range of investment funds managed by experts',
-    'Rate of return': 'Potential growth on your investment',
-  },
-};
-
-// Generic helper function to get tooltip text for plan detail fields
-const getPlanDetailTooltip = (fieldText, section) => {
-  const tooltips = PLAN_TOOLTIP_MAPPINGS[section];
-  if (!tooltips || !fieldText) return null;
-
-  // Check for exact matches or partial matches
-  for (const [key, value] of Object.entries(tooltips)) {
-    if (fieldText.toLowerCase().includes(key.toLowerCase())) {
-      return value;
-    }
-  }
-
-  return null;
-};
-
-// Convenience functions for backward compatibility and clarity
-const getEligibilityTooltip = fieldText =>
-  getPlanDetailTooltip(fieldText, 'eligibility');
-const getIncludedBenefitsTooltip = fieldText =>
-  getPlanDetailTooltip(fieldText, 'includedBenefits');
 </script>
 
 <template>
@@ -1082,6 +775,11 @@ const getIncludedBenefitsTooltip = fieldText =>
                       placeholder="EMIRATES ID NUMBER"
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
+                      @input="
+                        applyEmiratesNumberMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                     />
                   </dd>
                 </div>
@@ -1097,6 +795,45 @@ const getIncludedBenefitsTooltip = fieldText =>
                     />
                   </dd>
                 </div>
+
+                <template v-if="shouldShowPassportFields">
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">PASSPORT NUMBER</dt>
+                    <dd>
+                      <x-input
+                        v-model="customerProfileForm.passport_number"
+                        placeholder="PASSPORT NUMBER"
+                        class="w-full"
+                        :disabled="!isProfileUpdateAllow"
+                      />
+                    </dd>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">PASSPORT COUNTRY</dt>
+                    <dd>
+                      <x-input
+                        v-model="customerProfileForm.passport_country"
+                        placeholder="PASSPORT COUNTRY"
+                        class="w-full"
+                        :disabled="!isProfileUpdateAllow"
+                      />
+                    </dd>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">PASSPORT EXPIRY DATE</dt>
+                    <dd>
+                      <DatePicker
+                        v-model="customerProfileForm.passport_expiry_date"
+                        placeholder="PASSPORT EXPIRY DATE"
+                        :disabled="!isProfileUpdateAllow"
+                        :min-date="new Date()"
+                      />
+                    </dd>
+                  </div>
+                </template>
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">GENDER</dt>
                   <dd>{{ quote.gender_label }}</dd>
@@ -1108,6 +845,10 @@ const getIncludedBenefitsTooltip = fieldText =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MARITAL STATUS</dt>
                   <dd>{{ quote?.savings_quote?.marital_status?.text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">SALARY</dt>
+                  <dd>{{ quote.savings_quote?.salary }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Savings'" />
               </dl>
@@ -1352,652 +1093,109 @@ const getIncludedBenefitsTooltip = fieldText =>
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <AvailablePlans
+      :quote="quote"
+      :payments="payments"
+      :insuranceProviders="insuranceProviders"
+      :ecomSavingsInsuranceQuoteUrl="ecomSavingsInsuranceQuoteUrl"
+      :websiteURL="websiteURL"
+      :lockLeadSectionsDetails="lockLeadSectionsDetails"
+      :lookUpData="lookUpData"
+      :localLookups="localLookups"
+      @plan-selected="handlePlanSelected"
+    />
+    <!-- @plans-loaded="handlePlansLoaded" -->
+
+    <!-- Ecom Plan Detail -->
+    <div v-show="ecomDetail != null" class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Available Plans
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">E-COM Detail</h3>
           </div>
         </template>
+
         <template #body>
           <x-divider class="my-4" />
-          <!-- Commented out - bulk actions disabled since checkboxes are hidden
-          <div class="flex justify-end items-center flex-wrap gap-2">
-            <div
-              class="flex gap-2 mb-4"
-              v-if="
-                readOnlyMode.isDisable === true &&
-                !availablePlansTable.isLoading
-              "
-            >
-              <x-button-group
-                v-if="selectedPlans.length > 0"
-                size="sm"
-                class="mr-2"
+          <div>
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Price</dt>
+                <dd>
+                  {{ numberFormat(getEcomDisplayPrice(ecomDetail)) }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Total Annual Price</dt>
+                <dd>
+                  {{ numberFormat(totalAnnualPrice) }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="ecomDetail?.currency != 'AED'"
               >
-                <x-button
-                  @click.prevent="onTogglePlans(false)"
-                  :loading="toggleLoader"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Show
-                </x-button>
-                <x-button
-                  @click.prevent="onTogglePlans(true)"
-                  :loading="toggleLoader"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Hide
-                </x-button>
-              </x-button-group>
-
-              <x-button
-                v-if="availablePlansTable.data.length > 0"
-                size="sm"
-                color="orange"
-                class="mr-2"
-                @click.prevent="onCopyText('/quotes/savings/' + quote.uuid)"
+                <dt class="font-medium uppercase">Total Price AED</dt>
+                <dd>
+                  {{ numberFormat(totalPriceAED || 0) }}
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="ecomDetail?.currency != 'AED'"
               >
-                Copy Link
-              </x-button>
-            </div>
+                <dt class="font-medium uppercase">Total Annual Price AED</dt>
+                <dd>
+                  {{ getTotalAnnualPriceAED }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Payment Term</dt>
+                <dd>
+                  {{ getPaymentTermTitle(ecomDetail?.paymentTerm) ?? 'N/A' }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Authorised AT</dt>
+                <dd>{{ quote?.payments?.[0]?.authorized_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">PAID AT</dt>
+                <dd>{{ quote?.payment_paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ quote?.payment_status?.text ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>{{ ecomDetail?.providerName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT METHOD</dt>
+                <dd>
+                  {{ quote?.payments?.[0]?.payment_method?.name ?? 'N/A' }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ ecomDetail?.planName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ECOMMERCE</dt>
+                <dd>{{ quote.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">QUOTE LINK</dt>
+                <dd>{{ ecomSavingsInsuranceQuoteUrl + quote.uuid }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN SOURCE</dt>
+                <dd v-if="ecomDetail == null">N/A</dd>
+                <dd v-else>{{ ecomDetail?.isApi ? 'API' : 'Manual' }}</dd>
+              </div>
+            </dl>
           </div>
-          -->
-
-          <div
-            v-if="
-              availablePlansTable.data &&
-              typeof availablePlansTable.data == 'string'
-            "
-          >
-            <p
-              class="text-center text-primary-600 uppercase"
-              v-if="typeof availablePlansTable.data == 'string'"
-            >
-              {{ availablePlansTable.data }}
-            </p>
-          </div>
-          <div v-else>
-            <div
-              v-if="availablePlansTable.isLoading"
-              class="flex justify-center my-8"
-            >
-              <x-spinner size="lg" />
-            </div>
-            <DataTable
-              v-else
-              table-class-name="tablefixed compact-rows"
-              :headers="availablePlansTable.columns"
-              :items="availablePlansTable.data || []"
-              border-cell
-              hide-rows-per-page
-              :rows-per-page="15"
-              :hide-footer="availablePlansTable.data.length < 15"
-            >
-              <template #header-providerName>
-                <div class="flex items-center gap-2">
-                  <x-tooltip placement="bottom">
-                    <span
-                      class="underline decoration-dotted decoration-primary-700"
-                      >Provider Name</span
-                    >
-                    <template #tooltip>Insurance provider</template>
-                  </x-tooltip>
-                  <span class="diamond-icon"></span>
-                </div>
-              </template>
-              <template #header-name>
-                <x-tooltip placement="bottom">
-                  <span
-                    class="underline decoration-dotted decoration-primary-700"
-                    >Plans</span
-                  >
-                  <template #tooltip>Plan name</template>
-                </x-tooltip>
-              </template>
-              <template #header-investmentFrequency>
-                <x-tooltip placement="bottom">
-                  <span
-                    class="underline decoration-dotted decoration-primary-700"
-                    >Investment Frequency</span
-                  >
-                  <template #tooltip>How often you plan to invest</template>
-                </x-tooltip>
-              </template>
-              <template #header-minimumInvestment>
-                <x-tooltip placement="bottom">
-                  <span
-                    class="underline decoration-dotted decoration-primary-700"
-                    >Minimum Investment</span
-                  >
-                  <template #tooltip
-                    >Minimum amount of investment required</template
-                  >
-                </x-tooltip>
-              </template>
-              <template #header-policyTerm>
-                <x-tooltip placement="bottom">
-                  <span
-                    class="underline decoration-dotted decoration-primary-700"
-                    >Policy Term (Years)</span
-                  >
-                  <template #tooltip
-                    >Policy duration available for the plan</template
-                  >
-                </x-tooltip>
-              </template>
-              <template #header-price>
-                <x-tooltip placement="bottom">
-                  <span
-                    class="underline decoration-dotted decoration-primary-700"
-                    >Price</span
-                  >
-                  <template #tooltip>Price of the plan</template>
-                </x-tooltip>
-              </template>
-              <template #item-providerName="item">
-                <p class="text-primary-600 uppercase">
-                  {{ item.providerName }}
-                </p>
-                <div class="flex gap-1">
-                  <x-tag
-                    v-if="item.isManualUpdate"
-                    size="xs"
-                    color="primary"
-                    class="mt-0.5 text-[10px]"
-                  >
-                    Manual
-                  </x-tag>
-                  <x-tag
-                    v-if="item.isDisabled"
-                    size="xs"
-                    color="error"
-                    class="mt-0.5 text-[10px]"
-                  >
-                    Hidden
-                  </x-tag>
-                </div>
-              </template>
-              <template #item-name="item">
-                <span class="text-primary-600 uppercase">{{ item.name }}</span>
-              </template>
-              <template #item-investmentFrequency="item">
-                <span class="text-primary-600">{{
-                  item.investmentFrequency
-                }}</span>
-              </template>
-              <template #item-minimumInvestment="item">
-                <span class="text-primary-600">{{
-                  item.minimumInvestment
-                }}</span>
-              </template>
-              <template #item-currency="item">
-                <span class="text-primary-600">{{ item.currency }}</span>
-              </template>
-              <template #item-policyTerm="item">
-                <span class="text-primary-600">{{ item.policyTerm }}</span>
-              </template>
-              <template #item-price="item">
-                <span class="text-primary-600">
-                  {{ item.actualPremium ? item.actualPremium : '' }}
-                </span>
-              </template>
-              <template #item-action="item">
-                <div class="flex gap-2">
-                  <x-button
-                    size="xs"
-                    color="primary"
-                    outlined
-                    @click.prevent="
-                      selectedPlanType = 'normalPlans';
-                      getPlanDetails(item.id);
-                    "
-                    :loading="viewButtonLoading"
-                  >
-                    View
-                  </x-button>
-                  <span>
-                    <SelectPlan
-                      v-if="selectedProviderPlan.id != item.id"
-                      @update:selectedPlanChanged="handlePlanSelected"
-                      :plan="item"
-                      :quoteType="'Savings'"
-                      :uuid="quote.uuid"
-                      :code="quote.code"
-                      :plans="availablePlansTable.data || []"
-                      :extraDetails="{
-                        selectedPlansIds: [selectedProviderPlan?.id],
-                      }"
-                      :payments="payments"
-                      :insuranceProviderId="item.insuranceProviderId"
-                    />
-
-                    <x-button
-                      v-else
-                      size="xs"
-                      color="orange"
-                      outlined
-                      :disabled="true"
-                    >
-                      Selected
-                    </x-button>
-                  </span>
-                </div>
-              </template>
-            </DataTable>
-          </div>
-
-          <x-modal
-            v-model="modals.planDetails"
-            size="xl"
-            :title="`${planDetails?.providerName} - ${planDetails?.name}`"
-            show-close
-            backdrop
-          >
-            <div v-if="planDetails" class="w-full no-border">
-              <TabGroup>
-                <TabList
-                  class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
-                >
-                  <Tab
-                    v-for="{ index, label } in planDetailsTabs"
-                    as="template"
-                    :key="index"
-                    v-slot="{ selected }"
-                  >
-                    <button
-                      :class="[
-                        'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
-                        'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
-                        selected
-                          ? 'bg-white shadow text-primary-600'
-                          : 'hover:bg-white/50',
-                      ]"
-                    >
-                      {{ label }}
-                    </button>
-                  </Tab>
-                </TabList>
-
-                <TabPanels class="mt-2 text-sm min-h-[50vh]">
-                  <!-- Plan Details Tab -->
-                  <TabPanel class="bg-white">
-                    <div class="p-6">
-                      <!-- Plan Toggle Controls -->
-                      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
-                        <!-- <div class="grid sm:grid-cols-2 mb-3">
-                          <x-toggle
-                            v-model="planDetails.isDisabled"
-                            color="success"
-                            label="Hide Plan?"
-                            @change="onToggleIndividualPlan"
-                            :loading="toggleLoader"
-                          />
-                        </div> -->
-                        <div class="grid sm:grid-cols-2 mb-3">
-                          <ToggleManualButtonTemplate v-slot="{ isDisabled }">
-                            <x-toggle
-                              v-model="planDetails.isManualUpdate"
-                              color="success"
-                              label="Manual"
-                              :disabled="isDisabled"
-                              @change="onToggleManual"
-                              :loading="toggleManualLoader"
-                            />
-                          </ToggleManualButtonTemplate>
-
-                          <x-tooltip
-                            v-if="
-                              page.props.lockLeadSectionsDetails?.plan_selection
-                            "
-                            placement="bottom"
-                          >
-                            <ToggleManualButtonReuseTemplate
-                              :isDisabled="true"
-                            />
-                            <template #tooltip>
-                              No further action allowed on issued policy, If
-                              changes are required, such as increase in price,
-                              please proceed through the 'Send Update' feature
-                              using the 'Correction of Policy' option.
-                            </template>
-                          </x-tooltip>
-                          <ToggleManualButtonReuseTemplate v-else />
-                        </div>
-                      </dl>
-
-                      <!-- Form Fields using dt/dd grid pattern like Car -->
-                      <dl class="grid md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
-                        <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700">
-                            Provider Name
-                          </dt>
-                          <dd class="text-gray-900">
-                            {{ planDetails.providerName }}
-                          </dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700">
-                            Plan Name
-                          </dt>
-                          <dd class="text-gray-900">{{ planDetails.name }}</dd>
-                        </div>
-
-                        <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700 mt-2">
-                            Insurance Quote No.:
-                          </dt>
-                          <x-input
-                            v-model="planDetails.insurerQuoteNo"
-                            placeholder="Enter quote number"
-                            size="sm"
-                            :disabled="
-                              !planDetails.isManualUpdate ||
-                              page.props.lockLeadSectionsDetails?.plan_selection
-                            "
-                          />
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700 mt-2">
-                            Price:
-                          </dt>
-                          <x-input
-                            v-model="planDetails.actualPremium"
-                            placeholder="Enter price"
-                            size="sm"
-                            type="number"
-                            :disabled="
-                              !planDetails.isManualUpdate ||
-                              page.props.lockLeadSectionsDetails?.plan_selection
-                            "
-                          />
-                        </div>
-
-                        <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700">
-                            <x-tooltip placement="bottom">
-                              <span
-                                class="underline decoration-dotted decoration-primary-700"
-                              >
-                                Investment Frequency
-                              </span>
-                              <template #tooltip
-                                >How often you plan to invest</template
-                              >
-                            </x-tooltip>
-                          </dt>
-                          <dd class="text-gray-900">
-                            {{ planDetails.investmentFrequency }}
-                          </dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2"></div>
-                      </dl>
-
-                      <!-- Bottom section with dates and update button -->
-                      <div class="border-t border-gray-300 pt-6 mt-6">
-                        <div class="flex justify-end">
-                          <div class="text-right">
-                            <div class="text-sm text-gray-600 mb-2">
-                              <span class="font-medium">Created Date:</span>
-                              <span class="ml-2">{{ quote.created_at }}</span>
-                            </div>
-                            <div class="text-sm text-gray-600 mb-6">
-                              <span class="font-medium">Updated At:</span>
-                              <span class="ml-2">{{ quote.updated_at }}</span>
-                            </div>
-                            <x-button
-                              color="primary"
-                              size="sm"
-                              :disabled="
-                                page.props.lockLeadSectionsDetails
-                                  ?.plan_selection
-                              "
-                              @click="onUpdateIndividualPlan"
-                              :loading="planForm.processing"
-                            >
-                              Update
-                            </x-button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </TabPanel>
-
-                  <!-- Eligibility Tab -->
-                  <TabPanel>
-                    <div class="p-6">
-                      <div
-                        v-if="
-                          planDetails.eligibilities &&
-                          planDetails.eligibilities.length > 0
-                        "
-                        class="grid grid-cols-2 gap-x-8 gap-y-6"
-                      >
-                        <div
-                          v-for="item in planDetails.eligibilities"
-                          :key="item.id"
-                          class="grid grid-cols-2 gap-x-4"
-                        >
-                          <div class="text-gray-700 font-medium text-sm">
-                            <x-tooltip
-                              placement="bottom"
-                              v-if="getEligibilityTooltip(item.text)"
-                            >
-                              <span
-                                class="underline decoration-dotted decoration-primary-700"
-                              >
-                                {{ item.text }}
-                              </span>
-                              <template #tooltip>{{
-                                getEligibilityTooltip(item.text)
-                              }}</template>
-                            </x-tooltip>
-                            <span v-else>{{ item.text }}</span>
-                          </div>
-                          <div class="text-gray-900 text-sm">
-                            {{ item.value }}
-                          </div>
-                        </div>
-                      </div>
-                      <div v-else class="text-center py-8 text-gray-500">
-                        No eligibility criteria available
-                      </div>
-                    </div>
-                  </TabPanel>
-
-                  <!-- Included Benefits Tab -->
-                  <TabPanel>
-                    <div class="p-6">
-                      <div
-                        v-if="
-                          planDetails.includedBenefits &&
-                          planDetails.includedBenefits.length > 0
-                        "
-                        class="grid grid-cols-2 gap-x-8 gap-y-6"
-                      >
-                        <div
-                          v-for="item in planDetails.includedBenefits"
-                          :key="item.id"
-                          class="grid grid-cols-2 gap-x-4"
-                        >
-                          <div class="text-gray-700 font-medium text-sm">
-                            <x-tooltip
-                              placement="bottom"
-                              v-if="getIncludedBenefitsTooltip(item.text)"
-                            >
-                              <span
-                                class="underline decoration-dotted decoration-primary-700"
-                              >
-                                {{ item.text }}
-                              </span>
-                              <template #tooltip>{{
-                                getIncludedBenefitsTooltip(item.text)
-                              }}</template>
-                            </x-tooltip>
-                            <span v-else>{{ item.text }}</span>
-                          </div>
-                          <div class="text-gray-900 text-sm">
-                            {{ item.value }}
-                          </div>
-                        </div>
-                      </div>
-                      <div v-else class="text-center py-8 text-gray-500">
-                        No included benefits available
-                      </div>
-                    </div>
-                  </TabPanel>
-
-                  <!-- Key Features Document Tab -->
-                  <TabPanel>
-                    <div class="p-4">
-                      <div
-                        v-if="
-                          planDetails.keyFeatureDocument &&
-                          planDetails.keyFeatureDocument.length > 0
-                        "
-                        class="space-y-3"
-                      >
-                        <div
-                          v-for="doc in planDetails.keyFeatureDocument"
-                          :key="doc.id"
-                          class="inline-flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
-                        >
-                          <!-- PDF Icon -->
-                          <div class="flex-shrink-0">
-                            <svg
-                              class="w-6 h-6 text-red-500"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fill-rule="evenodd"
-                                d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                                clip-rule="evenodd"
-                              ></path>
-                            </svg>
-                          </div>
-
-                          <!-- Document Name -->
-                          <div class="flex-shrink-0">
-                            <x-tooltip placement="bottom">
-                              <span
-                                class="text-blue-600 font-medium underline decoration-dotted decoration-primary-700"
-                                >{{ doc.text }}</span
-                              >
-                              <template #tooltip
-                                >Summary of plan benefits and features</template
-                              >
-                            </x-tooltip>
-                          </div>
-
-                          <!-- Download Icon -->
-                          <div class="flex-shrink-0">
-                            <a
-                              :href="doc.value"
-                              target="_blank"
-                              class="text-blue-600 hover:text-blue-800"
-                            >
-                              <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                ></path>
-                              </svg>
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                      <div v-else class="text-center py-8 text-gray-500">
-                        No key feature documents available
-                      </div>
-                    </div>
-                  </TabPanel>
-
-                  <!-- Policy Wordings Tab -->
-                  <TabPanel>
-                    <div class="p-4">
-                      <div
-                        v-if="
-                          planDetails.policyWordings &&
-                          planDetails.policyWordings.length > 0
-                        "
-                        class="space-y-3"
-                      >
-                        <div
-                          v-for="doc in planDetails.policyWordings"
-                          :key="doc.id"
-                          class="inline-flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
-                        >
-                          <!-- PDF Icon -->
-                          <div class="flex-shrink-0">
-                            <svg
-                              class="w-6 h-6 text-red-500"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fill-rule="evenodd"
-                                d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                                clip-rule="evenodd"
-                              ></path>
-                            </svg>
-                          </div>
-
-                          <!-- Document Name -->
-                          <div class="flex-shrink-0">
-                            <x-tooltip placement="bottom">
-                              <span
-                                class="text-blue-600 font-medium underline decoration-dotted decoration-primary-700"
-                                >{{ doc.text }}</span
-                              >
-                              <template #tooltip
-                                >Policy wordings for this savings plan</template
-                              >
-                            </x-tooltip>
-                          </div>
-
-                          <!-- Download Icon -->
-                          <div class="flex-shrink-0">
-                            <a
-                              :href="doc.link"
-                              target="_blank"
-                              class="text-blue-600 hover:text-blue-800"
-                            >
-                              <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                ></path>
-                              </svg>
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                      <div v-else class="text-center py-8 text-gray-500">
-                        No policy wordings available
-                      </div>
-                    </div>
-                  </TabPanel>
-                </TabPanels>
-              </TabGroup>
-            </div>
-          </x-modal>
         </template>
       </Collapsible>
     </div>
@@ -2116,14 +1314,28 @@ const getIncludedBenefitsTooltip = fieldText =>
       :expanded="sectionExpanded"
     />
 
-    <LeadHistory :quote="quote" :expanded="sectionExpanded" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
-    <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
+    <ApiLogs
+      :type="modelClassSavings"
+      :id="$page.props.quote.savings_quote?.id"
+    />
 
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
+
+    <OcrLogs
+      v-if="can(permissionsEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
 

@@ -303,8 +303,15 @@ class HomeRenewalService extends RenewalsUploadService
             $this->updateTotalFailed($renewalStatusProcess);
         }
     }
-    public function getPlans($uuid)
+
+    /**
+     * Override the getPlans method to match parent signature,
+     * but $isRenewalHistorical is not used in Home context.
+     * This avoids PHP "Declaration must be compatible" errors.
+     */
+    public function getPlans($uuid, ...$args)
     {
+        // Ignore additional params for Home logic.
         $quotePlans = app(HomeQuoteService::class)->getQuotePlans($uuid, [
             'getLatestRating' => true,
         ]);

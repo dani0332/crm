@@ -169,7 +169,7 @@ const memberNameField = computed({
   },
 });
 
-const createOrUpdateMember = async (memberForm, isMemberEditEnabled) => {
+const createOrUpdateMember = async (form, isUpdate) => {
   let sectionName = props.isPayerDetails
     ? 'Payer'
     : props.customerType == page.props.customerTypeEnum.Individual
@@ -184,9 +184,9 @@ const createOrUpdateMember = async (memberForm, isMemberEditEnabled) => {
 
   try {
     isLoading.value = true;
-    const url = `/members${isMemberEditEnabled ? `/${memberForm.id}` : ''}`;
-    const method = isMemberEditEnabled ? 'put' : 'post';
-    const res = await axios[method](url, memberForm);
+    const url = `/members${isUpdate ? `/${form.id}` : ''}`;
+    const method = isUpdate ? 'put' : 'post';
+    const res = await axios[method](url, form);
     if (res.status) {
       const { data } = res.data;
       const memberData = {
@@ -194,7 +194,7 @@ const createOrUpdateMember = async (memberForm, isMemberEditEnabled) => {
         nationality: data.nationality,
         relation: data.relation,
       };
-      if (isMemberEditEnabled) {
+      if (isUpdate) {
         const index = members.value.findIndex(x => x.id === data.id);
         if (index !== -1) {
           members.value[index] = memberData;
@@ -204,17 +204,22 @@ const createOrUpdateMember = async (memberForm, isMemberEditEnabled) => {
         members.value.push(memberData);
       }
       notification.success({
-        title: `${sectionName} ${isMemberEditEnabled ? 'Updated' : 'Added'} Successfully`,
+        title: `${sectionName} ${isUpdate ? 'Updated' : 'Added'} Successfully`,
         position: 'top',
       });
-      memberForm.reset();
-      memberForm.clearErrors();
+      form.reset();
+      form.clearErrors();
       isMemberFormEnabled.value = false;
       isMemberEditEnabled.value = false;
     }
   } catch (err) {
+    const message =
+      err?.response?.data?.message ??
+      err?.response?.data?.error?.message ??
+      err?.message ??
+      'Something went wrong';
     notification.error({
-      title: err.response.data.message || 'Something went wrong',
+      title: message,
       position: 'top',
     });
   } finally {

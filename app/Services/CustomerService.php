@@ -9,6 +9,7 @@ use App\Models\CustomerAddress;
 use App\Models\CustomerMembers;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class CustomerService extends BaseService
 {
@@ -167,11 +168,22 @@ class CustomerService extends BaseService
         return Customer::where('uuid', $uuid)->first();
     }
 
-    public function makeAdditionalContactPrimary($lead, $key, $value)
+    public function makeAdditionalContactPrimary($lead, $key, $value, bool $keepExistingPrimaryEmail = true)
+    {
+        DB::transaction(function () use ($lead, $key, $value, $keepExistingPrimaryEmail) {
+            $this->executeMakeAdditionalContactPrimary($lead, $key, $value, $keepExistingPrimaryEmail);
+        });
+    }
+
+    /**
+     * Performs the database writes for making an additional contact primary.
+     * Called inside a transaction by makeAdditionalContactPrimary().
+     */
+    private function executeMakeAdditionalContactPrimary($lead, $key, $value, bool $keepExistingPrimaryEmail): void
     {
         if ($key == GenericRequestEnum::EMAIL) {
             $customer = null;
-            $previousEmail = $lead->email;
+            $previousEmail = trim($lead->email);
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
                 LoggerService::info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
                 $customerArray = [
@@ -186,13 +198,8 @@ class CustomerService extends BaseService
                 $email = trim($lead->email);
 
                 if (str_ends_with($email, '@insurancemarket.ae') || str_ends_with($email, '@afia.ae')) {
-                    $removeEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
-                        ->where('value', $value)
-                        ->where('key', 'email')
-                        ->first();
-                    if (isset($removeEmail->id)) {
-                        $removeEmail->delete();
-                    }
+                    $this->getFirstAdditionalContactByEmail($value, $lead->customer_id)?->delete();
+
                 } else {
 
                     $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
@@ -210,10 +217,10 @@ class CustomerService extends BaseService
                         ->where('value', $email)
                         ->exists();
 
-                    if (! $isExist) {
+                    if ($keepExistingPrimaryEmail && ! $isExist) {
                         CustomerAdditionalContact::create([
                             'customer_id' => $customer->id,
-                            'key' => 'email',
+                            'key' => GenericRequestEnum::EMAIL,
                             'value' => $email,
                         ]);
                     }
@@ -222,13 +229,8 @@ class CustomerService extends BaseService
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
-                $removeEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
-                    ->where('value', $lead->email)
-                    ->where('key', 'email')
-                    ->first();
-                if (isset($removeEmail->id)) {
-                    $removeEmail->delete();
-                }
+                $this->getFirstAdditionalContactByEmail($lead->email, $lead->customer_id)?->delete();
+
                 // ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
                 $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                     ->where('key', 'email')
@@ -241,22 +243,26 @@ class CustomerService extends BaseService
                     $removeAdvisorEmail->delete();
                 }
             } else {
-                // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
-                $removeEmail = CustomerAdditionalContact::where('value', $value)
-                    ->where('customer_id', $lead->customer_id)
-                    ->where('key', 'email')
-                    ->first();
-                if (isset($removeEmail->id)) {
-                    $removeEmail->delete();
-                }
                 $customer = $this->getCustomerByEmail($value);
+                if (! $customer) {
+                    LoggerService::warning("Customer not found against this email: {$value}");
+                    vAbort("Customer not found against this email: {$value}");
+                }
+
+                // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
+                $this->getFirstAdditionalContactByEmail($value, $lead->customer_id)?->delete();
+
                 $email = trim($lead->email);
                 if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
-                    CustomerAdditionalContact::firstOrCreate([
-                        'customer_id' => $customer->id,
-                        'key' => GenericRequestEnum::EMAIL,
-                        'value' => trim($lead->email),
-                    ]);
+
+                    // Convert lead email from primary to secondary, if user wants to keep
+                    if ($keepExistingPrimaryEmail) {
+                        CustomerAdditionalContact::firstOrCreate([
+                            'customer_id' => $customer->id,
+                            'key' => GenericRequestEnum::EMAIL,
+                            'value' => trim($lead->email),
+                        ]);
+                    }
 
                     $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                         ->get();
@@ -281,6 +287,11 @@ class CustomerService extends BaseService
                     $removeAdvisorEmail->delete();
                 }
             }
+
+            if (! $keepExistingPrimaryEmail) {
+                $this->getFirstAdditionalContactByEmail($previousEmail, $lead->customer_id)?->delete();
+            }
+
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
             // REMOVE Mobile Number TO MAKE PRIMARY IN ADDITIONAL CONTACT
             $removeMobileNumber = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
@@ -308,6 +319,62 @@ class CustomerService extends BaseService
                 $lead->customer->update(['mobile_no' => $value]);
             }
         }
+    }
+
+    /**
+     * Delete customer additional contact(s) by ID.
+     * Deletes all contacts matching the same key, value, and customer_id.
+     *
+     * @return array{success: bool, message: string}
+     */
+    public function deleteCustomerAdditionalContacts(int $additionalContactId): array
+    {
+        $additionalContact = CustomerAdditionalContact::find($additionalContactId);
+        if (! $additionalContact) {
+            LoggerService::warning(__CLASS__.' fn:deleteCustomerAdditionalContacts - Additional contact not found.', [
+                'additionalContactId' => $additionalContactId,
+            ]);
+
+            return ['success' => false, 'message' => 'Additional contact not found.'];
+        }
+
+        $filters = $additionalContact->only(['key', 'value', 'customer_id']);
+        $matchingContacts = CustomerAdditionalContact::where($filters)->get();
+        $deleteCount = $matchingContacts->count();
+
+        DB::transaction(function () use ($matchingContacts) {
+            foreach ($matchingContacts as $contact) {
+                $contact->delete();
+            }
+        });
+
+        @[$success, $message] = $deleteCount > 0
+            ? [true, "{$deleteCount} additional contact deleted."]
+            : [false, 'No additional contacts were deleted.'];
+
+        LoggerService::info(__CLASS__.' fn:deleteCustomerAdditionalContacts', [
+            ...$filters,
+            'message' => $message,
+        ]);
+
+        return ['success' => $success, 'message' => $message];
+    }
+
+    private function getFirstAdditionalContactByEmail($email, $customerId)
+    {
+        $additionalContacts = CustomerAdditionalContact::where('customer_id', $customerId)
+            ->where('value', $email)
+            ->where('key', GenericRequestEnum::EMAIL)
+            ->first();
+
+        if (! $additionalContacts) {
+            LoggerService::info('No additional email contact found to delete.', [
+                'email' => $email,
+                'customerId' => $customerId,
+            ]);
+        }
+
+        return $additionalContacts;
     }
 
     public function getCustomerCampaignFollowups($id)

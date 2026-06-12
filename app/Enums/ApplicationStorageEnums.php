@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
+use App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand;
+use App\Services\Reports\ConversionOptimizationReportService;
 use BenSampo\Enum\Enum;
+use Database\Seeders\ApplicationStorageSeeder;
 
 /**
  * @method static static OptionOne()
@@ -69,6 +72,7 @@ final class ApplicationStorageEnums extends Enum
     public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
     public const TEMP_DISABLE_SAGE_BOOKING = 'TEMP_DISABLE_SAGE_BOOKING';
     public const DTT_ENABLED = 'DTT_ENABLED';
+    public const DTT_LIFE_ENABLED = 'DTT_LIFE_ENABLED';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
     public const DTT_HEALTH_ENABLED = 'DTT_HEALTH_ENABLED';
@@ -108,6 +112,7 @@ final class ApplicationStorageEnums extends Enum
     public const BUSINESS_SEND_POLICY_TEMPLATE = 'BUSINESS_SEND_POLICY_TEMPLATE';
     public const PROFESSIONAL_SEND_POLICY_TEMPLATE = 'PROFESSIONAL_SEND_POLICY_TEMPLATE';
     public const COMMERCIAL_CAR_SEND_POLICY_TEMPLATE = 'COMMERCIAL_CAR_SEND_POLICY_TEMPLATE';
+    public const CYBER_SEND_POLICY_TEMPLATE = 'CYBER_SEND_POLICY_TEMPLATE';
     public const IM_EB_SERVICE_TEAM_EMAIL = 'IM_EB_SERVICE_TEAM_EMAIL';
     public const SEND_UPDATE_EMAIL = 'SEND_UPDATE_EMAIL';
     public const SEND_POLICY_UPDATE_EMAIL = 'SEND_POLICY_UPDATE_EMAIL';
@@ -187,10 +192,14 @@ final class ApplicationStorageEnums extends Enum
     public const PROCESS_CC_PAYMENTS_ENABLED = 'PROCESS_CC_PAYMENTS_ENABLED';
     public const TRAVEL_RENEWALS_SWITCH = 'TRAVEL_RENEWALS_SWITCH';
 
+    /* Policy Issuance Global Contacts */
+    public const CHIEF_DEPUTY_OFFICER_MOBILE_NO = 'CHIEF_DEPUTY_OFFICER_MOBILE_NO';
+    public const CHIEF_DEPUTY_OFFICER_EMAIL_ID = 'CHIEF_DEPUTY_OFFICER_EMAIL_ID';
+
     /* Policy Issuance Automation */
-    public const ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE = 'ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE';
-    public const ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE';
-    public const TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL = 'TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL';
+    public const ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE = 'ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE';
+    public const ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE';
+    public const TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL = 'TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL';
     public const HOME_OCB_AUTOMATED_FOLLOWUPS = 'HOME_OCB_AUTOMATED_FOLLOWUPS';
     public const HOME_RENEWAL_AUTOMATED_FOLLOWUPS = 'HOME_RENEWAL_AUTOMATED_FOLLOWUPS';
     public const AUTOMATED_HOME_RENEWAL_FOLLOWUP_SWITCH = 'AUTOMATED_HOME_RENEWAL_FOLLOWUP_SWITCH';
@@ -209,6 +218,9 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE';
     public const ENABLE_GIG_CAR_POLICY_ISSUANCE = 'ENABLE_GIG_CAR_POLICY_ISSUANCE';
     public const ENABLE_RETRY_TIMEOUT_GIG_CAR_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_GIG_CAR_POLICY_ISSUANCE';
+    public const ENABLE_AWNI_CYBER_POLICY_ISSUANCE = 'ENABLE_AWNI_CYBER_POLICY_ISSUANCE';
+    public const ENABLE_RETRY_TIMEOUT_AWNI_CYBER_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_AWNI_CYBER_POLICY_ISSUANCE';
+    public const AWNI_CYBER_AUTOMATION_API_TIMEOUT = 'AWNI_CYBER_AUTOMATION_API_TIMEOUT';
 
     /* Bike LMS Intro Email BCC */
     public const LMS_INTRO_BIKE_EMAIL_BCC = 'LMS_INTRO_BIKE_EMAIL_BCC';
@@ -241,6 +253,7 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
     public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
     public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
+    public const BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL = 'BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL';
 
     /* BOR (Broker on Record) Workflow Integration */
     public const BIRD_BOR_WORKFLOW_URL = 'BIRD_BOR_WORKFLOW_URL';
@@ -253,20 +266,31 @@ final class ApplicationStorageEnums extends Enum
     public const CYCLE_ADVISORS = 'CYCLE_ADVISORS';
     public const CORPLINE_ADVISORS = 'CORPLINE_ADVISORS';
     public const LIFE_OCA_EMAIL_FLOW = 'LIFE_OCA_EMAIL_FLOW';
+    public const SAVINGS_OCA_EMAIL_FLOW = 'SAVINGS_OCA_EMAIL_FLOW';
     public const FIC_LIFE_EMAIL = 'FIC_LIFE_EMAIL';
     public const FIC_LIFE_EMAIL_SWITCH = 'FIC_LIFE_EMAIL_SWITCH';
     public const AUTOMATED_LIFE_FOLLOWUP_SWITCH = 'AUTOMATED_LIFE_FOLLOWUP_SWITCH';
+    public const CYBER_ADVISORS = 'CYBER_ADVISORS';
 
     /* Savings Book Policy Template */
     public const SAVINGS_BOOK_POLICY_TEMPLATE = 'SAVINGS_BOOK_POLICY_TEMPLATE';
+    public const DEVICE_BOOK_POLICY_TEMPLATE = 'DEVICE_BOOK_POLICY_TEMPLATE';
+
+    /* Device/Smartphone Email Templates */
+    public const DEVICE_UPDATE_POLICY_TEMPLATE = 'DEVICE_UPDATE_POLICY_TEMPLATE';
+    public const DEVICE_PAYMENT_AUTHORIZED_TEMPLATE = 'DEVICE_PAYMENT_AUTHORIZED_TEMPLATE';
 
     /* Savings Send Policy Template */
     public const SAVINGS_SEND_POLICY_TEMPLATE = 'SAVINGS_SEND_POLICY_TEMPLATE';
     public const NEW_LEAD_POOL_BCC = 'NEW_LEAD_POOL_BCC';
     public const OCR_ENABLED = 'OCR_ENABLED';
     public const CAR_INTRO_EMAIL = 'CAR_INTRO_EMAIL';
+    public const OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED = 'OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED';
     public const CAR_CQF_RENEWALS_DAYS_THRESHOLD = 'CAR_CQF_RENEWALS_DAYS_THRESHOLD';
     public const CAR_CQF_RENEWALS_SWITCH = 'CAR_CQF_RENEWALS_SWITCH';
+    public const NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD = 'NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD';
+    public const NON_MOTOR_CQF_RENEWALS_SWITCH = 'NON_MOTOR_CQF_RENEWALS_SWITCH';
+    public const NON_MOTOR_RENEWAL_BATCH_DAYS = 'NON_MOTOR_RENEWAL_BATCH_DAYS';
 
     /* Cut Off Dates */
     public const HOME_CUT_OFF_DATE = 'HOME_CUT_OFF_DATE';
@@ -274,6 +298,24 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AI_ADVISOR_OCB = 'BIRD_AI_ADVISOR_OCB';
     public const BIRD_AUTOMATION_WORKFLOW_URL = 'BIRD_AUTOMATION_WORKFLOW_URL';
     public const TRAVEL_ENQUIRIES_EMAIL = 'TRAVEL_ENQUIRIES_EMAIL';
+
+    /* Claim Email Workflow URLs */
+    public const CLAIM_EMAILS_WORKFLOW_URL = 'CLAIM_EMAILS_WORKFLOW_URL';
+
+    /** Comma-separated BCC for Bird claim Google review email (non-health / default workflow) */
+    public const CLAIM_GOOGLE_REVIEW_EMAIL_BCC = 'CLAIM_GOOGLE_REVIEW_EMAIL_BCC';
+
+    /** Comma-separated BCC for Bird claim health & group-medical Google review email workflow */
+    public const CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC = 'CLAIM_HEALTH_GOOGLE_REVIEW_EMAIL_BCC';
+
+    /** Comma-separated BCC for motor & general (non-health, non-life) claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_MOTOR_AND_GENERAL';
+
+    /** Comma-separated BCC for health & group-medical claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_HEALTH';
+
+    /** Comma-separated BCC for life claim sub-status customer emails */
+    public const CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE = 'CLAIM_SUB_STATUS_CUSTOMER_EMAIL_BCC_LIFE';
 
     /* CPA Australia Home CC Emails */
     public const CPA_AUSTRALIA_HOME_BCC_EMAILS = 'CPA_AUSTRALIA_HOME_BCC_EMAILS';
@@ -304,12 +346,20 @@ final class ApplicationStorageEnums extends Enum
     /* OCR Customer Journey Flag */
     public const OCR_CUSTOMER_JOURNEY_ENABLED = 'OCR_CUSTOMER_JOURNEY_ENABLED';
 
+    /* Bird EP Workflow URL */
+    public const BIRD_EP_WORKFLOW_URL = 'BIRD_EP_WORKFLOW_URL';
+
+    /* OCR - Eligible Plan Codes (comma-separated) */
+    public const OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES = 'OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES';
+
     /* EP ECB Policy Configuration */
-    public const BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL = 'BIRD_SENT_EP_POLICY_DOCUMENTS_EMAIL';
     public const SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC = 'SENT_EP_ECB_POLICY_DOCUMENTS_EMAIL_CC';
     public const EP_ECB_POLICY_CLAIM_LIMIT = 'EP_ECB_POLICY_CLAIM_LIMIT';
     public const EP_ECB_POLICY_COVERAGE = 'EP_ECB_POLICY_COVERAGE';
     public const EP_ECB_POLICY_DURATION = 'EP_ECB_POLICY_DURATION';
+
+    /* CAR EP (MDX / ECB) Retargeting Reminder */
+    public const ENABLE_CAR_EP_RETARGETING_REMINDER = 'ENABLE_CAR_EP_RETARGETING_REMINDER';
 
     // EP Failure Notification Email
     public const EP_FAILURE_EMAIL_FROM = 'EP_FAILURE_EMAIL_FROM';
@@ -321,6 +371,43 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_METLIFE = 'ENABLE_METLIFE';
     public const MR_INCLUDE_FAILED_BOOKINGS = 'MR_INCLUDE_FAILED_BOOKINGS';
     public const MR_FAILED_BOOKING_DATE_FROM = 'MR_FAILED_BOOKING_DATE_FROM';
+
+    /* NGI Smartphone Policy Issuance Automation */
+    public const ENABLE_NGI_SMARTPHONE_POLICY_ISSUANCE = 'ENABLE_NGI_SMARTPHONE_POLICY_ISSUANCE';
+    public const ENABLE_RETRY_TIMEOUT_NGI_SMARTPHONE_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_NGI_SMARTPHONE_POLICY_ISSUANCE';
+    public const NGI_SMARTPHONE_AUTOMATION_API_TIMEOUT = 'NGI_SMARTPHONE_AUTOMATION_API_TIMEOUT';
+
+    /* Device/Smartphone Failure Email Configuration */
+    public const DEVICE_FAILURE_EMAIL_TO = 'DEVICE_FAILURE_EMAIL_TO';
+    public const DEVICE_FAILURE_EMAIL_CC = 'DEVICE_FAILURE_EMAIL_CC';
+    public const DEVICE_FAILURE_EMAIL_ESCALATION_LINK = 'DEVICE_FAILURE_EMAIL_ESCALATION_LINK';
+    public const DEVICE_FAILURE_EMAIL_REPLY_TO = 'DEVICE_FAILURE_EMAIL_REPLY_TO';
+    public const IMCRM_POLICY_ISSUANCE_FAILURE_EMAIL = 'IMCRM_POLICY_ISSUANCE_FAILURE_EMAIL';
+    public const IMCRM_DOC_DOWNLOAD_FAILURE_EMAIL = 'IMCRM_DOC_DOWNLOAD_FAILURE_EMAIL';
+    public const IMCRM_DOC_UPLOAD_FAILURE_EMAIL = 'IMCRM_DOC_UPLOAD_FAILURE_EMAIL';
+    public const IMCRM_BOOK_POLICY_FAILURE_EMAIL = 'IMCRM_BOOK_POLICY_FAILURE_EMAIL';
+
+    // Claim Intro Email
+    public const CLAIM_INTRO_EMAIL_SWITCH = 'CLAIM_INTRO_EMAIL_SWITCH';
+    public const CLAIM_INTRO_EMAIL_WORKFLOW = 'CLAIM_INTRO_EMAIL_WORKFLOW';
+
+    /* Cyber OCB */
+    public const BIRD_CYBER_OCB_INTRO_EMAIL = 'BIRD_CYBER_OCB_INTRO_EMAIL';
+    public const BIRD_CYBER_AUTOMATED_FOLLOWUPS = 'BIRD_CYBER_AUTOMATED_FOLLOWUPS';
+    public const CYBER_FAILURE_EMAIL = 'CYBER_FAILURE_EMAIL';
+    public const CYBER_CAPTURE_FAILURE_EMAIL = 'CYBER_CAPTURE_FAILURE_EMAIL';
+    public const CYBER_ESCALATION_LINK = 'CYBER_ESCALATION_LINK';
+    public const CYBER_HAPPINESS_SUPPORT_USER_EMAIL = 'CYBER_HAPPINESS_SUPPORT_USER_EMAIL';
+
+    // Health STP Advisor Notification
+    public const BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW = 'BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW';
+
+    // Device Allocation
+    public const SMART_PHONE_ADVISORS = 'SMART_PHONE_ADVISORS';
+    public const SMART_PHONE_HAPPINESS_SUPPORT_USER_EMAIL = 'SMART_PHONE_HAPPINESS_SUPPORT_USER_EMAIL';
+    public const BIRD_DEVICE_OCB_INTRO_EMAIL = 'BIRD_DEVICE_OCB_INTRO_EMAIL';
+    public const BIRD_DEVICE_AUTOMATED_FOLLOWUPS = 'BIRD_DEVICE_AUTOMATED_FOLLOWUPS';
+    public const BIRD_DEVICE_ZERO_PLANS_EMAIL = 'BIRD_DEVICE_ZERO_PLANS_EMAIL';
 
     // Branch Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
@@ -350,8 +437,44 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW = 'BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW';
     public const IT_SUPPORT_EMAIL = 'IT_SUPPORT_EMAIL';
 
+    /* Adnic Health Policy Issuance Automation */
+    public const ADNIC_HEALTH_AUTOMATION_API_TIMEOUT = 'ADNIC_HEALTH_AUTOMATION_API_TIMEOUT';
+    public const ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE = 'ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE';
+    public const ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE';
+    public const ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES = 'ADNIC_POLICY_ISSUANCE_TIMEOUT_RETRY_COOLDOWN_MINUTES';
+    public const ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT = 'ADNIC_NUMBER_OF_ALLOWED_RETRY_FOR_TIMEOUT';
+
     // Car OCB Email Templates Update
     public const SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE';
     public const SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE';
     public const SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE';
+    public const ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR = 'ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR';
+    public const BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL = 'BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL';
+
+    // Health Team Routing
+    public const HEALTH_TEAM_ROUTING_ENABLED = 'HEALTH_TEAM_ROUTING_ENABLED';
+    public const ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS = 'ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS';
+
+    // Instant Alfred Export Workflow
+    public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
+
+    // Claims Module Toggle
+    public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
+
+    // Car CAT A Revival Allocation Lookback Days
+    public const CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS = 'CAR_CAT_A_REVIVAL_ALLOCATION_LOOKBACK_DAYS';
+
+    // Motor Revival OCB Workflow
+    public const MOTOR_REVIVAL_WORKFLOW = 'MOTOR_REVIVAL_WORKFLOW';
+
+    /**
+     * {@see application_storage.value} JSON shape:
+     * {"to_email":"","cc_emails":[],"batch":{"start":"Y-m-d","end":"Y-m-d"},"filters":{...optional...}}
+     * `filters` is merged (whitelist only) over {@see ConversionOptimizationReportService::getDefaultFilters()}.
+     * Required `batch`: {"start":"Y-m-d","end":"Y-m-d"} — quote_batches whose start_date/end_date overlap that range
+     * become the `batches` filter (ids passed to the export).
+     * Default key for {@see ReportsConversionOptimizationScheduledExportCommand}.
+     * Empty row seeded by {@see ApplicationStorageSeeder}; set `value` before enabling the job.
+     */
+    public const CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS = 'CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS';
 }

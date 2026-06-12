@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\OCR\DrivingLicense;
 
 use App\Models\CarQuote;
-use App\Models\Nationality;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OcrUtils;
 use App\Services\OCR\Validators\OCRDocumentValidator;
@@ -22,7 +21,7 @@ class DrivingLicenseDataProcessor
     public function __construct(
         private Model $quote,
         private object $data,
-        private string $documentTypeCode
+        private string $documentTypeCode,
     ) {
         $this->drivingLicenseExtractor = new DrivingLicenseExtractor($this->data);
     }
@@ -49,7 +48,12 @@ class DrivingLicenseDataProcessor
             }
 
             // Trigger OCR success validation
-            $isOCRSuccess = app(OCRDocumentValidator::class)->validateDLFields($this->quote->id);
+            $validator = app()->make(OCRDocumentValidator::class, [
+                'quoteId' => $this->quote->id,
+                'quoteableType' => get_class($this->quote),
+            ]);
+
+            $isOCRSuccess = $validator->validateDLFields($this->documentTypeCode);
             LoggerService::info('Driving License data validation result for document type: '.$this->documentTypeCode.' is: '.($isOCRSuccess ? 'true' : 'false'), json_encode($processedData));
 
             DB::commit();

@@ -169,7 +169,7 @@ return [
         'production' => [
             'supervisor-prod' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -196,7 +196,7 @@ return [
         'uat' => [
             'supervisor-uat' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -222,49 +222,15 @@ return [
                 'memory' => 512,
             ],
         ],
-        // 'uat2' => [
-        //     'supervisor-uat2' => [
-        //         'connection' => 'redis',
-        //         'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
-        //         'balance' => 'auto',
-        //         'minProcesses' => 1,
-        //         'maxProcesses' => 3,
-        //         'tries' => 3,
-        //         'timeout' => 60,
-        //     ],
-        //     'supervisor-uat2-shared' => [
-        //         'connection' => 'redis',
-        //         'queue' => ['shared'],
-        //         'balance' => 'auto',
-        //         'minProcesses' => 1,
-        //         'maxProcesses' => 3,
-        //     ],
-        // ],
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification', 'shared', 'lead_ocr_data_comparison', 'private-client', 'ocr_dedicated'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
-                'maxProcesses' => 3,
+                'maxProcesses' => 2,
                 'tries' => 3,
                 'timeout' => 60,
-            ],
-            'supervisor-stg-shared' => [
-                'connection' => 'redis',
-                'queue' => ['shared', 'lead_ocr_data_comparison', 'private-client'],
-                'balance' => 'auto',
-                'minProcesses' => 1,
-                'maxProcesses' => 3,
-            ],
-            'supervisor-stg-ocr-dedicated' => [
-                'connection' => 'redis',
-                'queue' => ['ocr_dedicated'],
-                'balance' => 'simple',
-                'processes' => 2,
-                'tries' => 3,
-                'timeout' => 120,
-                'memory' => 512,
             ],
         ],
         'dev01' => [
@@ -297,7 +263,7 @@ return [
         'test' => [
             'supervisor-test' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,
@@ -324,7 +290,7 @@ return [
         'local' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],
+                'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation', 'advisor-payment-notification'],
                 'balance' => 'auto',
                 'minProcesses' => 1,
                 'maxProcesses' => 3,

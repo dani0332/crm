@@ -28,6 +28,7 @@ use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\Entity;
+use App\Models\Lookup;
 use App\Models\QuoteBatches;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\Team;
@@ -39,6 +40,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\OCRTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -514,6 +517,7 @@ class CarQuoteService extends BaseService
                 DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
                 DB::raw('DATE_FORMAT(cqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
                 'cqr.previous_quote_policy_premium',
+                'cqr.previous_quote_policy_commission',
                 'cqr.car_model_detail_id',
                 'cmd.text as car_model_detail_id_text',
                 'cqr.is_modified',
@@ -556,6 +560,8 @@ class CarQuoteService extends BaseService
                 'insured.last_name as insured_last_name',
                 'insured_kyc.id as insured_kyc_id',
                 DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
+                'insured.id_type as insured_id_type',
+                'insured.id_number as insured_id_number',
                 DB::raw('insured_kyc.id_expiry_date as emirates_id_expiry_date'),
                 'c.receive_marketing_updates',
                 'qrem.entity_id',
@@ -617,6 +623,8 @@ class CarQuoteService extends BaseService
                 'cqr.is_branch_applicable',
                 'vdd.driver_eid_number',
                 'vdd.driver_gender',
+                'cqrd.engagement_level',
+                DB::raw('DATE_FORMAT(cqrd.engagement_level_updated_at, "%d-%m-%Y %H:%i:%s") as engagement_level_updated_at'),
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -662,7 +670,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = cqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Car]);
+                $insuredCustomerMapping->where('ic.is_active', '=', true);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
@@ -1208,6 +1216,8 @@ class CarQuoteService extends BaseService
                 'policy_expiry_date',
                 'previous_quote_policy_number',
                 'previous_policy_expiry_date',
+                'previous_quote_policy_premium',
+                'previous_quote_policy_commission',
             ]
         )->with(['advisor', 'carMake', 'carModel', 'latestUpdateRenewalQuoteProcess', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name', 'pcp_tag')->with(['additionalContacts' => function ($q) {
@@ -1216,7 +1226,14 @@ class CarQuoteService extends BaseService
         }])
             ->where('uuid', $uuid)->first();
 
-        $plans = $this->getPlans($carQuote->uuid, true, true, true);
+        $renewalsUploadService = app(RenewalsUploadService::class);
+        $latestUpdateRenewalQuoteProcess = $carQuote->latestUpdateRenewalQuoteProcess;
+        $isTransitionableLead = $latestUpdateRenewalQuoteProcess
+            ? $renewalsUploadService->isTransitionableLeadWithCurrentData($latestUpdateRenewalQuoteProcess)
+            : false;
+        $isRenewalHistorical = $renewalsUploadService->resolveIsRenewalHistorical($carQuote, $isTransitionableLead);
+
+        $plans = $this->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical);
 
         $totalPlans = is_countable($plans) ? count($plans) : 0;
 
@@ -1239,11 +1256,8 @@ class CarQuoteService extends BaseService
             }
         }
 
-        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $leadValidationErrors = collect();
-            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
-            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
-            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
+        if ($latestUpdateRenewalQuoteProcess && $latestUpdateRenewalQuoteProcess->data) {
+            $carQuote->isTransitionableLead = $isTransitionableLead;
         }
 
         $carQuote->plans = $plans;
@@ -1251,13 +1265,11 @@ class CarQuoteService extends BaseService
         return $carQuote;
     }
 
-    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
+    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false, $isRenewalHistorical = false, $process = '')
     {
-        $process = '';
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
         if ($useKen2Endpoint) {
             $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
-            $process = 'renewalsUpload';
         } else {
             $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
         }
@@ -1279,6 +1291,7 @@ class CarQuoteService extends BaseService
                 'field' => 'isRenewalSort',
                 'value' => $isRenewalSort,
             ]],
+            'isRenewalHistorical' => $isRenewalHistorical,
             'callProcess' => $process,
             'callSource' => 'imcrm',
         ];
@@ -1290,7 +1303,7 @@ class CarQuoteService extends BaseService
             ];
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             LoggerService::info('Calling KEN get-car-quote-plans to update plans', ['quote_uuid' => $quoteUuId, 'data' => $plansDataArr]);
@@ -1316,14 +1329,14 @@ class CarQuoteService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
 
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            if (strpos($contents, 'Genesis') !== false) {
-                LoggerService::warning('FN: getQuotePlans KEN Genesis Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            if (strpos($contents, 'Genesis') !== false || strpos($contents, 'Phoenix') !== false) {
+                LoggerService::warning('FN: getQuotePlans KEN Transition Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
             } else {
                 LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
             }
@@ -1531,9 +1544,9 @@ class CarQuoteService extends BaseService
         return CarQuote::where('parent_duplicate_quote_id', $code)->first();
     }
 
-    public function getPlans($id, $isRenewalSort = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
+    public function getPlans($id, $isRenewalSort = false, $isDisabledEnabled = false, $useKen2Endpoint = false, $isRenewalHistorical = false)
     {
-        $quotePlans = $this->getQuotePlans($id, $isRenewalSort, false, $isDisabledEnabled, $useKen2Endpoint);
+        $quotePlans = $this->getQuotePlans($id, $isRenewalSort, false, $isDisabledEnabled, $useKen2Endpoint, $isRenewalHistorical);
 
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;
@@ -1824,7 +1837,7 @@ class CarQuoteService extends BaseService
             // If sub_source_id is provided, validate sub_source_options_id based on available options
             if (! empty($request->sub_source_id) && is_numeric($request->sub_source_id)) {
                 // Check if the selected sub-source has child options
-                $subSource = \App\Models\Lookup::with('childs')->find($request->sub_source_id);
+                $subSource = Lookup::with('childs')->find($request->sub_source_id);
                 if ($subSource && $subSource->childs && $subSource->childs->count() > 0) {
                     $validationArray['sub_source_options_id'] = 'required|integer|exists:lookups,id';
                 }
@@ -2090,7 +2103,7 @@ class CarQuoteService extends BaseService
         LoggerService::info('CarQuoteService::exportnonPUAAuthorized - Method called for Car PUA export');
 
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -2233,7 +2246,7 @@ class CarQuoteService extends BaseService
         LoggerService::info('CarQuoteService::exportPUAAuthorized - Method called for Car PUA export');
 
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -2350,7 +2363,7 @@ class CarQuoteService extends BaseService
         LoggerService::info('CarQuoteService::exportPUAUpdates - Method called for Car PUA export');
 
         if (! empty($requestParams)) {
-            $request = new \Illuminate\Http\Request($requestParams);
+            $request = new Request($requestParams);
         } else {
             $request = request();
         }
@@ -2432,7 +2445,7 @@ class CarQuoteService extends BaseService
     {
         try {
             // Cache the PCP team ID for 24 hours since it rarely changes
-            $pcpTeamId = Team::where('name', TeamNameEnum::PCP)->first()->id ?? null;
+            $pcpTeamId = getTeamId(TeamNameEnum::PCP);
 
             // If $pcpTeamId is null or empty, the function will return false
             return ! empty($pcpTeamId) && UserTeams::where('user_id', $user_id)->where('team_id', $pcpTeamId)->exists();

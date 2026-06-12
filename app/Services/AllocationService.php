@@ -19,7 +19,10 @@ use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
+use GuzzleHttp\Client;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class AllocationService extends BaseService
 {
@@ -47,7 +50,7 @@ class AllocationService extends BaseService
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
         $request = $client->post(
             $apiEndPoint,
             [
@@ -81,7 +84,7 @@ class AllocationService extends BaseService
             $leadAllocation = $leadAllocation->where('user_id', $userId)->first();
 
             return $leadAllocation;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error($e->getMessage());
         }
     }
@@ -98,13 +101,52 @@ class AllocationService extends BaseService
 
     public function upsertQuoteDetail($leadId, $quoteModel, $keyColumn): void
     {
-        $quoteModel::updateOrCreate(
-            [$keyColumn => $leadId],
-            [
-                'advisor_assigned_date' => now(),
-                'advisor_assigned_by_id' => auth()->id(),
-            ]
-        );
+        $attemptUpsert = function () use ($leadId, $quoteModel, $keyColumn) {
+            try {
+                $quoteModel::updateOrCreate(
+                    [$keyColumn => $leadId],
+                    [
+                        'advisor_assigned_date' => now(),
+                        'advisor_assigned_by_id' => auth()->id(),
+                    ]
+                );
+            } catch (QueryException $exception) {
+
+                LoggerService::error('QueryException: '.$exception->getMessage(), [
+                    'message' => $exception->getMessage(),
+                    'code' => $exception->getCode(),
+                    'getCode' => $exception->getCode() === 23000,
+                ]);
+
+                if ($exception->getCode() === 23000 || $exception->getCode() === '23000') {
+                    LoggerService::info('Re-attempting to update QuoteDetails');
+                    $updated = $quoteModel::where($keyColumn, $leadId)->update([
+                        'advisor_assigned_date' => now(),
+                        'advisor_assigned_by_id' => auth()->id(),
+                        'updated_at' => now(),
+                    ]);
+
+                    if ($updated) {
+                        return;
+                    }
+                }
+
+                LoggerService::error('QueryException in upsertQuoteDetail: '.$exception->getMessage(), [
+                    'message' => $exception->getMessage(),
+                    'code' => $exception->getCode(),
+                    'lead_id' => $leadId,
+                ]);
+
+                throw $exception;
+            }
+        };
+
+        if (DB::transactionLevel() === 0) {
+            DB::transaction($attemptUpsert);
+        } else {
+            /* If we're alreacy in a open transaction */
+            $attemptUpsert();
+        }
     }
 
     public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId = null, bool $isBuyLead = false, bool $isCatABuyLead = false)
@@ -410,7 +452,7 @@ class AllocationService extends BaseService
             ]);
 
             return $isBusinessHours;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error(self::class.' - isBusinessHours: Error checking business hours', exception: $e);
 
             return false;
@@ -438,8 +480,13 @@ class AllocationService extends BaseService
         return ! $isAdvisorAvailable;
     }
 
-    public function getValidAdvisorStatuses(): array
+    public function getValidAdvisorStatuses(bool $addUnavailable = false): array
     {
+        // specifically for Cyber Allocation, we need to add UNAVAILABLE status
+        if ($addUnavailable) {
+            return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE];
+        }
+
         $isBusinessHours = $this->isBusinessHours();
 
         LoggerService::info(self::class.' - getValidAdvisorStatuses: Business hours check', extra: [
@@ -451,5 +498,28 @@ class AllocationService extends BaseService
         } else {
             return [UserStatusEnum::ONLINE, UserStatusEnum::OFFLINE, UserStatusEnum::UNAVAILABLE, UserStatusEnum::MANUAL_OFFLINE];
         }
+    }
+
+    public function isUserOnLeave(string $email, bool $addUnavailable = false): bool
+    {
+        $user = User::where('email', $email)->activeUser()->first();
+
+        if (! $user) {
+            LoggerService::error(self::class.' - isUserOnLeave: User not found', extra: [
+                'email' => $email,
+            ]);
+
+            return false;
+        }
+
+        $isOnLeave = ! in_array($user->status, $this->getValidAdvisorStatuses($addUnavailable));
+
+        LoggerService::info(self::class.' - isUserOnLeave: User is on leave', extra: [
+            'email' => $email,
+            'is_on_leave' => $isOnLeave,
+            'status' => $user->status,
+        ]);
+
+        return $isOnLeave;
     }
 }

@@ -6,8 +6,10 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
+use App\Enums\MotorRevivalEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -17,7 +19,11 @@ use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
@@ -465,7 +471,7 @@ class CarQuote extends BaseModel
         return $this->belongsTo(User::class, 'created_by', 'id');
     }
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function carLostQuoteLogs()
     {
@@ -483,7 +489,7 @@ class CarQuote extends BaseModel
             ->where('quote_type_id', QuoteTypeId::Car);
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Car);
@@ -541,26 +547,16 @@ class CarQuote extends BaseModel
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
     }
 
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Car);
+            ->where('quote_type_id', QuoteTypeId::Car)
+            ->active();
     }
 
-    public function insured()
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // Foreign key on customer_insured
-            'id',               // Foreign key on insured
-            'id',               // Local key on car_quote_requests
-            'insured_id'        // Local key on customer_insured
-        )->where('quote_type_id', QuoteTypeId::Car);
-    }
-
-    // Get the latest/most recent insured record for this quote
-    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    // Reminder::Get the active insured record for this quote
+    public function latestInsured(): HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
@@ -569,8 +565,9 @@ class CarQuote extends BaseModel
             'id', // insured.id
             'id', // car_quote_requests.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
-            ->latest('customer_insured.updated_at');
+        )
+            ->where('customer_insured.quote_type_id', QuoteTypeId::Car)
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()
@@ -625,7 +622,7 @@ class CarQuote extends BaseModel
      * Get the previous quote for this car quote.
      * Returns null if no previous quote exists.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function previousQuote()
     {
@@ -661,5 +658,46 @@ class CarQuote extends BaseModel
     public function hasCarValue()
     {
         return ! empty($this->car_value) && $this->car_value > 0;
+    }
+
+    public function scopeWhereRevivalIntentEligible(Builder $query): Builder
+    {
+        return $query->whereHas('carQuoteRequestDetail', function ($q) {
+            $q->where(function ($w) {
+                $w->where(function ($h) {
+                    $h->where('engagement_level', MotorRevivalEnum::INTENT_HIGH->value)
+                        ->whereNotNull('engagement_level_updated_at')
+                        ->where('engagement_level_updated_at', '<', now()->subMinutes(MotorRevivalEnum::ILA_HIGH_INTENT_WAIT_MINUTES));
+                })->orWhere(function ($m) {
+                    $m->where('engagement_level', MotorRevivalEnum::MEDIUM_INTENT->value)
+                        ->whereNotNull('engagement_level_updated_at')
+                        ->where('engagement_level_updated_at', '<', now()->subHours(MotorRevivalEnum::ILA_MEDIUM_INTENT_WAIT_HOURS));
+                });
+            });
+        });
+    }
+
+    public function scopeWhereRevivalIntentRetryEligible(Builder $query): Builder
+    {
+        return $query->where('source', LeadSourceEnum::REVIVAL)
+            ->whereNull('advisor_id')
+            ->whereRevivalIntentEligible();
+    }
+
+    public function scopeWhereRevivalReinstatedRetryEligible(Builder $query): Builder
+    {
+        return $query->where('source', LeadSourceEnum::REVIVAL_REINSTATED)
+            ->whereNull('advisor_id')
+            ->where(function (Builder $eligibilityQuery) {
+                $eligibilityQuery
+                    ->where(function (Builder $nonSicOrAigQuery) {
+                        $nonSicOrAigQuery->sicFlowDisabled()->isNotAIG(QuoteTypes::CAR);
+                    })
+                    ->orWhere(function (Builder $sicOrAigQuery) {
+                        $sicOrAigQuery->where(function (Builder $flowTypeQuery) {
+                            $flowTypeQuery->sicFlowEnabled()->orWhere(fn (Builder $aigQuery) => $aigQuery->isAIG(QuoteTypes::CAR));
+                        })->advisorRequestedOrPaymentAuthorizedOrDeclined();
+                    });
+            });
     }
 }

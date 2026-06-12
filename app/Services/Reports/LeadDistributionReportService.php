@@ -15,10 +15,10 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
+use App\Enums\TeamsEnum;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\Tier;
-use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
@@ -169,8 +169,9 @@ class LeadDistributionReportService extends BaseService
 
     private function getPersonalQuoteQuery($lob)
     {
-        $lobId = $this->getLobId($lob);
-        $quoteType = QuoteTypes::from($lob);
+        $quoteType = $this->getLOBFromTeamName($lob);
+        $lobId = QuoteTypes::getId($quoteType);
+
         $parentTeam = $this->getProductByName($lob);
 
         $personalQuoteQuery = PersonalQuote::query()
@@ -214,13 +215,20 @@ class LeadDistributionReportService extends BaseService
         return $personalQuoteQuery;
     }
 
-    private function getLobId($lob)
+    private function getLOBFromTeamName($lob)
     {
-        $mappedLob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])
-            ? quoteTypeCode::Business
-            : $lob;
+        $quoteType = QuoteTypes::tryFrom($lob);
 
-        return QuoteTypeRepository::where('code', $mappedLob)->value('id');
+        /** We're doing this because $lob has ProductName which can directly be plugged-in as QuoteType but in some cases like DEVICE,
+         *  we need to find its quoteType through "Product & QuoteType" mapping (TeamsEnum::tryFrom($lob)->getQuoteTypes)
+         */
+        if ($quoteType !== null) {
+            return $quoteType;
+        } else {
+            /** It is expected to map product name to quote types if product names can't be directly plug into the quoteType.
+             * So in case of missing mapping getQuoteTypes would throw an exception */
+            return TeamsEnum::tryFrom($lob)->getQuoteTypes()[0];
+        }
     }
 
     public function getFilterOptions()
@@ -265,6 +273,10 @@ class LeadDistributionReportService extends BaseService
     {
         $filters = (object) $filters;
         $lob = $filters->lob ?? '';
+        // For Cyber only: convert product name to quote type code; others use product name directly
+        if ($lob === TeamNameEnum::CYBER) {
+            $lob = quoteTypeCode::getQuoteTypeCodeFromProductName($lob);
+        }
         [$freshLoad, $startDate, $endDate] = $this->getStartAndEndDate($filters, 'createdAtDates');
         $query->when(in_array($lob, [quoteTypeCode::Travel, quoteTypeCode::Health]), function ($q) use ($lob) {
             $segmentMap = [
@@ -293,6 +305,7 @@ class LeadDistributionReportService extends BaseService
             quoteTypeCode::Jetski => ['jetski_quote_request', 'jetski_quote_request.personal_quote_id', 'personal_quotes.id'],
             quoteTypeCode::Business => ['business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid'],
             quoteTypeCode::SAVINGS => ['savings_quote_request', 'savings_quote_request.personal_quote_id', 'personal_quotes.id'],
+            quoteTypeCode::CYBER => ['cyber_quote_request', 'cyber_quote_request.uuid', 'personal_quotes.uuid'],
         ];
 
         // Apply join based on LOB

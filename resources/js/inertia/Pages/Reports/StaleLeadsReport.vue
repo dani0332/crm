@@ -18,6 +18,7 @@ const validProdcuts = reactive([
   'Yacht',
   'Cycle',
   'Savings',
+  'Cyber',
 ]);
 
 const advisorOptions = ref([]);

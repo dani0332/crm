@@ -107,7 +107,7 @@ class ReportService extends BaseService
             });
         }
 
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER])->get();
         $lobs->push([
             'id' => 999,
             'text' => 'Group Medical',
@@ -561,7 +561,7 @@ class ReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER])->get();
 
         return [
             'teams' => $teams,

@@ -4,8 +4,8 @@ namespace App\Traits;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
-use Spatie\Activitylog\Contracts\Activity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity as ActivityModel;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 trait SpatieActivityLog
@@ -43,9 +43,9 @@ trait SpatieActivityLog
     }
 
     /**
-     * Customize the activity before it's saved
+     * Customize the activity before it's saved (Spatie activitylog v4: ActivityLogger calls tapActivity before persist).
      */
-    public function tapActivity(Activity $activity, string $eventName): void
+    public function tapActivity(ActivityModel $activity, string $eventName): void
     {
         // Get feature and code from Context (set by LoggerService::startFeatureLogging)
         $feature = Context::get('feature');
@@ -60,35 +60,20 @@ trait SpatieActivityLog
         $activity->user_agent = $request ? $request->userAgent() : null;
         $activity->code = $code;
 
-        // For update events, ensure both old and new values are stored
+        // Structured diff copy for reporting (Spatie also stores old/attributes on properties)
         if ($eventName === 'updated') {
-            // Get current properties (convert to array if needed)
-            $properties = $activity->properties ?? [];
-            if (is_object($properties) && method_exists($properties, 'toArray')) {
-                $properties = $properties->toArray();
-            }
-            if (! is_array($properties)) {
-                $properties = [];
-            }
-
-            // Get changed attributes (new values)
             $changedAttributes = $this->getChanges();
 
-            // Only process if there are actual changes
             if (! empty($changedAttributes)) {
-                // Build old values array from original attributes
                 $oldValues = [];
                 foreach (array_keys($changedAttributes) as $attribute) {
                     $oldValues[$attribute] = $this->getOriginal($attribute);
                 }
 
-                // Ensure properties structure includes both old and attributes
-                // Preserve any existing properties but ensure old and attributes are set correctly
-                $properties['old'] = $oldValues;
-                $properties['attributes'] = $changedAttributes;
-
-                // Update activity properties
-                $activity->properties = $properties;
+                $activity->attribute_changes = collect([
+                    'old' => $oldValues,
+                    'attributes' => $changedAttributes,
+                ]);
             }
         }
     }

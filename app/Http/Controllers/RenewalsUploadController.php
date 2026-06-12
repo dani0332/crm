@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
@@ -18,6 +20,7 @@ use App\Http\Requests\RenewalsUploadRequest;
 use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
+use App\Jobs\CQF\ProcessNonMotorCQFOrchestratorJob;
 use App\Jobs\Renewals\FetchHomeRenewalsPlansJob;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
@@ -37,8 +40,16 @@ use App\Services\OtherNonMotorRenewalsUploadService;
 use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
+use Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -57,7 +68,7 @@ class RenewalsUploadController extends Controller
     /**
      * process upload and create import.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function renewalsUploadCreate(RenewalsUploadRequest $request)
     {
@@ -67,7 +78,7 @@ class RenewalsUploadController extends Controller
     /**
      * process upload and update import.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function renewalsUploadUpdate(RenewalsUploadRequest $request)
     {
@@ -78,7 +89,7 @@ class RenewalsUploadController extends Controller
      * fetch plans batch wise.
      *
      * @param  $id
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function fetchPlans($batch)
     {
@@ -262,7 +273,7 @@ class RenewalsUploadController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request, RenewalsUploadLeads $renewalsUploadLeads)
     {
@@ -375,7 +386,7 @@ class RenewalsUploadController extends Controller
     /**
      * fetch plans for all pending quotes.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|never
+     * @return Application|Factory|View|never
      */
     public function plansProcesses($batch)
     {
@@ -456,7 +467,7 @@ class RenewalsUploadController extends Controller
     }
 
     /**
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      */
     public function scheduleRenewalsOcb(ScheduleRenewalsOcbRequest $request, $batch)
     {
@@ -502,7 +513,7 @@ class RenewalsUploadController extends Controller
             $export = new RenewalOtherNonMotorFailedValidationExport($renewaUploadLead);
         } elseif ($renewaUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
             $export = new RenewalHealthUpdateFailedValidationExport($renewaUploadLead);
-        } elseif ($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM) {
+        } elseif ($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
             $export = new RenewalHomeFailedValidationExport($renewaUploadLead);
         } else {
             $export = new RenewalFailedValidationExport($renewaUploadLead);
@@ -576,7 +587,7 @@ class RenewalsUploadController extends Controller
      *
      * @return void
      *
-     * @throws \Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException
+     * @throws PhpVersionNotSupportedException
      */
     public function search(Request $request)
     {
@@ -618,7 +629,7 @@ class RenewalsUploadController extends Controller
     /**
      * Retry all failed renewal processes for an upload batch
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function retryRenewalProcesses(RenewalsUploadLeads $renewalsUploadLead)
     {
@@ -635,5 +646,21 @@ class RenewalsUploadController extends Controller
         }
 
         return redirect()->route('renewals-uploaded-leads-list')->with('error', 'Failed to retry renewal processes');
+    }
+
+    /**
+     * Manually trigger the non-motor CQF renewal process (orchestrator job).
+     */
+    public function retriggerNonMotorCQFProcess(): RedirectResponse
+    {
+        $this->authorize(PermissionsEnum::RENEWALS_RETRIGGER);
+
+        if (! getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH)) {
+            return redirect()->route('renewals-upload-create')->with('error', 'Non-motor CQF renewals feature is currently disabled.');
+        }
+
+        ProcessNonMotorCQFOrchestratorJob::dispatch();
+
+        return redirect()->route('renewals-upload-create')->with('success', 'Non-motor CQF renewal process has been queued.');
     }
 }

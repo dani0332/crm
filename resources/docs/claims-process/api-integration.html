@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Integration - Claims Management System</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .content-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .content-section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 20px;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+      }
+
+      .content-section h3 {
+        color: #34495e;
+        font-size: 1.5em;
+        margin: 25px 0 15px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .api-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+        margin: 25px 0;
+      }
+
+      .api-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 25px;
+        border-left: 4px solid #3498db;
+      }
+
+      .api-card.cpapi {
+        border-left-color: #e67e22;
+      }
+      .api-card.ai {
+        border-left-color: #9b59b6;
+      }
+      .api-card.internal {
+        border-left-color: #27ae60;
+      }
+
+      .api-card.cpapi {
+        background: linear-gradient(135deg, #fff5f0 0%, #ffe8e0 100%);
+        border: 1px solid #e67e22;
+        box-shadow: 0 4px 15px rgba(230, 126, 34, 0.1);
+      }
+
+      .api-card.ai {
+        background: linear-gradient(135deg, #f8f0ff 0%, #f0e6ff 100%);
+        border: 1px solid #9b59b6;
+        box-shadow: 0 4px 15px rgba(155, 89, 182, 0.1);
+      }
+
+      .api-card.internal {
+        background: linear-gradient(135deg, #f0fff4 0%, #e8f5e8 100%);
+        border: 1px solid #27ae60;
+        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.1);
+      }
+
+      .api-card h4 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        font-size: 1.3em;
+      }
+
+      .endpoint-list {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 15px 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .endpoint-item {
+        margin-bottom: 12px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+
+      .endpoint-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .endpoint-item.get {
+        border-left-color: #27ae60;
+        background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+      }
+      .endpoint-item.post {
+        border-left-color: #3498db;
+        background: linear-gradient(135deg, #f0f8ff 0%, #ffffff 100%);
+      }
+      .endpoint-item.put {
+        border-left-color: #f39c12;
+        background: linear-gradient(135deg, #fff8f0 0%, #ffffff 100%);
+      }
+      .endpoint-item.delete {
+        border-left-color: #e74c3c;
+        background: linear-gradient(135deg, #fff0f0 0%, #ffffff 100%);
+      }
+
+      .code-block {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: #ecf0f1;
+        padding: 25px;
+        border-radius: 12px;
+        margin: 20px 0;
+        overflow-x: auto;
+        font-family: 'Fira Code', 'Courier New', monospace;
+        font-size: 0.9em;
+        border: 1px solid #34495e;
+        box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3);
+        position: relative;
+      }
+
+      .code-block::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3498db, #9b59b6, #e67e22);
+        border-radius: 12px 12px 0 0;
+      }
+
+      .integration-flow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 30px 0;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .flow-step {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 25px;
+        border-radius: 15px;
+        text-align: center;
+        min-width: 180px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        position: relative;
+        transition: all 0.3s ease;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .flow-step:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .flow-step:not(:last-child):after {
+        content: '→';
+        position: absolute;
+        right: -25px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.5em;
+        color: #fff;
+      }
+
+      .auth-section {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 2px solid #f39c12;
+        border-radius: 12px;
+        padding: 25px;
+        margin: 20px 0;
+        box-shadow: 0 4px 15px rgba(243, 156, 18, 0.1);
+        position: relative;
+      }
+
+      .auth-section::before {
+        content: '🔐';
+        position: absolute;
+        top: -15px;
+        left: 20px;
+        background: #f39c12;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 1.2em;
+      }
+
+      .auth-section h4 {
+        color: #d68910;
+        margin-bottom: 15px;
+        font-size: 1.2em;
+        margin-top: 10px;
+      }
+
+      .error-handling {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        border: 2px solid #e74c3c;
+        border-radius: 12px;
+        padding: 25px;
+        margin: 20px 0;
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.1);
+        position: relative;
+      }
+
+      .error-handling::before {
+        content: '⚠️';
+        position: absolute;
+        top: -15px;
+        left: 20px;
+        background: #e74c3c;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 1.2em;
+      }
+
+      .error-handling h4 {
+        color: #c0392b;
+        margin-bottom: 15px;
+        font-size: 1.2em;
+        margin-top: 10px;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .feature-item {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 4px solid #3498db;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .feature-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .feature-item strong {
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .response-example {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 2px solid #27ae60;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.1);
+        position: relative;
+      }
+
+      .response-example::before {
+        content: '✅';
+        position: absolute;
+        top: -15px;
+        left: 20px;
+        background: #27ae60;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 1.2em;
+      }
+
+      .response-example h4 {
+        color: #1e8449;
+        margin-bottom: 15px;
+        font-size: 1.2em;
+        margin-top: 10px;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .api-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .integration-flow {
+          flex-direction: column;
+        }
+
+        .flow-step:not(:last-child):after {
+          content: '↓';
+          right: 50%;
+          top: 100%;
+          transform: translateX(50%);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/index.html">📚 Documentation Home</a>
+        <span>></span>
+        <a href="/docs/claims-process/index.html">Claims Management</a>
+        <span>></span>
+        <span>API Integration</span>
+      </div>
+
+      <div class="header">
+        <h1>🔧 API Integration</h1>
+        <p>
+          Comprehensive guide to external API integrations and error handling
+        </p>
+      </div>
+
+      <div class="content-section">
+        <h2>🌐 Integration Overview</h2>
+        <p>
+          The Claims Management System integrates with multiple external APIs to
+          provide comprehensive functionality including policy search,
+          AI-powered message optimization, and internal system coordination.
+        </p>
+
+        <div class="integration-flow">
+          <div class="flow-step">
+            <strong>1. Internal Policy Search</strong>
+            <div>System Database Queries</div>
+          </div>
+          <div class="flow-step">
+            <strong>2. CPAPI Integration</strong>
+            <div>Claim Creation Only</div>
+          </div>
+          <div class="flow-step">
+            <strong>3. InstantWriter AI</strong>
+            <div>Message Optimization</div>
+          </div>
+          <div class="flow-step">
+            <strong>4. External Services</strong>
+            <div>Notifications & Storage</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🔍 Internal Policy Search Integration</h2>
+        <h3>📋 System Database Queries</h3>
+        <p>
+          Policy search is handled internally within the current system using
+          database queries on the PersonalQuote model, providing fast and
+          reliable policy validation for claim creation.
+        </p>
+
+        <div class="api-card internal">
+          <h4>🎯 Internal Search Implementation</h4>
+          <div class="endpoint-list">
+            <div class="endpoint-item post">
+              <strong>POST /claim/search-policies</strong><br />
+              Internal policy search via PersonalQuote model
+            </div>
+            <div class="endpoint-item get">
+              <strong>Database Query</strong><br />
+              PersonalQuote::where('status', 'PolicyBooked')
+            </div>
+            <div class="endpoint-item get">
+              <strong>Eager Loading</strong><br />
+              Optimized queries with relationship loading
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block">
+          // ClaimsService::searchActivePolicies() - Internal Database
+          Integration public function searchActivePolicies( ?string $email =
+          null, ?string $policyNumber = null, ?int $quoteTypeId = null, int
+          $page = 1 ): array { try { // Build internal database query $query =
+          PersonalQuote::with(['customer', 'quoteType']) ->where('status',
+          'PolicyBooked') ->select([ 'id', 'uuid', 'ref_id', 'policy_number',
+          'customer_id', 'quote_type_id', 'car_make', 'car_model', 'model_year',
+          'plate_number', 'status', 'created_at' ]); // Apply search filters if
+          ($email) { $query->whereHas('customer', function($q) use ($email) {
+          $q->where('email', 'like', "%{$email}%"); }); } if ($policyNumber) {
+          $query->where('policy_number', 'like', "%{$policyNumber}%"); } if
+          ($quoteTypeId) { $query->where('quote_type_id', $quoteTypeId); } //
+          Execute paginated query $policies =
+          $query->simplePaginate($this->perPage, ['*'], 'page', $page);
+          LoggerService::info('Internal policy search successful', [
+          'search_params' => compact('email', 'policyNumber', 'quoteTypeId',
+          'page'), 'result_count' => $policies->count(), 'user_id' =>
+          Auth::id(), ]); return [ 'policies' => $policies->items(),
+          'pagination' => [ 'current_page' => $policies->currentPage(),
+          'per_page' => $policies->perPage(), 'total' => $policies->total(),
+          'has_more' => $policies->hasMorePages(), ] ]; } catch (\Exception $e)
+          { LoggerService::error(' Internal search error', [ 'error' =>
+          $e->getMessage(), 'search_params' => compact('email', 'policyNumber',
+          'quoteTypeId', 'page'), 'user_id' => Auth::id(), ]); throw $e; } }
+        </div>
+
+        <div class="auth-section">
+          <h4>🔐 Internal System Security</h4>
+          <ul>
+            <li>
+              <strong>Database Security:</strong> Eloquent ORM with
+              parameterized queries
+            </li>
+            <li>
+              <strong>Access Control:</strong> Permission-based policy search
+              access
+            </li>
+            <li>
+              <strong>Performance:</strong> Optimized queries with eager loading
+            </li>
+            <li>
+              <strong>Audit Logging:</strong> All search activities logged for
+              compliance
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🔌 CPAPI (Customer Portal API) Integration</h2>
+        <h3>📋 Claim Creation Functionality</h3>
+        <p>
+          CPAPI integration is used exclusively for claim creation, allowing the
+          system to create claims in the external system with comprehensive data
+          mapping and error handling.
+        </p>
+
+        <div class="api-card cpapi">
+          <h4>🎯 CPAPI Endpoints Used</h4>
+          <div class="endpoint-list">
+            <div class="endpoint-item post">
+              <strong>POST /api/claims/save-claim</strong><br />
+              Create new claim in external system
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block">
+          // ClaimsService::createClaim() - CPAPI Integration for Claim Creation
+          public function createClaim(array $claimData): array { try { //
+          Prepare CPAPI data with 15+ mapped fields $cpapiData = [ 'first_name'
+          => $claimData['first_name'], 'last_name' => $claimData['last_name'],
+          'email' => $claimData['email'], 'mobile_no' =>
+          $claimData['mobile_no'], 'quote_type_id' =>
+          $claimData['quote_type_id'], 'claim_type_id' =>
+          $claimData['claim_type_id'], 'incident_date' =>
+          $claimData['incident_date'], 'incident_story' =>
+          $claimData['incident_story'], 'policy_number' =>
+          $claimData['policy_number'], 'customer_id' =>
+          $claimData['customer_id'], 'insurance_provider_id' =>
+          $claimData['insurance_provider_id'], 'selected_quote_uuid' =>
+          $claimData['selected_quote_uuid'], 'car_make' =>
+          $claimData['car_make'] ?? null, 'car_model' => $claimData['car_model']
+          ?? null, 'model_year' => $claimData['model_year'] ?? null,
+          'plate_number' => $claimData['plate_number'] ?? null,
+          'claim_request_type_id' => $claimData['claim_request_type_id'],
+          'service_type_id' => $claimData['service_type_id'],
+          'request_reference_number' => $claimData['request_reference_number'],
+          ]; // Make CPAPI request for claim creation $response =
+          CustomerPortalApiFacade::request('/api/claims/save-claim', 'post',
+          $cpapiData); if ($response->success) { LoggerService::info('CPAPI
+          claim creation successful', [ 'claim_data' => $cpapiData, 'response'
+          => $response->data, 'user_id' => Auth::id(), ]); return [ 'success' =>
+          true, 'data' => $response->data, 'message' => 'Claim created
+          successfully via CPAPI' ]; } throw new \Exception('CPAPI claim
+          creation failed: ' . $response->message); } catch (\Exception $e) {
+          LoggerService::error(' CPAPI claim creation error', [ 'error' =>
+          $e->getMessage(), 'claim_data' => $claimData ?? [], 'user_id' =>
+          Auth::id(), ]); throw $e; } }
+        </div>
+
+        <div class="auth-section">
+          <h4>🔐 CPAPI Authentication</h4>
+          <ul>
+            <li>
+              <strong>Authentication Type:</strong> Bearer Token + API Key
+            </li>
+            <li>
+              <strong>Token Refresh:</strong> Automatic token renewal on expiry
+            </li>
+            <li>
+              <strong>Rate Limiting:</strong> 100 requests per minute per user
+            </li>
+            <li>
+              <strong>Timeout Settings:</strong> 30 seconds connection, 60
+              seconds read
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🤖 InstantWriter AI Integration</h2>
+        <h3>✨ Message Optimization Service</h3>
+        <p>
+          InstantWriter AI integration provides intelligent message optimization
+          for customer communications, enhancing clarity and professionalism of
+          claim notifications.
+        </p>
+
+        <div class="api-card ai">
+          <h4>🧠 AI Service Endpoints</h4>
+          <div class="endpoint-list">
+            <div class="endpoint-item post">
+              <strong>POST /message-optimizer/optimize</strong><br />
+              Optimize customer message content
+            </div>
+            <div class="endpoint-item post">
+              <strong>POST /message-optimizer/analyze</strong><br />
+              Analyze message tone and clarity
+            </div>
+            <div class="endpoint-item get">
+              <strong>GET /service/health</strong><br />
+              Check AI service availability
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block">
+          // ClaimsService::optimizeMessageWithAI() - AI Integration public
+          function optimizeMessageWithAI(string $message, string $claimUuid):
+          array { try { $apiData = [ 'original_message' => $message,
+          'claim_reference' => $claimUuid, 'optimization_level' =>
+          'professional', 'target_audience' => 'insurance_customer',
+          'preserve_meaning' => true, ]; // Make AI optimization request
+          $response =
+          InstantWriterAIFacade::request('/message-optimizer/optimize', 'post',
+          $apiData); if ($response->success &&
+          isset($response->data['optimized_message'])) { LoggerService::info('AI
+          message optimization successful', [ 'claim_uuid' => $claimUuid,
+          'original_length' => strlen($message), 'optimized_length' =>
+          strlen($response->data['optimized_message']), 'user_id' => Auth::id(),
+          ]); return [ 'success' => true, 'original_message' => $message,
+          'optimized_message' => $response->data['optimized_message'],
+          'improvements' => $response->data['improvements'] ?? [],
+          'confidence_score' => $response->data['confidence_score'] ?? null, ];
+          } throw new \Exception('AI optimization failed: ' .
+          ($response->message ?? 'Unknown error')); } catch (\Exception $e) {
+          LoggerService::error(' AI optimization error', [ 'error' =>
+          $e->getMessage(), 'claim_uuid' => $claimUuid, 'message_length' =>
+          strlen($message), 'user_id' => Auth::id(), ]); // Return original
+          message if AI fails return [ 'success' => false, 'original_message' =>
+          $message, 'optimized_message' => $message, 'error' =>
+          $e->getMessage(), ]; } }
+        </div>
+
+        <div class="response-example">
+          <h4>📤 AI Response Structure</h4>
+          <div class="code-block">
+            { "success": true, "data": { "optimized_message": "Dear [Customer
+            Name], we have reviewed your claim and...", "improvements": [
+            "Enhanced professional tone", "Improved clarity and structure",
+            "Added empathetic language" ], "confidence_score": 0.92,
+            "optimization_time": "1.2s" }, "message": "Message optimized
+            successfully" }
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>⚙️ Current Implementation Details</h2>
+        <h3>🔧 System Architecture</h3>
+
+        <div class="api-grid">
+          <div class="api-card internal">
+            <h4>📊 Internal Policy Search</h4>
+            <ul>
+              <li>
+                <strong>Model:</strong> PersonalQuote with PolicyBooked status
+              </li>
+              <li>
+                <strong>Relationships:</strong> Customer, QuoteType eager
+                loading
+              </li>
+              <li><strong>Fields:</strong> 12+ fields including car details</li>
+              <li>
+                <strong>Performance:</strong> Optimized queries with pagination
+              </li>
+              <li>
+                <strong>Security:</strong> Permission-based access control
+              </li>
+            </ul>
+          </div>
+
+          <div class="api-card cpapi">
+            <h4>🔌 CPAPI Claim Creation</h4>
+            <ul>
+              <li><strong>Endpoint:</strong> /api/claims/save-claim</li>
+              <li>
+                <strong>Data Mapping:</strong> 15+ fields mapped to CPAPI format
+              </li>
+              <li>
+                <strong>Error Handling:</strong> Try-catch with LoggerService
+              </li>
+              <li>
+                <strong>Response:</strong> Success/failure with claim details
+              </li>
+              <li><strong>Authentication:</strong> Bearer token + API key</li>
+            </ul>
+          </div>
+
+          <div class="api-card ai">
+            <h4>🤖 AI Message Optimization</h4>
+            <ul>
+              <li><strong>Service:</strong> InstantWriter AI integration</li>
+              <li><strong>Endpoint:</strong> /message-optimizer/optimize</li>
+              <li><strong>Fallback:</strong> Original message if AI fails</li>
+              <li><strong>Logging:</strong> Comprehensive error tracking</li>
+              <li><strong>Performance:</strong> Background processing</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="code-block">
+          // Current Implementation Flow 1. Internal Policy Search: -
+          PersonalQuote::where('status', 'PolicyBooked') - Eager loading:
+          customer, quoteType - Filtered by email, policy_number, quote_type_id
+          - Paginated results with 15 items per page 2. CPAPI Claim Creation: -
+          CustomerPortalApiFacade::request('/api/claims/save-claim', 'post',
+          $data) - 15+ fields mapped from internal format to CPAPI format -
+          Error handling with LoggerService logging - Success response includes
+          claim_id, claim_uuid, claim_number 3. AI Message Optimization: -
+          InstantWriterAIFacade::request('/message-optimizer/optimize', 'post',
+          $data) - Fallback to original message if AI service fails - Background
+          processing for non-critical optimizations - Comprehensive logging for
+          debugging and monitoring
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>📊 Performance Optimization</h2>
+        <h3>⚡ Caching & Rate Limiting</h3>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <strong>Internal Search Caching</strong>
+            Policy search results cached for 15 minutes to reduce database
+            queries
+          </div>
+          <div class="feature-item">
+            <strong>CPAPI Rate Limiting</strong>
+            Built-in rate limiting for CPAPI claim creation requests
+          </div>
+          <div class="feature-item">
+            <strong>Database Optimization</strong>
+            Eager loading and optimized queries for internal searches
+          </div>
+          <div class="feature-item">
+            <strong>Async Processing</strong>
+            AI optimization and notifications processed in background jobs
+          </div>
+        </div>
+
+        <div class="code-block">
+          // Caching implementation for internal policy search public function
+          searchActivePoliciesCached(array $searchParams): array { $cacheKey =
+          'internal_policy_search_' . md5(serialize($searchParams)); return
+          Cache::remember($cacheKey, now()->addMinutes(15), function () use
+          ($searchParams) { return $this->searchActivePolicies(
+          $searchParams['email'] ?? null, $searchParams['policy_number'] ??
+          null, $searchParams['quote_type_id'] ?? null, $searchParams['page'] ??
+          1 ); }); } // Rate limiting implementation for CPAPI public function
+          checkRateLimit(string $userId, string $endpoint): bool { $key =
+          "cpapi_rate_limit_{$userId}_{$endpoint}"; $attempts = Cache::get($key,
+          0); if ($attempts >= config('cpapi.rate_limit.max_attempts', 60)) {
+          LoggerService::warning('CPAPI rate limit exceeded', [ 'user_id' =>
+          $userId, 'endpoint' => $endpoint, 'attempts' => $attempts, ]); return
+          false; } Cache::put($key, $attempts + 1, now()->addMinute()); return
+          true; }
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h2>🔍 API Monitoring & Logging</h2>
+        <h3>📈 Comprehensive Tracking</h3>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <strong>Request Logging</strong>
+            All API requests logged with timing and response data
+          </div>
+          <div class="feature-item">
+            <strong>Performance Metrics</strong>
+            Response times, success rates, and error patterns tracked
+          </div>
+          <div class="feature-item">
+            <strong>Health Checks</strong>
+            Regular API endpoint availability monitoring
+          </div>
+          <div class="feature-item">
+            <strong>Alert System</strong>
+            Automated alerts for API failures and performance issues
+          </div>
+        </div>
+
+        <div class="code-block">
+          // API monitoring and metrics collection public function
+          logApiMetrics(string $endpoint, float $responseTime, bool $success,
+          ?string $error = null): void { $metrics = [ 'endpoint' => $endpoint,
+          'response_time_ms' => round($responseTime * 1000, 2), 'success' =>
+          $success, 'timestamp' => now()->toISOString(), 'user_id' =>
+          Auth::id(), ]; if (!$success && $error) { $metrics['error'] = $error;
+          } // Log to metrics collection system LoggerService::info('API request
+          metrics', $metrics); // Store in performance database for analytics
+          ApiMetric::create($metrics); // Check for performance degradation
+          $this->checkPerformanceAlerts($endpoint, $responseTime, $success); }
+          private function checkPerformanceAlerts(string $endpoint, float
+          $responseTime, bool $success): void { // Alert if response time
+          exceeds threshold if ($responseTime >
+          config('api.performance.response_time_threshold', 5.0)) { event(new
+          ApiPerformanceAlert($endpoint, $responseTime, 'slow_response')); } //
+          Alert if error rate is high $recentErrorRate =
+          $this->calculateRecentErrorRate($endpoint); if ($recentErrorRate >
+          config('api.performance.error_rate_threshold', 0.1)) { event(new
+          ApiPerformanceAlert($endpoint, $recentErrorRate, 'high_error_rate'));
+          } }
+        </div>
+      </div>
+
+      <div class="footer">
+        <p><strong>API Integration Documentation</strong></p>
+        <p>Part of the Claims Management System Technical Documentation</p>
+      </div>
+    </div>
+  </body>
+</html>

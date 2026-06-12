@@ -6,13 +6,14 @@ use App\Enums\CourierSyncStatusEnum;
 use App\Enums\RolesEnum;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Traits\SpatieActivityLog;
+use App\Traits\UsesTestConnection;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EmbeddedTransaction extends Model
 {
-    use HasFactory, SpatieActivityLog;
+    use HasFactory, SpatieActivityLog, UsesTestConnection;
 
     protected $guarded = [];
     protected $appends = [
@@ -166,5 +167,38 @@ class EmbeddedTransaction extends Model
     public function getSageStatusAttribute()
     {
         return $this->sage_status_id ? SageEmbeddedProductEnum::getStatusById($this->sage_status_id) : null;
+    }
+
+    public function scopeIsActive($query, bool $isActive)
+    {
+        return $query->where('is_active', $isActive);
+    }
+
+    public function scopeEpShortCode($query, string|array $epShortCode)
+    {
+        return $query
+            ->when(is_string($epShortCode),
+                fn ($q) => $q->whereHas('product.embeddedProduct',
+                    fn ($q) => $q->where('short_code', $epShortCode)
+                )
+            )
+            ->when(is_array($epShortCode),
+                fn ($q) => $q->whereHas('product.embeddedProduct',
+                    fn ($q) => $q->whereIn('short_code', $epShortCode)
+                )
+            );
+    }
+
+    /**
+     * Scope by quote request status. Applies to Car, Home, Bike, Travel, Cyber (EmbeddedProductRepository::ALLOWED_LOBS).
+     * Morphs: CarQuote→car_quote_request, TravelQuote→travel_quote_request, PersonalQuote→personal_quotes (Home/Bike/Cyber). All have quote_status_id.
+     */
+    public function scopeQuoteRequestStatusId($query, int $quoteStatusId)
+    {
+        return $query->whereHasMorph(
+            'quoteRequest',
+            [CarQuote::class, TravelQuote::class, PersonalQuote::class],
+            fn ($q) => $q->where('quote_status_id', $quoteStatusId)
+        );
     }
 }

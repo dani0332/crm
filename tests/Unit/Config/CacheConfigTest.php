@@ -6,6 +6,7 @@ namespace Tests\Unit\Config;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -52,7 +53,7 @@ class CacheConfigTest extends TestCase
         foreach ($environments as $env) {
             // Simulate environment change
             $appName = Config::get('app.name', 'laravel');
-            $sluggedName = \Illuminate\Support\Str::slug($appName, '_');
+            $sluggedName = Str::slug($appName, '_');
             $expectedPrefix = "{$sluggedName}_cache_{$env}";
 
             $prefixes[$env] = $expectedPrefix;
@@ -88,7 +89,7 @@ class CacheConfigTest extends TestCase
         $prefix = Config::get('cache.prefix');
 
         // Expected format: slugified_app_name_cache_environment
-        $sluggedName = \Illuminate\Support\Str::slug($appName, '_');
+        $sluggedName = Str::slug($appName, '_');
         $expectedPrefix = "{$sluggedName}_cache_{$environment}";
 
         $this->assertEquals(
@@ -215,7 +216,7 @@ class CacheConfigTest extends TestCase
     {
         $prefix = Config::get('cache.prefix');
         $appName = Config::get('app.name', 'laravel');
-        $sluggedName = \Illuminate\Support\Str::slug($appName, '_');
+        $sluggedName = Str::slug($appName, '_');
 
         $this->assertStringContainsString(
             $sluggedName,

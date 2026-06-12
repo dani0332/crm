@@ -2,9 +2,6 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypes;
-use App\Models\PersonalQuote;
 use Carbon\Carbon;
 
 class MDX extends EmbeddedProduct
@@ -20,28 +17,16 @@ class MDX extends EmbeddedProduct
     public function getPDFData($quoteObject, $certificateNumber, $premium)
     {
         $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-
-        if ($quoteObject::class == PersonalQuote::class) {
-            $quoteTypeId = $quoteObject->quote_type_id;
-        } else {
-            $quoteType = quoteTypeCode::getName($quoteObject::class);
-            $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        }
-
-        $customerInsured = $quoteObject->customer?->customerInsured()
-            ->where('quote_request_id', $quoteObject->id)
-            ->where('quote_type_id', $quoteTypeId)
-            ->latest('updated_at')
-            ->first() ?? null;
+        $latestInsured = $quoteObject->latestInsured ?? null;
 
         if (! empty($quoteObject->quoteRequestEntityMapping)) {
             $firstName = $quoteObject->first_name ?? '';
             $lastName = $quoteObject->last_name ?? '';
             $emiratesIdNumber = '';
         } else {
-            $firstName = ($customerInsured?->insured?->first_name ?? $quoteObject->customer?->insured_first_name) ?? '';
-            $lastName = ($customerInsured?->insured?->last_name ?? $quoteObject->customer?->insured_last_name) ?? '';
-            $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $quoteObject->customer?->emirates_id_number) ?? '';
+            $firstName = ($latestInsured?->first_name ?? $quoteObject->customer?->insured_first_name) ?? '';
+            $lastName = ($latestInsured?->last_name ?? $quoteObject->customer?->insured_last_name) ?? '';
+            $emiratesIdNumber = ($latestInsured?->id_number ?? $quoteObject->customer?->emirates_id_number) ?? '';
         }
 
         $data = [

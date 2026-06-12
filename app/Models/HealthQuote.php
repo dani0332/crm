@@ -2,23 +2,34 @@
 
 namespace App\Models;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthQuoteDigitalSignatory;
+use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
+use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
@@ -28,7 +39,10 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog;
 
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'has_pec_tag'];
+    protected $appends = [
+        'insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted',
+        'pc_qualified_formatted', 'has_pec_tag', 'signatory_text', 'uae_pass_api_status_text',
+    ];
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
@@ -68,12 +82,27 @@ class HealthQuote extends Model implements AuditableContract
         });
     }
 
+    public function getApiIssuanceStatusAttribute()
+    {
+        return $this->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($this->api_issuance_status_id) : null;
+    }
+
+    public function getInsurerApiStatusAttribute()
+    {
+        return $this->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($this->insurer_api_status_id) : null;
+    }
+
     public function getAuditables()
     {
         return [
             'auditable_type' => self::class,
         ];
     }
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
     public function emirate()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_your_visa_id');
@@ -169,8 +198,13 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 
+    public function vehicleDriverDetail()
+    {
+        return $this->morphOne(VehicleDriverDetail::class, 'quoteable');
+    }
+
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function members()
     {
@@ -217,7 +251,7 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Health);
@@ -309,6 +343,7 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
+    // Reminder:: this relation is being used for currently insured customer
     public function insured()
     {
         return $this->belongsTo(Customer::class, 'currently_insured_id');
@@ -359,26 +394,16 @@ class HealthQuote extends Model implements AuditableContract
         }
     }
 
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Health);
+            ->where('quote_type_id', QuoteTypeId::Health)
+            ->active();
     }
 
-    public function insuredDetails()
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // Foreign key on customer_insured
-            'id',               // Foreign key on insured
-            'id',               // Local key on health_quote_requests
-            'insured_id'        // Local key on customer_insured
-        )->where('quote_type_id', QuoteTypeId::Health);
-    }
-
-    // Get the latest/most recent insured record for this quote
-    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    // Reminder::Get the active insured record for this quote
+    public function latestInsured(): HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
@@ -387,8 +412,9 @@ class HealthQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // health_quote_requests.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Health)
-            ->latest('customer_insured.updated_at');
+        )
+            ->where('customer_insured.quote_type_id', QuoteTypeId::Health)
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()
@@ -464,7 +490,7 @@ class HealthQuote extends Model implements AuditableContract
     /**
      * Get all payments that have IPL splits
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getPaymentsWithInsurerPaymentLink()
     {
@@ -478,7 +504,7 @@ class HealthQuote extends Model implements AuditableContract
     /**
      * Get the last payment with an IPL split
      *
-     * @return \App\Models\Payment|null
+     * @return Payment|null
      */
     public function getLastPaymentWithInsurerPaymentLink()
     {
@@ -493,7 +519,7 @@ class HealthQuote extends Model implements AuditableContract
     /**
      * Get all IPL payment splits across all payments
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getAllInsurerPaymentLinkSplits()
     {
@@ -524,12 +550,79 @@ class HealthQuote extends Model implements AuditableContract
         return $this->emirate_of_your_visa_id === EmirateEnum::ABU_DHABI && ($shouldCheckSource ? $this->source === LeadSourceEnum::IMCRM : true);
     }
 
+    public function isPECLead(): bool
+    {
+        return ! empty($this->has_pec_tag);
+    }
+
+    public function isSIC1(): bool
+    {
+        return ! $this->health_plan_type_id;
+    }
+
+    public function isSIC2(): bool
+    {
+        $sicConfig = SICConfig::where('quote_type_id', QuoteTypeId::Health)->first();
+
+        if (! $sicConfig) {
+            return false;
+        }
+
+        // Only use age-based classification when DOB is present; null DOB must not be treated as age 0
+        if (! empty($this->dob)) {
+            $age = Carbon::parse($this->dob)->age;
+            LoggerService::info('Lead applicant age', ['age' => $age]);
+
+            if ($age >= $sicConfig->min_age && $age <= $sicConfig->max_age) {
+                return true;
+            }
+        }
+
+        if (! empty($this->price_starting_from)) {
+            if ($this->price_starting_from < $sicConfig->price_starting_from) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isSourceApplicable(): bool
+    {
+        LoggerService::info("isSourceApplicable check for lead source {$this->source}", ['source' => $this->source]);
+        $appStorageValue = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE);
+        LoggerService::info("App storage Value for lead source {$appStorageValue}", ['appStorageValue' => $appStorageValue]);
+
+        $host = parse_url($this->source, PHP_URL_HOST);
+        $domains = explode(',', $appStorageValue);
+
+        if (! in_array($host, $domains) && $this->source != LeadSourceEnum::INSURANCE_WALLET) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function hasPecTag(): Attribute
     {
         return Attribute::make(
             get: function () {
                 return ! empty($this->pec_marked_at);
             }
+        );
+    }
+
+    public function signatoryText(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => HealthQuoteDigitalSignatory::displayLabel($this->digital_signatory),
+        );
+    }
+
+    public function uaePassApiStatusText(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => HealthQuoteUaePassApiStatus::displayLabel($this->uae_pass_api_status),
         );
     }
 
@@ -562,5 +655,57 @@ class HealthQuote extends Model implements AuditableContract
     public function branch()
     {
         return $this->hasOne(Branch::class, 'id', 'branch_id');
+    }
+
+    public function insurerRequestResponses()
+    {
+        return $this->hasMany(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid');
+    }
+
+    public function insurerGenerateQuoteRequestResponse()
+    {
+        return $this->hasOne(HealthInsurerRequestResponse::class, 'quote_uuid', 'uuid')->where(['execution_method' => HealthInsurerRequestResponse::EXECUTION_METHOD_GENERATE_QUOTE, 'status' => 'passed'])->latest();
+    }
+
+    public function healthUmafResponse()
+    {
+        return $this->hasOne(HealthUMAFResponse::class, 'quote_uuid', 'uuid');
+    }
+
+    /**
+     * Check if this quote is a Straight Through Processing (STP) case
+     */
+    public function isSTPCase(): bool
+    {
+        // Use data_get for safe nested access with default value
+        return (bool) data_get($this->healthUmafResponse, 'stp_rating.is_stp', false);
+    }
+
+    public function isBookingFailed()
+    {
+        return $this->insurer_api_status_id === PolicyIssuanceEnum::PIA_BOOK_POLICY_API_FAILED_STATUS_ID;
+    }
+
+    public function isPolicyIssuanceFailed()
+    {
+        return in_array($this->insurer_api_status_id, app(PolicyIssuanceService::class)->getInsurerAPIStatuses(null, true));
+    }
+
+    public function policyIssuance()
+    {
+        return $this->morphOne(PolicyIssuance::class, 'model');
+    }
+
+    /**
+     * ADNIC non-STP flag from MongoDB health-umaf-responses (stp_rating.is_non_stp).
+     */
+    public function hasAdnicPlan(): bool
+    {
+        $umaf = HealthUMAF::where('quote_uuid', $this->uuid)->first();
+        if (! $umaf || ! $umaf?->isADNIC()) {
+            return false;
+        }
+
+        return $umaf?->isADNIC() ? true : false;
     }
 }

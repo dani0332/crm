@@ -11,6 +11,7 @@ const props = defineProps({
   rmCategoryText: String,
 });
 
+const loading = ref(false);
 const user = ref(props.user);
 const page = usePage();
 const can = permission => useCan(permission);
@@ -95,6 +96,31 @@ function onSubmit(isValid) {
       },
     });
   }
+}
+
+// Function to update user status (receives the new value after v-model update)
+function updateUserStatus(status) {
+  loading.value = true;
+
+  axios
+    .post(`/admin/update-user-state`, { id: props.user.id, status })
+    .then(res => {
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      // Revert to previous status if api fails
+      user.value.is_active = !status;
+      notification.error({
+        title: err.response?.data?.message ?? 'Failed to update user status',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      loading.value = false;
+    });
 }
 </script>
 <template>
@@ -220,9 +246,12 @@ function onSubmit(isValid) {
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">ACTIVE</dt>
           <dd>
-            <x-tag size="sm" :color="user.is_active ? 'success' : 'error'">
-              {{ user.is_active ? 'Yes' : 'No' }}
-            </x-tag>
+            <x-toggle
+              v-model="user.is_active"
+              color="success"
+              size="lg"
+              @update:model-value="updateUserStatus"
+            />
           </dd>
         </div>
 
@@ -296,6 +325,16 @@ function onSubmit(isValid) {
           </dd>
         </div>
       </dl>
+    </div>
+
+    <!-- Page Loader -->
+    <div
+      v-if="loading"
+      class="fixed inset-0 flex items-center justify-center bg-black/40 z-50"
+    >
+      <div
+        class="h-6 w-6 border-4 border-blue-200 border-t-transparent rounded-full animate-spin"
+      ></div>
     </div>
   </div>
 

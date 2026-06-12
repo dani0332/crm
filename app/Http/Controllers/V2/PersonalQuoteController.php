@@ -20,13 +20,14 @@ use App\Services\SIBService;
 use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
 
 class PersonalQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function updateStatus($quoteType, $quoteId, PersonalQuoteStatusRequest $request)
     {
@@ -98,7 +99,7 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function updatePayment($quoteId, $paymentCode, PersonalQuotePaymentRequest $request)
     {
@@ -108,7 +109,7 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function updatePolicyDetails($id, PersonalQuotePolicyRequest $request)
     {
@@ -118,20 +119,14 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @return mixed
-     */
-    public function getAuditHistory($quoteId)
-    {
-        return PersonalQuoteRepository::getAuditHistory($quoteId);
-    }
-
-    /**
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function changePrimaryContact($quoteId, ChangePrimaryContactRequest $request)
     {
         $quoteObject = PersonalQuoteRepository::findOrFail($quoteId);
-        app(CustomerService::class)->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
+
+        $keepExistingPrimaryEmail = isset($request->keep_existing_primary_email) ? $request->keep_existing_primary_email : 1;
+        app(CustomerService::class)->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value, (bool) $keepExistingPrimaryEmail);
 
         return back();
     }

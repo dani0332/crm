@@ -41,6 +41,11 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  /** False for view-only (see LeadAllocationPermissionService::userCanMutate). */
+  canMutateLeadAllocation: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const page = usePage();
@@ -97,7 +102,8 @@ const currentRow = (id, type = 'mormal') => {
 
 const editCap = (id, type = 'normal') => {
   if (
-    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]) ||
+    props.canMutateLeadAllocation
   ) {
     const row = leadData?.value.find(item => item.id === id);
     if (type === 'buy-lead') {
@@ -146,6 +152,9 @@ const onToggleStatus = (status, id, userId) => {
 };
 
 const toggleOption = (value, type) => {
+  if (!props.canMutateLeadAllocation) {
+    return;
+  }
   confirmModal.type = type;
   confirmModal.status = value ? 1 : 0;
   confirmModal.title = 'Health Lead Allocation';
@@ -299,6 +308,9 @@ const onStatusModalClose = event => {
 };
 
 const onSubmitChanges = async (type = 'normal') => {
+  if (!props.canMutateLeadAllocation) {
+    return;
+  }
   loader.submit = true;
   let max_cap = leadData?.value;
 
@@ -489,6 +501,7 @@ watch(
         v-model="canManage"
         color="emerald"
         size="lg"
+        :disabled="!canMutateLeadAllocation"
         @update:model-value="toggleOption($event, 1)"
       />
     </div>
@@ -537,6 +550,7 @@ watch(
             color="emerald"
             :loading="loader.submit"
             block
+            :disabled="!canMutateLeadAllocation"
             @click="() => onSubmitChanges()"
           >
             Save Cap Changes
@@ -552,6 +566,7 @@ watch(
             color="emerald"
             :loading="loader.submit"
             block
+            :disabled="!canMutateLeadAllocation"
             @click="() => onSubmitChanges('buy-lead')"
           >
             Save Buy Lead Cap Changes
@@ -778,7 +793,7 @@ watch(
             ])
           "
           :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
-          :disabled="!canManage"
+          :disabled="!canManage || !canMutateLeadAllocation"
           :id="id"
           @toggle="onToggleStatus($event.active, id, userId)"
           :loading="leadData.find(item => item.id === id)?.loading"
@@ -796,6 +811,7 @@ watch(
         <ItemToggler
           :is-active="reset_cap"
           :id="id"
+          :disabled="!canMutateLeadAllocation"
           @toggle="onToggleResetCap($event.active, userId, id)"
         />
       </div>
@@ -805,6 +821,7 @@ watch(
         <ItemToggler
           :is-active="BLStatus"
           :id="id"
+          :disabled="!canMutateLeadAllocation"
           @toggle="onToggleBlStatus($event.active, userId, id)"
         />
       </div>
@@ -817,6 +834,7 @@ watch(
         <ItemToggler
           :is-active="normalAllocationEnabled"
           :id="id"
+          :disabled="!canMutateLeadAllocation"
           @toggle="onToggleNormalAllocation($event.active, userId, id)"
         />
       </div>
@@ -827,6 +845,7 @@ watch(
         <ItemToggler
           :is-active="blResetCap"
           :id="id"
+          :disabled="!canMutateLeadAllocation"
           @toggle="onToggleBLResetCap($event.active, userId, id)"
         />
       </div>

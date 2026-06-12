@@ -42,6 +42,7 @@ use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\KenService;
+use App\Services\LifeRevivalService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -52,6 +53,8 @@ use App\Traits\PersonalQuoteLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use DB;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use PDF;
@@ -208,7 +211,16 @@ class LifeQuoteService extends BaseService
                     }
                 }
             })
-
+            ->when(
+                $this->shouldExcludeRevivalSourcesForSegmentFilter(request()->input('segment_filter')),
+                function ($query): void {
+                    $query->where(function ($inner): void {
+                        $inner->whereNotIn('personal_quotes.source', LifeRevivalService::REVIVAL_SOURCES)
+                            ->orWhereNull('personal_quotes.source');
+                    });
+                }
+            )
+            ->filterBySegment(request()->input('segment_filter'), QuoteTypeId::Life)
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 
@@ -305,9 +317,6 @@ class LifeQuoteService extends BaseService
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],
             'othersInfo' => $data['others_info'],
-            'height' => $data['height'],
-            'weight' => $data['weight'],
-            'bmi' => $data['bmi'],
             'age' => $data['age'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
@@ -322,6 +331,12 @@ class LifeQuoteService extends BaseService
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
             'additionalNotes' => $data['notes'] ?? null,
         ];
+
+        foreach (['height', 'weight', 'bmi'] as $field) {
+            if (isset($data[$field]) && $data[$field] !== null && is_numeric($data[$field])) {
+                $lifeQuote[$field] = $data[$field];
+            }
+        }
 
         LoggerService::info('saveLifeQuote: ', [
             'subSourceId' => $data['sub_source_id'] ?? null,
@@ -358,7 +373,7 @@ class LifeQuoteService extends BaseService
                     ]);
                 },
                 'quoteDetail.lostReason:id,text',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'paymentStatus',
                 'customer.additionalContactInfo',
                 'transactionType',
@@ -408,7 +423,7 @@ class LifeQuoteService extends BaseService
 
         $data = ! empty($lifeQuote) ? $lifeQuote->toArray() : [];
         $lifeQuote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $lifeQuote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $lifeQuote->previous_advisor_id_text = $lifeQuote->previousAdvisor?->name;
         $lifeQuote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         $lifeQuote->branch_name = ! $lifeQuote->is_branch_applicable ? 'N/A' : ($lifeQuote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($lifeQuote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life));
 
@@ -729,7 +744,7 @@ class LifeQuoteService extends BaseService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -753,7 +768,7 @@ class LifeQuoteService extends BaseService
 
                 return json_decode($getContents);
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -898,7 +913,7 @@ class LifeQuoteService extends BaseService
             $queryParams['planIds'] = is_array($planIds) ? implode(',', $planIds) : $planIds;
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->get(
@@ -921,7 +936,7 @@ class LifeQuoteService extends BaseService
 
                 return json_decode($getContents);
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -1075,5 +1090,13 @@ class LifeQuoteService extends BaseService
             $sendUpdateLogs,
             $sendUpdateEnum,
         ];
+    }
+
+    private function shouldExcludeRevivalSourcesForSegmentFilter(?string $segmentFilter): bool
+    {
+        return ! in_array($segmentFilter, [
+            QuoteSegmentEnum::ALL->value,
+            QuoteSegmentEnum::SIC_REVIVAL->value,
+        ], true);
     }
 }

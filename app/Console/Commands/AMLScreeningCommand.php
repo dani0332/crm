@@ -19,26 +19,20 @@ class AMLScreeningCommand extends Command
     use GenericQueriesAllLobs;
 
     private $className = 'AMLScreeningCommand';
-    private $quoteType = QuoteTypes::TRAVEL;
 
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'aml-screening-automation:run';
+    protected $signature = 'aml-screening-automation:run {--quote-type= : Specific quote type to process (Travel or Cyber). If not provided, processes both.}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Run AML Screening Automation for Travel Quote';
-
-    public function __construct()
-    {
-        parent::__construct();
-    }
+    protected $description = 'Run AML Screening Automation for Travel and Cyber Quotes';
 
     /**
      * Execute the console command.
@@ -52,9 +46,26 @@ class AMLScreeningCommand extends Command
             return;
         }
 
-        $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
+        $quoteTypesToProcess = $this->resolveQuoteTypes($this->option('quote-type'));
+        if (empty($quoteTypesToProcess)) {
+            return;
+        }
+
+        foreach ($quoteTypesToProcess as $quoteType) {
+            $this->processQuoteType($quoteType);
+        }
+    }
+
+    /**
+     * Process AML screening automation for a specific quote type.
+     */
+    private function processQuoteType(QuoteTypes $quoteType): void
+    {
+        $quoteModel = $this->getModelObject(strtolower($quoteType->value));
 
         if (! class_exists($quoteModel)) {
+            LoggerService::info($this->className.' - Model not found for '.$quoteType->value);
+
             return;
         }
 
@@ -66,17 +77,22 @@ class AMLScreeningCommand extends Command
                 $query->whereNull('aml_status')
                     ->orWhere('aml_status', AMLStatusCode::AMLPending);
             })
-            ->whereNotIn('code', $quoteModel::from('aml_automation')->select('code'));
+            ->whereDoesntHave('amlAutomation');
+
+        // For PersonalQuote (Cyber), also filter by quote_type_id
+        if ($quoteType === QuoteTypes::CYBER) {
+            $quoteRequestQuery->where('quote_type_id', $quoteType->id());
+        }
 
         if ($quoteRequestQuery->exists()) {
-            $quoteRequestQuery->chunk(100, function ($quoteRequests) {
+            $quoteRequestQuery->chunk(100, function ($quoteRequests) use ($quoteType) {
                 foreach ($quoteRequests as $quoteRequest) {
 
                     $quoteRequestId = $quoteRequest->id;
-                    $quoteRequest = $this->getQuoteObject($this->quoteType->value, $quoteRequestId);
+                    $quoteRequest = $this->getQuoteObject($quoteType->value, $quoteRequestId);
 
                     if (! $quoteRequest) {
-                        LoggerService::error($this->className.' - '.$this->quoteType->value.' Quote #'.$quoteRequestId.' not found');
+                        LoggerService::error($this->className.' - '.$quoteType->value.' Quote #'.$quoteRequestId.' not found');
 
                         continue;
                     }
@@ -84,14 +100,40 @@ class AMLScreeningCommand extends Command
                     $isApiIssuanceStatusYes = $quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
                     $isAMLPending = empty($quoteRequest->aml_status) ?: $quoteRequest->aml_status == AMLStatusCode::AMLPending;
 
-                    if (! $isApiIssuanceStatusYes || ! $isAMLPending || $quoteRequest->amlAutomation()->exists()) {
+                    // Check amlAutomation relationship based on quote type
+                    $hasAmlAutomation = false;
+                    if ($quoteType === QuoteTypes::TRAVEL) {
+                        $hasAmlAutomation = $quoteRequest->amlAutomation()->exists();
+                    } elseif ($quoteType === QuoteTypes::CYBER) {
+                        $hasAmlAutomation = AmlAutomation::where('code', $quoteRequest->code)->exists();
+                    }
+
+                    if (! $isApiIssuanceStatusYes || ! $isAMLPending || $hasAmlAutomation) {
                         continue;
                     }
 
-                    AmlAutomation::updateOrCreate(['code' => $quoteRequest->code], ['status' => AmlAutomationStatus::QUEUE_STATUS]);
-                    AmlScreeningAutomationJob::dispatch($this->quoteType, $quoteRequest)->onQueue('renewals');
+                    AmlAutomation::updateOrCreate(['code' => $quoteRequest->code], ['status' => AmlAutomationStatus::Queue->value]);
+                    AmlScreeningAutomationJob::dispatch($quoteType, $quoteRequest)->onQueue('renewals');
                 }
             });
         }
+    }
+
+    private function resolveQuoteTypes(?string $quoteTypeOption): array
+    {
+        if (! $quoteTypeOption) {
+            return [QuoteTypes::TRAVEL, QuoteTypes::CYBER];
+        }
+
+        $normalizedQuoteTypeOption = ucfirst(strtolower($quoteTypeOption));
+        $quoteType = QuoteTypes::tryFrom($normalizedQuoteTypeOption);
+
+        if (! $quoteType || ! in_array($quoteType, [QuoteTypes::TRAVEL, QuoteTypes::CYBER], true)) {
+            $this->error("Invalid quote type. Must be 'Travel' or 'Cyber'.");
+
+            return [];
+        }
+
+        return [$quoteType];
     }
 }

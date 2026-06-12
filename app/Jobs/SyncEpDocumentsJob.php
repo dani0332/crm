@@ -9,6 +9,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\SendsEpFailureEmail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Throwable;
 
@@ -69,7 +70,7 @@ class SyncEpDocumentsJob implements ShouldQueue
     public function shouldRetry(Throwable $exception): bool
     {
         // Retry for network/timeout issues
-        if ($exception instanceof \Illuminate\Http\Client\RequestException ||
+        if ($exception instanceof RequestException ||
             str_contains($exception->getMessage(), 'timeout') ||
             str_contains($exception->getMessage(), 'server error')
         ) {

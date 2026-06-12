@@ -15,6 +15,14 @@ class YearOfManufacture extends Model implements AuditableContract
     protected $table = 'year_of_manufacture';
     protected $guarded = [];
 
+    /**
+     * Scope to order by sort order
+     */
+    public function scopeOrderedBySort($query)
+    {
+        return $query->orderBy('sort_order');
+    }
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');

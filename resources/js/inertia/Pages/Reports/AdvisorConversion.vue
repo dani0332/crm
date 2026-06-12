@@ -892,6 +892,7 @@ const getRouteByLob = computed(() => {
     [quoteTypeCodeEnum.Jetski]: 'jetski-quotes-show',
     [quoteTypeCodeEnum.Yacht]: 'yacht-quotes-show',
     [quoteTypeCodeEnum.SAVINGS]: 'savings-quotes-show',
+    [quoteTypeCodeEnum.CYBER]: 'cyber-quotes-show',
   };
   return routeMap[filters.lob];
 });

@@ -2,6 +2,7 @@
 
 namespace App\Services\Traits;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Models\CarQuote;
@@ -37,9 +38,14 @@ trait Inboundable
         }
 
         // assign advisor to the lead either Oragnic or Unassisted 2.0 advisor
+        $revivalSources = [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID];
+        $teamName = TeamNameEnum::ORGANIC;
+        if ($lead->isPaymentAuthorized() && ! in_array($lead->source, $revivalSources)) {
+            $teamName = TeamNameEnum::SIC_UNASSISTED;
+        }
         $this->handleCarAllocation(
             $lead,
-            getTeamId($lead->isPaymentAuthorized() ? TeamNameEnum::SIC_UNASSISTED : TeamNameEnum::ORGANIC)
+            getTeamId($teamName)
         );
     }
 }

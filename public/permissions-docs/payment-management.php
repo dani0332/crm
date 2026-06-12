@@ -218,11 +218,11 @@
             <tbody>
                 <tr>
                     <td><span class="permission-value">proforma-create</span></td>
-                    <td>Allows users to create proforma invoices.</td>
+                    <td>Allows users to create and download proforma payment request PDFs. This includes generating proforma invoices for both main leads and policy endorsements (send updates), with automatic version tracking.</td>
                 </tr>
                 <tr>
                     <td><span class="permission-value">proforma-payment-request-add</span></td>
-                    <td>Allows users to add payment requests to proforma invoices.</td>
+                    <td>Allows users to add "Proforma Payment Request" (PPR) as a payment method option in the payment dropdown. This enables creating payment records with upfront frequency and single split payment structure.</td>
                 </tr>
                 <tr>
                     <td><span class="permission-value">plan-details-add</span></td>

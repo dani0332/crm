@@ -22,7 +22,6 @@ use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\PaymentLinkService;
 use App\Services\SageApiService;
@@ -557,7 +556,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * This method processes the decline of a payment by updating the payment record with the decline reason,
      * updating the status of the quote model, and logging the transaction decline.
      *
-     * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
+     * @param  Request  $request  The request object containing payment details.
      * @return string The result of the transaction processing.
      */
     private function handlePaymentDecline($request)
@@ -576,7 +575,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         ]);
         if ($request->send_update_id > 0) {
             LoggerService::info("Updating send update status logs for quote ID: {$quoteModel->id}");
-            app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_DECLINE);
             $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
         } else {
             LoggerService::info("Updating quote status to TransactionDeclined for main lead quote ID: {$quoteModel->id}");
@@ -592,7 +590,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * This method processes the approval of a payment by updating the collected amount for split payments,
      * logging the approval process, and calling the appropriate service to handle the approval.
      *
-     * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
+     * @param  Request  $request  The request object containing payment details.
      * @return mixed The result of the master payment approval process.
      */
     public function handlePaymentApprove($request)
@@ -803,6 +801,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             DocumentTypeCode::GMQPD => DocumentTypeCode::GMQPD_RECEIPT,
             DocumentTypeCode::PPD => DocumentTypeCode::PPD_RECEIPT,
             DocumentTypeCode::YPD => DocumentTypeCode::YPD_RECEIPT,
+            DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_PROOF => DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT,
         ];
 
         return $map[$documentTypeCode] ?? $documentTypeCode;
@@ -811,7 +810,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     /**
      * This method updates the payment status for payments with an upfront frequency.
      *
-     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @param  Payment  $payment  The payment object to update.
      * @return void
      */
     private function updateUpfrontStatus($payment)
@@ -844,7 +843,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     /**
      * This method updates the payment status for payments that do not have an upfront frequency.
      *
-     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @param  Payment  $payment  The payment object to update.
      * @return void
      */
     private function updateNonUpfrontStatus($payment)
@@ -998,7 +997,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function getPaymentsCountByLeadCode($quoteCode)
     {
-        return $this->where('code', 'LIKE', "%{$quoteCode}%")->count();
+        return $this->where('code', 'LIKE', "{$quoteCode}%")->count();
     }
 
     public function fetchGetPaymentByInsurerInvoiceNumber($quote, $invoiceNumber)
@@ -1140,7 +1139,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     }
 
-    public function getAuthorisePaymentCount($user = null, $teamIds = null)
+    public function getAuthorisePaymentCount($user = null, $teamIds = null): int
     {
         $user = $user ?: Auth::user();
         if (! $user) {
@@ -1148,43 +1147,26 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         $userTeamIds = $teamIds ?: $user->getUserTeamIds();
-
         $isManager = $user->hasAnyRole(getManagerRoles());
-
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
-        // Base query with optimized joins and indexes
-        $query = DB::table('payments')
-            ->join('personal_quotes as pq', 'pq.code', '=', 'payments.code');
+        $allowedQuoteTypeIds = QuoteTypes::allowedIdsForUser($user);
 
-        // Apply user/team filtering early to reduce dataset
-        if ($isManager) {
-            // For managers, join user_team and filter by team_id
-            $query->join('user_team', 'user_team.user_id', '=', 'pq.advisor_id')
-                ->whereIn('user_team.team_id', $userTeamIds);
-        } else {
-            // For non-managers, filter directly by advisor_id (more efficient)
-            $query->where('pq.advisor_id', $user->id);
-        }
-
-        // Optimize OR conditions by using UNION ALL for better index usage
-        // This allows each branch to use specific indexes effectively
-        $authorisedQuery = (clone $query)
-            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('payments.authorized_at', '>=', $thirtyDaysAgo)
-            ->select('payments.id');
-
-        $insurerPaymentQuery = (clone $query)
-            ->where('payments.payment_methods_code', PaymentMethodsEnum::InsurerPayment)
-            ->whereIn('payments.payment_status_id', [PaymentStatusEnum::PENDING, PaymentStatusEnum::PAYMENT_LINK_REQUESTED])
-            ->where('payments.authorized_at', '>=', $thirtyDaysAgo)
-            ->select('payments.id');
-
-        // Use UNION ALL and COUNT DISTINCT to get unique payment count
-        return DB::table(DB::raw("({$authorisedQuery->toSql()} UNION ALL {$insurerPaymentQuery->toSql()}) as combined_payments"))
-            ->mergeBindings($authorisedQuery)
-            ->mergeBindings($insurerPaymentQuery)
-            ->count(DB::raw('DISTINCT id'));
+        return Payment::query()
+            ->whereHas('personalQuote', function ($query) use ($isManager, $userTeamIds, $user, $allowedQuoteTypeIds) {
+                $query->when($isManager, function ($q) use ($userTeamIds) {
+                    $q->whereHas('advisor.teams', function ($teamQuery) use ($userTeamIds) {
+                        $teamQuery->whereIn('teams.id', $userTeamIds);
+                    });
+                }, function ($q) use ($user) {
+                    $q->where('advisor_id', $user->id);
+                })
+                    ->whereIn('quote_type_id', $allowedQuoteTypeIds);
+            })
+            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('authorized_at', '>=', $thirtyDaysAgo)
+            ->distinct()
+            ->count('id');
     }
 
     public function fetchMainQuotePayment($quote)

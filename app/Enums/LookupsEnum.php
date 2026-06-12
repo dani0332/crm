@@ -65,4 +65,5 @@ enum LookupsEnum: string
     case SUB_SOURCE = 'sub-source';
     case SUB_SOURCE_OPTION = 'sub-source-option';
 
+    case CYBER_COVERAGE = 'cyber-coverage';
 }

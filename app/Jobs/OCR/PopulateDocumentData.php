@@ -38,6 +38,7 @@ class PopulateDocumentData implements ShouldQueue
         protected int $userId,
         bool $isEcom = false,
         protected bool $isSendUpdateEligibleForOCR = false,
+        protected int $memberDetailId = 0,
     ) {
         $this->isEcom = $isEcom;
         $this->onQueue('shared');
@@ -53,6 +54,7 @@ class PopulateDocumentData implements ShouldQueue
      */
     public function handle()
     {
+        LoggerService::startQuoteLogging($this->quote);
         if (! $this->validateMimeType()) {
             $errorMessage = "Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}";
 
@@ -75,6 +77,7 @@ class PopulateDocumentData implements ShouldQueue
                 $this->userId,
                 $this->isEcom,
                 $this->isSendUpdateEligibleForOCR,
+                $this->memberDetailId,
             );
 
             if ($isSuccess === null) {
@@ -116,7 +119,7 @@ class PopulateDocumentData implements ShouldQueue
                     $this->release(now()->addMinutes($retryDelay));
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info(self::class.' - OCR processing failed with unexpected exception', extra: [
                 'quote_type' => $this->quoteType?->value ?? null,
                 'quote_code' => $this->quote->code ?? null,
@@ -139,16 +142,18 @@ class PopulateDocumentData implements ShouldQueue
 
         $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);
         $isOCRCustomerJourneyEnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_ENABLED, useCache: true) == '1';
+        $isOCRCustomerJourneyQuoteTypeEnabled = $this->isOCRCustomerJourneyQuoteTypeEnabled();
 
         $isCustomerJourneyDoc = in_array($docType, [
             OCRDocumentTypeEnum::ID_CARD,
             OCRDocumentTypeEnum::DRIVER_EMIRATES_ID,
             OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE,
             OCRDocumentTypeEnum::DRIVING_LICENSE,
+            OCRDocumentTypeEnum::PASSPORT,
         ]);
 
         $isOCRDocEnabled = OCRDocumentTypeEnum::isOCREnabled($this->documentType, $this->quoteType);
-        $willRun = $isOCREnabled && $isOCRDocEnabled && (! $isCustomerJourneyDoc || $isOCRCustomerJourneyEnabled);
+        $willRun = $isOCREnabled && $isOCRDocEnabled && $isOCRCustomerJourneyQuoteTypeEnabled && (! $isCustomerJourneyDoc || $isOCRCustomerJourneyEnabled);
 
         LoggerService::info(self::class.'::middleware - OCR Job Middleware Check', [
             'quote_type' => $this->quoteType->value,
@@ -158,8 +163,12 @@ class PopulateDocumentData implements ShouldQueue
             'is_ocr_doc_enabled' => $isOCRDocEnabled,
             'is_customer_journey_doc' => $isCustomerJourneyDoc,
             'is_customer_journey_enabled' => $isOCRCustomerJourneyEnabled,
+            'is_ocr_customer_journey_quotetype_enabled' => $isOCRCustomerJourneyQuoteTypeEnabled,
             'will_run' => $willRun,
             'decision' => $willRun ? 'Job will execute' : 'Job will be skipped',
+            'quote_type_id' => $this->quoteType?->id(),
+            'quote_type_name' => $this->quoteType?->value,
+            'ref_id' => $this->quote?->code,
         ]);
 
         // Create unique lock key based on quote ID, document type ID, and document path to prevent duplicate processing
@@ -171,6 +180,16 @@ class PopulateDocumentData implements ShouldQueue
                 ->dontRelease()
                 ->expireAfter($this->timeout), // Lock expires after timeout seconds
         ];
+    }
+
+    private function isOCRCustomerJourneyQuoteTypeEnabled()
+    {
+        switch ($this->quoteType) {
+            case QuoteTypes::HEALTH:
+                return getAppStorageValueByKey(ApplicationStorageEnums::OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED, useCache: true) == '1';
+            default:
+                return true;
+        }
     }
 
     public function failed(\Throwable $exception)
@@ -191,6 +210,16 @@ class PopulateDocumentData implements ShouldQueue
         // Send OCR fail notification for supported document types
         $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);
 
+        if (! $docType) {
+            LoggerService::info(self::class.' - OCR failure notification not required for this document type', extra: [
+                'quote_code' => $this->quote?->code ?? null,
+                'document_type' => $this->documentType?->code ?? null,
+                'ocr_doc_type' => $docType?->value ?? null,
+            ]);
+
+            return;
+        }
+
         if (app(OCRService::class)->requiresOcrNotifications($docType)) {
             try {
                 event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed', null, $docType?->value, $this->userId));
@@ -200,7 +229,7 @@ class PopulateDocumentData implements ShouldQueue
                     'document_type' => $docType?->value,
                     'user_id' => $this->userId,
                 ]);
-            } catch (\Exception $notificationException) {
+            } catch (Exception $notificationException) {
                 LoggerService::info(self::class.' - Failed to send OCR failure notification', extra: [
                     'quote_code' => $this->quote?->code ?? null,
                     'document_type' => $docType?->value ?? null,

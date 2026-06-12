@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
@@ -23,6 +24,7 @@ use App\Models\HealthQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteStatusLogService;
 use App\Services\SLA\SLAService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -34,10 +36,21 @@ class HealthQuoteObserver
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
+    private const LOG_HEALTH_TRANSACTION_APPROVED_FAILED = 'HealthQuoteObserver - dispatch HealthTransactionApproved event failed';
+    private const LOG_PRIVATE_CLIENT_UPDATED_FAILED = 'HealthQuoteObserver - dispatch PrivateClientUpdatedEvent failed';
+
     public function updating(HealthQuote $quote): void
     {
-        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
-            $quote->quote_status_date = now();
+        if ($quote->isDirty('quote_status_id')) {
+            app(QuoteStatusLogService::class)->createQuoteStatusLog(
+                QuoteTypeId::Health,
+                $quote,
+                $quote->getOriginal('quote_status_id'),
+            );
+
+            if (! $quote->isDirty('quote_status_date')) {
+                $quote->quote_status_date = now();
+            }
         }
     }
 
@@ -55,7 +68,14 @@ class HealthQuoteObserver
             $healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
             // Trigger the event for transaction approval
-            HealthTransactionApproved::dispatch($healthQuote);
+            try {
+                HealthTransactionApproved::dispatch($healthQuote);
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_HEALTH_TRANSACTION_APPROVED_FAILED, [
+                    'uuid' => $healthQuote->uuid,
+                    'quote_status_id' => $healthQuote->quote_status_id,
+                ], exception: $e);
+            }
             $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at, 'is_quote_locked' => true];
         }
 
@@ -155,9 +175,27 @@ class HealthQuoteObserver
 
         if (
             isset($dirty['quote_status_id']) &&
-            in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicyBooked])
+            $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
         ) {
-            event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
+            try {
+                event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
+            } catch (Exception $e) {
+                LoggerService::warning(self::LOG_PRIVATE_CLIENT_UPDATED_FAILED, [
+                    'uuid' => $healthQuote->uuid,
+                    'quote_status_id' => $healthQuote->quote_status_id,
+                ], exception: $e);
+            }
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                QuotePolicyBooked::dispatch($healthQuote->uuid, QuoteTypeId::Health);
+            } catch (Exception $e) {
+                LoggerService::error('HealthQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $healthQuote->uuid]);
+            }
         }
 
         if (

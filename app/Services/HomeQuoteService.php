@@ -28,6 +28,8 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -111,6 +113,7 @@ class HomeQuoteService extends BaseService
             'rb.name as renewal_batch_text',
             'hqr.previous_quote_policy_number',
             'hqr.previous_quote_policy_premium',
+            'hqr.previous_quote_policy_commission',
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
             'hqr.renewal_import_code',
@@ -174,7 +177,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
-                $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id ORDER BY customer_insured.updated_at DESC LIMIT 1)', [QuoteTypeId::Home]);
+                $insuredCustomerMapping->where('ic.is_active', '=', true);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
@@ -204,49 +207,64 @@ class HomeQuoteService extends BaseService
         );
     }
 
-    public function saveHomeQuote(Request $request)
+    public function saveHomeQuote($data)
     {
-        $sourceName = config('constants.SOURCE_NAME');
-        $appUrl = config('constants.APP_URL');
-        $dataArr = [
-            'firstName' => $request->first_name,
-            'lastName' => $request->last_name,
-            'email' => $request->email,
-            'address' => $request->address,
-            'mobileNo' => $request->mobile_no,
-            'companyName' => $request->company_name,
-            'companyAddress' => $request->company_address,
-            'contentsAed' => $request->contents_aed,
-            'premium' => $request->premium,
-            'iamPossesionTypeId' => $request->iam_possesion_type_id,
-            'iliveinAccommodationTypeId' => $request->ilivein_accommodation_type_id,
-            'personalBelongingsAed' => $request->personal_belongings_aed,
-            'policyNumber' => $request->policy_number,
-            'buildingAed' => $request->building_aed,
-            'hasContents' => $request->has_contents == 'on' ? true : false,
-            'nationalityId' => $request->nationality_id,
-            'hasBuilding' => $request->has_building == 'on' ? true : false,
-            'hasPersonalBelongings' => $request->has_personal_belongings == 'on' ? true : false,
-            'source' => $sourceName,
-            'isPropertyRentedHolidayHome' => $request->owner_occupancy_type_id == 'on' ? true : false,
-            'referenceUrl' => $appUrl,
-            'dob' => $request->dob ?? null,
-            'gender' => $request->gender ?? null,
+        // This method is used for duplicate quote cases
+        $homeQuote = [
+            'firstName' => $data['first_name'],
+            'lastName' => $data['last_name'],
+            'email' => $data['email'],
+            'mobileNo' => $data['mobile_no'],
         ];
 
-        if (! Auth::user()->hasRole('ADMIN')) {
-            $dataArr['advisorId'] = Auth::user()->id;
+        // Add optional fields only if they are set and not empty
+        $optionalFields = [
+            'hasContents' => 'has_contents',
+            'hasBuilding' => 'has_building',
+            'hasClaimedLosses' => 'have_claimed_losses',
+            'buildingValue' => 'building_aed',
+            'hasPersonalBelongings' => 'has_personal_belongings',
+            'ownerOccupancyTypeId' => 'owner_occupancy_type_id',
+            'accommodationTypeId' => 'ilivein_accommodation_type_id',
+            'possessionTypeId' => 'iam_possesion_type_id',
+            'subAreaId' => 'sub_area_id',
+            'contentsValueId' => 'contents_aed',
+            'personalBelongingsValueId' => 'personal_belongings_aed',
+            'coverageTypeId' => 'type_of_coverage_you_need',
+            'address' => 'address',
+            'dob' => 'dob',
+            'nationalityId' => 'nationality_id',
+            'gender' => 'gender',
+            'companyName' => 'company_name',
+            'companyAddress' => 'company_address',
+        ];
+
+        foreach ($optionalFields as $key => $field) {
+            if (isset($data[$field]) && $data[$field] !== null && $data[$field] !== '') {
+                // Handle boolean fields
+                if (in_array($field, ['has_contents', 'has_building', 'have_claimed_losses', 'has_personal_belongings'])) {
+                    $homeQuote[$key] = (bool) $data[$field];
+                } else {
+                    $homeQuote[$key] = $data[$field];
+                }
+            }
         }
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
+        // Add standard fields
+        $homeQuote['source'] = config('constants.SOURCE_NAME');
+        $homeQuote['referenceUrl'] = config('constants.APP_URL');
+        $homeQuote['advisorId'] = (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null;
+        $homeQuote['quoteTypeId'] = QuoteTypeId::Home;
+        $homeQuote['lang'] = 'EN';
+        $homeQuote['device'] = 'DESKTOP';
+        $homeQuote['createdById'] = auth()->user()->id;
 
-        if (isset($response->quoteUID)) {
-            $this->savePremium(quoteTypeCode::HomeQuote, $request, $response);
+        LoggerService::info('saveHomeQuote: ', [
+            'address' => $data['address'] ?? null,
+            'nationality_id' => $data['nationality_id'] ?? null,
+        ]);
 
-            $this->selfAssign(QuoteTypes::HOME, $response->quoteUID);
-        }
-
-        return $response;
+        return CapiRequestService::sendCAPIRequest('/api/v2-save-home-quote', $homeQuote);
     }
 
     public function getGridData($model, $request)
@@ -828,7 +846,7 @@ class HomeQuoteService extends BaseService
             }
         }
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -853,7 +871,7 @@ class HomeQuoteService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -1185,7 +1203,7 @@ class HomeQuoteService extends BaseService
     /**
      * Fetch the document type by code.
      *
-     * @return \App\Models\DocumentType|null
+     * @return DocumentType|null
      */
     private function getDocumentType(string $code)
     {

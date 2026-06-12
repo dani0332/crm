@@ -16,6 +16,8 @@ const page = usePage();
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
+const quoteTypeEnum = page.props.quoteTypes;
 
 // const { isRequired } = useRules();
 
@@ -25,8 +27,8 @@ const filters = reactive({
   tomorrowDate: '',
   thisWeek: [],
   customDate: [],
-  teams: [],
-  quoteType: '',
+  selectedTeams: [],
+  quoteTypeId: '',
   selectedAdvisor: '',
   userIds: [],
   statusId: [],
@@ -66,7 +68,7 @@ function onReset() {
 }
 const quoteTypesOptions = computed(() => {
   return props.defaultFilters.quoteTypes.map(method => ({
-    value: method.text,
+    value: method.id,
     label: method.text,
   }));
 });
@@ -176,61 +178,49 @@ function showCustomDate() {
   filters.expireDate = '';
   filters.thisWeek = [];
 }
+
+// Convert quoteTypeEnum array to a mapping object for easy lookup
+const quoteTypeMapping = computed(() => {
+  const mapping = {};
+  quoteTypeEnum.forEach(qt => {
+    mapping[qt.id] = qt.name;
+  });
+  return mapping;
+});
+
 function setUrl(advisor_id, quote_status_id, created_at_start, created_at_end) {
   let url = '';
 
-  if (!filters || !filters.quoteType) {
+  if (!filters || !filters.quoteTypeId) {
     notification.error({
       title: 'Please select a line of business.',
       position: 'top',
     });
   } else {
-    const quoteTypeMapping = {
-      'Car Insurance': 'car',
-      'Health Insurance': 'health',
-      'Business Insurance': 'business',
-      'Bike Insurance': 'bike',
-      'Life Insurance': 'life',
-      'Pet Insurance': 'pet',
-      'Jetski Insurance': 'jetski',
-      'Yacht Insurance': 'yacht',
-      'Travel Insurance': 'travel',
-      'Cycle Insurance': 'cycle',
-      'Home Insurance': 'home',
-    };
+    const formattedQuoteType =
+      quoteTypeMapping.value[filters.quoteTypeId]?.toLowerCase();
 
     const personalQuoteTypes = new Set([
-      'Home Insurance',
-      'Life Insurance',
-      'Bike Insurance',
-      'Jetski Insurance',
-      'Cycle Insurance',
-      'Pet Insurance',
-      'Yacht Insurance',
+      quoteTypeIdEnum.Home,
+      quoteTypeIdEnum.Life,
+      quoteTypeIdEnum.Bike,
+      quoteTypeIdEnum.Jetski,
+      quoteTypeIdEnum.Cycle,
+      quoteTypeIdEnum.Pet,
+      quoteTypeIdEnum.Yacht,
     ]);
-
-    const formattedQuoteType = quoteTypeMapping[filters.quoteType];
 
     const quoteStatusParams = quote_status_id
       .map(id => `quote_status_id[]=${id}`)
       .join('&');
 
-    const paymentStatusIds = [
-      paymentStatusEnum.AUTHORISED,
-      paymentStatusEnum.PENDING,
-      paymentStatusEnum.PAYMENT_LINK_REQUESTED,
-    ];
-    const paymentStatusParams = paymentStatusIds
-      .map(id => `payment_status_id[]=${id}`)
-      .join('&');
-
-    url = `/${personalQuoteTypes.has(filters.quoteType) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&${paymentStatusParams}&created_at_start=${created_at_start}&created_at_end=${created_at_end}`;
+    url = `/${personalQuoteTypes.has(filters.quoteTypeId) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&payment_status_id=4&created_at_start=${created_at_start}&created_at_end=${created_at_end}`;
     window.location.href = url;
   }
 }
 
 watch(
-  () => filters.quoteType,
+  () => filters.quoteTypeId,
   newQuoteType => {
     if (newQuoteType) {
       onSubmit(true);
@@ -249,7 +239,7 @@ onMounted(() => {
 });
 
 const isCarLob = computed(() => {
-  return filters.quoteType === 'Car Insurance';
+  return filters.quoteTypeId === quoteTypeIdEnum.Car;
 });
 
 const registrationTypeOptions = [
@@ -282,7 +272,7 @@ const isVehicleUseDisabled = computed(() => {
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <x-select
         label="Teams"
-        v-model="filters.teams"
+        v-model="filters.selectedTeams"
         placeholder="Search By Teams"
         :options="teams"
         :rules="[maxSelections(3)]"
@@ -293,13 +283,13 @@ const isVehicleUseDisabled = computed(() => {
       >
         <template #content-footer>
           <ui-select-actions
-            @select-all="filters.teams = teams.map(team => team.value)"
-            @clear="filters.teams = []"
+            @select-all="filters.selectedTeams = teams.map(team => team.value)"
+            @clear="filters.selectedTeams = []"
           />
         </template>
       </x-select>
       <x-select
-        v-model="filters.quoteType"
+        v-model="filters.quoteTypeId"
         label="Line of Business"
         placeholder="Select Line of Business"
         :options="quoteTypesOptions"
@@ -487,6 +477,7 @@ const isVehicleUseDisabled = computed(() => {
       current: props.reportData.current_page,
       from: props.reportData.from,
       to: props.reportData.to,
+      total: props.reportData.total,
     }"
   />
 </template>

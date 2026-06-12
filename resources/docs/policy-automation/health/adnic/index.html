@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADNIC Health Insurance Automation - Complete Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .status-badge {
+        display: inline-block;
+        background: #27ae60;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 0.9em;
+        font-weight: 600;
+      }
+
+      .overview-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .overview-section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .process-flow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 30px 0;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .process-step {
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        min-width: 200px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        position: relative;
+        flex: 1;
+      }
+
+      .process-step:not(:last-child):after {
+        content: '→';
+        position: absolute;
+        right: -25px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.5em;
+        color: #fff;
+      }
+
+      .process-step h4 {
+        margin-bottom: 8px;
+        font-size: 1.1em;
+      }
+
+      .process-step p {
+        font-size: 0.9em;
+        opacity: 0.9;
+      }
+
+      .documentation-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+        margin-top: 30px;
+      }
+
+      .doc-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-left: 4px solid #27ae60;
+      }
+
+      .doc-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+      }
+
+      .doc-card h3 {
+        color: #2c3e50;
+        font-size: 1.5em;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .doc-card .icon {
+        font-size: 1.3em;
+      }
+
+      .doc-card p {
+        color: #7f8c8d;
+        margin-bottom: 20px;
+        line-height: 1.7;
+      }
+
+      .doc-card .features {
+        list-style: none;
+        margin-bottom: 25px;
+      }
+
+      .doc-card .features li {
+        color: #555;
+        margin-bottom: 10px;
+        padding-left: 25px;
+        position: relative;
+        font-weight: 500;
+      }
+
+      .doc-card .features li:before {
+        content: '▶';
+        position: absolute;
+        left: 0;
+        color: #27ae60;
+        font-weight: bold;
+      }
+
+      .doc-link {
+        display: inline-block;
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        color: white;
+        text-decoration: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .doc-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .tech-item {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 12px;
+        padding: 20px;
+        border-left: 4px solid #27ae60;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .tech-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .tech-item strong {
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 8px;
+        font-size: 1.1em;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .documentation-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .process-flow {
+          flex-direction: column;
+        }
+
+        .process-step:not(:last-child):after {
+          content: '↓';
+          right: 50%;
+          top: 100%;
+          transform: translateX(50%);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/index.html">🏥 Health</a>
+        <span>></span>
+        <span>ADNIC</span>
+      </div>
+
+      <div class="header">
+        <h1>📋 ADNIC Health Insurance Automation</h1>
+        <p>Complete 3-Step Policy Issuance Automation System</p>
+        <span class="status-badge">✓ Production Ready</span>
+      </div>
+
+      <div class="overview-section">
+        <h2>❓ What is ADNIC Health Automation?</h2>
+        <p
+          style="
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.15em;
+            margin-bottom: 20px;
+            line-height: 1.8;
+          "
+        >
+          The ADNIC Health Insurance Automation system is a comprehensive,
+          production-ready solution that automates the complete policy issuance
+          workflow with <strong>ADNIC Insurance Company</strong>. Built using a
+          modular, service-oriented architecture with 10+ specialized services,
+          it handles everything from policy creation to final booking with
+          <strong>comprehensive audit trails</strong> and
+          <strong>error handling</strong>.
+        </p>
+
+        <div
+          style="
+            background: linear-gradient(135deg, #27ae60, #16a085);
+            padding: 25px;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 30px;
+          "
+        >
+          <h4 style="margin-bottom: 15px">💡 System Highlights</h4>
+          <p style="margin: 0; line-height: 1.7">
+            <strong>ADNIC Health Automation</strong> eliminates manual
+            processing and integrates seamlessly with ADNIC's APIs:<br /><br />
+            ✓ <strong>10+ Specialized Services</strong> following SOLID
+            principles and design patterns<br />
+            ✓ <strong>3-Step Automation Workflow</strong> with state management
+            and progress tracking<br />
+            ✓ <strong>3 API Endpoints</strong> for document upload, policy
+            creation, and document download<br />
+            ✓ <strong>STP-Only Requirement</strong> - automation only runs for
+            STP cases<br />
+            ✓ <strong>Comprehensive Logging</strong> at every step using
+            LoggerService<br />
+            ✓ <strong>Pre-validation</strong> before API calls to prevent
+            unnecessary failures<br />
+            ✓ <strong>Retry Mechanisms</strong> for timeout handling and
+            transient failures<br />
+            ✓ <strong>Azure Storage Integration</strong> for document
+            management<br />
+            ✓ <strong>STP-Only Automation</strong> - runs only for STP cases<br />
+            ✓ <strong>Per-Member Document Upload</strong> - documents uploaded
+            separately for each insured member<br />
+            ✓ <strong>Pre-Captured Payment</strong> - payment already authorized
+            before automation starts
+          </p>
+        </div>
+      </div>
+
+      <div class="overview-section">
+        <h2>💳 Pre-Automation Payment Capture</h2>
+        <div
+          style="
+            background: linear-gradient(135deg, #27ae60, #229954);
+            padding: 25px;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 30px;
+            border-left: 5px solid #fff;
+          "
+        >
+          <h4 style="margin-bottom: 15px">🔑 Critical Prerequisite Step</h4>
+          <p style="margin: 0; line-height: 1.7">
+            <strong
+              >Auto-capture executes BEFORE automation workflow starts</strong
+            >
+            during the split payment approval process:<br /><br />
+            ✓ <strong>When:</strong> During
+            <code>SplitPaymentService->processSplitPaymentApprove()</code>
+            execution (background job <code>CcPaymentProcess</code>)<br />
+            ✓ <strong>What:</strong> Captures authorized payments via
+            Marshall/Tap API using <code>CRUDService->capturePayment()</code
+            ><br />
+            ✓ <strong>Code Location:</strong>
+            <code>SplitPaymentService.php</code> lines 770-792, 1475-1487<br />
+            ✓ <strong>Marshall API:</strong> Creates
+            <code>PaymentAction</code> record with
+            <code>action_type: 'CAPTURE'</code> and <code>amount</code><br />
+            ✓ <strong>Retry Logic:</strong> Up to 3 attempts with 1-second delay
+            between retries<br /><br />
+            <strong>Success:</strong> If capture succeeds → Automation workflow
+            is scheduled via <code>createPolicyIssuanceAutomation()</code><br />
+            <strong>Failure:</strong> If capture fails →
+            <code>handleAutomationError()</code> sets
+            <code>AUTO_CAPTURE_FAILED_STATUS_ID</code> and allocates to team
+            (prevents automation from starting)<br /><br />
+            <strong
+              >This is why documentation refers to "pre-captured"
+              payments</strong
+            >
+            - the payment must be successfully captured before any automation
+            steps can execute.
+          </p>
+        </div>
+      </div>
+
+      <div class="overview-section">
+        <h2>🔄 Complete Automation Workflow</h2>
+        <p
+          style="
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+          "
+        >
+          Sequential 3-step automation process with state management and error
+          handling at each stage
+        </p>
+
+        <div class="process-flow">
+          <div class="process-step">
+            <h4>1️⃣ Upload Documents</h4>
+            <p>
+              Upload required documents per member (Emirates ID, etc.) to ADNIC
+            </p>
+          </div>
+          <div class="process-step">
+            <h4>2️⃣ Issue Policy</h4>
+            <p>
+              Create policy with ADNIC API using pre-captured payment reference
+            </p>
+          </div>
+          <div class="process-step">
+            <h4>3️⃣ Upload Policy Docs</h4>
+            <p>
+              Download all 3 policy documents from ADNIC and upload to IMCRM
+            </p>
+          </div>
+        </div>
+
+        <div
+          style="
+            margin-top: 30px;
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 10px;
+          "
+        >
+          <h4 style="color: #27ae60; margin-bottom: 15px">
+            📊 Workflow Details
+          </h4>
+          <div class="tech-grid">
+            <div
+              style="
+                text-align: center;
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+              "
+            >
+              <div style="font-size: 1.5em; color: #27ae60; font-weight: bold">
+                3
+              </div>
+              <div style="color: #7f8c8d; font-size: 0.9em">API Endpoints</div>
+            </div>
+            <div
+              style="
+                text-align: center;
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+              "
+            >
+              <div style="font-size: 1.5em; color: #27ae60; font-weight: bold">
+                3
+              </div>
+              <div style="color: #7f8c8d; font-size: 0.9em">
+                Automation Steps
+              </div>
+            </div>
+            <div
+              style="
+                text-align: center;
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+              "
+            >
+              <div style="font-size: 1.5em; color: #27ae60; font-weight: bold">
+                3
+              </div>
+              <div style="color: #7f8c8d; font-size: 0.9em">
+                Policy Documents
+              </div>
+            </div>
+            <div
+              style="
+                text-align: center;
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+              "
+            >
+              <div style="font-size: 1.5em; color: #27ae60; font-weight: bold">
+                100%
+              </div>
+              <div style="color: #7f8c8d; font-size: 0.9em">Audit Coverage</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overview-section">
+        <h2>📚 Complete Documentation</h2>
+        <div class="documentation-grid">
+          <div class="doc-card">
+            <h3>
+              <span class="icon">🏗️</span>
+              System Architecture
+            </h3>
+            <p>
+              Comprehensive technical documentation of the ADNIC automation
+              architecture including service layers, dependencies, and design
+              patterns.
+            </p>
+            <ul class="features">
+              <li>10+ Specialized Services</li>
+              <li>Service-Oriented Architecture</li>
+              <li>SOLID Principles</li>
+              <li>6 Design Patterns</li>
+              <li>Dependency Injection</li>
+              <li>Interface Implementation</li>
+            </ul>
+            <a
+              href="/docs/policy-automation/health/adnic/architecture.html"
+              class="doc-link"
+              >View Architecture →</a
+            >
+          </div>
+
+          <div class="doc-card">
+            <h3>
+              <span class="icon">🔄</span>
+              Automation Flow
+            </h3>
+            <p>
+              Detailed step-by-step automation workflow with data flow diagrams,
+              API interactions, and success/failure criteria for each step.
+            </p>
+            <ul class="features">
+              <li>Step 1: Upload Documents</li>
+              <li>Step 2: Issue Policy</li>
+              <li>Step 3: Upload Policy Docs</li>
+              <li>State Management</li>
+              <li>Progress Tracking</li>
+              <li>STP-Only Requirement</li>
+            </ul>
+            <a
+              href="/docs/policy-automation/health/adnic/automation-flow.html"
+              class="doc-link"
+              >View Flow →</a
+            >
+          </div>
+
+          <div class="doc-card">
+            <h3>
+              <span class="icon">⚙️</span>
+              Services Overview
+            </h3>
+            <p>
+              Complete reference for all 10+ specialized services including
+              responsibilities, methods, dependencies, and usage patterns.
+            </p>
+            <ul class="features">
+              <li>AdnicInsuranceService</li>
+              <li>AdnicStepExecutor</li>
+              <li>AdnicApiService</li>
+              <li>AdnicValidationService</li>
+              <li>AdnicDocumentHandler</li>
+              <li>+5 More Services</li>
+            </ul>
+            <a
+              href="/docs/policy-automation/health/adnic/services-overview.html"
+              class="doc-link"
+              >View Services →</a
+            >
+          </div>
+
+          <div class="doc-card">
+            <h3>
+              <span class="icon">🔌</span>
+              API Integration
+            </h3>
+            <p>
+              ADNIC API endpoints documentation with request/response formats,
+              authentication, headers, and payload structures.
+            </p>
+            <ul class="features">
+              <li>Generate Policy API</li>
+              <li>Upload Document API</li>
+              <li>Download Document API</li>
+              <li>Authentication & Headers</li>
+              <li>Request Payloads</li>
+              <li>Response Parsing</li>
+            </ul>
+            <a
+              href="/docs/policy-automation/health/adnic/api-integration.html"
+              class="doc-link"
+              >View API Docs →</a
+            >
+          </div>
+
+          <div class="doc-card">
+            <h3>
+              <span class="icon">⚠️</span>
+              Error Handling
+            </h3>
+            <p>
+              Comprehensive error handling strategies including validation, API
+              errors, retry mechanisms, and failure recovery patterns.
+            </p>
+            <ul class="features">
+              <li>Pre-validation Checks</li>
+              <li>API Error Handling</li>
+              <li>Timeout & Retry Logic</li>
+              <li>Exception Management</li>
+              <li>Status Updates</li>
+              <li>Logging Patterns</li>
+            </ul>
+            <a
+              href="/docs/policy-automation/health/adnic/error-handling.html"
+              class="doc-link"
+              >View Error Handling →</a
+            >
+          </div>
+
+          <div class="doc-card">
+            <h3>
+              <span class="icon">🔧</span>
+              Configuration
+            </h3>
+            <p>
+              Configuration management guide including environment variables,
+              feature toggles, application storage, and runtime settings.
+            </p>
+            <ul class="features">
+              <li>Environment Configuration</li>
+              <li>Feature Toggles</li>
+              <li>Application Storage</li>
+              <li>API Timeout Settings</li>
+              <li>Retry Configuration</li>
+              <li>Document Type Mapping</li>
+            </ul>
+            <a
+              href="/docs/policy-automation/health/adnic/configuration.html"
+              class="doc-link"
+              >View Configuration →</a
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="overview-section">
+        <h2>🎯 Key Technical Features</h2>
+        <div class="tech-grid">
+          <div class="tech-item">
+            <strong>Strategy Pattern</strong>
+            Provider-specific implementation of PolicyIssuanceInterface
+          </div>
+          <div class="tech-item">
+            <strong>Chain of Responsibility</strong>
+            Sequential step execution through service chain
+          </div>
+          <div class="tech-item">
+            <strong>Builder Pattern</strong>
+            Complex payload construction with RequestBuilder
+          </div>
+          <div class="tech-item">
+            <strong>Facade Pattern</strong>
+            Simplified HTTP client interface with AdnicHttpFacade
+          </div>
+          <div class="tech-item">
+            <strong>Adapter Pattern</strong>
+            Response normalization to standard structure
+          </div>
+          <div class="tech-item">
+            <strong>Command Pattern</strong>
+            Step handlers with standardized execution
+          </div>
+          <div class="tech-item">
+            <strong>Dependency Injection</strong>
+            Constructor-based DI for all services
+          </div>
+          <div class="tech-item">
+            <strong>SOLID Principles</strong>
+            Single responsibility for each service
+          </div>
+          <div class="tech-item">
+            <strong>Comprehensive Logging</strong>
+            LoggerService integration at every step
+          </div>
+          <div class="tech-item">
+            <strong>Pre-validation</strong>
+            Validate before API calls to prevent failures
+          </div>
+          <div class="tech-item">
+            <strong>Retry Mechanisms</strong>
+            Timeout handling with configurable retry
+          </div>
+          <div class="tech-item">
+            <strong>Feature Toggles</strong>
+            Runtime enable/disable via ApplicationStorage
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p><strong>ADNIC Health Insurance Automation Documentation</strong></p>
+        <p>Part of the Policy Issuance Automation System</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Version 1.0 | Last Updated: February 2026 | Production Ready
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

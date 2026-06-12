@@ -2,15 +2,28 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
+use App\Enums\PermissionsEnum;
+use App\Enums\RuleTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RuleRequest;
+use App\Models\LeadSource;
+use App\Models\QuoteType;
 use App\Models\Rule;
 use App\Models\RuleType;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class RulesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_LIST)->only('index');
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_LIST)->only('show');
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_CREATE)->only(['create', 'store']);
+        $this->middleware('can:'.PermissionsEnum::RULE_CONFIG_UPDATE)->only(['edit', 'update']);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -45,15 +58,24 @@ class RulesController extends Controller
         ]);
     }
 
+    private function getLeadSourcesList()
+    {
+        return LeadSource::select('id', 'name')
+            ->withActive()
+            ->get();
+    }
+
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
+            'quoteTypes' => QuoteType::select('id', 'code as name')->get(),
+            'leadSourcesList' => $this->getLeadSourcesList(),
+            'ruleTypeEnumLeadSource' => RuleTypeEnum::LEAD_SOURCE,
         ]);
     }
 
@@ -62,16 +84,42 @@ class RulesController extends Controller
      */
     public function store(RuleRequest $request)
     {
-        $rule = Rule::create($request->except(['rule_users']));
+        return DB::transaction(function () use ($request) {
+            $rule = Rule::create($request->except(['rule_users', 'lead_source_id', 'utm_source', 'utm_campaign', 'utm_medium']));
 
-        // Attaching users
-        $response = $rule->users()->attach($request->rule_users);
+            // Create rule detail if lead_source_id is provided
+            if ($request->filled('lead_source_id')) {
+                $leadSource = LeadSource::find($request->lead_source_id);
 
-        if (! empty($response->errors) || ! empty($response->msg)) {
-            vAbort($response->msg);
-        }
+                if ($leadSource && ! $leadSource->is_applicable_for_rules) {
+                    $leadSource->update(['is_applicable_for_rules' => true]);
+                }
 
-        return redirect(route('rule.show', $rule->id))->with('message', 'Rule is created successfully.');
+                $rule->ruleDetail()->create([
+                    'lead_source_id' => $leadSource->id,
+                    'utm_source' => $request->utm_source,
+                    'utm_campaign' => $request->utm_campaign,
+                    'utm_medium' => $request->utm_medium,
+                ]);
+
+                if ($request->filled('rule_users')) {
+                    $rule->leadSources()->createMany(
+                        collect($request->rule_users)->map(fn ($userId) => [
+                            'lead_source_id' => $request->lead_source_id,
+                            'user_id' => $userId,
+                        ])->toArray()
+                    );
+                }
+            }
+
+            $response = $rule->users()->attach($request->rule_users);
+
+            if (! empty($response->errors) || ! empty($response->msg)) {
+                vAbort($response->msg);
+            }
+
+            return redirect(route('rule.show', $rule->id))->with('message', 'Rule is created successfully.');
+        });
     }
 
     /**
@@ -79,10 +127,11 @@ class RulesController extends Controller
      */
     public function show($id)
     {
-        $rule = Rule::with('ruleType')->with(['ruleUsers',  'quoteType'])->findOrFail($id);
+        $rule = Rule::with(['ruleType', 'ruleUsers', 'quoteType', 'ruleDetail.leadSource'])->findOrFail($id);
 
         return inertia('Admin/AllocationConfig/Rules/Show', [
             'rule' => $rule,
+            'ruleTypeEnumLeadSource' => RuleTypeEnum::LEAD_SOURCE,
         ]);
     }
 
@@ -96,9 +145,13 @@ class RulesController extends Controller
         return inertia('Admin/AllocationConfig/Rules/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
             'rulesTypeList' => RuleType::select('id', 'name')->get(),
+            'quoteTypes' => QuoteType::select('id', 'code as name')->get(),
+            'leadSourcesList' => $this->getLeadSourcesList(),
+            'ruleTypeEnumLeadSource' => RuleTypeEnum::LEAD_SOURCE,
             'rule' => $rule->load([
                 'ruleUsers',
                 'ruleType',
+                'ruleDetail',
                 'leadSource',
                 'quoteType',
             ]),
@@ -110,17 +163,54 @@ class RulesController extends Controller
      */
     public function update(RuleRequest $request, $id)
     {
-        $rule = Rule::findOrFail($id);
-        $rule->update($request->except('rule_users'));
+        return DB::transaction(function () use ($request, $id) {
+            $rule = Rule::findOrFail($id);
 
-        // Sync users
-        $response = $rule->users()->sync($request->rule_users);
+            $rule->update($request->except(['rule_users', 'lead_source_id', 'utm_source', 'utm_campaign', 'utm_medium']));
 
-        if (! empty($response->errors) || ! empty($response->msg)) {
-            vAbort($response->msg);
-        }
+            if ($request->filled('lead_source_id') && $request->get('rule_type') == RuleTypeEnum::LEAD_SOURCE) {
+                $leadSource = LeadSource::find($request->lead_source_id);
+                if ($leadSource && ! $leadSource->is_applicable_for_rules) {
+                    $leadSource->update(['is_applicable_for_rules' => true]);
+                }
 
-        return redirect(route('rule.show', $id))->with('message', 'Rule is updated successfully.');
+                $rule->ruleDetail()->updateOrCreate(
+                    ['rule_id' => $rule->id],
+                    [
+                        'lead_source_id' => $leadSource->id,
+                        'utm_source' => $request->utm_source,
+                        'utm_campaign' => $request->utm_campaign,
+                        'utm_medium' => $request->utm_medium,
+                    ]
+                );
+
+                if ($request->filled('rule_users')) {
+                    $rule->leadSources()->delete();
+                    $rule->leadSources()->createMany(
+                        collect($request->rule_users)->map(fn ($userId) => [
+                            'lead_source_id' => $request->lead_source_id,
+                            'user_id' => $userId,
+                        ])->toArray()
+                    );
+                }
+            } else {
+                $rule->ruleDetail()->update([
+                    'lead_source_id' => null,
+                    'utm_source' => null,
+                    'utm_campaign' => null,
+                    'utm_medium' => null,
+                ]);
+                $rule->leadSources()->delete();
+            }
+
+            $response = $rule->users()->sync($request->rule_users);
+
+            if (! empty($response->errors) || ! empty($response->msg)) {
+                vAbort($response->msg);
+            }
+
+            return redirect(route('rule.show', $id))->with('message', 'Rule is updated successfully.');
+        });
     }
 
 }

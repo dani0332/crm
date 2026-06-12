@@ -2,19 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
-use App\Http\Requests\OcrLogsRequest;
+use App\Enums\RolesEnum;
+use App\Http\Requests\LogsRequest;
+use App\Http\Requests\UaeSigningPassLogsRequest;
+use App\Models\CyberInsurerRequestResponses;
+use App\Models\CyberQuote;
+use App\Models\DeviceInsurerRequestResponses;
+use App\Models\DeviceQuote;
+use App\Models\EpLog;
+use App\Models\HealthInsurerRequestResponse;
+use App\Models\HealthQuote;
+use App\Models\HealthRoutingLog;
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
 use App\Models\LifeInsurerRequestResponses;
 use App\Models\LifeQuote;
 use App\Models\OcrLog;
+use App\Models\SavingsInsurerRequestResponse;
+use App\Models\SavingsQuote;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
+use App\Models\User;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\UaePass\UaeSigningPassLogsPresenter;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -24,15 +40,20 @@ class AuditableController extends Controller
 {
     use GenericQueriesAllLobs;
 
+    public function __construct(
+        private BaseService $baseService,
+        private PolicyIssuanceService $policyIssuanceService,
+    ) {
+        $this->middleware('permission:'.PermissionsEnum::ILA_CONFIG_ALL_LOB)->only(['loadAuditLogs', 'loadAuditableComponent']);
+    }
+
     public function loadAuditableComponent(Request $request)
     {
         $auditableType = $request->auditableType;
         $auditableId = $request->auditableId;
 
         if ($request->jsonData) {
-            $service = app()->make(BaseService::class);
-
-            return response()->json($service->audits($auditableId, $auditableType));
+            return response()->json($this->baseService->audits($auditableId, $auditableType));
         }
 
         return view('auditable', compact('auditableId', 'auditableType'));
@@ -85,7 +106,9 @@ class AuditableController extends Controller
         $quoteType = QuoteTypes::getName($request->quoteTypeId)->value ?? '';
         $quote = $this->getQuoteObject($quoteType, $request->quoteId);
 
-        if (empty($quote) || empty($quoteType) || $quoteType !== QuoteTypes::CAR->value) {
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value];
+
+        if (empty($quote) || empty($quoteType) || ! in_array($quoteType, $allowedQuoteTypes)) {
             return response()->json([
                 'success' => false,
                 'message' => empty($quote) ? 'Quote not found' : 'Quote type not supported',
@@ -98,10 +121,20 @@ class AuditableController extends Controller
             ->sortByDesc('created_at')
             ->values();
 
+        $policyIssuance = $quote->policyIssuance;
+        $reTriggerPolicyAutomationEligible = false;
+        if ($policyIssuance) {
+            $policyIssuance->loadMissing('insuranceProvider');
+            $reTriggerPolicyAutomationEligible = $this->policyIssuanceService
+                ->shouldOfferReTriggerPolicyAutomation($policyIssuance);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Policy issuance API logs retrieved successfully',
             'data' => $policyIssuanceLogs,
+            'policyIssuance' => $policyIssuance ?? null,
+            'reTriggerPolicyAutomationEligible' => $reTriggerPolicyAutomationEligible,
         ]);
     }
 
@@ -135,9 +168,10 @@ class AuditableController extends Controller
 
             $query = $this->getQueryBuilderForAuditableType($auditableType);
 
+            // Use string direction so MongoDB\Laravel\Query\Builder maps to -1/1; orderByDesc() passes
+            // SortDirection enum which cannot be BSON-serialized for Mongo find sort options.
             $query->where('quote_uuid', $quoteUID)
-                ->orderByDesc('created_at');
-
+                ->orderBy('created_at', 'desc');
             if ($insuranceProvider) {
                 $query->where('provider_id', $insuranceProvider);
             }
@@ -166,6 +200,48 @@ class AuditableController extends Controller
      */
     public function getQuoteAudits(Request $request)
     {
+        $user = $request->user();
+        $quoteType = $request->input('quote_type');
+        $quoteTypeString = is_string($quoteType) && $quoteType !== '' ? $quoteType : null;
+
+        $primaryAuditableType = null;
+        if ($quoteTypeString !== null) {
+            try {
+                $primaryAuditableType = AuditRepository::primaryAuditableTypeForQuoteType($quoteTypeString);
+            } catch (\Throwable) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to view audit logs.',
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            if ($primaryAuditableType === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to view audit logs.',
+                ], Response::HTTP_FORBIDDEN);
+            }
+        }
+
+        $requiresSelfAuditableId = $primaryAuditableType === User::class;
+
+        $forbidden = $requiresSelfAuditableId
+            ? (
+                ! $user->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering])
+                && (
+                    (int) $user->id !== (int) $request->input('auditable_id')
+                    || ! $user->hasAnyPermission([PermissionsEnum::Auditable])
+                )
+            )
+            : ! $user->hasAnyPermission([PermissionsEnum::Auditable]);
+
+        if ($forbidden) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to view audit logs.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         $audits = AuditRepository::getQuoteAudits();
 
         return ($request->jsonData) ? response()->json($audits) : $audits;
@@ -183,12 +259,22 @@ class AuditableController extends Controller
             case LifeQuote::class:
                 return LifeInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
+            case CyberQuote::class:
+                return CyberInsurerRequestResponses::with('insuranceProvider');
+            case DeviceQuote::class:
+                return DeviceInsurerRequestResponses::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
+            case HealthQuote::class:
+                return HealthInsurerRequestResponse::with('insuranceProvider')->whereNotIn('call_type', ['oAuth', 'login']);
+            case SavingsQuote::class:
+                return SavingsInsurerRequestResponse::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');
         }
     }
 
-    public function loadOcrLogs(OcrLogsRequest $request)
+    public function loadOcrLogs(LogsRequest $request)
     {
         try {
             $auditableType = $request->input('type');
@@ -229,6 +315,106 @@ class AuditableController extends Controller
                 'success' => false,
                 'message' => 'Failed to load OCR logs',
                 'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadHealthRoutingLogs(Request $request)
+    {
+        try {
+            $logs = HealthRoutingLog::with('user')
+                ->where('type', $request->type)
+                ->when($request->team_category, function ($query) use ($request) {
+                    $query->where('team_category', $request->team_category);
+                })
+                ->when($request->quote_request_id, function ($query) use ($request) {
+                    $query->where('quote_request_id', $request->quote_request_id);
+                })
+                ->orderByDesc('id')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load Health Routing Logs - ', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load Health Routing Logs',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadEpLogs(LogsRequest $request)
+    {
+        try {
+            $auditableType = $request->input('type');
+            $auditableId = $request->input('id');
+
+            $logs = EpLog::where('loggable_type', $auditableType)
+                ->where('loggable_id', $auditableId)
+                ->with('embeddedTransaction', 'embeddedTransaction.payment')
+                ->get()
+                ->map(function ($log) {
+                    return [
+                        'id' => $log->id,
+                        'event' => $log->event,
+                        'product_type' => $log->embeddedTransaction?->code ? substr($log->embeddedTransaction->code, 0, 3) : null,
+                        'captured_at' => $log->embeddedTransaction?->payment?->getRawOriginal('captured_at') ?? null,
+                        'values' => $log->values ?? null,
+                        'created_at' => $log->created_at,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+
+            LoggerService::error('Failed to load EP logs - ', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load EP logs',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function loadUaeSigningPassLogs(UaeSigningPassLogsRequest $request)
+    {
+        try {
+            $quoteUuid = $request->input('quote_uuid');
+            $quoteTypeId = (int) $request->input('quote_type_id');
+
+            LoggerService::info('Loading UAE Pass logs', [
+                'quote_uuid' => $quoteUuid,
+                'quote_type_id' => $quoteTypeId,
+            ]);
+
+            $logs = app(UaeSigningPassLogsPresenter::class)->mergedRows($quoteUuid, $quoteTypeId);
+
+            LoggerService::info('UAE Pass logs loaded successfully', [
+                'quote_uuid' => $quoteUuid,
+                'quote_type_id' => $quoteTypeId,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $logs,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to load UAE Pass logs', [], $e, [
+                'quote_uuid' => $request->input('quote_uuid'),
+                'quote_type_id' => $request->input('quote_type_id'),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load UAE Pass logs',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

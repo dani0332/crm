@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteDocumentsEnum;
@@ -13,6 +14,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SukoonMedexEnum;
+use App\Enums\VehicleTypeEnum;
 use App\Exceptions\EpEcbException;
 use App\Jobs\SyncSukoonDocumentsJob;
 use App\Models\ApplicationStorage;
@@ -94,8 +96,6 @@ class SukoonMedexService
             $this->policyStatus = $transaction->policy_status ?? '';
             $this->quotePolicy = $transaction->quote_policy ?? null;
             $this->certificateNumber = $transaction->certificate_number ?? null;
-
-            LoggerService::startQuoteLogging($this->currentQuote);
 
             if (! in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
                 throw new EpEcbException('Only (Car / Bike) LOB are eligible');
@@ -185,33 +185,59 @@ class SukoonMedexService
 
             }
 
+            // Capture before sync mutates policy_status (e.g. via updateTransaction).
+            $initialPolicyStatusBeforeDocumentsSync = $this->policyStatus;
+
             // sync documents then update commission
             // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument), (#16 viewQuotePolicy)
             $this->syncAndProcessSukoonDocuments();
 
-            if ($isSendEmail) {
-                $reqWatermarkedDocumentTypes = $this->transaction->documents
-                    ->whereIn('document_type_code', $this->sukoonInitialDocTypeCodes)
-                    ->where('is_watermarked', true)->pluck('document_type_code')->toArray();
-
-                $missingReqWatermarkedDocTypes = array_diff($this->sukoonInitialDocTypeCodes, $reqWatermarkedDocumentTypes);
-
-                // make sure email required watermarked documents is not missing
-                if (empty($missingReqWatermarkedDocTypes)) {
-                    $this->sendDocuments();
-                } else {
-                    LoggerService::info("{$this->logPrefix} Email watermarked documents are not saved, skipping sendDocuments");
-                }
-            }
+            $this->maybeSendDocumentsEmail($isSendEmail, $initialPolicyStatusBeforeDocumentsSync);
 
             $missingReqDocTypes = $this->getMissingReqDocTypes();
             if (! empty($missingReqDocTypes)) {
-                SyncSukoonDocumentsJob::dispatch($this->currentQuote, $this->quoteTypeId, $this->transaction)
+                SyncSukoonDocumentsJob::dispatch($this->currentQuote, $this->quoteTypeId, $this->transaction, $isSendEmail)
                     ->delay(now()->addMinutes(1));
             }
 
         } catch (Throwable $e) {
+            LoggerService::info("{$this->logPrefix} processPurchaseFlow failed", extra: ['exception' => $e->getMessage()]);
             throw $e;
+        }
+    }
+
+    /**
+     * Send customer documents email when enabled, watermarks exist, and policy just reached ready-for-Sage.
+     */
+    public function maybeSendDocumentsEmail(bool $isSendEmail, string $initialPolicyStatusBeforeDocumentsSync): void
+    {
+        if (! $isSendEmail) {
+            return;
+        }
+
+        $reqWatermarkedDocumentTypes = $this->transaction->documents
+            ->whereIn('document_type_code', $this->sukoonInitialDocTypeCodes)
+            ->where('is_watermarked', true)->pluck('document_type_code')->toArray();
+
+        $missingReqWatermarkedDocTypes = array_diff($this->sukoonInitialDocTypeCodes, $reqWatermarkedDocumentTypes);
+
+        $hasAllWatermarkedDocs = empty($missingReqWatermarkedDocTypes);
+        $hasAlreadySentDocument = EmbeddedTransactionEnum::checkPolicyStatusPassed(
+            $initialPolicyStatusBeforeDocumentsSync,
+            EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+        );
+        $isNowReadyForSage = $this->policyStatus === EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+
+        if (! $hasAllWatermarkedDocs) {
+            LoggerService::info("{$this->logPrefix} Email watermarked documents are not saved, skipping sendDocuments");
+        } elseif (! $hasAlreadySentDocument && $isNowReadyForSage) {
+            $this->sendDocuments();
+        } else {
+            LoggerService::info("{$this->logPrefix} Skipping sendDocuments", extra: [
+                'hasAlreadySentDocument' => $hasAlreadySentDocument,
+                'isNowReadyForSage' => $isNowReadyForSage,
+                'initialPolicyStatusBeforeDocumentsSync' => $initialPolicyStatusBeforeDocumentsSync,
+            ]);
         }
     }
 
@@ -392,7 +418,7 @@ class SukoonMedexService
     {
         $sageApiService = (new SageApiService);
         if ($this->currentQuote->quote_status_id != QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
-            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, null);
+            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED);
         }
 
         $request = new \stdClass;
@@ -406,7 +432,7 @@ class SukoonMedexService
         $createSageProcessResponse = $sageApiService->postBookPolicyToSage($request, $this->currentQuote);
 
         if (! $createSageProcessResponse['status']) {
-            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, null);
+            $sageApiService->updateAndLogQuoteStatus($this->currentQuote, $this->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED);
         }
 
         return $createSageProcessResponse;
@@ -737,6 +763,7 @@ class SukoonMedexService
     public function validateCustomerDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
+        $customerType = $latestInsuredData?->customer_type;
         $insuredKyc = $latestInsuredData?->insuredKyc;
 
         if (empty($insuredKyc)) {
@@ -745,7 +772,8 @@ class SukoonMedexService
 
         $missingFields = [];
 
-        if (empty($insuredKyc?->residential_address)) {
+        if ((empty($insuredKyc?->residential_address) && $customerType == CustomerTypeEnum::Individual) ||
+            (empty($insuredKyc?->registered_address) && $customerType == CustomerTypeEnum::Entity)) {
             $missingFields[] = 'residential-address';
         }
 
@@ -760,9 +788,11 @@ class SukoonMedexService
      * @param  mixed  $quote  The quote object.
      * @return array The prepared user details.
      */
+    // Reminder:: this function is used for Bike and Car quotes - already back tracked in the code
     private function prepareUserDetails($quote)
     {
         $latestInsuredData = $quote->latestInsured;
+        $customerType = $latestInsuredData?->customer_type;
         $insuredKyc = $latestInsuredData?->insuredKyc;
 
         if (! empty($quote->quoteRequestEntityMapping)) {
@@ -792,6 +822,8 @@ class SukoonMedexService
                 .'-'.substr($emirateIdNumber, 7, 7).'-'.substr($emirateIdNumber, 14, 1);
         }
 
+        $address = $customerType == CustomerTypeEnum::Individual ? $insuredKyc?->residential_address : $insuredKyc?->registered_address;
+
         return [
             'form_name' => 'personal_details',
             'title' => $title,
@@ -800,11 +832,11 @@ class SukoonMedexService
             'mobile' => '+9710502732524',
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'nationality' => 'AE',
-            'emirate' => $emirate->text ?? '',
+            'emirate' => $emirate?->text ?? '',
             'emirates_id_number' => $emirateIdNumber,
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
             'is_resident' => $emirate ? 'Yes' : 'No',
-            'address' => $insuredKyc?->residential_address ?? '',
+            'address' => $address ?? '',
         ];
     }
 
@@ -983,9 +1015,18 @@ class SukoonMedexService
      */
     private function prepareAdditionalData()
     {
-        $planOption = match ($this->quoteTypeId) {
-            QuoteTypeId::Car => "{$this->productSlug}-personal_non_commercial_vehicles",
-            QuoteTypeId::Bike => "{$this->productSlug}-personal_sports_mc",
+        // Check if this should use the bike/sports MC plan
+        $bikeVehicleTypes = [
+            VehicleTypeEnum::MOTOR_CYCLE->id(),
+            VehicleTypeEnum::BIKE->id(),
+            VehicleTypeEnum::MOTORCYCLES->id(),
+        ];
+        $useBikePlan = $this->quoteTypeId === QuoteTypeId::Bike ||
+                        ($this->quoteTypeId === QuoteTypeId::Car && in_array($this->currentQuote?->vehicle_type_id, $bikeVehicleTypes));
+
+        $planOption = match (true) {
+            $useBikePlan => "{$this->productSlug}-personal_sports_mc",
+            $this->quoteTypeId === QuoteTypeId::Car => "{$this->productSlug}-personal_non_commercial_vehicles",
             default => null
         };
 
@@ -1322,6 +1363,7 @@ class SukoonMedexService
                     'created_by_id' => null,
                     'watermarked_doc_name' => null,
                     'watermarked_doc_url' => null,
+                    'document_type_id' => $documentType->id,
                 ];
 
                 return $documentData;

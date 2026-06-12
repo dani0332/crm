@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
+use App\Enums\DocumentTypeEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
@@ -59,6 +62,12 @@ class QuotesDocumentRequest extends FormRequest
                 return;
             }
 
+            $this->validateLockedQuoteStatus($validator);
+            // Check member detail id with category (quote or member)
+            if (request()->category == DocumentTypeCategory::MEMBER && request()->member_detail_id == 0) {
+                $validator->errors()->add('member_detail_id', 'Member is required for member document');
+            }
+
             $uploadedDocuments = 0;
             $newFilesCount = count(request()->file('files') ?? []);
 
@@ -79,9 +88,42 @@ class QuotesDocumentRequest extends FormRequest
         });
     }
 
+    protected function validateLockedQuoteStatus($validator)
+    {
+        // for safe side, if UI is not refreshed, then the issuance documents tab will be enabled, so we need to check the quote status here as well.
+        $quote = $this->getQuoteObject(request()->quote_type, request()->quote_id);
+        $quoteStatusId = $quote?->quote_status_id ?? null;
+
+        if (
+            request()->document_type_key === DocumentTypeEnum::ISSUING_DOCUMENTS &&
+            $quoteStatusId &&
+            in_array($quoteStatusId, [
+                QuoteStatusEnum::PolicyBooked,
+                QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+                QuoteStatusEnum::POLICY_BOOKING_FAILED,
+            ])
+        ) {
+            if ($quoteStatusId == QuoteStatusEnum::PolicyBooked) {
+                $status = 'booked';
+            } elseif ($quoteStatusId == QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
+                $status = 'in queued';
+            } elseif ($quoteStatusId == QuoteStatusEnum::POLICY_BOOKING_FAILED) {
+                $status = 'failed';
+            }
+
+            $validator->errors()->add('error', "Issuing Document uploads are not allowed after policy is {$status}. Please use Send Update (CPU) to upload additional issuing documents.");
+        }
+    }
+
     protected function validateSendUpdate($validator, &$uploadedDocuments)
     {
         $whereFilter = ['document_type_code' => request()->document_type_code];
+
+        // Apply member detail id if provided (for health, later can work for any other lob)
+        if (request()->member_detail_id) {
+            $whereFilter['member_detail_id'] = request()->member_detail_id;
+        }
+
         $quoteDocuments = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
         $uploadedDocuments = $quoteDocuments?->documents()->where($whereFilter)->count() ?? 0;
 
@@ -99,7 +141,14 @@ class QuotesDocumentRequest extends FormRequest
         }
 
         if (! empty($quote)) {
-            $uploadedDocuments = $quote->documents->where('document_type_code', request()->document_type_code)->count();
+            $uploadedDocuments = $quote->documents()->where('document_type_code', request()->document_type_code);
+
+            // Apply member detail id if provided (for health, later can work for any other lob)
+            if (request()->member_detail_id) {
+                $uploadedDocuments = $uploadedDocuments->where('member_detail_id', request()->member_detail_id);
+            }
+
+            $uploadedDocuments = $uploadedDocuments->count();
         }
     }
 

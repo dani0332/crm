@@ -2,7 +2,6 @@
 
 namespace App\Services\OCR;
 
-use App\Enums\DocumentTypeCategory;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
@@ -12,9 +11,11 @@ use App\Services\OCR\DrivingLicense\DrivingLicenseDataProcessor;
 use App\Services\OCR\EmiratesId\DriverEmiratesIdDataProcessor;
 use App\Services\OCR\EmiratesId\EmiratesIdDataProcessor;
 use App\Services\OCR\Mulkiya\MulkiyaDataProcessor;
+use App\Services\OCR\Passport\PassportDataProcessor;
 use App\Services\OCR\PolicySchedule\PolicyScheduleDataProcessor;
 use App\Services\OCR\TaxInvoice\TaxInvoiceDataProcessor;
 use App\Services\OCR\TaxInvoiceRaisedByBuyer\TaxInvoiceRaisedByBuyerDataProcessor;
+use App\Services\OCR\Visa\VisaDataProcessor;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 
@@ -144,11 +145,11 @@ trait OcrFillable
         return true;
     }
 
-    private function fillEmiratesId(Model $quote, object $data)
+    private function fillEmiratesId(Model $quote, object $data, string $documentTypeCode, int $memberDetailId)
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new EmiratesIdDataProcessor($quote, $data, $this->documentTypeCode);
+            $processor = new EmiratesIdDataProcessor($quote, $data, $documentTypeCode, $memberDetailId);
 
             $success = $processor->processEmiratesIdData();
 
@@ -200,11 +201,11 @@ trait OcrFillable
         }
     }
 
-    private function fillMulkiya(Model $quote, object $data)
+    private function fillMulkiya(Model $quote, object $data, string $documentTypeCode)
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new MulkiyaDataProcessor($quote, $data, $this->documentTypeCode);
+            $processor = new MulkiyaDataProcessor($quote, $data, $documentTypeCode);
 
             $success = $processor->processMulkiyaData();
 
@@ -231,11 +232,11 @@ trait OcrFillable
         }
     }
 
-    private function fillDrivingLicense(Model $quote, object $data)
+    private function fillDrivingLicense(Model $quote, object $data, string $documentTypeCode)
     {
         try {
             // Create a single instance of the processor to reuse
-            $processor = new DrivingLicenseDataProcessor($quote, $data, $this->documentTypeCode);
+            $processor = new DrivingLicenseDataProcessor($quote, $data, $documentTypeCode);
 
             $success = $processor->processDrivingLicenseData();
 
@@ -254,6 +255,34 @@ trait OcrFillable
 
         } catch (Exception $e) {
             LoggerService::error(self::class.' - Exception occurred during Driving License data filling - Quote UUID: '.$quote->uuid, exception: $e);
+
+            return false;
+        }
+    }
+
+    private function fillPassport(Model $quote, object $data, string $documentTypeCode, int $memberDetailId)
+    {
+        try {
+            // Create a single instance of the processor to reuse
+            $processor = new PassportDataProcessor($quote, $data, $documentTypeCode, $memberDetailId);
+
+            return $processor->processPassportData();
+
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during passport data filling - Quote UUID: '.$quote->uuid, exception: $e);
+
+            return false;
+        }
+    }
+
+    private function fillVisa(Model $quote, object $data, string $documentTypeCode, int $memberDetailId)
+    {
+        try {
+            $processor = new VisaDataProcessor($quote, $data, $documentTypeCode, $memberDetailId);
+
+            return $processor->processVisaData();
+        } catch (Exception $e) {
+            LoggerService::error(self::class.' - Exception occurred during Visa data filling - Quote UUID: '.$quote->uuid, exception: $e);
 
             return false;
         }
@@ -298,16 +327,12 @@ trait OcrFillable
         object $data,
         $documentCategory,
         bool $isSendUpdateEligibleForOCR,
-        QuoteTypes $quoteType
+        QuoteTypes $quoteType,
+        string $documentTypeCode,
+        int $memberDetailId
     ) {
         $this->providerCode = $this->getProvider($quote);
         $this->isSendUpdateEligibleForOCR = $isSendUpdateEligibleForOCR;
-
-        if (! $this->isSupportedProvider($quoteType, $this->providerCode) && $documentCategory != DocumentTypeCategory::QUOTE) {
-            LoggerService::info(self::class.' - Not a Valid Provider');
-
-            return false;
-        }
 
         LoggerService::startQuoteLogging($quote);
 
@@ -319,14 +344,17 @@ trait OcrFillable
                 OCRDocumentTypeEnum::TAX_INVOICE => $this->fillTaxInvoice($quote, $data),
                 OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER => $this->fillTaxInvoiceRaisedByBuyer($quote, $data),
                 OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE => $this->fillCertificateOfIssuance($quote, $data),
-                OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data),
+                OCRDocumentTypeEnum::ID_CARD => $this->fillEmiratesId($quote, $data, $documentTypeCode, $memberDetailId),
                 OCRDocumentTypeEnum::DRIVER_EMIRATES_ID => $this->fillDriverEmiratesId($quote, $data),
-                OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data),
-                OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data),
+                OCRDocumentTypeEnum::REGISTRATION_CERTIFICATE => $this->fillMulkiya($quote, $data, $documentTypeCode),
+                OCRDocumentTypeEnum::DRIVING_LICENSE => $this->fillDrivingLicense($quote, $data, $documentTypeCode),
+                OCRDocumentTypeEnum::DRIVER_EMIRATES_ID => $this->fillDriverEmiratesId($quote, $data),
                 OCRDocumentTypeEnum::MOTOR_INSURANCE_POLICY_SCHEDULE => in_array($quoteType, [QuoteTypes::HOME, QuoteTypes::GROUP_MEDICAL], true)
                     ? $this->fillPolicySchedule($quote, $data)
                     : $this->fillMotorInsurancePolicySchedule($quote, $data),
                 OCRDocumentTypeEnum::POLICY_SCHEDULE => $this->fillPolicySchedule($quote, $data), // for home and group medical policy schedule
+                OCRDocumentTypeEnum::PASSPORT => $this->fillPassport($quote, $data, $documentTypeCode, $memberDetailId),
+                OCRDocumentTypeEnum::VISA => $this->fillVisa($quote, $data, $documentTypeCode, $memberDetailId),
                 default => false,
             };
         } catch (Exception $e) {

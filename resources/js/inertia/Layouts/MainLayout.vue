@@ -3,6 +3,7 @@ import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
 import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
 import PaymentNotification from '../Components/PaymentNotification.vue';
 import DocumentNotification from '../Components/DocumentNotification.vue';
+import STPAdvisorNotification from '../Components/STPAdvisorNotification.vue';
 const page = usePage();
 
 const props = defineProps({
@@ -36,6 +37,23 @@ const isActive = link => {
 };
 
 const user = computed(() => page.props.auth.user);
+const ecomBaseUrl = computed(() => page.props.ecomBaseUrl);
+const uploadDocumentLink = computed(
+  () => `${ecomBaseUrl.value}/adv/${user.value?.id}/docs/`,
+);
+const linkCopied = ref(false);
+
+const copyUploadDocumentLink = async () => {
+  try {
+    await navigator.clipboard.writeText(uploadDocumentLink.value);
+    linkCopied.value = true;
+    setTimeout(() => {
+      linkCopied.value = false;
+    }, 2000);
+  } catch {
+    linkCopied.value = false;
+  }
+};
 const pendingActivityCount = computed(() => page.props.pendingActivityCount);
 const authorisePaymentCountProp = computed(
   () => page.props.authorisePaymentCount,
@@ -394,6 +412,29 @@ onUnmounted(() => {
                       </div>
                     </template>
                   </x-tooltip>
+
+                  <x-tooltip position="top">
+                    <x-button
+                      size="sm"
+                      :color="linkCopied ? 'success' : 'orange'"
+                      class="flex items-center gap-1.5 whitespace-nowrap"
+                      @click.prevent="copyUploadDocumentLink"
+                    >
+                      <x-icon
+                        :icon="linkCopied ? 'copyCheck' : 'link'"
+                        size="sm"
+                      />
+                      <span style="text-decoration: dotted underline">{{
+                        linkCopied ? 'Link Copied!' : 'Document Upload Link'
+                      }}</span>
+                    </x-button>
+                    <template #tooltip>
+                      <div class="max-w-xs">
+                        Copy and share this secure link so your customer can
+                        upload documents, which will be emailed to your inbox
+                      </div>
+                    </template>
+                  </x-tooltip>
                 </div>
               </div>
             </div>
@@ -405,6 +446,7 @@ onUnmounted(() => {
               <PaymentExpireNotifications
                 v-if="isReceiveNotificationsEnabled"
               />
+              <STPAdvisorNotification v-if="isReceiveNotificationsEnabled" />
 
               <x-tooltip>
                 <x-button class="w-full" size="sm">
@@ -483,6 +525,36 @@ onUnmounted(() => {
                       <div class="md:hidden block">{{ user.name }}</div>
                       <div class="text-gray-500">{{ user.email }}</div>
                     </div>
+                    <x-tooltip position="left">
+                      <button
+                        type="button"
+                        class="flex w-full gap-2 items-center px-2 py-1.5 rounded hover:bg-gray-100 group transition"
+                        @click.prevent="copyUploadDocumentLink"
+                      >
+                        <x-icon
+                          :icon="linkCopied ? 'copyCheck' : 'link'"
+                          size="sm"
+                          :class="
+                            linkCopied ? 'text-success-600' : 'text-primary-500'
+                          "
+                        />
+                        <span
+                          class="text-sm font-medium"
+                          :class="linkCopied ? 'text-success-600' : ''"
+                          style="text-decoration: dotted underline"
+                        >
+                          {{
+                            linkCopied ? 'Link Copied!' : 'Document Upload Link'
+                          }}
+                        </span>
+                      </button>
+                      <template #tooltip>
+                        <div class="max-w-xs">
+                          Copy and share this secure link so your customer can
+                          upload documents, which will be emailed to your inbox
+                        </div>
+                      </template>
+                    </x-tooltip>
                     <x-menu :items="userMenu" />
                   </x-popover-container>
                 </template>

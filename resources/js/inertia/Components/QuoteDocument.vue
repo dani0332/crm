@@ -3,7 +3,7 @@ import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
 import { useDocumentTempUrl } from '@/inertia/Composables/useDocumentTempUrl.js';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDocuments: Object,
   documentTypes: Object,
@@ -19,6 +19,10 @@ defineProps({
   inslyId: String,
   sendPolicy: Boolean,
   bookPolicyDetails: Array,
+  storageUrl: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits([
@@ -39,6 +43,29 @@ const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const documentTypeEnum = page.props.documentTypeEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
+
+// Restricted internal types require compliance-document-upload; others are always listed.
+const canViewDocumentTypeInUploadModal = documentType => {
+  if (!documentType.is_restricted_internal_document) {
+    return true;
+  }
+
+  return can(permissionEnum.COMPLIANCE_DOCUMENT_UPLOAD);
+};
+
+/** Delete action: requires DOCUMENT_DELETE and row must not be internal-restricted. */
+const canShowQuoteDocumentDelete = item => {
+  if (!can(permissionEnum.DOCUMENT_DELETE)) {
+    return false;
+  }
+  if (item?.is_restricted_internal_document) {
+    return false;
+  }
+
+  return true;
+};
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -51,6 +78,14 @@ const quoteDocumentsTable = reactive({
       text: 'Document Name',
       value: 'original_name',
     },
+    ...(page.props.quoteType === quoteTypeCodeEnum.Health
+      ? [
+          {
+            text: 'Member',
+            value: 'member',
+          },
+        ]
+      : []),
     {
       text: 'Created At',
       value: 'created_at',
@@ -81,7 +116,7 @@ const docForm = reactive({
   file: null,
 });
 
-const uploadFile = (doc, filesWithInfo) => {
+const uploadFile = (doc, filesWithInfo, documentTypeKey) => {
   successStatus.value[doc.id] = false;
   errorMsg.value[doc.id] = '';
   const { files, rejectReason } = filesWithInfo;
@@ -102,6 +137,8 @@ const uploadFile = (doc, filesWithInfo) => {
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
   formData.append('quote_type', usePage().props.quoteType);
+  formData.append('document_type_key', documentTypeKey);
+
   files.forEach(file => {
     formData.append('files[]', file.file);
   });
@@ -226,7 +263,51 @@ onUnmounted(() => {
   );
 });
 
+const issuanceDocDisableToolTip = ref('');
+const isPolicyLocked = quoteStatusId => {
+  return [
+    quoteStatusEnum.PolicyBooked,
+    quoteStatusEnum.POLICY_BOOKING_QUEUED,
+    quoteStatusEnum.POLICY_BOOKING_FAILED,
+  ].includes(quoteStatusId);
+};
+
+const isIssuingDocumentsTabDisabled = key => {
+  let quoteStatusId = page.props.quote.quote_status_id;
+  if (
+    key === documentTypeEnum.ISSUING_DOCUMENTS &&
+    isPolicyLocked(quoteStatusId)
+  ) {
+    let status = '';
+    if (quoteStatusId === quoteStatusEnum.PolicyBooked) {
+      status = 'booked';
+    } else if (quoteStatusId === quoteStatusEnum.POLICY_BOOKING_QUEUED) {
+      status = 'in queued';
+    } else if (quoteStatusId === quoteStatusEnum.POLICY_BOOKING_FAILED) {
+      status = 'failed';
+    }
+
+    issuanceDocDisableToolTip.value = `Issuing Document uploads are not allowed after policy is ${status}. Please use Send Update (CPU) to upload additional issuing documents.`;
+
+    return true;
+  }
+
+  return false;
+};
 const { openTempUrl } = useDocumentTempUrl();
+
+const filteredQuoteDocuments = computed(() =>
+  (props.quoteDocuments || []).filter(
+    d => d.document_type_code !== documentTypeCodeEnum.BOR_SIGN,
+  ),
+);
+
+const openDocumentInNewTab = async item => {
+  const docUrl = item.watermarked_doc_url || item.doc_url;
+  if (docUrl) {
+    await openTempUrl(docUrl);
+  }
+};
 </script>
 
 <template>
@@ -325,11 +406,7 @@ const { openTempUrl } = useDocumentTempUrl();
         <DataTable
           table-class-name="compact"
           :headers="quoteDocumentsTable.columns"
-          :items="
-            quoteDocuments.filter(
-              d => d.document_type_code != documentTypeCodeEnum.BOR_SIGN,
-            ) || []
-          "
+          :items="filteredQuoteDocuments"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
@@ -337,20 +414,18 @@ const { openTempUrl } = useDocumentTempUrl();
         >
           <template #item-original_name="item">
             <a
-              target="_blank"
               class="text-primary-600 cursor-pointer"
-              @click.prevent="
-                openTempUrl(item.watermarked_doc_url || item.doc_url)
-              "
+              @click.prevent="openDocumentInNewTab(item)"
             >
               {{ item.original_name }}
             </a>
           </template>
-          <template
-            v-if="can(permissionEnum.DOCUMENT_DELETE)"
-            #item-action="{ id, doc_uuid }"
-          >
-            <div>
+          <template #item-member="item">
+            {{ item.member_detail?.first_name }}
+            {{ item.member_detail?.last_name }}
+          </template>
+          <template #item-action="item">
+            <div v-if="canShowQuoteDocumentDelete(item)">
               <x-tooltip
                 placement="left"
                 v-if="bookPolicyDetails?.isEnableUploadDocument === false"
@@ -369,7 +444,7 @@ const { openTempUrl } = useDocumentTempUrl();
                 size="xs"
                 color="error"
                 outlined
-                @click.prevent="onDocDelete(id, doc_uuid)"
+                @click.prevent="onDocDelete(item.id, item.doc_uuid)"
                 v-else-if="readOnlyMode.isDisable === true"
               >
                 Delete
@@ -394,86 +469,92 @@ const { openTempUrl } = useDocumentTempUrl();
           v-for="(docType, key, index) in documentTypes"
           :key="index"
           :disabled="
-            key === $page.props.documentTypeEnum.ISSUING_DOCUMENTS &&
-            !quote.insurance_provider_id &&
-            !quote.plan_id
+            (key === documentTypeEnum.ISSUING_DOCUMENTS &&
+              !quote.insurance_provider_id &&
+              !quote.plan_id) ||
+            isIssuingDocumentsTabDisabled(key)
           "
         >
-          <div
-            v-for="documentType in docType"
-            :key="documentType.id"
-            class="grid md:grid-cols-2 gap-2 my-4 border-b"
-          >
-            <div class="flex flex-col gap-1">
-              <h5 class="text-sm font-semibold">
-                {{ documentType.text }}
-                <span class="text-red-500">
-                  {{ documentType.is_required ? '*' : '' }}</span
-                >
-              </h5>
-              <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-              <p class="text-xs">
-                Supported: {{ documentType.accepted_files }}
-              </p>
-              <p class="text-xs">
-                Max file size: {{ documentType.max_size }} MB
-              </p>
-
-              <x-alert
-                v-if="successStatus[documentType.id]"
-                type="success"
-                color="success"
-                light
-              >
-                <p class="text-sm">File uploaded successfully</p>
-              </x-alert>
-
-              <x-alert
-                v-if="errorMsg[documentType.id]"
-                type="error"
-                color="error"
-                light
-              >
-                <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
-              </x-alert>
+          <template #tab v-if="isIssuingDocumentsTabDisabled(key)">
+            <div class="flex items-center justify-center">
+              <x-tooltip placement="right">
+                <span class="font-medium">{{ key.replace(/_/g, ' ') }}</span>
+                <template #tooltip>
+                  {{ issuanceDocDisableToolTip }}
+                </template>
+              </x-tooltip>
             </div>
-            <div class="pb-4">
-              <Dropzone
-                :id="documentType.id"
-                :accept="documentType.accepted_files"
-                :max-files="documentType.max_files"
-                :max-size="documentType.max_size"
-                :loading="uploadingStatus[documentType.id]"
-                :document-type-code="documentType.code"
-                :isDisabled="
-                  documentType.code == documentTypeCodeEnum.AUDIT &&
-                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
-                "
-                :multiple="true"
-                @change="uploadFile(documentType, $event)"
-              />
+          </template>
+          <template v-for="documentType in docType" :key="documentType.id">
+            <div
+              v-if="canViewDocumentTypeInUploadModal(documentType)"
+              class="grid md:grid-cols-2 gap-2 my-4 border-b"
+            >
+              <div class="flex flex-col gap-1">
+                <h5 class="text-sm font-semibold">
+                  {{ documentType.text }}
+                  <span class="text-red-500">
+                    {{ documentType.is_required ? '*' : '' }}</span
+                  >
+                </h5>
+                <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+                <p class="text-xs">
+                  Supported: {{ documentType.accepted_files }}
+                </p>
+                <p class="text-xs">
+                  Max file size: {{ documentType.max_size }} MB
+                </p>
 
-              <template
-                v-for="quoteDocument in quoteDocuments.filter(
-                  d => d.document_type_code == documentType.code,
-                )"
-                :key="quoteDocument.id"
-              >
-                <a
-                  @click.prevent="
-                    openTempUrl(
-                      quoteDocument.doc_url ||
-                        quoteDocument.watermarked_doc_url,
-                    )
+                <x-alert
+                  v-if="successStatus[documentType.id]"
+                  type="success"
+                  color="success"
+                  light
+                >
+                  <p class="text-sm">File uploaded successfully</p>
+                </x-alert>
+
+                <x-alert
+                  v-if="errorMsg[documentType.id]"
+                  type="error"
+                  color="error"
+                  light
+                >
+                  <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
+                </x-alert>
+              </div>
+              <div class="pb-4">
+                <Dropzone
+                  :id="documentType.id"
+                  :accept="documentType.accepted_files"
+                  :max-files="documentType.max_files"
+                  :max-size="documentType.max_size"
+                  :loading="uploadingStatus[documentType.id]"
+                  :document-type-code="documentType.code"
+                  :isDisabled="
+                    documentType.code == documentTypeCodeEnum.AUDIT &&
+                    !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
                   "
-                  target="_blank"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                  :multiple="true"
+                  @change="uploadFile(documentType, $event, key)"
+                />
+
+                <template
+                  v-for="quoteDocument in quoteDocuments.filter(
+                    d => d.document_type_code == documentType.code,
+                  )"
+                  :key="quoteDocument.id"
                 >
-                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
-                </a>
-              </template>
+                  <a
+                    @click.prevent="openDocumentInNewTab(quoteDocument)"
+                    class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                  >
+                    {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                  </a>
+                </template>
+              </div>
             </div>
-          </div>
+          </template>
         </x-tab>
       </x-tab-group>
     </x-modal>

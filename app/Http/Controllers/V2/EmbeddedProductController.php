@@ -13,27 +13,34 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
+use App\Http\Requests\UpdateEpDocumentRequest;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
+use App\Services\EmbeddedTransactionService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiEmbeddedProductService;
 use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class EmbeddedProductController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'voidPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote']]);
+    public function __construct(
+        private EmbeddedTransactionService $embeddedTransactionService,
+    ) {
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'voidPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote', 'updateEpDocument']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
         $this->middleware('permission:'.PermissionsEnum::PAYMENTS_VOID, ['only' => ['voidPayment']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote']]);
+        $this->middleware('permission:'.PermissionsEnum::EP_DOCUMENT_MANUAL_OVERRIDE, ['only' => ['updateEpDocument']]);
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index()
     {
@@ -45,7 +52,7 @@ class EmbeddedProductController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create()
     {
@@ -56,7 +63,7 @@ class EmbeddedProductController extends Controller
 
     /**
      * @param  $quoteTypeCode
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function store(EmbeddedProductRequest $request)
     {
@@ -66,7 +73,7 @@ class EmbeddedProductController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function edit($id)
     {
@@ -79,7 +86,7 @@ class EmbeddedProductController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($id)
     {
@@ -157,7 +164,7 @@ class EmbeddedProductController extends Controller
     /**
      * Get the list of reports for embedded products.
      *
-     * @return \Inertia\Response
+     * @return Response
      */
     public function reportsList()
     {
@@ -171,7 +178,7 @@ class EmbeddedProductController extends Controller
     /**
      * Report transactions for an embedded product.
      *
-     * @return \Inertia\Response
+     * @return Response
      */
     public function reportTransactions(EmbeddedProduct $ep, Request $request)
     {
@@ -183,6 +190,7 @@ class EmbeddedProductController extends Controller
                 'detail' => $ep,
                 'transactions' => $dataset,
             ],
+            'reportLobFilterOptions' => EmbeddedProductRepository::quoteTypeReportLobFilterOptions($ep->short_code),
             'ep_enums' => EmbeddedProductEnum::asArray(),
             'sync_statuses' => CourierSyncStatusEnum::withLabels(),
             'sage_statuses' => SageEmbeddedProductEnum::withLabels(),
@@ -218,8 +226,11 @@ class EmbeddedProductController extends Controller
 
     public function force(Request $request)
     {
+        // Determine storage disk based on is_policy_wordings
+        $storageDisk = $request->boolean('is_policy_wordings') ? 'azureIM' : 'azureIMPrivate';
+
         // Generate a temporary URL for the file
-        $documentUrl = app(QuoteDocumentService::class)->getDocumentUrl($request->path);
+        $documentUrl = app(QuoteDocumentService::class)->getDocumentUrl($request->path, $storageDisk);
 
         // Check if the file exists
         if ($documentUrl === null) {
@@ -314,5 +325,29 @@ class EmbeddedProductController extends Controller
             ]);
         }
 
+    }
+
+    public function updateEpDocument(UpdateEpDocumentRequest $request)
+    {
+        try {
+            $result = $this->embeddedTransactionService->updateEpDocument($request->validated());
+
+            if (! $result) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update document.',
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Document updated successfully.',
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

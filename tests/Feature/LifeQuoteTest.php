@@ -2,15 +2,20 @@
 
 use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
+use App\Services\OCR\OCRService;
 use Tests\Helpers\LifeQuoteMockHelper;
 use Tests\Helpers\LifeQuoteTestDataBuilder;
 use Tests\Helpers\TestDataSeeder;
-use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
     $this->lookups = TestDataSeeder::seedLifeQuoteLookups();
     $this->user = TestDataSeeder::createAdminUser();
+
+    // Mock OCRService to avoid dependency resolution issues in HandleInertiaRequests middleware
+    $ocrServiceMock = Mockery::mock(OCRService::class);
+    $ocrServiceMock->shouldReceive('getEligibleProviders')->andReturn([]);
+    $this->app->instance(OCRService::class, $ocrServiceMock);
+
     $this->actingAs($this->user);
 });
 

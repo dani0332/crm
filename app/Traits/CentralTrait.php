@@ -27,6 +27,12 @@ trait CentralTrait
             case QuoteTypes::HOME->id():
                 $basePath = '/home-insurance/quote/';
                 break;
+            case QuoteTypes::CYBER->id():
+                $basePath = '/cyber-insurance/quote/';
+                break;
+            case QuoteTypes::DEVICE->id():
+                $basePath = '/smartphone-insurance/quote/';
+                break;
             default:
                 return '';
         }

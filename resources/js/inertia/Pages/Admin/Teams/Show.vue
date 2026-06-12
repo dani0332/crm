@@ -52,6 +52,16 @@ const permissionsEnum = page.props.permissionsEnum;
         </div>
 
         <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Slabs Count</dt>
+          <dd>{{ team.slabs_count ?? 'N/A' }}</dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2" v-if="team.type == 'Team'">
+          <dt class="font-medium">Category</dt>
+          <dd>{{ team.category ?? 'N/A' }}</dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Created At</dt>
           <dd>{{ team.created_at ? team.created_at.split('T')[0] : 'N/A' }}</dd>
         </div>
@@ -59,11 +69,6 @@ const permissionsEnum = page.props.permissionsEnum;
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Updated At</dt>
           <dd>{{ team.updated_at ? team.updated_at.split('T')[0] : 'N/A' }}</dd>
-        </div>
-
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Slabs Count</dt>
-          <dd>{{ team.slabs_count ?? 'N/A' }}</dd>
         </div>
       </dl>
     </div>

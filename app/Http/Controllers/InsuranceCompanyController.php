@@ -6,13 +6,14 @@ use App\Models\InsuranceCompany;
 use Auth;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class InsuranceCompanyController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function __construct()
     {
@@ -25,14 +26,14 @@ class InsuranceCompanyController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
         if ($request->ajax()) {
             $data = InsuranceCompany::select('*')->where('is_deleted', 0)->orderBy('created_at', 'desc');
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     return view('Insurancecompany.actions', compact('row'))->render();
@@ -47,7 +48,7 @@ class InsuranceCompanyController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -57,7 +58,7 @@ class InsuranceCompanyController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store(Request $request)
     {
@@ -81,7 +82,7 @@ class InsuranceCompanyController extends Controller
     /**
      * Display the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show(InsuranceCompany $insurancecompany)
     {
@@ -91,7 +92,7 @@ class InsuranceCompanyController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit(InsuranceCompany $insurancecompany)
     {
@@ -101,7 +102,7 @@ class InsuranceCompanyController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, InsuranceCompany $insurancecompany)
     {
@@ -124,7 +125,7 @@ class InsuranceCompanyController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(InsuranceCompany $insurancecompany)
     {

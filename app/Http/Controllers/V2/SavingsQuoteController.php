@@ -7,12 +7,17 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\FetchSavingsProviderPlanRequest;
 use App\Http\Requests\SavingsPlanUpdateRequest;
 use App\Http\Requests\SavingsQuoteRequest;
+use App\Jobs\SendSavingsOCAEmailJob;
+use App\Models\PersonalQuote;
 use App\Repositories\LostReasonRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\Quotes\SavingsQuoteService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class SavingsQuoteController extends Controller
 {
@@ -183,5 +188,163 @@ class SavingsQuoteController extends Controller
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : $this->savingsQuoteService->getData(forExport: true, getTotalCount: true),
             'investmentFrequencies' => $this->savingsQuoteService->getInvestmentFrequencies(),
         ]);
+    }
+
+    /**
+     * Send OCA (One Click Apply) email to customer
+     */
+    public function sendOCAEmail(Request $request, string $quoteUuId)
+    {
+        try {
+            $quote = PersonalQuote::where('uuid', $quoteUuId)
+                ->where('quote_type_id', QuoteTypes::SAVINGS->id())
+                ->firstOrFail();
+
+            LoggerService::startQuoteLogging($quote);
+            LoggerService::info('SavingsQuoteController - sendOCAEmail', [
+                'quote_uuid' => $quoteUuId,
+                'customer_email' => $quote->email,
+                'plan_ids' => $request->plan_ids ?? [],
+            ]);
+
+            // Bypass duplicate check when Send OCA email button is used (manual trigger)
+            $emailData = [
+                'plan_ids' => $request->plan_ids ?? [],
+                'force_send' => true,
+            ];
+
+            // Dispatch the job to send OCA email
+            SendSavingsOCAEmailJob::dispatch($quoteUuId, $emailData);
+
+            LoggerService::info('SavingsQuoteController - sendOCAEmail job dispatched');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'OCA email has been queued for sending to '.$quote->email,
+            ]);
+        } catch (\Exception $e) {
+            LoggerService::error('SavingsQuoteController - sendOCAEmail failed', exception: $e);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to send OCA email: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Proxy to KEN /fetch-savings-provider-plan (lump sum etc.). Validated body is forwarded; quote UID comes from the route.
+     */
+    public function fetchSavingsProviderPlan(FetchSavingsProviderPlanRequest $request, string $quoteUuId)
+    {
+        try {
+            LoggerService::info('SavingsQuoteController - fetchSavingsProviderPlan', [
+                'quote_uuid' => $quoteUuId,
+            ]);
+
+            $payload = $request->validated();
+            $payload['quoteUID'] = $quoteUuId;
+
+            $result = $this->savingsQuoteService->fetchSavingsProviderPlan($payload);
+
+            if (! $result['success']) {
+                $status = $result['status'] ?? 422;
+
+                return response()->json(
+                    ['message' => $result['message'] ?? 'Request failed'],
+                    is_int($status) && $status >= 400 && $status < 600 ? $status : 422
+                );
+            }
+
+            return response()->json($result['data'], 200);
+        } catch (\Exception $e) {
+            LoggerService::error('SavingsQuoteController - fetchSavingsProviderPlan failed', exception: $e);
+
+            return response()->json([
+                'message' => 'Failed to fetch savings provider plan: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Create a new savings plan manually
+     */
+    public function savingsPlanManualProcess(Request $request, string $quoteUuId)
+    {
+        try {
+
+            LoggerService::info('SavingsQuoteController - savingsPlanManualProcess', [
+                'quote_uuid' => $quoteUuId,
+                'update' => $request->update ?? false,
+                'plansData' => $request->plans ?? [],
+            ]);
+
+            // Call the service to process the plan
+            $response = $this->savingsQuoteService->processSavingsPlan($request->all(), $quoteUuId);
+
+            if ($response === 200 || $response === 201) {
+                return response()->json([
+                    'message' => $request->update ? 'Savings plan updated successfully' : 'Savings plan created successfully',
+                ], 200);
+            }
+
+            return response()->json([
+                'message' => 'Failed to process savings plan',
+            ], 400);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            LoggerService::error('SavingsQuoteController - savingsPlanManualProcess failed', exception: $e);
+
+            return response()->json([
+                'message' => 'Failed to process savings plan: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get provider plans from database (like Life)
+     */
+    public function getProviderPlans($providerId)
+    {
+        $providerPlans = $this->savingsQuoteService->getProviderPlans($providerId);
+
+        return response()->json(['plans' => $providerPlans]);
+    }
+
+    /**
+     * Get riders for a plan (like Life)
+     */
+    public function riders(Request $request)
+    {
+        $riders = $this->savingsQuoteService->getRiders($request->planId);
+
+        return response()->json($riders);
+    }
+
+    /**
+     * Toggle savings plan visibility (hide/show)
+     */
+    public function toggleSavingsPlanVisibility(Request $request)
+    {
+        LoggerService::startQuoteLogging($request->quoteUID);
+        $this->savingsQuoteService->toggleSavingsPlanVisibility($request->all());
+        LoggerService::info('fn: toggleSavingsPlanVisibility - Savings plan visibility toggled successfully');
+
+        return response()->json(['message' => 'Savings plan visibility toggled successfully']);
+    }
+
+    public function updateExchangeRate(Request $request)
+    {
+        $quote = $this->savingsQuoteService->updateExchangeRate($request->quoteUID, $request->exchangeRate);
+
+        if (! $quote) {
+            return response()->json(['message' => 'Quote not found'], 404);
+        }
+
+        return response()->json(['message' => 'Exchange rate updated successfully']);
     }
 }

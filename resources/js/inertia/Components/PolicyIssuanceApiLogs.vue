@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { useHasRole } from '../Composables/can';
 
 const props = defineProps({
   type: {
@@ -23,6 +24,10 @@ const props = defineProps({
 
 const page = usePage();
 const insuranceProviderId = ref(null);
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 const modals = reactive({
   apiLog: false,
@@ -42,9 +47,108 @@ const selectLog = item => {
   modals.apiLog = true;
 };
 
+const togglePolicyIssuance = () => {
+  if (!policyIssuanceId.value) {
+    notification.error({
+      title: 'No Policy Issuance ID Found',
+      position: 'top',
+    });
+    return;
+  }
+  axios
+    .get(`/trigger-policy-issuance/${policyIssuanceId.value}`)
+    .then(res => {
+      notification.success({
+        title: res.data.message || 'Policy Issuance Triggered Successfully',
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      notification.error({
+        title: err.response.data.message || 'Failed to Trigger Policy Issuance',
+        position: 'top',
+      });
+    });
+};
+
+const reTriggerPolicyAutomationLoading = ref(false);
+
+const reTriggerPolicyAutomation = () => {
+  if (!policyIssuanceId.value) {
+    notification.error({
+      title: 'No Policy Issuance ID Found',
+      position: 'top',
+    });
+    return;
+  }
+  reTriggerPolicyAutomationLoading.value = true;
+  axios
+    .post('/re-trigger-policy-automation', {
+      policy_issuance_id: policyIssuanceId.value,
+    })
+    .then(res => {
+      notification.success({
+        title:
+          res.data.message || 'Policy automation re-triggered successfully.',
+        position: 'top',
+      });
+      loadPolicyIssuanceLogs();
+    })
+    .catch(err => {
+      notification.error({
+        title:
+          err.response?.data?.message ||
+          'Failed to re-trigger policy automation.',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      reTriggerPolicyAutomationLoading.value = false;
+    });
+};
+
+const manualTriggerPolicyIssuance = async () => {
+  await axios
+    .get(`/trigger-policy-issuance`, {
+      params: {
+        model_id: props.id,
+        quote_type_Id: props.quoteTypeId,
+      },
+    })
+    .then(res => {
+      notification.success({
+        title:
+          res.data.message || 'Manual Trigger Policy Issuance Successfully',
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      notification.error({
+        title:
+          err.response.data.message ||
+          'Failed to Manual Trigger Policy Issuance',
+        position: 'top',
+      });
+    });
+};
+
+const policyIssuanceDetail = computed(() => {
+  if (!apiLogs.policyIssuance) {
+    return null;
+  }
+  if (apiLogs.policyIssuance == null) {
+    return null;
+  }
+  return apiLogs.policyIssuance;
+});
+
+const policyIssuanceId = computed(() => apiLogs.policyIssuance?.id ?? null);
+
 const apiLogs = reactive({
   loading: false,
   data: null,
+  policyIssuance: null,
+  reTriggerPolicyAutomationEligible: false,
   table: [
     { text: 'ID', value: 'id' },
     { text: 'REF-ID', value: 'policy_issuance.model.uuid' },
@@ -80,7 +184,13 @@ const loadPolicyIssuanceLogs = async () => {
     .post(url, data)
     .then(res => {
       if (res.data.success) {
-        apiLogs.data = res.data.data;
+        apiLogs.data = res.data.data ?? [];
+        apiLogs.policyIssuance = res.data.policyIssuance ?? null;
+        const d = res.data;
+        apiLogs.reTriggerPolicyAutomationEligible = Boolean(
+          d.reTriggerPolicyAutomationEligible ??
+            d.re_trigger_policy_automation_eligible,
+        );
         notification.success({
           title: 'Policy Issuance API Logs Loaded Successfully',
           position: 'top',
@@ -113,10 +223,69 @@ const onLoadAuditLogData = async () => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <Collapsible :expanded="expanded">
       <template #header>
-        <div>
+        <div class="flex justify-between gap-4 items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
             Policy Issuance API Logs
           </h3>
+          <div
+            v-if="
+              (can(permissionsEnum.RE_TRIGGER_POLICY_ISSUANCE) ||
+                (can(permissionsEnum.CYBER_API_TRIGGER) &&
+                  props.quoteTypeId == 19)) &&
+              policyIssuanceId
+            "
+            class="flex gap-2"
+            @click.stop
+          >
+            <x-button
+              @click.stop="togglePolicyIssuance"
+              size="sm"
+              color="primary"
+              variant="outline"
+            >
+              Re-Trigger Policy Issuance
+            </x-button>
+          </div>
+          <div
+            v-if="
+              (hasRole(rolesEnum.Engineering) ||
+                (can(permissionsEnum.CYBER_API_TRIGGER) &&
+                  props.quoteTypeId == 19)) &&
+              apiLogs.data?.length == 0 &&
+              apiLogs.policyIssuance == null
+            "
+            class="flex gap-2"
+            @click.stop
+          >
+            <x-button
+              @click.stop="manualTriggerPolicyIssuance"
+              size="sm"
+              color="primary"
+              variant="outline"
+            >
+              Manual Trigger Policy Issuance
+            </x-button>
+          </div>
+          <div
+            v-if="
+              policyIssuanceId &&
+              apiLogs.reTriggerPolicyAutomationEligible &&
+              (can(permissionsEnum.RE_TRIGGER_POLICY_ISSUANCE) ||
+                can(permissionsEnum.RE_TRIGGER_POLICY_AUTOMATION_DEVICE))
+            "
+            class="flex gap-2"
+            @click.stop
+          >
+            <x-button
+              @click.stop="reTriggerPolicyAutomation"
+              size="sm"
+              color="primary"
+              variant="outline"
+              :loading="reTriggerPolicyAutomationLoading"
+            >
+              Re Trigger Policy Automation
+            </x-button>
+          </div>
         </div>
       </template>
       <template #body>
@@ -133,6 +302,20 @@ const onLoadAuditLogData = async () => {
           </x-button>
         </div>
         <div v-else>
+          <div class="flex items-center gap-4 my-3">
+            <div v-if="policyIssuanceDetail && hasRole(rolesEnum.Engineering)">
+              <p class="text-sm">
+                completed step:
+                {{ policyIssuanceDetail.completed_step ?? 'N/A' }}
+                <x-tag size="xs" color="success" class="mt-0.5 text-[10px]">
+                  {{ policyIssuanceDetail.status }}
+                </x-tag>
+              </p>
+              <p class="text-sm">message: {{ policyIssuanceDetail.message }}</p>
+              <p class="text-sm">data: {{ policyIssuanceDetail.data }}</p>
+              <p class="text-sm">request: {{ policyIssuanceDetail.request }}</p>
+            </div>
+          </div>
           <div class="flex items-center gap-4 my-3">
             <x-select
               class="flex-1 mt-1"

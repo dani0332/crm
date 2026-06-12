@@ -21,6 +21,8 @@ final class InsuranceProvidersEnum extends Enum
     public const BUP = 'BUP';
     public const CIG = 'CIG';
     public const DIC = 'DIC';
+    public const DIC_AUH = 'DIC_AUH';
+    public const ISON_AUH = 'ISON_AUH';
     public const DNIRC = 'DNIRC';
     public const FID = 'FID';
     public const IHC = 'IHC';
@@ -47,6 +49,7 @@ final class InsuranceProvidersEnum extends Enum
     public const NTPJSC = 'NTPJSC';
     public const ASI = 'ASI';
     public const MDG = 'MDG';
+    public const MEDGULF = 'MEDGULF';
     public const MTL = 'MTL';
     public const SAICO = 'SAICO';
     public const NLGIC = 'NLGIC';
@@ -89,6 +92,8 @@ final class InsuranceProvidersEnum extends Enum
             self::RSA => 'Liva',
             self::AXA => 'GIG',
             self::OIC => 'Sukoon',
+            self::NGI => 'NationalGeneralInsurance',
+            self::AWNI => 'Awni',
             default => 'GIG',
         };
     }

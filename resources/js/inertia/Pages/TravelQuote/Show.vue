@@ -1,6 +1,7 @@
 <script setup>
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import { usePayment } from '@/inertia/Composables/usePayment.js';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
@@ -66,7 +67,7 @@ defineProps({
   access: Object,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
-  isAllianceProvider: Boolean,
+  isQatarProvider: Boolean,
   customerAddressData: Object,
 });
 
@@ -80,12 +81,15 @@ const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
-
+const genericRequestEnum = page.props.genericRequestEnum;
 const checkedItems = ref([]);
-const { hasAuthorizedSplit } = usePayment();
+const { hasAuthorizedSplit, isMemberPaymentCancelled } = usePayment();
+
+const memberPaymentCancelled = member => isMemberPaymentCancelled(member);
 const checkCheckedPlans = computed(() => {
   return true;
 });
+
 const checkedCount = computed(() => {
   return checkedItems.value.length;
 });
@@ -199,7 +203,6 @@ const memberActionEdit = ref(false),
   selectedSeniorPlans = ref([]),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
-  historyLoading = ref(false),
   toggleLoader = ref(false),
   lostReasonId = ref(
     page.props.lostReasons.find(
@@ -352,10 +355,9 @@ const memberRelationOptions = computed(() => {
 });
 
 const emiratesOptions = computed(() => {
-  return page.props.emirates.map(em => ({
-    value: em.id,
-    label: em.text,
-  }));
+  return (page.props.emirates || [])
+    .map(em => ({ value: em?.value, label: em?.label }))
+    .filter(opt => opt && opt.value != null && opt.label != null);
 });
 
 const travelerForm = useForm({
@@ -604,6 +606,15 @@ const deleteTraveler = id => {
         position: 'top',
       });
       onLoadAvailablePlansData();
+    },
+    onError: errors => {
+      const raw =
+        errors?.travel_member_delete ?? Object.values(errors ?? {})[0];
+      const message = Array.isArray(raw) ? raw[0] : raw;
+      notification.error({
+        title: message,
+        position: 'top',
+      });
     },
     onFinish: () => {
       travelerTable.processing = false;
@@ -1155,28 +1166,6 @@ const advisorOptions = computed(() => {
   }));
 });
 
-const historyData = ref(null);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    route('getLeadHistory', {
-      modelType: 'travel',
-      recordId: page.props.quote.id,
-    }),
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
-
 // selected tab
 
 const planDetails = ref(null);
@@ -1256,7 +1245,10 @@ const customerProfileForm = useForm({
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote.entity_id ?? null,
-  trade_license_no: page.props.quote.trade_license_no ?? null,
+  trade_license_no:
+    page.props.quote.insured_id_type === genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote.insured_id_number
+      : null,
   company_name: page.props.quote.company_name ?? null,
   company_address: page.props.quote.company_address ?? null,
   entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
@@ -1312,8 +1304,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -1338,7 +1330,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -1348,7 +1340,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -2731,9 +2723,12 @@ const fullAddress = computed(() => {
           </EditMemberButtonTemplate>
 
           <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
-            <!-- Show button with tooltip when payment is authorized -->
+            <!-- Show button with tooltip when payment is authorized and not cancelled -->
             <x-tooltip
-              v-if="isAuthorizedPayment.hasAuthorized"
+              v-if="
+                isAuthorizedPayment.hasAuthorized &&
+                !memberPaymentCancelled(item)
+              "
               position="bottom"
             >
               <x-button size="xs" color="error" outlined :disabled="true">
@@ -3481,7 +3476,7 @@ const fullAddress = computed(() => {
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
       :isPlanDetailSectionEnabled="false"
-      :isAllianceProvider="isAllianceProvider"
+      :isQatarProvider="isQatarProvider"
     />
 
     <PaymentTable
@@ -3772,39 +3767,11 @@ const fullAddress = computed(() => {
       </x-modal>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="quote.id"
+      :quoteTypeId="page.props.quoteTypeId"
+    />
 
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
@@ -3833,6 +3800,14 @@ const fullAddress = computed(() => {
     <ApiLogs
       v-if="can(permissionEnum.API_LOG_VIEW)"
       :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
+    <PolicyIssuanceApiLogs
+      v-if="isQatarProvider"
+      :type="modelClass"
+      :quoteTypeId="$page.props.quoteTypeId"
       :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />

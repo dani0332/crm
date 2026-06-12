@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+set -e
+
+# Local developer workflow only: activate with `composer hooks:install` per clone.
+# Not used by CI unless a pipeline explicitly sets core.hooksPath and commits from that repo.
+
+# Runs Laravel Pint on staged PHP files (same binary as `composer pint:fix`).
+# Re-stages files so formatting is included in the commit.
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+if [ ! -f vendor/bin/pint ]; then
+    echo "pre-commit: vendor/bin/pint not found. Run: composer install" >&2
+    exit 1
+fi
+
+STAGED_PHP="$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.php$' || true)"
+if [ -z "$STAGED_PHP" ]; then
+    exit 0
+fi
+
+# On Windows (incl. Git Bash with Herd, which only exposes php.bat), use the
+# Composer-generated .bat wrapper so we don't rely on a `php` shim being on PATH.
+if [ "$OS" = "Windows_NT" ] && [ -f vendor/bin/pint.bat ]; then
+    PINT_CMD="vendor/bin/pint.bat"
+else
+    PINT_CMD="vendor/bin/pint"
+fi
+
+echo "$STAGED_PHP" | xargs "$PINT_CMD"
+echo "$STAGED_PHP" | xargs git add

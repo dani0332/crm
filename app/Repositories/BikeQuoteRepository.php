@@ -157,6 +157,8 @@ class BikeQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
+                'previousQuote:id,uuid,code',
+                'renewalBatchModel',
                 'bikeQuote' => function ($q) {
                     $q->with(['uaeLicenseHeldFor', 'bikeQuoteRequestDetail', 'backHomeLicenseHeldFor', 'bikeMake', 'bikeModel', 'carTypeInsurance', 'claimHistory', 'emirates']);
                 },
@@ -164,7 +166,7 @@ class BikeQuoteRepository extends BaseRepository
                 'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'currentlyInsuredWith',
                 'transactionType',
                 'insuranceProvider',
@@ -217,7 +219,7 @@ class BikeQuoteRepository extends BaseRepository
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
@@ -248,6 +250,7 @@ class BikeQuoteRepository extends BaseRepository
             'advisor.primaryBranch',
             'paymentStatus',
             'payments',
+            'nationality',
             'renewalBatchModel',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::BIKE->id());
@@ -348,8 +351,8 @@ class BikeQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'customer'])
-            ->filter()
+        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'previousAdvisor', 'nationality', 'customer'])
+            ->filter(paginate: false)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
     }

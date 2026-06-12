@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Traits\SpatieActivityLog;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -15,25 +17,50 @@ class QuoteDocument extends Model implements AuditableContract
     use Auditable, HasFactory, SoftDeletes, SpatieActivityLog;
 
     protected $table = 'quote_documents';
-    protected $guarded = [];
     protected $casts = [
         'deleted_at' => 'datetime',
     ];
-    protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name', 'member_detail_id', 'payment_split_type', 'payment_split_id', 'watermarked_doc_name', 'watermarked_doc_url', 'document_category', 'insurer_document_link'];
+    protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name', 'member_detail_id', 'payment_split_type', 'payment_split_id', 'watermarked_doc_name', 'watermarked_doc_url', 'document_category', 'insurer_document_link', 'is_manual_override', 'override_remarks', 'is_restricted_internal_document', 'document_type_id'];
     protected $hidden = [''];
 
-    public function getCreatedAtAttribute($table)
+    /**
+     * Get the created_at attribute with proper timezone conversion.
+     * Database stores timestamps in UTC, convert to app timezone for display.
+     *
+     * @param  mixed  $value
+     * @return string|null
+     */
+    public function getCreatedAtAttribute($value)
     {
+        if (! $value) {
+            return null;
+        }
+
         $date_time_format = config('constants.DATETIME_DISPLAY_FORMAT');
 
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return Carbon::parse($value, 'UTC')
+            ->setTimezone(config('app.timezone'))
+            ->format($date_time_format);
     }
 
-    public function getUpdatedAtAttribute($table)
+    /**
+     * Get the updated_at attribute with proper timezone conversion.
+     * Database stores timestamps in UTC, convert to app timezone for display.
+     *
+     * @param  mixed  $value
+     * @return string|null
+     */
+    public function getUpdatedAtAttribute($value)
     {
+        if (! $value) {
+            return null;
+        }
+
         $date_time_format = config('constants.DATETIME_DISPLAY_FORMAT');
 
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return Carbon::parse($value, 'UTC')
+            ->setTimezone(config('app.timezone'))
+            ->format($date_time_format);
     }
 
     public function getIsWatermarkedAttribute()
@@ -69,6 +96,11 @@ class QuoteDocument extends Model implements AuditableContract
     public function documentType()
     {
         return $this->belongsTo(DocumentType::class, 'document_type_code', 'code');
+    }
+
+    public function memberDetail(): BelongsTo
+    {
+        return $this->belongsTo(CustomerMembers::class, 'member_detail_id', 'id');
     }
 
     public function documentUrl(): Attribute

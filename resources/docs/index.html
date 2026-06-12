@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blanka Insurance Platform - Technical Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🏢 Afia Brokerage LLC</h1>
+        <p>Technical Documentation Hub</p>
+        <span class="version-badge">Laravel 12 + Vue 3 + Sage 300</span>
+      </div>
+
+      <!-- Quick Overview Section -->
+      <div
+        class="doc-card"
+        style="max-width: 1200px; margin: 0 auto 30px; text-align: center"
+      >
+        <h3 style="justify-content: center">
+          <span class="icon">📚</span>
+          Welcome to Blanka Documentation
+        </h3>
+        <p style="font-size: 1.1em; line-height: 1.8; margin-bottom: 0">
+          This documentation hub provides comprehensive technical guides for the
+          Afia Brokerage insurance platform, with a focus on
+          <strong>Sage 300 ERP integration</strong>. Each guide includes
+          detailed workflows, code examples, troubleshooting steps, and best
+          practices for developers, administrators, and support staff.
+        </p>
+      </div>
+
+      <div class="documentation-grid">
+        <!-- Main Sage Integration Hub -->
+        <div class="doc-card">
+          <h3>
+            <span class="icon">⚙️</span>
+            Sage Integration - Booking Process
+          </h3>
+          <p>
+            Comprehensive documentation covering the complete Sage 300 ERP
+            integration workflow including customer verification, receipt
+            creation, and payment processing.
+          </p>
+          <ul class="features">
+            <li>Complete Booking Process Overview (9 Core Processes)</li>
+            <li>Customer Verification & Creation</li>
+            <li>Prepayment Receipt Creation (AR/AP)</li>
+            <li>AR & AP Invoice Lifecycles</li>
+            <li>Payment Mapping & Apply Prepayment</li>
+            <li>Main Lead & Send Update Processing</li>
+            <li>Embedded Product Booking (MDX, RDX, ECB)</li>
+            <li>Proforma Payment Request Generation</li>
+            <li>Sage Failed Processes Management</li>
+            <li>Error Handling, Logging & Troubleshooting</li>
+            <li>API Integration Details & Best Practices</li>
+          </ul>
+          <a href="/docs/booking-process/index.html" class="doc-link"
+            >Explore Sage Integration →</a
+          >
+        </div>
+
+        <!-- Proforma Payment Request -->
+        <div class="doc-card">
+          <h3>
+            <span class="icon">📄</span>
+            Proforma Payment Request
+          </h3>
+          <p>
+            Generate and manage proforma payment request documents for policy
+            payments. Learn how to create preliminary invoices before formal
+            policy issuance.
+          </p>
+          <ul class="features">
+            <li>Payment requisition before formal invoice</li>
+            <li>PDF generation with payment breakdown</li>
+            <li>Version tracking and document management</li>
+            <li>Support for main leads and endorsements</li>
+            <li>Upfront and split payment scenarios</li>
+            <li>Broker vs insurer collection handling</li>
+            <li>Permission-based access control</li>
+            <li>S3 secure document storage</li>
+          </ul>
+          <a href="/docs/payment-proforma.html" class="doc-link"
+            >View Proforma Documentation →</a
+          >
+        </div>
+
+        <!-- Sage Failed Processes -->
+        <div class="doc-card">
+          <h3>
+            <span class="icon">🔍</span>
+            Sage Failed Processes Management
+          </h3>
+          <p>
+            Monitor, troubleshoot, and resolve failed Sage 300 integration
+            processes. Essential tool for maintaining financial accuracy and
+            audit compliance.
+          </p>
+          <ul class="features">
+            <li>Comprehensive failed process monitoring</li>
+            <li>Multi-dimensional filtering (provider, quote type, date)</li>
+            <li>Complete payment and commission breakdown</li>
+            <li>IMCRM-friendly error message extraction</li>
+            <li>One-click error detail copying</li>
+            <li>CSV export for reporting and analysis</li>
+            <li>Optimized query performance with read replicas</li>
+            <li>Step-by-step troubleshooting guide</li>
+          </ul>
+          <a
+            href="/docs/booking-process/sage-failed-processes.html"
+            class="doc-link"
+            >View Failed Processes Guide →</a
+          >
+        </div>
+
+        <!-- IP Address Resolver -->
+        <div class="doc-card">
+          <h3>
+            <span class="icon">🌐</span>
+            IP Address Resolver
+          </h3>
+          <p>
+            Custom IP resolution from request headers for accurate audit logging
+            behind Nginx and other proxies. Ensures audit records store the real
+            client IP.
+          </p>
+          <ul class="features">
+            <li>Custom IpAddressResolver for Laravel Audit</li>
+            <li>X-Real-IP and X-Forwarded-For with validation</li>
+            <li>TrustProxies and trusted CIDRs (Docker, UAT, Staging, Prod)</li>
+            <li>Nginx FastCGI params for IP and scheme</li>
+            <li>Public IP validation to reduce spoofing risk</li>
+          </ul>
+          <a href="/docs/ip-address-resolver.html" class="doc-link"
+            >View IP Resolver Documentation →</a
+          >
+        </div>
+
+        <!-- Legacy Policy & Move to IMCRM -->
+        <div class="doc-card">
+          <h3>
+            <span class="icon">📋</span>
+            Legacy Policy & Move to IMCRM
+          </h3>
+          <p>
+            View Insly legacy policies (MongoDB), assign advisor and customer
+            email via Application Storage, and move leads into IMCRM with policy
+            number or email+date matching.
+          </p>
+          <ul class="features">
+            <li>
+              Legacy Policy list and detail (filters: policy number, email,
+              mobile_no)
+            </li>
+            <li>
+              Move to IMCRM: match by policy number or email + payment date, or
+              create new lead
+            </li>
+            <li>
+              Application Storage keys for user ID and email assignment
+              (INSLY_TEMP_*)
+            </li>
+            <li>InslyDetailRepository: getDataByIndex, getBy, saveToImcrm</li>
+            <li>
+              Product/coverage mappings, S3 document URLs, CAPI migrate endpoint
+            </li>
+          </ul>
+          <a href="/docs/legacy-policy.html" class="doc-link"
+            >View Legacy Policy Documentation →</a
+          >
+        </div>
+
+        <!-- Search Leads -->
+        <div class="doc-card">
+          <h3>
+            <span class="icon">🔍</span>
+            Search Leads
+          </h3>
+          <p>
+            Cross-LOB search for leads and send-update (endorsement) requests
+            with role-based scoping, read-replica usage, and optional Excel
+            export.
+          </p>
+          <ul class="features">
+            <li>Lead List and Send Update List modes</li>
+            <li>
+              Permissions: SEARCH_ALL_LEAD_LOB (page),
+              DATA_EXTRACTION_SEARCH_ALL_LEADS (export)
+            </li>
+            <li>
+              Filters: Ref-ID, names, company, policy number, dates, statuses,
+              LOB, advisors, departments, tax invoices
+            </li>
+            <li>SearchService authorization (advisor / manager scope)</li>
+            <li>Universal Search flag and Excel export</li>
+          </ul>
+          <a href="/docs/search-leads.html" class="doc-link"
+            >View Search Leads Documentation →</a
+          >
+        </div>
+
+        <!-- Claims Management System -->
+        <div class="doc-card">
+          <h3>
+            <span class="icon">🛡️</span>
+            Claims Management System
+          </h3>
+          <p>
+            Comprehensive insurance claims processing documentation: claim
+            creation, status management, document handling, LOB-specific
+            workflows, and API integration.
+          </p>
+          <ul class="features">
+            <li>Architecture, business logic, and development guide</li>
+            <li>
+              Claim creation (CPAPI), status management, document management
+            </li>
+            <li>
+              API endpoints, security & permissions, frontend architecture
+            </li>
+          </ul>
+          <a href="/docs/claims-process/index.html" class="doc-link"
+            >Explore Claims Process →</a
+          >
+        </div>
+
+        <!-- Policy Automation -->
+        <div class="doc-card">
+          <h3>
+            <span class="icon">🤖</span>
+            Policy Automation
+          </h3>
+          <p>
+            Technical documentation for policy issuance automation across Car
+            (GIG, Liva), Health (ADNIC), and Travel (Qatar) — architecture,
+            flows, configuration, and API integration.
+          </p>
+          <ul class="features">
+            <li>Car: GIG & Liva automation</li>
+            <li>Health: ADNIC automation</li>
+            <li>Travel: Qatar automation</li>
+            <li>
+              Architecture, automation flow, configuration, API integration per
+              LOB
+            </li>
+          </ul>
+          <a href="/docs/policy-automation/index.html" class="doc-link"
+            >Explore Policy Automation →</a
+          >
+        </div>
+      </div>
+
+      <div class="footer">
+        <p><strong>Afia Brokerage LLC</strong> - Technical Documentation</p>
+        <p>
+          Built with modern web technologies for scalable insurance solutions
+        </p>
+        <div class="tech-stack">
+          <span class="tech-badge">PHP 8.2+</span>
+          <span class="tech-badge">Laravel 12</span>
+          <span class="tech-badge">Vue.js 3</span>
+          <span class="tech-badge">Inertia.js</span>
+          <span class="tech-badge">TailwindCSS</span>
+          <span class="tech-badge">Sage 300</span>
+          <span class="tech-badge">MySQL</span>
+          <span class="tech-badge">Redis</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

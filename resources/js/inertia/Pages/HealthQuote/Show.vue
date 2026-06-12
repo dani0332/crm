@@ -1,11 +1,13 @@
 <script setup>
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import UaeSigningPassLogs from '@/inertia/Components/UaeSigningPassLogs.vue';
 
 const props = defineProps({
   quote: Object,
@@ -72,6 +74,11 @@ const props = defineProps({
   isAUHLead: Boolean,
   branchOptions: Object,
   hasPecTag: Boolean,
+  canBypassPlanLock: {
+    type: Boolean,
+    default: false,
+  },
+  archivedDocuments: Array,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
@@ -79,7 +86,7 @@ const isManualPlansCount = ref(0);
 
 const page = usePage();
 const authId = computed(() => page.props.auth.user.id);
-
+const genericRequestEnum = page.props.genericRequestEnum;
 let countDays = ref(useDaysSinceStale(props.quoteRequest?.stale_at));
 const compareDueDate = useCompareDueDate;
 const permissionsEnum = page.props.permissionsEnum;
@@ -89,6 +96,8 @@ const can = permission => useCan(permission);
 
 const showPlans = ref(!props.hashCollapsibleStatuses);
 const contactLoader = ref(false);
+const emailCheckLoader = ref(false);
+const keepExistingPrimaryEmailLoader = ref(null);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -148,6 +157,10 @@ const modals = reactive({
   planFilters: false,
   sendConfirm: false,
   memberPrincipal: false,
+  addContact: false,
+  contactPrimaryConfirm: false,
+  contactDeleteConfirm: false,
+  customerAlreadyPrimaryConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -194,12 +207,50 @@ const emailTableColumns = reactive({
   ],
 });
 
+const isAdnic = computed(() => {
+  return (
+    page.props.quote?.plan_provider_code ===
+    page.props.insuranceProviderCodeEnum.ADNIC
+  );
+});
+
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
   activity: null,
   contact: null,
 });
+
+const additionalContactDelete = id => {
+  modals.contactDeleteConfirm = true;
+  confirmDeleteData.contact = id;
+};
+
+const additionalContactDeleteConfirmed = () => {
+  router.post(
+    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
+    {
+      isInertia: true,
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        contactLoader.value = true;
+      },
+      onFinish: () => {
+        contactLoader.value = false;
+        modals.contactDeleteConfirm = false;
+      },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
+      },
+    },
+  );
+};
 
 const confirmPrincipalData = reactive({
   member: null,
@@ -215,7 +266,6 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
   selectedPlans = ref([]),
   exportLoader = ref(false),
   toggleLoader = ref(false),
-  historyLoading = ref(false),
   isDisabled = ref(false);
 
 const { copy, copied } = useClipboard();
@@ -1447,8 +1497,35 @@ const additionalContactPrimary = data => {
   confirmData.contactPrimary = data;
 };
 
-const additionalContactPrimaryConfirmed = () => {
+const customerAlreadyPrimaryCheck = async () => {
+  let data = {
+    isInertia: true,
+    key: confirmData.contactPrimary.key,
+    value: confirmData.contactPrimary.value,
+  };
+
+  emailCheckLoader.value = true;
+
+  axios
+    .post('/customer-primary-email-check', data)
+    .then(res => {
+      if (res.data.response === true) {
+        modals.contactPrimaryConfirm = false;
+        emailCheckLoader.value = false;
+        modals.customerAlreadyPrimaryConfirm = true;
+      } else {
+        additionalContactPrimaryConfirmed();
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+const additionalContactPrimaryConfirmed = (keepExistingPrimaryEmail = true) => {
   const isEmail = confirmData.contactPrimary.key === 'email';
+  keepExistingPrimaryEmailLoader.value = keepExistingPrimaryEmail;
+
   router.post(
     `/customer-additional-contact/${
       isEmail ? confirmData.contactPrimary.id : 0
@@ -1459,21 +1536,19 @@ const additionalContactPrimaryConfirmed = () => {
       key: confirmData.contactPrimary.key,
       value: confirmData.contactPrimary.value,
       quote_type: 'health',
+      keep_existing_primary_email: keepExistingPrimaryEmail ? 1 : 0,
     },
     {
       preserveScroll: true,
       onBefore: () => {
         contactLoader.value = true;
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Primary Contact Updated',
-          position: 'top',
-        });
-      },
       onFinish: () => {
         contactLoader.value = false;
+        emailCheckLoader.value = false;
+        keepExistingPrimaryEmailLoader.value = null;
         modals.contactPrimaryConfirm = false;
+        modals.customerAlreadyPrimaryConfirm = false;
       },
       onError: err => {
         const firstError = Object.values(err)[0];
@@ -1485,26 +1560,6 @@ const additionalContactPrimaryConfirmed = () => {
     },
   );
 };
-
-// history data
-const historyData = ref(null);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    `/quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`,
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
 
 const dateToYMD = date => {
   if (date) {
@@ -1609,7 +1664,10 @@ const customerProfileForm = useForm({
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote.entity_id ?? null,
-  trade_license_no: page.props.quote.trade_license_no ?? null,
+  trade_license_no:
+    page.props.quote.insured_id_type === genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote.insured_id_number
+      : null,
   company_name: page.props.quote.company_name ?? null,
   company_address: page.props.quote.company_address ?? null,
   entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
@@ -1664,8 +1722,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -1693,7 +1751,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -1703,7 +1761,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -1966,7 +2024,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
 
-const isLocked = page.props.quote.is_quote_locked ?? false;
+const isLocked = computed(() => props.quote?.is_quote_locked ?? false);
 
 const isPrimaryEmailLocked = computed(() => {
   return [
@@ -2251,7 +2309,7 @@ const validateEmirateOfVisa = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUBTEAM</dt>
-                <dd>{{ quote.health_team_type }}</dd>
+                <dd>{{ quote.health_team_type ?? quote.notional_team }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -2390,6 +2448,26 @@ const validateEmirateOfVisa = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER API STATUS</dt>
+                <dd>{{ quote.insurer_api_status ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">API ISSUANCE STATUS</dt>
+                <dd>{{ quote.api_issuance_status ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS STP Case</dt>
+                <dd>{{ quote.isSTPCase ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SIGNATORY</dt>
+                <dd>{{ quote.signatory_text ?? '—' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UAE PASS API STATUS</dt>
+                <dd>{{ quote.uae_pass_api_status_text ?? '—' }}</dd>
               </div>
             </dl>
           </div>
@@ -2686,6 +2764,14 @@ const validateEmirateOfVisa = () => {
                       filterPlaceholder="Filter Entity Type...."
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">SIGNATORY</dt>
+                  <dd>{{ quote.signatory_text ?? '—' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UAE PASS API STATUS</dt>
+                  <dd>{{ quote.uae_pass_api_status_text ?? '—' }}</dd>
                 </div>
               </dl>
               <div class="flex justify-end">
@@ -3239,6 +3325,34 @@ const validateEmirateOfVisa = () => {
               </div>
             </template>
           </x-modal>
+
+          <x-modal
+            v-model="modals.contactDeleteConfirm"
+            title="Delete Additional Contact"
+            show-close
+            backdrop
+          >
+            <p>Are you sure you want to delete this?</p>
+            <template #actions>
+              <div class="text-right space-x-4">
+                <x-button
+                  size="sm"
+                  ghost
+                  @click.prevent="modals.contactDeleteConfirm = false"
+                >
+                  Cancel
+                </x-button>
+                <x-button
+                  size="sm"
+                  color="error"
+                  @click.prevent="additionalContactDeleteConfirmed"
+                  :loading="contactLoader"
+                >
+                  Delete
+                </x-button>
+              </div>
+            </template>
+          </x-modal>
         </template>
       </x-accordion-item>
     </x-accordion>
@@ -3317,6 +3431,19 @@ const validateEmirateOfVisa = () => {
                 >
                   Make Primary
                 </x-button>
+                <x-button
+                  size="xs"
+                  color="red"
+                  outlined
+                  @click.prevent="additionalContactDelete(item.id)"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    typeof item.id === 'number' &&
+                    can(permissionsEnum.DELETE_ADDITIONAL_CONTACT)
+                  "
+                >
+                  Delete
+                </x-button>
               </div>
             </template>
           </DataTable>
@@ -3394,10 +3521,54 @@ const validateEmirateOfVisa = () => {
             <x-button
               size="sm"
               color="emerald"
-              @click.prevent="additionalContactPrimaryConfirmed"
-              :loading="contactLoader"
+              @click.prevent="customerAlreadyPrimaryCheck"
+              :loading="emailCheckLoader"
             >
               Confirm
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+
+      <x-modal
+        v-model="modals.customerAlreadyPrimaryConfirm"
+        title="Primary Additional Contact"
+        show-close
+        backdrop
+      >
+        <p>
+          Do you want to keep the existing primary email ID as the additional
+          contact for this lead?
+        </p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              color="primary"
+              @click.prevent="additionalContactPrimaryConfirmed(true)"
+              :loading="
+                keepExistingPrimaryEmailLoader === true && contactLoader
+              "
+              :disabled="
+                keepExistingPrimaryEmailLoader === false && contactLoader
+              "
+            >
+              Yes
+            </x-button>
+            <x-button
+              size="sm"
+              ghost
+              color="red"
+              outlined
+              @click.prevent="additionalContactPrimaryConfirmed(false)"
+              :loading="
+                keepExistingPrimaryEmailLoader === false && contactLoader
+              "
+              :disabled="
+                keepExistingPrimaryEmailLoader === true && contactLoader
+              "
+            >
+              No
             </x-button>
           </div>
         </template>
@@ -4100,6 +4271,7 @@ const validateEmirateOfVisa = () => {
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Health"
+      :canBypassPlanLock="canBypassPlanLock"
       :payments="payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
@@ -4173,7 +4345,7 @@ const validateEmirateOfVisa = () => {
       :payments="payments"
     />
 
-    <QuoteDocument
+    <HealthQuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :quote="quote"
@@ -4183,6 +4355,7 @@ const validateEmirateOfVisa = () => {
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
       :bookPolicyDetails="bookPolicyDetails"
+      :members="membersDetail"
     />
 
     <BorLogsSection
@@ -4424,40 +4597,18 @@ const validateEmirateOfVisa = () => {
       </template>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="page.props.quote.id"
+      :quoteTypeId="page.props.quoteTypeId"
+    />
 
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+    <UaeSigningPassLogs
+      v-if="quote.uae_pass_api_status_text"
+      :quoteUuid="quote.uuid"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :expanded="sectionExpanded"
+    />
 
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
@@ -4478,6 +4629,21 @@ const validateEmirateOfVisa = () => {
       :quoteCode="$page.props.quote.code"
     />
 
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
+    <PolicyIssuanceApiLogs
+      v-if="isAdnic"
+      :type="modelClass"
+      :quoteTypeId="$page.props.quoteTypeId"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
     <AuditLogs
       :quoteType="$page.props.modelType"
       :type="modelClass"
@@ -4491,9 +4657,25 @@ const validateEmirateOfVisa = () => {
       :id="props.quote?.insured_kyc_id"
     />
 
+    <HealthRoutingLogs type="ROUTING" :quoteRequestId="$page.props.quote.id" />
+
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
+    />
+
+    <ApiLogs
+      v-if="can(permissionEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
+    />
+
+    <OcrLogs
+      v-if="can(permissionsEnum.API_LOG_VIEW)"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
     />
 
     <lead-raw-data

@@ -35,6 +35,7 @@ class ChangePrimaryContactRequest extends FormRequest
             'quote_customer_id' => 'nullable',
             'quote_primary_email_address' => 'nullable',
             'quote_primary_mobile_no' => 'nullable',
+            'keep_existing_primary_email' => 'nullable|numeric|in:0,1',
         ];
 
         if (request()->segment(1) == 'customer-additional-contact') {

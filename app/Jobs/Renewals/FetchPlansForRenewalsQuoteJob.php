@@ -54,7 +54,16 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
+        LoggerService::info('FetchPlansForRenewalsQuoteJob: middleware', extra: [
+            'policy_number' => $this->renewalQuoteProcess->policy_number,
+            'batch' => $this->renewalQuoteProcess->batch,
+        ]);
+
+        return [
+            (new WithoutOverlapping($this->renewalQuoteProcess->id))
+                ->dontRelease()
+                ->expireAfter($this->timeout),
+        ];
     }
 
     /**

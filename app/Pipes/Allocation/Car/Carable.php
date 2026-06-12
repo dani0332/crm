@@ -3,7 +3,6 @@
 namespace App\Pipes\Allocation\Car;
 
 use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -21,6 +20,14 @@ use Illuminate\Support\Facades\DB;
 
 trait Carable
 {
+    /**
+     * Normalize lead source by trimming special characters
+     */
+    private function normalizeLeadSource(string $source): string
+    {
+        return trim($source, " \t\n\r\0\x0B/?");
+    }
+
     public function getBaseQuery($status, $userIds)
     {
         $excludedUserIds = $this->allocationRequest->get('excludedUserIds') ?? [];
@@ -97,23 +104,93 @@ trait Carable
 
             return $this->getRulesForVehicleUse($lead);
         } else {
+            $ruleId = $this->findLeadSourceRuleId($lead);
+
             $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
                 ->join('rules', 'rules.id', 'rule_details.rule_id')
                 ->join('rule_users', 'rule_users.rule_id', 'rules.id')
                 ->join('users', 'users.id', 'rule_users.user_id')
-                ->where('lead_sources.name', $lead->source)
-                ->where('rules.is_active', 1)
-                ->where('lead_sources.is_applicable_for_rules', 1)
                 ->groupBy('rule_details.lead_source_id')
+                ->where('rules.id', $ruleId)
                 ->select(
                     'lead_sources.name AS leadSourceName',
                     'lead_sources.id AS leadSourceId',
                     DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-                );
-            LoggerService::info(self::class.'- Lead is not registered as a company, applying  rules for lead');
+                )->get();
 
-            return $records->get();
+            return $records;
         }
+    }
+
+    private function findLeadSourceRuleId($lead)
+    {
+        $normalizedLeadSource = $this->normalizeLeadSource($lead->source);
+
+        $rules = Rule::select('rules.id', 'rules.name', 'lead_sources.name as leadSourceName', 'rule_details.utm_campaign')
+            ->join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('lead_sources', 'lead_sources.id', 'rule_details.lead_source_id')
+            ->where('lead_sources.is_applicable_for_rules', 1)
+            ->where('rules.is_active', 1)
+            ->where('rules.rule_type', RuleTypeEnum::LEAD_SOURCE)
+            ->whereRaw(
+                'TRIM(BOTH ? FROM TRIM(BOTH ? FROM TRIM(BOTH ? FROM lead_sources.name))) = ?',
+                ['/', '?', ' ', $normalizedLeadSource]
+            )
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->get();
+
+        if ($rules->isEmpty()) {
+            return null;
+        }
+
+        $hasUtmCampaignRule = $rules->filter(fn ($rule) => ! empty($rule->utm_campaign))->isNotEmpty();
+
+        /**
+         * if there is no utm campaign rule, then return rule id without utm campaign
+         * so lead can pick that rule which doesn't have utm campaign and just lead source
+         */
+        if (! $hasUtmCampaignRule) {
+            $ruleWithoutUtmCampaign = $rules->first();
+            LoggerService::info("There is only one Rule without UTM Campaigns having just lead source rules against source {$lead->source} so applying that main rule named: {$ruleWithoutUtmCampaign->name}");
+
+            return $ruleWithoutUtmCampaign->id;
+        }
+
+        $utmCampaign = $lead->carQuoteRequestDetail->utm_campaign;
+
+        /**
+         * if utm campaign is empty for the lead, then return rule id without utm campaign
+         * so lead can pick that rule which doesn't have utm campaign and just lead source
+         */
+        if (empty($utmCampaign)) {
+            $ruleWithoutUtmCampaign = $rules->filter(fn ($rule) => empty($rule->utm_campaign))->first();
+
+            if (! $ruleWithoutUtmCampaign) {
+                LoggerService::info("No rule without UTM Campaign found for lead source '{$lead->source}' so no rule should be applied for this lead");
+
+                return null;
+            }
+
+            LoggerService::info("UTM Campaign is empty for lead source '{$lead->source}' so applying rule without UTM Campaign named: {$ruleWithoutUtmCampaign->name}");
+
+            return $ruleWithoutUtmCampaign->id;
+        }
+
+        /**
+         * if utm campaign is not empty for the lead, then return rule id with utm campaign
+         * so lead can pick that rule which has utm campaign along with lead source
+         */
+        $campaignRule = $rules->where('utm_campaign', $utmCampaign)->first();
+
+        if (! $campaignRule) {
+            LoggerService::info("No UTM Campaign rule found for lead with campaign '{$utmCampaign}' and source '{$lead->source}' so no rule should be applied for this lead");
+
+            return null;
+        }
+
+        LoggerService::info("UTM Campaign rule found for lead with campaign '{$utmCampaign}' and source '{$lead->source}' so applying that rule named: {$campaignRule->name}");
+
+        return $campaignRule->id;
     }
 
     private function getCommercialRule()
@@ -135,15 +212,10 @@ trait Carable
 
     private function getRulesForVehicleUse($lead)
     {
-        if ($lead->vehicle_use == CarVehicleUse::PRIVATE) {
-            info(self::class." - Lead is not commercial, applying private use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+        LoggerService::info(self::class." - Lead is {$lead->vehicle_use} use, applying company use rules for lead with Ref-ID: {$lead->uuid} ");
 
-            return $this->getCompanyUsageRules($lead, RuleEnum::PRIVATE_USE->value);
-        } else {
-            info(self::class." - Lead is commercial, applying commercial use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+        return $this->getCompanyUsageRules($lead, RuleEnum::COMPANY_USE->value);
 
-            return $this->getCompanyUsageRules($lead, RuleEnum::COMMERCIAL_USE->value);
-        }
     }
 
     private function getCompanyUsageRules($lead, $ruleName = null)

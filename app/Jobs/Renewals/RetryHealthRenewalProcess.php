@@ -40,7 +40,7 @@ class RetryHealthRenewalProcess implements ShouldQueue
         try {
             $renewalUploadService = app(RenewalsUploadService::class);
             $renewalUploadService->retryRenewalQuoteProcess($this->renewalQuoteProcess);
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             throw $th;
         }
     }

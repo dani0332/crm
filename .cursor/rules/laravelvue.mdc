@@ -30,6 +30,7 @@ alwaysApply: true
     - Apply try-catch blocks for predictable errors.
   - Use Laravel's request validation and middleware effectively.
   - Implement Eloquent ORM for database modeling and queries.
+  - Authentication helpers: Use `auth()->user()`, `auth()->id()`, `auth()->check()` and `Auth::user()`, `Auth::id()`, `Auth::check()` interchangeably as valid Laravel authentication methods. The `auth()` helper function returns an instance of the authentication guard, which has methods like `id()`, `user()`, `check()`, and `guest()`.
   - This project uses doppler, when running a local command make sure to use `doppler run -- ` before the php command like `doppler run -- php artisan --version`
 
   Vue.js
@@ -54,6 +55,17 @@ alwaysApply: true
   - Secure APIs with Laravel Passport and ensure proper CSRF protection.
   - Optimize front-end development with TailwindCSS.
   - Separate data access logic from business logic by implementing the service pattern for better testability and maintainability.
+  
+  Authentication Patterns
+  - Both `auth()` helper and `Auth` facade are valid and interchangeable:
+    - `auth()->id()` and `Auth::id()` - Get current user ID (both return integer|null)
+    - `auth()->user()` and `Auth::user()` - Get current user model (both return User|null)
+    - `auth()->check()` and `Auth::check()` - Check if user is authenticated (both return boolean)
+    - `auth()->guest()` and `Auth::guest()` - Check if user is guest (both return boolean)
+  - Use consistent pattern within the same class/method for readability
+  - Both patterns are valid Laravel conventions and should not trigger linting errors
+  - The `auth()` helper function is a Laravel global helper that returns the authentication guard instance
+  - All methods called on `auth()` are valid Laravel authentication guard methods
 
   Key Conventions
   1. Follow Laravel's MVC architecture.

@@ -54,6 +54,8 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class BusinessQuoteController extends Controller
 {
@@ -84,7 +86,7 @@ class BusinessQuoteController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index(Request $request)
     {
@@ -159,7 +161,7 @@ class BusinessQuoteController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create(Request $request)
     {
@@ -209,7 +211,7 @@ class BusinessQuoteController extends Controller
 
     /**
      * @param  $uuid
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($id)
     {
@@ -316,6 +318,11 @@ class BusinessQuoteController extends Controller
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Business));
+
+        // $record is a DB::table() stdClass — Eloquent relations can't be used; manual lookup is intentional.
+        $record->previous_quote = $record->previous_quote_id
+            ? BusinessQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
+            : null;
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),

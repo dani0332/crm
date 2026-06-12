@@ -7,6 +7,7 @@ namespace App\Traits;
 use App\Contracts\CsvExportableInterface;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\User;
+use App\Services\EmailExportService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -140,6 +141,12 @@ trait ModernCsvExportable
         $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
         $requestParams = $this->processEmailParameters($fileName, $requestParams);
 
+        LoggerService::info('Dispatching ExportCsvAndSendEmailJob()', [
+            'export_class' => static::class,
+            'recipientEmail' => $requestParams['recipientEmail'],
+            'requestParams' => $requestParams,
+        ]);
+
         // Use ExportCsvAndSendEmailJob instead to avoid serialization issues with dependencies
         ExportCsvAndSendEmailJob::dispatch(
             static::class, // Pass class name instead of instance
@@ -228,7 +235,7 @@ trait ModernCsvExportable
         }
 
         // Use the modern email export service
-        $emailExportService = app(\App\Services\EmailExportService::class);
+        $emailExportService = app(EmailExportService::class);
 
         $emailExportService->sendCsvByEmail(
             $this,

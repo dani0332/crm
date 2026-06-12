@@ -12,9 +12,11 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Jobs\SendSupportUserAssignmentEmailJob;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
+use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
@@ -80,6 +82,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.previous_policy_expiry_date',
                 'bqr.previous_policy_start_date',
                 'bqr.previous_quote_policy_premium',
+                'bqr.previous_quote_policy_commission',
                 'bqr.gender',
                 'bqr.device',
                 'bqr.customer_id',
@@ -105,6 +108,8 @@ class BusinessQuoteService extends BaseService
                 'i.first_name as insured_first_name',
                 'i.last_name as insured_last_name',
                 DB::raw('IF(i.id_type = "emiratesId", i.id_number, "") as emirates_id_number'),
+                'i.id_type as insured_id_type',
+                'i.id_number as insured_id_number',
                 'qrem.entity_id',
                 'ent.code as entity_code',
                 'ent.trade_license_no',
@@ -128,8 +133,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.policy_issuance_status_id',
                 'bqr.policy_issuance_status_other',
                 'bqr.policy_booking_date',
-                'policy_start_date',
-                'policy_issuance_date',
+                'bqr.policy_start_date',
+                'bqr.policy_issuance_date',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'ps.text AS payment_status_id_text',
                 'py.payment_status_id',
@@ -137,17 +142,19 @@ class BusinessQuoteService extends BaseService
                 'bqr.aml_status',
                 DB::raw('
                     CASE
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
-                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
-                        ELSE insurer_aml_status
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN bqr.insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE bqr.insurer_aml_status
                     END AS insurer_aml_status_display
                 '),
                 'ub.branch_id as advisor_primary_branch_id',
                 'b.name as lead_branch_name',
                 'b.id as lead_branch_id',
                 'bqr.is_branch_applicable',
+                'ciw.id as currently_insured_with_id',
+                'ciw.text as currently_insured_with_text',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -169,7 +176,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('customer_insured as ci', function ($query) {
                 $query->on('ci.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $query->on('ci.quote_request_id', '=', 'bqr.id');
-                $query->whereRaw('ci.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = bqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Business]);
+                $query->where('ci.is_active', '=', true);
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
             ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
@@ -182,7 +189,9 @@ class BusinessQuoteService extends BaseService
                     ->where('ub.is_primary', '=', 1)
                     ->where('ub.status', '=', 1);
             })
-            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
+            ->leftJoin('personal_quotes as pq_ciw', 'pq_ciw.id', '=', 'bqr.personal_quote_id')
+            ->leftJoin('insurance_provider as ciw', 'ciw.id', '=', 'pq_ciw.currently_insured_with_id');
     }
 
     public function postProcessBusinessQuotes($quotes)
@@ -300,6 +309,7 @@ class BusinessQuoteService extends BaseService
             'subSourceId' => $request->sub_source_id ?? null,
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
             'additionalNotes' => $request->additional_notes ?? null,
+            'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
 
@@ -851,9 +861,9 @@ class BusinessQuoteService extends BaseService
         // Send a single email for all assigned leads
         if (! empty($updatedLeadIds) && $supportUserId) {
             try {
-                $quoteType = \App\Enums\QuoteTypes::from(ucfirst($modelType));
-                \App\Jobs\SendSupportUserAssignmentEmailJob::dispatch(
-                    \Illuminate\Support\Facades\Auth::id(),
+                $quoteType = QuoteTypes::from(ucfirst($modelType));
+                SendSupportUserAssignmentEmailJob::dispatch(
+                    Auth::id(),
                     $supportUserId,
                     $updatedLeadIds,
                     $quoteType
@@ -870,7 +880,7 @@ class BusinessQuoteService extends BaseService
 
         // Return success message if any leads were updated
         if (! empty($updatedLeadIds)) {
-            $supportUserName = \App\Models\User::find($supportUserId)->name;
+            $supportUserName = User::find($supportUserId)->name;
 
             return $modelType.' Leads has been Assigned To '.$supportUserName;
         }

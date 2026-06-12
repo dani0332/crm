@@ -30,6 +30,13 @@ enum OCRDocumentTypeEnum: string
             'CEID' => self::ID_CARD,
             'CAR_MULKIY' => self::REGISTRATION_CERTIFICATE,
             'EID_CAR' => self::ID_CARD,
+            DocumentTypeCode::DEVICE_SMARTPHONE_EMIRATES_ID => self::ID_CARD,
+            'SAV_EID' => self::ID_CARD,
+            'CYB_EID' => self::ID_CARD,
+            'MEEID' => self::ID_CARD,
+            'MEPP' => self::PASSPORT,
+            'MEV' => self::VISA,
+            'PP_SAV' => self::PASSPORT,
             'DRIVER_EID' => self::DRIVER_EMIRATES_ID,
 
             'PS' => self::POLICY_SCHEDULE,
@@ -46,6 +53,10 @@ enum OCRDocumentTypeEnum: string
     public static function isOCREnabled(DocumentType $documentType, QuoteTypes $quoteType)
     {
         $documentType = self::getDocumentType($documentType);
+
+        if (! $documentType) {
+            return false;
+        }
 
         return $documentType?->isEnabled($quoteType);
     }
@@ -75,6 +86,21 @@ enum OCRDocumentTypeEnum: string
                 self::POLICY_SCHEDULE,
                 self::MOTOR_INSURANCE_POLICY_SCHEDULE,
             ],
+            QuoteTypes::DEVICE => [
+                self::ID_CARD,
+            ],
+            QuoteTypes::CYBER => [
+                self::ID_CARD,
+            ],
+            QuoteTypes::SAVINGS => [
+                self::ID_CARD,
+                self::PASSPORT,
+            ],
+            QuoteTypes::HEALTH => [
+                self::ID_CARD,
+                self::PASSPORT,
+                self::VISA,
+            ],
             default => [],
         };
     }
@@ -95,6 +121,12 @@ enum OCRDocumentTypeEnum: string
         }
 
         return $result;
+    }
+
+    public static function getPlanValidation()
+    {
+        return [
+        ];
     }
 
 }

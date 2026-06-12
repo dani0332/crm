@@ -7,6 +7,13 @@ const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const permissionEnum = page.props.permissionsEnum;
 const { formatDate, formatAmount, formatString } = usePayment();
 
+/** Local start of today — use with DatePicker `min-date` so past calendar days are disabled. */
+const minSelectableDate = computed(() => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+});
+
 const emit = defineEmits([
   'handle-collection-type-change',
   'handle-frequency-change',
@@ -69,6 +76,7 @@ const props = defineProps({
   quoteType: String,
   quoteTypeCodeEnum: Object,
   isLifePlanDetailsEnabled: Boolean,
+  sendUpdate: Object,
 });
 
 const totalPriceFormat = computed(() => {
@@ -99,6 +107,14 @@ const isLifeQuoteFrequencyReadonly = computed(() => {
   return (
     props.quoteType === props.quoteTypeCodeEnum.Life &&
     !props.isLifePlanDetailsEnabled
+  );
+});
+
+// Computed property to check if frequency should be readonly/disabled for savings quotes
+// Only for Savings quotes, not for send update
+const isSavingsQuoteFrequencyReadonly = computed(() => {
+  return (
+    props.quoteType === props.quoteTypeCodeEnum.SAVINGS && !props.sendUpdate
   );
 });
 
@@ -142,7 +158,8 @@ const isMasterPaymentPaid = computed(() => {
           v-if="!isFieldReadonly"
           name="collection_date"
           v-model="paymentMethodsForm.collection_date"
-          :rules="[rules.isRequired]"
+          :rules="[rules.isRequired, rules.dateOnOrAfterToday]"
+          :min-date="minSelectableDate"
         />
       </x-field>
     </div>
@@ -225,7 +242,7 @@ const isMasterPaymentPaid = computed(() => {
       <ToolTip
         title="FREQUENCY"
         :tooltip="
-          isLifeQuoteFrequencyReadonly
+          isLifeQuoteFrequencyReadonly || isSavingsQuoteFrequencyReadonly
             ? 'To make changes, please update the payment term in the Available Plan section.'
             : paymentTooltipEnum.FREQUENCY
         "
@@ -240,7 +257,11 @@ const isMasterPaymentPaid = computed(() => {
           }}
         </span>
         <select
-          v-if="!isFieldReadonly && !isLifeQuoteFrequencyReadonly"
+          v-if="
+            !isFieldReadonly &&
+            !isLifeQuoteFrequencyReadonly &&
+            !isSavingsQuoteFrequencyReadonly
+          "
           :class="{
             'custom-select-error': isPaymentFrequencyNotSelected,
           }"
@@ -256,7 +277,10 @@ const isMasterPaymentPaid = computed(() => {
           </template>
         </select>
         <input
-          v-if="!isFieldReadonly && isLifeQuoteFrequencyReadonly"
+          v-if="
+            !isFieldReadonly &&
+            (isLifeQuoteFrequencyReadonly || isSavingsQuoteFrequencyReadonly)
+          "
           class="custom-select cursor-not-allowed bg-gray-100"
           :value="
             frequencyTypes.find(

@@ -42,6 +42,7 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const contactLoader = ref(false);
 const EmailCheckLoader = ref(false);
+const keepExistingPrimaryEmailLoader = ref(null);
 
 const additionalContactTable = [
   { text: 'Type', value: 'key' },
@@ -129,6 +130,7 @@ const customerAlreadyPrimaryCheck = async () => {
     .then(res => {
       if (res.data.response === true) {
         modals.contactPrimaryConfirm = false;
+        EmailCheckLoader.value = false;
         modals.customerAlreadyPrimaryConfirm = true;
       } else {
         additionalContactPrimaryConfirmed();
@@ -139,13 +141,27 @@ const customerAlreadyPrimaryCheck = async () => {
     });
 };
 
-function additionalContactPrimaryConfirmed() {
+function additionalContactPrimaryConfirmed(keepExistingPrimaryEmail = true) {
   const isEmail = confirmData.contactPrimary.key === 'email';
-  router.post(
-    `/customer-additional-contact/${
+
+  // Determine the API endpoint based on quote type
+  let endpoint;
+  let requestData;
+  keepExistingPrimaryEmailLoader.value = keepExistingPrimaryEmail;
+
+  if (props.quoteType === 'Claim') {
+    // For claims, use the claims-specific endpoint
+    endpoint = route('claims.make-additional-contact-primary', props.quoteId);
+    requestData = {
+      key: confirmData.contactPrimary.key,
+      value: confirmData.contactPrimary.value,
+    };
+  } else {
+    // For other quote types, use the existing customer endpoint
+    endpoint = `/customer-additional-contact/${
       isEmail ? confirmData.contactPrimary.id : 0
-    }/make-primary`,
-    {
+    }/make-primary`;
+    requestData = {
       isInertia: true,
       quote_id: props.quoteId,
       quote_type: props.quoteType,
@@ -154,33 +170,36 @@ function additionalContactPrimaryConfirmed() {
       quote_customer_id: props.customerId,
       quote_primary_email_address: props.quoteEmail,
       quote_primary_mobile_no: props.quoteMobile,
+      keep_existing_primary_email: keepExistingPrimaryEmail ? 1 : 0,
+    };
+  }
+
+  router.post(endpoint, requestData, {
+    preserveScroll: true,
+    onBefore: () => {
+      contactLoader.value = true;
     },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Additional Contact Primary',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        EmailCheckLoader.value = false;
-        modals.contactPrimaryConfirm = false;
-        modals.customerAlreadyPrimaryConfirm = false;
-      },
-      onError: err => {
-        const firstError = Object.values(err)[0];
-        notification.error({
-          title: firstError,
-          position: 'top',
-        });
-      },
+    onSuccess: () => {
+      notification.success({
+        title: 'Additional Contact Primary',
+        position: 'top',
+      });
     },
-  );
+    onFinish: () => {
+      contactLoader.value = false;
+      EmailCheckLoader.value = false;
+      keepExistingPrimaryEmailLoader.value = null;
+      modals.contactPrimaryConfirm = false;
+      modals.customerAlreadyPrimaryConfirm = false;
+    },
+    onError: err => {
+      const firstError = Object.values(err)[0];
+      notification.error({
+        title: firstError,
+        position: 'top',
+      });
+    },
+  });
 }
 
 const confirmDeleteData = reactive({
@@ -203,15 +222,16 @@ const additionalContactDeleteConfirmed = () => {
       onBefore: () => {
         contactLoader.value = true;
       },
-      onSuccess: () => {
-        notification.error({
-          title: 'Additional Contact Deleted',
-          position: 'top',
-        });
-      },
       onFinish: () => {
         contactLoader.value = false;
         modals.contactDeleteConfirm = false;
+      },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
       },
     },
   );
@@ -220,13 +240,14 @@ const additionalContactDeleteConfirmed = () => {
 const readOnlyMode = reactive({
   isDisable: true,
 });
-onMounted(() => {
-  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
-});
 </script>
 
 <template>
-  <x-accordion show-icon class="p-4 rounded shadow mb-6 bg-white">
+  <x-accordion
+    show-icon
+    class="p-4 rounded shadow mb-6 bg-white"
+    :expanded="expanded"
+  >
     <x-accordion-item>
       <h3 class="font-semibold text-primary-800 text-lg">
         Customer Additional Contacts
@@ -279,6 +300,18 @@ onMounted(() => {
                 @click.prevent="additionalContactPrimary(item)"
               >
                 Make Primary
+              </x-button>
+              <x-button
+                size="xs"
+                color="red"
+                outlined
+                @click.prevent="additionalContactDelete(item.id)"
+                v-if="
+                  readOnlyMode.isDisable === true &&
+                  can(permissionsEnum.DELETE_ADDITIONAL_CONTACT)
+                "
+              >
+                Delete
               </x-button>
             </div>
           </template>
@@ -375,28 +408,38 @@ onMounted(() => {
           backdrop
         >
           <p>
-            You are about to set this "email" as the primary contact for this
-            lead. This action will add this lead to the list of other existing
-            leads associated with the same email.
+            Do you want to keep the existing primary email ID as the additional
+            contact for this lead?
           </p>
-          <br />
-          <p>Are you sure you want to continue?</p>
           <template #actions>
             <div class="text-right space-x-4">
               <x-button
                 size="sm"
-                ghost
-                @click.prevent="modals.customerAlreadyPrimaryConfirm = false"
+                color="primary"
+                @click.prevent="additionalContactPrimaryConfirmed(true)"
+                :loading="
+                  keepExistingPrimaryEmailLoader === true && contactLoader
+                "
+                :disabled="
+                  keepExistingPrimaryEmailLoader === false && contactLoader
+                "
               >
-                Cancel
+                Yes
               </x-button>
               <x-button
                 size="sm"
-                color="emerald"
-                @click.prevent="additionalContactPrimaryConfirmed"
-                :loading="contactLoader"
+                ghost
+                color="red"
+                outlined
+                @click.prevent="additionalContactPrimaryConfirmed(false)"
+                :loading="
+                  keepExistingPrimaryEmailLoader === false && contactLoader
+                "
+                :disabled="
+                  keepExistingPrimaryEmailLoader === true && contactLoader
+                "
               >
-                Continue
+                No
               </x-button>
             </div>
           </template>

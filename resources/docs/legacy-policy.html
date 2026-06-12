@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Legacy Policy & Move to IMCRM - Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      /* Fallback if external CSS fails to load */
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        line-height: 1.6;
+        color: #555;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        margin: 0;
+      }
+      .container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.12);
+        padding: 12px 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+      }
+      .breadcrumb span {
+        color: rgba(255, 255, 255, 0.6);
+      }
+      .header {
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 16px;
+        padding: 48px 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        text-align: center;
+      }
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+      }
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.15rem;
+        margin-bottom: 20px;
+      }
+      .status-badge {
+        display: inline-flex;
+        background: #27ae60;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      .content-section {
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 16px;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      }
+      .content-section h2 {
+        color: #2c3e50;
+        font-size: 1.9rem;
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid #3498db;
+      }
+      .content-section h3 {
+        color: #2c3e50;
+        font-size: 1.5rem;
+        margin: 32px 0 16px;
+      }
+      .content-section p {
+        margin-bottom: 16px;
+        line-height: 1.7;
+      }
+      .info-cards,
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin: 24px 0;
+      }
+      .info-card {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-left: 4px solid #3498db;
+        border-radius: 12px;
+        padding: 24px;
+      }
+      .info-card h4 {
+        color: #2c3e50;
+        margin-bottom: 16px;
+        font-size: 1.15rem;
+      }
+      .info-card ul {
+        list-style: none;
+        padding: 0;
+      }
+      .info-card li {
+        padding: 6px 0;
+        padding-left: 20px;
+        position: relative;
+      }
+      .info-card li::before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        color: #3498db;
+        font-weight: bold;
+      }
+      .highlight {
+        background: linear-gradient(135deg, #e67e22, #d35400);
+        color: white;
+        padding: 24px;
+        border-radius: 12px;
+        margin: 24px 0;
+        border-left: 5px solid #c0392b;
+      }
+      .highlight h4 {
+        margin-bottom: 12px;
+        font-size: 1.15rem;
+      }
+      .highlight p {
+        margin: 0;
+        line-height: 1.6;
+      }
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 24px;
+        border-radius: 12px;
+        margin: 24px 0;
+        font-family: monospace;
+        font-size: 0.9rem;
+        overflow-x: auto;
+      }
+      .code-block pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      .table-container {
+        overflow-x: auto;
+        margin: 24px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+      }
+      th {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        padding: 14px;
+        text-align: left;
+        font-weight: 600;
+      }
+      td {
+        padding: 14px;
+        border-bottom: 1px solid #e9ecef;
+      }
+      .footer {
+        text-align: center;
+        margin-top: 48px;
+        padding: 32px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a href="/docs/index.html">📚 Documentation Home</a>
+        <span>></span>
+        <span>Legacy Policy</span>
+      </nav>
+
+      <!-- Header -->
+      <header class="header">
+        <h1>📋 Legacy Policy & Move to IMCRM</h1>
+        <p>
+          View Insly legacy policies, assign user/email via Application Storage,
+          and move leads into IMCRM
+        </p>
+        <span class="status-badge">✓ Active Feature</span>
+      </header>
+
+      <!-- Overview -->
+      <section class="content-section">
+        <h2>❓ What is Legacy Policy?</h2>
+        <p>
+          <strong>Legacy policies</strong> are policy records stored in the
+          Insly system (MongoDB). They represent business that existed before or
+          outside the current IMCRM quote flow. The Legacy Policy feature allows
+          authorised users to search and view these policies, and to
+          <strong>Move to IMCRM</strong>—i.e. create or link an IMCRM lead
+          (quote) so the policy can be managed inside the application.
+        </p>
+
+        <div class="highlight">
+          <h4>💡 Key Concepts</h4>
+          <p>
+            <strong>Insly:</strong> External policy management system; data is
+            stored in MongoDB (InslyDetail model).<br />
+            <strong>Move to IMCRM:</strong> Either link an existing IMCRM quote
+            by policy number or email+payment date, or create a new lead and
+            attach the legacy policy (insly_id) to the appropriate LOB table.<br />
+            <strong>Application Storage:</strong> Key-value store used to assign
+            a <strong>user ID (advisor)</strong> and
+            <strong>customer email</strong> to specific legacy policies when
+            Insly data is missing (e.g. no renewer person, no customer email).
+          </p>
+        </div>
+      </section>
+
+      <!-- Access & Permissions -->
+      <section class="content-section">
+        <h2>🔐 Access & Permissions</h2>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📍 Routes</h4>
+            <ul>
+              <li>
+                <strong>GET /legacy-policy</strong> – List (index); search runs
+                only when at least one filter is provided. Route name:
+                <code>legacy-policy.index</code>.
+              </li>
+              <li>
+                <strong>GET /legacy-policy/{legacy_policy}</strong> – Show
+                policy detail; <code>{legacy_policy}</code> is the MongoDB
+                document <code>_id</code>. Route name:
+                <code>legacy-policy.show</code>. Returns 404 if not found.
+              </li>
+              <li>
+                <strong>POST /legacy-policy/move-to-imcrm</strong> – Move to
+                IMCRM (body: policy_oid, validateAll, isInertia).
+              </li>
+              <li>
+                <strong>GET /legacy-policy/{policyNumber}/policy</strong> – Look
+                up by policy number, then redirect to show using MongoDB
+                <code>_id</code>. Route name:
+                <code>view-legacy-policy.renewal-uploads</code>.
+              </li>
+              <li>
+                <strong>POST /legacy-policy/get-s3-temp-url</strong> – Temporary
+                URL for document viewing (body: <code>legacyPolicyId</code>,
+                <code>fileName</code>).
+              </li>
+              <li>
+                <strong>POST /migrate-legacy-policy/{poid}</strong> – CAPI
+                migration (separate flow). Route name:
+                <code>migrate-legacy-policy</code>. Migrate (POID) form on Index
+                is shown only to users with <code>MIGRATE_INSLY_LEAD</code>.
+              </li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h4>🔑 Permissions</h4>
+            <ul>
+              <li>
+                List, show, and Move to IMCRM require one of:
+                <code>VIEW_LEGACY_DETAILS</code> or
+                <code>VIEW_ALL_LEADS</code> (middleware on <code>index</code>,
+                <code>show</code>, <code>moveToImcrm</code>).
+              </li>
+              <li>
+                Sidebar: "Legacy Policies" link when user has
+                <code>VIEW_LEGACY_DETAILS</code> or <code>VIEW_ALL_LEADS</code>.
+              </li>
+              <li>
+                Migrate (CAPI) form visibility:
+                <code>MIGRATE_INSLY_LEAD</code> (frontend only; route itself is
+                not permission-gated in the controller).
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Application Storage: User ID & Email Assignment -->
+      <section class="content-section">
+        <h2>
+          ⚙️ Application Storage: Assign User ID and Email to Legacy Policy
+        </h2>
+
+        <h3>Why This Exists</h3>
+        <p>
+          When you click <strong>Move to IMCRM</strong>, the system must create
+          (or link) an IMCRM lead. Every lead needs:
+        </p>
+        <ul>
+          <li>
+            An <strong>advisor (sales person)</strong> — the user in your system
+            who “owns” the lead.
+          </li>
+          <li>
+            A <strong>customer email</strong> — required for validation and for
+            the lead record.
+          </li>
+        </ul>
+        <p>
+          Normally these come from <strong>Insly</strong>: the policy’s
+          renewer/broker is matched to an <code>InslyAdvisor</code> to get a
+          <code>user_id</code>, and the customer’s email is read from the
+          policy. But some legacy policies in Insly have
+          <strong>no renewer person</strong> or
+          <strong>no customer email</strong>. In those cases, Move to IMCRM
+          would fail with “Advisor not found” or “Customer email not found”
+          unless we provide a fallback.
+        </p>
+        <p>
+          <strong>Application Storage</strong> is that fallback. It is a
+          key-value store (e.g. in your database or admin UI) where an
+          administrator can say: “For
+          <em>this specific legacy policy</em> (identified by its
+          <strong>policy OID</strong>), use <em>this user ID</em> as the advisor
+          and/or <em>this email</em> as the customer email.” The Move to IMCRM
+          logic checks these keys only when Insly did not provide the data, so
+          you can fix one policy at a time without changing Insly data.
+        </p>
+
+        <h3>How It Works (In Plain Terms)</h3>
+        <div class="highlight">
+          <h4>Advisor (user ID) assignment</h4>
+          <ol style="margin: 0.5em 0 0 1.2em; padding-left: 0.5em">
+            <li>
+              The user clicks “Move to IMCRM” for a legacy policy (e.g. policy
+              OID <code>12345</code>).
+            </li>
+            <li>
+              The system tries to find the advisor from Insly (renewer_person or
+              broker → InslyAdvisor → <code>user_id</code>).
+            </li>
+            <li>
+              If no advisor is found, it reads from Application Storage:
+              <code>INSLY_TEMP_SALES_PERSON_ID</code> and
+              <code>INSLY_TEMP_POLICY_OID</code>.
+            </li>
+            <li>
+              If the stored policy OID <strong>equals</strong>
+              <code>12345</code>, the system uses the stored user ID as the
+              advisor for the new lead.
+            </li>
+            <li>
+              If there is still no advisor, the request fails with
+              <strong>400 – Advisor not found.</strong>
+            </li>
+          </ol>
+        </div>
+        <div class="highlight">
+          <h4>Customer email assignment</h4>
+          <ol style="margin: 0.5em 0 0 1.2em; padding-left: 0.5em">
+            <li>
+              The system needs a customer email for the lead (validation and
+              record creation).
+            </li>
+            <li>
+              It first uses the email from the Insly policy
+              (<code>policy.customer.email</code>).
+            </li>
+            <li>
+              If that is empty, it reads
+              <code>INSLY_TEMP_CUSTOMER_EMAIL</code> and
+              <code>INSLY_TEMP_CUSTOMER_POLICY_OID</code> from Application
+              Storage.
+            </li>
+            <li>
+              If the stored policy OID <strong>equals</strong> the policy being
+              moved, the stored email is used for that policy.
+            </li>
+            <li>
+              If there is still no email, the request fails with
+              <strong>400 – Customer email not found.</strong>
+            </li>
+          </ol>
+        </div>
+
+        <h3>When to Use It</h3>
+        <ul>
+          <li>
+            <strong>Policy has no renewer in Insly:</strong> Set
+            <code>INSLY_TEMP_POLICY_OID</code> to that policy’s OID and
+            <code>INSLY_TEMP_SALES_PERSON_ID</code> to the correct advisor’s
+            user ID (from your <code>users</code> table). Then run Move to IMCRM
+            for that policy.
+          </li>
+          <li>
+            <strong>Policy has no customer email in Insly:</strong> Set
+            <code>INSLY_TEMP_CUSTOMER_POLICY_OID</code> to that policy’s OID and
+            <code>INSLY_TEMP_CUSTOMER_EMAIL</code> to the known customer email.
+            Then run Move to IMCRM.
+          </li>
+          <li>
+            You can set both advisor and email for the same policy (same OID in
+            both pairs), or use them for different policies. The two pairs work
+            independently.
+          </li>
+        </ul>
+
+        <h3>Storage Keys (ApplicationStorageEnums)</h3>
+        <p>
+          These four keys are defined in
+          <code>ApplicationStorageEnums</code> and stored in the
+          <code>application_storage</code> table (or your configured store).
+          They work in <strong>pairs</strong>: one key holds the value (user ID
+          or email), the other holds the policy OID that value applies to.
+        </p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Purpose</th>
+                <th>Used When</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>INSLY_TEMP_SALES_PERSON_ID</code></td>
+                <td>
+                  User ID of the advisor/sales person to assign to the legacy
+                  lead (integer, from <code>users.id</code>).
+                </td>
+                <td>
+                  Move to IMCRM: advisor not found from Insly; used only when
+                  <code>INSLY_TEMP_POLICY_OID</code> equals the policy being
+                  moved.
+                </td>
+              </tr>
+              <tr>
+                <td><code>INSLY_TEMP_POLICY_OID</code></td>
+                <td>
+                  Policy OID (integer) for which the temp sales person ID
+                  applies. Must match the legacy policy’s
+                  <code>policy_oid</code>.
+                </td>
+                <td>
+                  Checked together with <code>INSLY_TEMP_SALES_PERSON_ID</code>;
+                  both must be set and OID must match.
+                </td>
+              </tr>
+              <tr>
+                <td><code>INSLY_TEMP_CUSTOMER_EMAIL</code></td>
+                <td>
+                  Customer email address to use when the policy has no email in
+                  Insly. Must be a valid email format.
+                </td>
+                <td>
+                  Used when policy has no <code>customer.email</code> and
+                  <code>INSLY_TEMP_CUSTOMER_POLICY_OID</code> equals this
+                  policy’s <code>policy_oid</code>.
+                </td>
+              </tr>
+              <tr>
+                <td><code>INSLY_TEMP_CUSTOMER_POLICY_OID</code></td>
+                <td>
+                  Policy OID (integer) for which the temp customer email
+                  applies. Must match the legacy policy’s
+                  <code>policy_oid</code>.
+                </td>
+                <td>
+                  Checked together with <code>INSLY_TEMP_CUSTOMER_EMAIL</code>;
+                  both must be set and OID must match.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Where It’s Used in Code (InslyDetailRepository)</h3>
+        <p>
+          The logic lives in
+          <code>InslyDetailRepository::fetchSaveToImcrm</code> (and for email
+          again in <code>prePareData</code> when building the lead payload). The
+          flow is: try Insly first; if missing, read Application Storage and
+          apply only when the stored policy OID matches the current policy.
+        </p>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>📌 Advisor / Sales Person (fetchSaveToImcrm)</h4>
+            <ul>
+              <li>
+                <strong>Step 1:</strong> Resolve advisor from Insly: policy’s
+                <code>renewer_person</code> or <code>quote.broker</code> →
+                lookup <code>InslyAdvisor</code> by name → <code>user_id</code>.
+              </li>
+              <li>
+                <strong>Step 2:</strong> If that is null, read
+                <code>INSLY_TEMP_SALES_PERSON_ID</code> and
+                <code>INSLY_TEMP_POLICY_OID</code> from Application Storage.
+              </li>
+              <li>
+                <strong>Step 3:</strong> If both are set and
+                <code>INSLY_TEMP_POLICY_OID == $policyID</code> (the policy
+                being moved), use <code>INSLY_TEMP_SALES_PERSON_ID</code> as
+                <code>advisor_id</code> for the new lead.
+              </li>
+              <li>
+                If advisor is still null after this, Move to IMCRM returns
+                <strong>400 – "Advisor not found."</strong>
+              </li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h4>📌 Customer Email (fetchSaveToImcrm & prePareData)</h4>
+            <ul>
+              <li>
+                <strong>Step 1:</strong> Use
+                <code>$policy['customer']['email']</code> from Insly.
+              </li>
+              <li>
+                <strong>Step 2:</strong> If email is empty, read
+                <code>INSLY_TEMP_CUSTOMER_EMAIL</code> and
+                <code>INSLY_TEMP_CUSTOMER_POLICY_OID</code>.
+              </li>
+              <li>
+                <strong>Step 3:</strong> If
+                <code>INSLY_TEMP_CUSTOMER_POLICY_OID == policy_oid</code>, use
+                <code>INSLY_TEMP_CUSTOMER_EMAIL</code> for validation and for
+                the new lead.
+              </li>
+              <li>
+                The same fallback is applied again in
+                <code>prePareData()</code> when building the payload so the
+                created lead gets the correct email.
+              </li>
+              <li>
+                If email is still empty, Move to IMCRM returns
+                <strong>400 – "Customer email not found."</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Example: Moving One Policy With Missing Data</h3>
+        <p>
+          Legacy policy <strong>OID 98765</strong> has no renewer in Insly and
+          no customer email. You want to assign advisor user ID
+          <strong>42</strong> and use <strong>customer@example.com</strong> as
+          the customer email.
+        </p>
+        <ol>
+          <li>
+            In Application Storage (admin UI or database), set:
+            <ul>
+              <li><code>INSLY_TEMP_SALES_PERSON_ID</code> = <code>42</code></li>
+              <li><code>INSLY_TEMP_POLICY_OID</code> = <code>98765</code></li>
+              <li>
+                <code>INSLY_TEMP_CUSTOMER_EMAIL</code> =
+                <code>customer@example.com</code>
+              </li>
+              <li>
+                <code>INSLY_TEMP_CUSTOMER_POLICY_OID</code> = <code>98765</code>
+              </li>
+            </ul>
+          </li>
+          <li>
+            Open the Legacy Policy detail page for that policy and click
+            <strong>Move to IMCRM</strong>.
+          </li>
+          <li>
+            The system will use user 42 as advisor and customer@example.com as
+            email for that policy only. Other policies are unaffected.
+          </li>
+          <li>
+            After a successful move, you can change the stored OIDs/values for
+            the next policy if needed (the keys are effectively “one policy at a
+            time” by design).
+          </li>
+        </ol>
+
+        <h3>Seeding and Updating Values (ApplicationStorageSeeder)</h3>
+        <p>
+          The seeder method <code>seedLegacyPolicyKeys()</code> creates the four
+          keys in <code>application_storage</code> with placeholder values (e.g.
+          <code>1</code> or a date). These placeholders are not valid for a real
+          move—an administrator must update them to the actual policy OID, user
+          ID, and/or email for the legacy policy they are moving. Updates are
+          done through your Application Storage admin interface or by updating
+          the <code>application_storage</code> table (e.g.
+          <code>key_value</code> or equivalent column) for each key.
+        </p>
+
+        <div class="code-block" data-lang="php">
+          // InslyDetailRepository::fetchSaveToImcrm (simplified) // Advisor
+          fallback when Insly has no renewer $tempSalesPersonId =
+          app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_SALES_PERSON_ID);
+          $tempPolicyId =
+          app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_POLICY_OID);
+          if ($tempSalesPersonId && $tempPolicyId && (int) $tempPolicyId ===
+          (int) $policyID) { $advisorId = $tempSalesPersonId; } // Customer
+          email fallback when policy has no customer.email in Insly
+          $tempCustomerEmail =
+          app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_CUSTOMER_EMAIL);
+          $tempCustomerPolicyId =
+          app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_CUSTOMER_POLICY_OID);
+          if (empty($email) && $tempCustomerPolicyId && (int)
+          $tempCustomerPolicyId === (int) $policyID) { $email =
+          $tempCustomerEmail; }
+        </div>
+
+        <p>
+          <strong>Important:</strong> The matching is by
+          <strong>policy OID</strong> (the Insly policy identifier). So only the
+          legacy policy whose <code>policy_oid</code> matches the stored OID
+          gets the temp advisor or email. This keeps the behaviour predictable
+          and safe when moving multiple policies over time.
+        </p>
+      </section>
+
+      <!-- Move to IMCRM Flow -->
+      <section class="content-section">
+        <h2>🔄 Move to IMCRM Flow</h2>
+        <p>
+          From the Legacy Policy detail page, the user clicks
+          <strong>Move to IMCRM</strong>. The backend (<code
+            >LegacyPolicyController::moveToImcrm</code
+          >
+          → <code>InslyDetailRepository::fetchSaveToImcrm</code>) runs the
+          following logic. The controller returns the repository response
+          directly (JSON).
+        </p>
+
+        <div class="process-flow">
+          <div class="process-step">
+            <div class="step-number">1</div>
+            <h4>Resolve email & advisor</h4>
+            <p>
+              Use policy customer email or Application Storage temp email;
+              resolve advisor from Insly (renewer_person or quote.broker →
+              InslyAdvisor) or Application Storage temp sales person ID. If
+              email or advisor is missing after fallbacks, return 400.
+            </p>
+          </div>
+          <div class="process-step">
+            <div class="step-number">2</div>
+            <h4>Resolve quote type & model</h4>
+            <p>
+              Map <code>policy.coverage</code> to quote type via
+              <code>getQuoteTypeFromCoverage</code> (InslyDataService). Get
+              model via <code>getModelObject($quoteType)</code>. If no model
+              (unsupported coverage), return 400 "Quote Type not found."
+            </p>
+          </div>
+          <div class="process-step">
+            <div class="step-number">3</div>
+            <h4>Match by policy number</h4>
+            <p>
+              Search quote by <code>policy_number</code> or
+              <code>previous_quote_policy_number</code>. If found and
+              <code>validateAll</code> is true, return 200
+              <code>type: 'policy_number'</code> with
+              <code>data[0].link</code> and <code>code</code> (modal: open
+              existing lead). If found but validateAll is false, the same 200 is
+              still returned.
+            </p>
+          </div>
+          <div class="process-step">
+            <div class="step-number">4</div>
+            <h4>Match by email + payment date</h4>
+            <p>
+              Only when <code>validateAll</code> is true: join quote table with
+              payments, filter by <code>email</code> and
+              <code>captured_at</code> between policy issue_date −1 month and +1
+              month. If any quote found, return 200
+              <code>type: 'email'</code> with <code>data</code> array (modal:
+              user picks one or "Create new").
+            </p>
+          </div>
+          <div class="process-step">
+            <div class="step-number">5</div>
+            <h4>Create new lead</h4>
+            <p>
+              If no match: build payload via
+              <code>prePareData()</code> (includes Application Storage email
+              fallback), set <code>advisor_id</code>, create main quote, then
+              create/update LOB-specific detail with <code>insly_id</code> (e.g.
+              CarQuoteRequestDetail, HealthQuoteRequestDetail, quoteDetail for
+              personal LOBs). Set <code>moved_to_imcrm</code>,
+              <code>imcrm_link</code>, <code>code</code>,
+              <code>moved_to_imcrm_date</code>,
+              <code>moved_to_imcrm_by</code> on the Insly document. Sync to
+              CAPI/personal quote where applicable. Return 201 "Lead Created
+              Successfully".
+            </p>
+          </div>
+        </div>
+
+        <h3>Supported LOBs (Move to IMCRM)</h3>
+        <p>
+          The quote type is derived from the policy’s <code>coverage</code> via
+          <code>InslyDataService::inslyInsurances()</code>. Supported LOBs for
+          lead creation include: <strong>Business</strong> (incl. Group Medical,
+          CorpLine), <strong>Car</strong>, <strong>Life</strong>,
+          <strong>Home</strong>, <strong>Travel</strong>,
+          <strong>Health</strong>, <strong>Pet</strong>, <strong>Bike</strong>,
+          <strong>Cycle</strong>, <strong>Yacht</strong>,
+          <strong>Savings</strong>. If the coverage does not map to a known
+          quote type, <code>getModelObject</code> returns false and the API
+          returns 400 "Quote Type not found."
+        </p>
+
+        <h3>Request Payload (Frontend)</h3>
+        <div class="code-block" data-lang="json">
+          POST /legacy-policy/move-to-imcrm { "policy_oid": 12345,
+          "validateAll": true, "isInertia": true }
+        </div>
+        <p>
+          <code>validateAll: true</code> (default) runs policy number match and
+          email+payment-date match; if matches are found, the frontend shows a
+          modal (open existing or create new).
+          <code>validateAll: false</code> is used when the user chooses "Create
+          new" in the modal—the backend skips returning existing leads by
+          email+date and proceeds to create a new lead when no policy number
+          match exists.
+        </p>
+
+        <h3>Response Types</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Type</th>
+                <th>Meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>200</td>
+                <td>policy_number</td>
+                <td>
+                  Existing quote found by policy number;
+                  <code>data[0].link</code>, <code>data[0].code</code>; frontend
+                  shows modal with link to open.
+                </td>
+              </tr>
+              <tr>
+                <td>200</td>
+                <td>email</td>
+                <td>
+                  Existing quotes found by email + payment date;
+                  <code>data</code> array (each item has <code>link</code>,
+                  <code>modelType</code>, etc.); user can select one or choose
+                  "Create new" (frontend then calls move-to-imcrm with
+                  <code>validateAll: false</code>).
+                </td>
+              </tr>
+              <tr>
+                <td>201</td>
+                <td>—</td>
+                <td>
+                  New lead created; <code>message</code> "Lead Created
+                  Successfully".
+                </td>
+              </tr>
+              <tr>
+                <td>400</td>
+                <td>—</td>
+                <td>
+                  <code>message</code>: "Customer email not found." / "Advisor
+                  not found." / "Quote not found." / "Quote Type not found."
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- InslyDetailRepository Overview -->
+      <section class="content-section">
+        <h2>📂 InslyDetailRepository & Legacy Data</h2>
+        <p>
+          <code>App\Repositories\InslyDetailRepository</code> works with the
+          <code>InslyDetail</code> model (MongoDB). Static-style calls (e.g.
+          <code>InslyDetailRepository::getDataByIndex()</code>) are forwarded to
+          <code>fetch*</code> methods by <code>BaseRepository</code>.
+        </p>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Method (called as)</th>
+                <th>Implementation</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>getDataByIndex()</code></td>
+                <td>fetchGetDataByIndex</td>
+                <td>
+                  Search legacy policies.
+                  <strong
+                    >Only runs when the request has at least one of:</strong
+                  >
+                  <code>policy_number</code>, <code>email</code>,
+                  <code>mobile_no</code> (index action passes request to
+                  repository). Filters: exact <code>policy_no</code>, free-text
+                  <code>customer.email</code>, regex/wildcard
+                  <code>customer.mobile_phone</code>, and
+                  <code>policy.coverage</code> IN user’s coverage list. Uses
+                  MongoDB Atlas Search index <code>insly_search_index</code>.
+                  Returns paginated structure: <code>data</code>,
+                  <code>current_page</code>, <code>per_page</code> (15),
+                  <code>from</code>, <code>to</code>,
+                  <code>next_page_url</code>, <code>prev_page_url</code>. If no
+                  filter is sent, controller returns empty
+                  <code>policies</code> array.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <code>getBy('_id', $id)</code> /
+                  <code>getBy('policy_no', $number)</code>
+                </td>
+                <td>fetchGetBy</td>
+                <td>
+                  Load one policy by column and value. If
+                  <code>request()->policy_oid</code> is set, also matches
+                  <code>policy_oid</code> (orWhere). Uses
+                  <code>firstOrFail()</code> → 404 if not found. Masks
+                  <code>customer.email</code>,
+                  <code>customer.mobile_phone</code>,
+                  <code>customer.phone</code> in response. Sets
+                  <code>quoteType</code> (from coverage) and
+                  <code>imcrm_link</code> (current app URL). Premium from sum of
+                  <code>installments.gross_premium</code> if present.
+                </td>
+              </tr>
+              <tr>
+                <td><code>saveToImcrm($request->toArray())</code></td>
+                <td>fetchSaveToImcrm</td>
+                <td>
+                  Run Move to IMCRM: resolve email/advisor (including
+                  Application Storage), match by policy number or email+payment
+                  date, or create new lead; update Insly document with
+                  <code>moved_to_imcrm</code>, <code>imcrm_link</code>,
+                  <code>code</code>, <code>moved_to_imcrm_date</code>,
+                  <code>moved_to_imcrm_by</code>.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          <strong>Deprecated:</strong> <code>fetchGetData()</code> is a fallback
+          listing implementation (non–Atlas Search, simple filters and
+          <code>whereIn('policy.coverage', $coverage)</code>). Not used by the
+          index when <code>getDataByIndex</code> is used.
+        </p>
+
+        <h3>Coverage / LOB Filtering (getCoverageList)</h3>
+        <p>
+          <code>getCoverageList($user)</code> returns the list of Insly
+          <code>policy.coverage</code> values the user is allowed to see. It
+          uses <code>InslyDataService::inslyInsurances()</code> and the user’s
+          roles. Each role adds its coverages to the list:
+        </p>
+        <ul>
+          <li>
+            <code>BikeAdvisor</code> → Bike; <code>CorpLineAdvisor</code> →
+            Business; <code>CarAdvisor</code> → Car; <code>LifeAdvisor</code> →
+            Life; <code>HomeAdvisor</code> → Home; <code>TravelAdvisor</code> →
+            Travel; <code>HealthAdvisor</code> → Health;
+            <code>CycleAdvisor</code> → Cycle; <code>PetAdvisor</code> → Pet;
+            <code>YachtAdvisor</code> → Yacht; <code>SavingsAdvisor</code> →
+            Savings.
+          </li>
+        </ul>
+        <p>
+          Coverage values are merged and lowercased for matching. Search
+          (getDataByIndex) only returns policies whose
+          <code>policy.coverage</code> is in this list. Users with none of these
+          roles get an empty coverage list, so the coverage filter is omitted
+          and other filters (policy_number, email, mobile_no) still apply.
+        </p>
+      </section>
+
+      <!-- LegacyPolicyEnum Mappings -->
+      <section class="content-section">
+        <h2>🗺️ Product & Coverage Mappings (LegacyPolicyEnum)</h2>
+        <p>
+          <code>App\Enums\LegacyPolicyEnum</code> defines two mappings used for
+          display on the Legacy Policy list (Index) and for resolving quote type
+          when moving to IMCRM. The controller passes
+          <code>legacyPolicyMapping</code> (INSLY_PRODUCT_MAPPING) and
+          <code>coveragePolicyMapping</code> (INSLY_COVERAGE_MAPPING) to the
+          Index page.
+        </p>
+        <div class="info-cards">
+          <div class="info-card">
+            <h4>INSLY_PRODUCT_MAPPING</h4>
+            <ul>
+              <li>
+                Maps Insly product strings (e.g. "casco", "home insurance", "pet
+                insurance") to display labels (e.g. "Motor Insurance", "Home
+                Insurance", "Pet Insurance").
+              </li>
+              <li>
+                Used in Index.vue <code>productName(item)</code>: first checks
+                <code>item.product.product</code> against this map (lowercased).
+              </li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h4>INSLY_COVERAGE_MAPPING</h4>
+            <ul>
+              <li>
+                Override for specific coverages: "motor fleet" → "Business
+                Insurance", "casco" → "Motor Insurance", "group medical
+                insurance" → "Group Medical Insurance".
+              </li>
+              <li>
+                In <code>productName(item)</code>, if product is not set,
+                <code>item.policy.coverage</code> is checked against
+                INSLY_COVERAGE_MAPPING first, then INSLY_PRODUCT_MAPPING, so
+                coverage-based display is consistent.
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p>
+          Quote type for Move to IMCRM is determined by
+          <code>InslyDataService::inslyInsurances()</code> and
+          <code>getQuoteTypeFromCoverage($coverage)</code>, not by these enum
+          mappings directly.
+        </p>
+      </section>
+
+      <!-- Other Features -->
+      <section class="content-section">
+        <h2>📎 Other Legacy Policy Features</h2>
+        <h3>Document Viewing (S3 Temp URL)</h3>
+        <p>
+          Legacy policy documents stored on the
+          <code>insly_documents</code> disk can be viewed via a temporary URL.
+          Frontend calls <code>POST /legacy-policy/get-s3-temp-url</code> with
+          body <code>{ legacyPolicyId, fileName }</code>. Backend checks
+          <code>Storage::disk('insly_documents')->has($fileName)</code>; if the
+          file exists, returns <code>{ "url": "…" }</code> with expiry 40
+          minutes (<code>now()->addMinutes(40)</code>). Otherwise returns
+          <code>{ "error": "File does not exists on server" }</code>. This
+          endpoint has no permission middleware; access is effectively limited
+          by the fact that <code>fileName</code> and
+          <code>legacyPolicyId</code> are obtained from the Legacy Policy Show
+          page (which is protected by <code>VIEW_LEGACY_DETAILS</code> or
+          <code>VIEW_ALL_LEADS</code>).
+        </p>
+
+        <h3>Migrate Policy (CAPI)</h3>
+        <p>
+          <code>POST /migrate-legacy-policy/{poid}</code> sends
+          <code>{ "policyIds": [poid] }</code> to CAPI
+          <code>/api/migrate-policy</code>. This is a separate migration path
+          (e.g. bulk/data migration), not the same as "Move to IMCRM". Success:
+          response must have <code>result</code> array with at least one item;
+          <code>result[0]['msg']</code> is shown (or "Failed!"). If
+          <code>msg == 'Failed!'</code>, redirect back with error; otherwise
+          redirect back with success flash. The Migrate (POID) form on the
+          Legacy Policy index page is only visible to users with
+          <code>MIGRATE_INSLY_LEAD</code> permission.
+        </p>
+
+        <h3>View Legacy Policy from Quote Pages</h3>
+        <p>
+          Many quote show pages (Car, Health, Travel, Life, Home, Pet, Bike,
+          etc.) show a "View Legacy policy" link when the quote has an
+          <code>insly_id</code>. The link goes to
+          <code>/legacy-policy/{insly_id}</code> (Legacy Policy show page;
+          <code>insly_id</code> is the MongoDB <code>_id</code>). The route
+          <code>GET /legacy-policy/{policyNumber}/policy</code> is named
+          <code>view-legacy-policy.renewal-uploads</code> and is used to open a
+          legacy policy by policy number (redirects to show by
+          <code>_id</code>).
+        </p>
+
+        <h3>prePareData (New Lead Payload)</h3>
+        <p>
+          When creating a new lead,
+          <code>prePareData($policy, $quoteType, $isPersonalQuote)</code> builds
+          the payload. It uses <code>getPrimaryAndAdditionalEmails</code> /
+          <code>getPrimaryAndAdditionalMobileNumbers</code> from the policy; if
+          <code>INSLY_TEMP_CUSTOMER_POLICY_OID</code> equals
+          <code>policy['policy_oid']</code>, it overwrites email with
+          <code>INSLY_TEMP_CUSTOMER_EMAIL</code>. Other fields:
+          <code>previous_quote_policy_number</code>, <code>policy_number</code>,
+          dates, insurer → <code>insurance_provider_id</code> via
+          <code>InsuranceProviderRepository::getInslyProviderId</code>, customer
+          name split into first/last, default <code>mobile_no</code>
+          <code>0552244556</code> when missing,
+          <code>CustomerService::createCustomerIfNotExists</code> and additional
+          contacts, CAPI for <code>uuid</code> and <code>code</code>,
+          <code>source</code> = INSLY, <code>insly_migrated</code> = true,
+          <code>quote_status_id</code> = NewLead. Business quotes get
+          <code>business_type_of_insurance_id</code> from coverage.
+        </p>
+      </section>
+
+      <!-- Summary -->
+      <section class="content-section">
+        <h2>✅ Summary</h2>
+        <ul class="features">
+          <li>
+            <strong>Legacy Policy</strong> = Insly (MongoDB) policies viewable
+            and actionable in IMCRM. Index shows search results only when at
+            least one of policy_number, email, mobile_no is provided (15 per
+            page); show uses MongoDB <code>_id</code>; S3 temp URL (40 min) for
+            documents; CAPI migrate for <code>/api/migrate-policy</code>.
+            Permissions: <code>VIEW_LEGACY_DETAILS</code> or
+            <code>VIEW_ALL_LEADS</code> for list/show/move;
+            <code>MIGRATE_INSLY_LEAD</code> for Migrate form visibility.
+          </li>
+          <li>
+            <strong>Move to IMCRM</strong> = Resolve email and advisor (Insly
+            first, then Application Storage), resolve quote type from coverage,
+            match by policy number or (if validateAll) by email + payment date
+            ±1 month, or create new lead. New lead: prePareData payload,
+            LOB-specific detail with <code>insly_id</code>, then update Insly
+            document (<code>moved_to_imcrm</code>, <code>imcrm_link</code>,
+            <code>code</code>, dates, user). Supported LOBs: Business, Car,
+            Life, Home, Travel, Health, Pet, Bike, Cycle, Yacht, Savings.
+          </li>
+          <li>
+            <strong>Application Storage</strong> keys
+            <code>INSLY_TEMP_SALES_PERSON_ID</code> +
+            <code>INSLY_TEMP_POLICY_OID</code> assign an advisor user ID to a
+            specific policy OID when Insly has no renewer;
+            <code>INSLY_TEMP_CUSTOMER_EMAIL</code> +
+            <code>INSLY_TEMP_CUSTOMER_POLICY_OID</code> assign customer email
+            when the policy has no email. Used in fetchSaveToImcrm and
+            prePareData. Seeder creates placeholder rows; admin must set real
+            values.
+          </li>
+          <li>
+            <strong>InslyDetailRepository</strong>: getDataByIndex (Atlas
+            Search, user coverage filter, pagination), getBy (single policy,
+            optional policy_oid in request, masking), saveToImcrm (full Move to
+            IMCRM). getCoverageList builds allowed coverages from user roles
+            (BikeAdvisor, CorpLineAdvisor, CarAdvisor, LifeAdvisor, HomeAdvisor,
+            TravelAdvisor, HealthAdvisor, CycleAdvisor, PetAdvisor,
+            YachtAdvisor, SavingsAdvisor). fetchGetData is deprecated.
+          </li>
+        </ul>
+      </section>
+
+      <div class="footer">
+        <p><strong>Legacy Policy Documentation</strong></p>
+        <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+      </div>
+    </div>
+  </body>
+</html>

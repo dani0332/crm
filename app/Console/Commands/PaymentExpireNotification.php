@@ -86,8 +86,8 @@ class PaymentExpireNotification extends Command
                 $lead = $this->getQuoteObjectBy($quoteType, $notification->paymentable_id, 'id');
                 if ($lead) {
                     $quoteTypeCode = strtolower($quoteType);
-                    if ($quoteType == QuoteTypeCode::Business) {
-                        if ($lead->business_type_of_insurance_id == QuoteBusinessTypeCode::getId(QuoteBusinessTypeCode::groupMedical)) {
+                    if ($quoteType == quoteTypeCode::Business) {
+                        if ($lead->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                             $path = "medical/amt/$lead->uuid";
                         } else {
                             $path = "quotes/business/$lead->uuid";

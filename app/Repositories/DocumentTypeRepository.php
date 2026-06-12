@@ -4,11 +4,15 @@ namespace App\Repositories;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\BusinessInsuranceType;
 use App\Models\DocumentType;
 use App\Models\KycLog;
 use App\Services\ActivitiesService;
+use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
+use Illuminate\Support\Collection;
 
 class DocumentTypeRepository extends BaseRepository
 {
@@ -90,7 +94,8 @@ class DocumentTypeRepository extends BaseRepository
     public function fetchQuoteDocumentsSentToCustomerCode($quoteType, $quote)
     {
         $documentTypes = DocumentType::sendToCustomer()
-            ->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType));
+            ->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType))
+            ->notRestrictedInternalDocument();
 
         // Return all document types if the quote's insurance type is either car fleet or group medical health.
         if (in_array($quote->business_type_of_insurance_id, [quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet), quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)])) {
@@ -132,17 +137,88 @@ class DocumentTypeRepository extends BaseRepository
         return false;
     }
 
-    public function fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record)
+    /**
+     * @param  array<int, mixed>|Collection<int, mixed>  $quoteDocuments
+     * @return array{
+     *     disabled: bool,
+     *     documentTypeCodes: mixed,
+     *     requiredDocuments: array<int, string>,
+     *     missingDocumentCodes: array<int, string>,
+     *     missingDocuments: array<int, string>,
+     * }
+     */
+    public function fetchAreSendPolicyDocsUploaded($quoteDocuments, $quoteType, $record): array
     {
         $documentTypeCodes = $this->fetchSendPolicyDocumentCodes($quoteType, $record, false);
-        $docCodes = collect($documentTypeCodes)->where('is_required_for_send_policy', 1)->pluck('code')->toArray();
-        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $docCodes)->groupBy('document_type_code')->count();
-        $requiredDocuments = collect($documentTypeCodes)->where('is_required_for_send_policy', 1)->pluck('text')->toArray();
+        $requiredRows = collect($documentTypeCodes)->where('is_required_for_send_policy', 1);
+        $codeToText = $requiredRows->pluck('text', 'code');
+        $docCodes = $codeToText->keys()->values()->all();
+        $requiredDocuments = $codeToText->values()->unique()->values()->all();
+
+        $uploadedCodes = collect($quoteDocuments)
+            ->pluck('document_type_code')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $missingDocumentCodes = array_values(array_diff($docCodes, $uploadedCodes));
+        $missingDocuments = array_values(array_map(
+            static fn (string $code): string => $codeToText[$code] ?? $code,
+            $missingDocumentCodes
+        ));
+
+        $disabled = $docCodes !== [] && $missingDocumentCodes !== [];
+
+        if ($disabled) {
+            LoggerService::info('fetchAreSendPolicyDocsUploaded: send policy blocked — required document types not uploaded', [
+                'quote_code' => $record->code ?? null,
+                'requiredDocuments' => $requiredDocuments,
+                'missingDocumentCodes' => $missingDocumentCodes,
+                'missingDocuments' => $missingDocuments,
+            ]);
+        }
 
         return [
-            'disabled' => $quoteDocumentsCount != count($documentTypeCodes),
+            'disabled' => $disabled,
             'documentTypeCodes' => $documentTypeCodes,
             'requiredDocuments' => $requiredDocuments,
+            'missingDocumentCodes' => $missingDocumentCodes,
+            'missingDocuments' => $missingDocuments,
         ];
+    }
+
+    public function validateSendPolicyDocsUploaded($quote, $quoteType): bool
+    {
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
+
+        $requiredDocuments = DocumentType::where('quote_type_id', $quoteTypeId)
+            ->where('is_required_for_send_policy', 1)
+            ->when($quoteTypeId == QuoteTypeId::Business, function ($query) use ($quote) {
+                return $query->where('business_type_of_insurance_id', $quote->business_type_of_insurance_id);
+            })
+            ->required()
+            ->active()
+            ->pluck('code')
+            ->toArray();
+
+        $uploadedDocumentCodes = $quote->documents()->pluck('document_type_code')->toArray();
+        $missingDocuments = array_diff($requiredDocuments, $uploadedDocumentCodes);
+
+        if (empty($missingDocuments)) {
+            return true;
+        }
+
+        $phbCodes = [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH];
+        $missingPhb = array_intersect($missingDocuments, $phbCodes);
+
+        if (! empty($missingPhb)) {
+            $hasHandbookDocuments = ! empty(app(QuoteDocumentService::class)->getHandBookDocuments($quote));
+            if ($hasHandbookDocuments) {
+                $missingDocuments = array_diff($missingDocuments, $phbCodes);
+            }
+        }
+
+        return empty($missingDocuments);
     }
 }

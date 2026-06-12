@@ -72,6 +72,9 @@ class SageApiEmbeddedProductService
         $sageRequest->quoteCode = $quote->code;
         $sageRequest->epShortCode = $epTransaction->product?->embeddedProduct?->short_code;
 
+        $sageRequest->bookingDate = Carbon::now()->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequest->policyBookingDate = Carbon::now()->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
+
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
         $sageRequest->customerId = $this->sageApiService->verifySageCustomer($quote->customer_id, $data, $quote, 15);
 
@@ -215,15 +218,6 @@ class SageApiEmbeddedProductService
             }
             $sageRequestEmbeddedProduct->epSageReceiptId = $arReceiptCreationResponse['documentNumber'];
 
-            // Execute AP Prepayment Receipt Post Call
-            /*$apReceiptCreationResponse = $this->createAPPrepaymentReceipt([$quote, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
-            if (! $apReceiptCreationResponse['status']) {
-                $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
-
-                return $apReceiptCreationResponse;
-            }
-            $sageRequestEmbeddedProduct->epSageAPReceiptId = $apReceiptCreationResponse['documentNumber'];*/
-
             // Create AR Commission and Premium Invoice
             $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$quote, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
             if (! $createARInvoicePremAndComm['status']) {
@@ -247,14 +241,6 @@ class SageApiEmbeddedProductService
 
                 return $applyPaymentARInvoices;
             }
-
-            // Apply Prepayments AP Invoice
-            /*$applyPaymentAPInvoices = $this->applyPaymentAPInvoices([$quote, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray]);
-            if (! $applyPaymentAPInvoices['status']) {
-                $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
-
-                return $applyPaymentAPInvoices;
-            }*/
 
             $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_COMPLETED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
 
@@ -683,7 +669,7 @@ class SageApiEmbeddedProductService
             $sageResponse = json_decode($resp, true);
         }
 
-        if (! empty($sageResponse['BatchNumber'])) {
+        if (isset($sageResponse['BatchNumber']) && ! empty($sageResponse['BatchNumber'])) {
             LoggerService::info('EP AR Invoice Premium and Commission batch number - '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep1) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $embeddedTransaction, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
@@ -863,7 +849,7 @@ class SageApiEmbeddedProductService
             $postedResponse = json_decode($resp, true);
         }
 
-        if (! empty($postedResponse['BatchNumber'])) {
+        if (isset($postedResponse['BatchNumber']) && ! empty($postedResponse['BatchNumber'])) {
             LoggerService::info('EP AP Invoice Premium batch number - '.$postedResponse['BatchNumber']);
             if ($isLiveApiCallStep5) {
                 $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $embeddedTransaction, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
@@ -1042,7 +1028,7 @@ class SageApiEmbeddedProductService
             $sageResponse = json_decode($resp, true);
         }
 
-        if (! empty($sageResponse['BatchNumber'])) {
+        if (isset($sageResponse['BatchNumber']) && ! empty($sageResponse['BatchNumber'])) {
             LoggerService::info('Reversal of EP AR Invoice Premium and Commission batch number - '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep1) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
@@ -1228,7 +1214,7 @@ class SageApiEmbeddedProductService
             $postedResponse = json_decode($resp, true);
         }
 
-        if (! empty($postedResponse['BatchNumber'])) {
+        if (isset($postedResponse['BatchNumber']) && ! empty($postedResponse['BatchNumber'])) {
             LoggerService::info('Reversal of EP AP Invoice Premium batch number - '.$postedResponse['BatchNumber'], extra: [
                 'SendUpdateCode' => $sendUpdateLog->code,
             ]);
@@ -1431,7 +1417,7 @@ class SageApiEmbeddedProductService
             $this->logSageApiCall($payLoadOptions, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
         }
 
-        if (isset($postedResponse['error'])) {
+        if (isset($postedResponse['error']) || (! isset($postedResponse['BatchNumber']) || empty($postedResponse['BatchNumber']))) {
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' Error while making split prepayments to sage';
             $message = ' EP code: '.$embeddedTransaction->code.' createPaymentReceiptOneInvoice failed';
 
@@ -1582,7 +1568,6 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->originalCommissionTaxInvoiceNumber = $originalCommissionTaxInvoiceNumber;
         $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber = (string) mb_substr($insurerTaxInvoiceNumber, -18);
         $sageRequestEmbeddedProduct->originalInsurerTaxInvoiceNumber = $originalInsurerTaxInvoiceNumber;
-        $sageRequestEmbeddedProduct->createdOn = Carbon::parse($insurerRequestResponseObject->premium_inv_dt)->format(env('DATE_FORMAT_ONLY'));
         $sageRequestEmbeddedProduct->taxAmount = $insurerRequestResponseObject->policy_premium_tax;
         $sageRequestEmbeddedProduct->policyPrice = $insurerRequestResponseObject->policy_premium_without_tax;
         $sageRequestEmbeddedProduct->totalPrice = $insurerRequestResponseObject->policy_premium_with_tax;
@@ -1590,8 +1575,8 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->brokerCommissionAmount = $insurerRequestResponseObject->policy_commision_without_tax;
         $sageRequestEmbeddedProduct->brokerCommissionVatAmount = $insurerRequestResponseObject->policy_commision_tax;
         $sageRequestEmbeddedProduct->brokerCommissionTotalAmount = $insurerRequestResponseObject->policy_commision_with_tax;
-        $sageRequestEmbeddedProduct->startDate = Carbon::parse($insurerRequestResponseObject->policy_start_dt)->format(env('DATE_FORMAT_ONLY'));
-        $sageRequestEmbeddedProduct->endDate = Carbon::parse($insurerRequestResponseObject->policy_end_dt)->format(env('DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->startDate = Carbon::parse($insurerRequestResponseObject->policy_start_dt)->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->endDate = Carbon::parse($insurerRequestResponseObject->policy_end_dt)->format(config('constants.DATE_FORMAT_ONLY'));
 
         return $sageRequestEmbeddedProduct;
     }
@@ -1624,7 +1609,6 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->originalCommissionTaxInvoiceNumber = $originalCommissionTaxInvoiceNumber;
         $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber = (string) mb_substr($insurerTaxInvoiceNumber, -18);
         $sageRequestEmbeddedProduct->originalInsurerTaxInvoiceNumber = $originalInsurerTaxInvoiceNumber;
-        $sageRequestEmbeddedProduct->createdOn = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->created_on)->format(env('DATE_FORMAT_ONLY'));
         $sageRequestEmbeddedProduct->taxAmount = $insurerRequestResponseObject->pricing->tax_amount;
         $sageRequestEmbeddedProduct->policyPrice = $insurerRequestResponseObject->pricing->policy_price;
         $sageRequestEmbeddedProduct->totalPrice = $insurerRequestResponseObject->pricing->total_price;
@@ -1632,8 +1616,8 @@ class SageApiEmbeddedProductService
         $sageRequestEmbeddedProduct->brokerCommissionAmount = $insurerRequestResponseObject->additional_data->broker_commission_amount;
         $sageRequestEmbeddedProduct->brokerCommissionVatAmount = $insurerRequestResponseObject->additional_data->broker_commission_vat_amount;
         $sageRequestEmbeddedProduct->brokerCommissionTotalAmount = $insurerRequestResponseObject->additional_data->broker_commission_total_amount;
-        $sageRequestEmbeddedProduct->startDate = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->start_date)->format(env('DATE_FORMAT_ONLY'));
-        $sageRequestEmbeddedProduct->endDate = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->end_date)->format(env('DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->startDate = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->start_date)->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequestEmbeddedProduct->endDate = Carbon::createFromFormat('d/m/Y', $insurerRequestResponseObject->end_date)->format(config('constants.DATE_FORMAT_ONLY'));
 
         return $sageRequestEmbeddedProduct;
 
@@ -1804,8 +1788,7 @@ class SageApiEmbeddedProductService
         }
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
         $commissionDescription = 'C.'.$sageRequestEmbeddedProduct->invoiceDescription;
-        $createdOn = $sageRequestEmbeddedProduct->createdOn;
-        $createdOnDate = Carbon::parse($createdOn)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
+        $bookingDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
         $optionalFields = self::createOptionalFields($request, $sageRequestEmbeddedProduct);
 
         $payLoad = [
@@ -1814,16 +1797,16 @@ class SageApiEmbeddedProductService
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber,
                     'InvoiceDescription' => $premiumDescription,
-                    'DocumentDate' => $createdOnDate,
+                    'DocumentDate' => $bookingDate,
                     'CurrencyCode' => 'AED',
-                    'DueDate' => $createdOnDate,
-                    'AsOfDate' => $createdOnDate,
+                    'DueDate' => $bookingDate,
+                    'AsOfDate' => $bookingDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->policyPrice),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->totalPrice),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'PostingDate' => $bookingDate,
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
@@ -1835,7 +1818,7 @@ class SageApiEmbeddedProductService
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => $createdOnDate,
+                            'DueDate' => $bookingDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => $optionalFields,
@@ -1844,15 +1827,15 @@ class SageApiEmbeddedProductService
                     'CustomerNumber' => $sageRequestEmbeddedProduct->sageCustomerNumber,
                     'DocumentNumber' => $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber,
                     'InvoiceDescription' => $commissionDescription,
-                    'DocumentDate' => $createdOnDate,
+                    'DocumentDate' => $bookingDate,
                     'CurrencyCode' => 'AED',
-                    'DueDate' => $createdOnDate,
-                    'AsOfDate' => $createdOnDate,
+                    'DueDate' => $bookingDate,
+                    'AsOfDate' => $bookingDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $commissionTaxClass,
                     'DocumentTotalBeforeTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->brokerCommissionAmount),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format),
+                    'PostingDate' => $bookingDate,
                     'InvoiceDetails' => [
                         [
                             'Description' => $commissionDescription,
@@ -1864,7 +1847,7 @@ class SageApiEmbeddedProductService
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => $createdOnDate,
+                            'DueDate' => $bookingDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => $optionalFields,
@@ -1873,25 +1856,22 @@ class SageApiEmbeddedProductService
         ];
 
         if ($isReversal) {
-
-            $createdOnDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
-
             $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][0]['DocumentNumber'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber.'-REV';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber;
 
-            $payLoad['Invoices'][0]['DocumentDate'] = $createdOnDate;
-            $payLoad['Invoices'][0]['DueDate'] = $createdOnDate;
-            $payLoad['Invoices'][0]['AsOfDate'] = $createdOnDate;
-            $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['DocumentDate'] = $bookingDate;
+            $payLoad['Invoices'][0]['DueDate'] = $bookingDate;
+            $payLoad['Invoices'][0]['AsOfDate'] = $bookingDate;
+            $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $bookingDate;
 
             $payLoad['Invoices'][1]['DocumentType'] = 'CreditNote';
             $payLoad['Invoices'][1]['DocumentNumber'] = $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber.'-REV';
             $payLoad['Invoices'][1]['ApplytoDocument'] = $sageRequestEmbeddedProduct->commissionTaxInvoiceNumber;
-            $payLoad['Invoices'][1]['DocumentDate'] = $createdOnDate;
-            $payLoad['Invoices'][1]['DueDate'] = $createdOnDate;
-            $payLoad['Invoices'][1]['AsOfDate'] = $createdOnDate;
-            $payLoad['Invoices'][1]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
+            $payLoad['Invoices'][1]['DocumentDate'] = $bookingDate;
+            $payLoad['Invoices'][1]['DueDate'] = $bookingDate;
+            $payLoad['Invoices'][1]['AsOfDate'] = $bookingDate;
+            $payLoad['Invoices'][1]['InvoicePaymentSchedules'][0]['DueDate'] = $bookingDate;
 
             $sageRequestType = SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV_REV;
             $entryType = SageEnum::SCT_REVERSAL;
@@ -1965,11 +1945,11 @@ class SageApiEmbeddedProductService
             ],
             [
                 'OptionalField' => 'EXPIRY',
-                'Value' => Carbon::parse($sageRequestEmbeddedProduct->endDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT')),
+                'Value' => Carbon::parse($sageRequestEmbeddedProduct->endDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT')),
             ],
             [
                 'OptionalField' => 'INCEPTION',
-                'Value' => Carbon::parse($sageRequestEmbeddedProduct->startDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT')),
+                'Value' => Carbon::parse($sageRequestEmbeddedProduct->startDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT')),
             ],
             [
                 'OptionalField' => 'INSURED',
@@ -2057,8 +2037,7 @@ class SageApiEmbeddedProductService
             'Value' => 'N',
         ];
         $premiumDescription = 'P.'.$sageRequestEmbeddedProduct->invoiceDescription;
-        $createdOn = $sageRequestEmbeddedProduct->createdOn;
-        $createdOnDate = Carbon::parse($createdOn)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
+        $bookingDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
 
         $payLoad = [
             'Invoices' => [
@@ -2066,16 +2045,16 @@ class SageApiEmbeddedProductService
                     'VendorNumber' => $sageRequestEmbeddedProduct->sageVendorId, // use vender api to create vender in sage
                     'DocumentNumber' => $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber,
                     'InvoiceDescription' => $premiumDescription,
-                    'DocumentDate' => $createdOnDate,
+                    'DocumentDate' => $bookingDate,
                     'CurrencyCode' => 'AED',
-                    'DueDate' => $createdOnDate,
-                    'AsOfDate' => $createdOnDate,
+                    'DueDate' => $bookingDate,
+                    'AsOfDate' => $bookingDate,
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => roundNumber($sageRequestEmbeddedProduct->taxAmount),
                     'DocumentTotalBeforeTaxes' => roundNumber($sageRequestEmbeddedProduct->policyPrice),
                     'DocumentTotalIncludingTax' => roundNumber($sageRequestEmbeddedProduct->totalPrice),
-                    'PostingDate' => Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
+                    'PostingDate' => $bookingDate, // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
@@ -2087,7 +2066,7 @@ class SageApiEmbeddedProductService
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => $createdOnDate,
+                            'DueDate' => $bookingDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => $optionalFields,
@@ -2102,12 +2081,10 @@ class SageApiEmbeddedProductService
             $payLoad['Invoices'][0]['DocumentNumber'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber.'-REV';
             $payLoad['Invoices'][0]['ApplytoDocument'] = $sageRequestEmbeddedProduct->insurerTaxInvoiceNumber;
 
-            $createdOnDate = Carbon::parse($request->bookingDate)->format(SagePayloadFactory::instanceData()->sage_api_date_format);
-
-            $payLoad['Invoices'][0]['DocumentDate'] = $createdOnDate;
-            $payLoad['Invoices'][0]['DueDate'] = $createdOnDate;
-            $payLoad['Invoices'][0]['AsOfDate'] = $createdOnDate;
-            $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $createdOnDate;
+            $payLoad['Invoices'][0]['DocumentDate'] = $bookingDate;
+            $payLoad['Invoices'][0]['DueDate'] = $bookingDate;
+            $payLoad['Invoices'][0]['AsOfDate'] = $bookingDate;
+            $payLoad['Invoices'][0]['InvoicePaymentSchedules'][0]['DueDate'] = $bookingDate;
 
             $sageRequestType = SageEnum::EP_SRT_CREATE_AP_PREM_INV_REV;
             $entryType = SageEnum::SCT_REVERSAL;
@@ -2377,7 +2354,7 @@ class SageApiEmbeddedProductService
             $this->logSageApiCall($payLoadOptions, $postedResponse, $embeddedTransaction, $quote, $currentStep, $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
         }
 
-        if (isset($postedResponse['error'])) {
+        if (isset($postedResponse['error']) || (! isset($postedResponse['BatchNumber']) || empty($postedResponse['BatchNumber']))) {
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' Error while making split prepayments to sage';
             $message = ' EP code: '.$embeddedTransaction->code.' createAPPaymentReceiptOneInvoice failed';
 

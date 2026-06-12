@@ -467,4 +467,19 @@ trait QuoteModelTrait
 
         return in_array($this->quote_status_id, $excludedQuoteStatuses);
     }
+
+    public function getCrmQuoteLink(): string
+    {
+        $baseUrl = config('app.url', env('APP_URL'));
+        $quoteId = $this->uuid ?? $this->id ?? '';
+
+        // Generate appropriate link based on quote type
+        return match ($this->quote_type_id) {
+            QuoteTypeId::Car => "{$baseUrl}/quotes/car/{$quoteId}",           // Car quote type
+            QuoteTypeId::Bike => "{$baseUrl}/personal-quotes/bike/{$quoteId}", // Bike quote type
+            QuoteTypeId::Cyber => "{$baseUrl}/personal-quotes/cyber/{$quoteId}", // Cyber quote type
+            QuoteTypeId::Device => "{$baseUrl}/personal-quotes/smartphone/{$quoteId}", // Device quote type
+            default => 'N/A'
+        };
+    }
 }

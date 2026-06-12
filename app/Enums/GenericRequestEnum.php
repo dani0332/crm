@@ -11,6 +11,9 @@ use BenSampo\Enum\Enum;
  */
 final class GenericRequestEnum extends Enum
 {
+    /** IMCRM / grid list filters: sentinel value — not persisted on domain models. */
+    public const ALL = 'ALL';
+
     public const Yes = 'Yes';
     public const No = 'No';
     public const TPA_Code = 'tpa';
@@ -61,5 +64,12 @@ final class GenericRequestEnum extends Enum
     const PREVIOUS_POLICY_EXPIRED = 'Previous policy has expired';
     const PREVIOUS_POLICY_EXPIRED_STATUS_ID = 99;
     const SEND_UPDATE_LOG = 'SendUpdateLog';
+    public const TRADE_LICENSE = 'tradeLicense';
+    public const EMIRATES_ID = 'emiratesId';
+    public const PASSPORT = 'passport';
+    public const TRADE_LICENSE_SHORT_CODE = 'TL';
+    public const EMIRATES_ID_SHORT_CODE = 'EID';
+    const UNKNOWN_ERROR = 'Unknown error';
     const SEND_UPDATE_AS_QUOTE_TYPE = 'sendupdate';
+    const TRAVEL_SENIOR_MEMBER_AGE = 65;
 }

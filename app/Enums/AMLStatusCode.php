@@ -13,6 +13,8 @@ final class AMLStatusCode extends Enum
     const InsurerAMLScreeningPending = 'PENDING';
     const InsurerAMLScreeningCleared = 'CLEARED';
     const InsurerAMLScreeningFailed = 'FAILED';
+    const AML_SCREENING_CLEARED_ID = 2;
+    const AML_SCREENING_FAILED_ID = 1;
 
     private static $statuses = [
         'AML_PENDING' => 'AML Pending',

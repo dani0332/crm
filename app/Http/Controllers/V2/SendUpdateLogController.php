@@ -26,8 +26,6 @@ use App\Http\Requests\UpdateToCustomerRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Lookup;
 use App\Models\Payment;
-use App\Models\PersonalQuote;
-use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Repositories\CustomerMembersRepository;
@@ -40,10 +38,13 @@ use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -97,7 +98,9 @@ class SendUpdateLogController extends Controller
         if (! empty($childLeadResponse)) {
             if ($childLeadResponse['childLeadsCount'] == 0 || ($quoteType->code == quoteTypeCode::Travel && $childLeadResponse['childLeadsCount'])) {
                 if (checkPersonalQuotes($childLeadResponse['quote_type_code'])) {
-                    return redirect('/personal-quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
+                    $quoteTypeSlug = strtolower(quoteTypeCode::resolveQuoteType($quoteType->code));
+
+                    return redirect('/personal-quotes/'.$quoteTypeSlug.'/'.$childLeadResponse['uuid'])
                         ->with('success', $childLeadResponse['ref_id'].' has been created');
                 } else {
                     $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
@@ -174,8 +177,14 @@ class SendUpdateLogController extends Controller
         $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode, $optionCode, $quoteTypeId);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
-            $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $realQuote = $repository::getBy('uuid', $quote->uuid);
+            if ($quoteType == quoteTypeCode::Device) {
+                $realQuote = app(DeviceQuoteService::class)->getOne($quote->uuid);
+            } elseif ($quoteType == QuoteTypes::CYBER->value) {
+                $realQuote = app(CyberQuoteService::class)->getOne($quote->uuid);
+            } else {
+                $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+                $realQuote = $repository::getBy('uuid', $quote->uuid);
+            }
         } else {
             $quoteServiceFile = app(getServiceObject($quoteType));
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
@@ -240,10 +249,20 @@ class SendUpdateLogController extends Controller
         $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $realQuote, $sendUpdatePayments[0] ?? null, isTapEnabled(), $sendUpdateLog);
         $bookingDetails = array_merge($bookingDetails, $tapPaymentConfiguration);
 
+        $deviceType = (isset($sendUpdateLog->personalQuote) && isset($sendUpdateLog->personalQuote->deviceQuote))
+            ? ($sendUpdateLog->personalQuote->deviceQuote->device_type ?? null)
+            : null;
+        $quoteTypeDisplayLabel = QuoteTypeId::displayLabel(
+            $sendUpdateLog->quote_type_id,
+            $quoteType,
+            $deviceType
+        );
+
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
             'quoteType' => $quoteType,
+            'quoteTypeDisplayLabel' => $quoteTypeDisplayLabel,
             'sendUpdateLog' => $sendUpdateLog,
             'parentText' => $parentText,
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -276,13 +295,14 @@ class SendUpdateLogController extends Controller
             'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
             'insuranceProviderId' => $insuranceProviderId ?? null,
             'isCommVatNotAppEnabled' => $isCommVatNotAppEnabled,
-            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission']),
+            'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission'], $quote),
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'notesList' => $notesList ?? [],
             'cancelOptions' => app(LookupService::class)->getSendUpdateCancelOptions(),
             'isEndorsementBookingActionDisabled' => $this->sendUpdateLogService->isEndorsementBookingActionDisabled($sendUpdateLog),
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
+            'hasEndorsementPayments' => $sendUpdateLog->payments()->exists(),
         ]);
     }
 
@@ -328,48 +348,16 @@ class SendUpdateLogController extends Controller
             $subType = $data['childCategory']['option'];
         }
 
-        $model = PersonalQuote::class;
-
         if ($type === 'create') {
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                     if ($subType && $subType['slug'] === 'MPC') {
-                        $quote = $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->first();
-                        $oldLeadStatus = $quote->quote_status_id;
-                        $newLeadStatus = QuoteStatusEnum::CancellationPending;
-
-                        $quote->update([
-                            'quote_status_id' => $newLeadStatus,
-                            'quote_status_date' => now(),
-                        ]);
-
-                        QuoteStatusLog::create([
-                            'quote_type_id' => $quoteTypeId,
-                            'quote_request_id' => $quote->id,
-                            'current_quote_status_id' => $newLeadStatus,
-                            'previous_quote_status_id' => $oldLeadStatus,
-                            'created_by' => auth()->id(),
-                        ]);
+                        SendUpdateLogRepository::updateQuoteStatusLog($quoteTypeId, $quoteUuid, QuoteStatusEnum::CancellationPending);
                     }
                     break;
                 case SendUpdateLogStatusEnum::CI:
                 case SendUpdateLogStatusEnum::CIR:
-                    $quote = $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->first();
-                    $oldLeadStatus = $quote->quote_status_id;
-                    $newLeadStatus = QuoteStatusEnum::CancellationPending;
-
-                    $quote->update([
-                        'quote_status_id' => $newLeadStatus,
-                        'quote_status_date' => now(),
-                    ]);
-
-                    QuoteStatusLog::create([
-                        'quote_type_id' => $quoteTypeId,
-                        'quote_request_id' => $quote->id,
-                        'current_quote_status_id' => $newLeadStatus,
-                        'previous_quote_status_id' => $oldLeadStatus,
-                        'created_by' => auth()->id(),
-                    ]);
+                    SendUpdateLogRepository::updateQuoteStatusLog($quoteTypeId, $quoteUuid, QuoteStatusEnum::CancellationPending);
                     break;
             }
         } else {
@@ -377,20 +365,12 @@ class SendUpdateLogController extends Controller
                 case SendUpdateLogStatusEnum::EF:
                 case SendUpdateLogStatusEnum::CI:
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
-                        $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                            'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-                            'quote_status_date' => now(),
-                        ]);
+                        SendUpdateLogRepository::updateQuoteStatusLog($quoteTypeId, $quoteUuid, QuoteStatusEnum::PolicyCancelled);
                     }
                     break;
                 case SendUpdateLogStatusEnum::CIR:
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
-                        $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                            'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-                            'quote_status_date' => now(),
-                        ]);
-
-                        // TODO: send it to sage, need to confirm what the sage is.
+                        SendUpdateLogRepository::updateQuoteStatusLog($quoteTypeId, $quoteUuid, QuoteStatusEnum::PolicyBooked);
                     }
                     break;
             }
@@ -440,7 +420,7 @@ class SendUpdateLogController extends Controller
         return response()->json($reversalEntries);
     }
 
-    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest): \Illuminate\Http\JsonResponse
+    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest): JsonResponse
     {
         LoggerService::startQuoteLogging($sendUpdateCustomerValidationRequest->code);
         LoggerService::info('fn:sendUpdateCustomerValidation - Start - SendUpdateLogController');
@@ -459,7 +439,7 @@ class SendUpdateLogController extends Controller
         return response()->json($response);
     }
 
-    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest): \Illuminate\Http\JsonResponse
+    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest): JsonResponse
     {
         LoggerService::startQuoteLogging($updateToCustomerRequest->code);
         LoggerService::info('fn:sendUpdateToCustomer - Start - SendUpdateLogController');
@@ -496,7 +476,7 @@ class SendUpdateLogController extends Controller
         }
     }
 
-    public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
+    public function sendUpdate(SendUpdateRequest $sendUpdateRequest): JsonResponse
     {
         LoggerService::startQuoteLogging($sendUpdateRequest->code);
         LoggerService::info('fn:sendUpdate - Start - SendUpdateLogController');

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\HealthRoutingSourceEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
@@ -77,15 +78,16 @@ class ReAssignHealthLeadsJob implements ShouldQueue
                 overrideAdvisorId: true,
                 isReassignmentJob: true,
                 reAssigFromAdvisorId: $this->advisorId,
-                assignmentType: AssignmentTypeEnum::SYSTEM_REASSIGNED
+                assignmentType: AssignmentTypeEnum::SYSTEM_REASSIGNED,
+                source: HealthRoutingSourceEnum::REASSIGNMENT
             );
 
             try {
                 Pipeline::send($allocationRequest)->through([
                     FetchLeadPipe::class,
                     VerifyAlreadyInProgressAllocationPipe::class,
-                    ValidateNationalityConfigPipe::class,
                     AssignTeamPipe::class,
+                    ValidateNationalityConfigPipe::class,
                     ApplyRuleExclusionPipe::class,
                     FetchAvailableAdvisorPipe::class,
                     ResetNationalityConfigPipe::class,

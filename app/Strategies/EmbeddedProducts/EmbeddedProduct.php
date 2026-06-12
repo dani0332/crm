@@ -4,14 +4,19 @@ namespace App\Strategies\EmbeddedProducts;
 
 use App\Enums\CourierSyncStatusEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 
 class EmbeddedProduct
@@ -83,11 +88,7 @@ class EmbeddedProduct
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
-            $customerInsured = $customer?->customerInsured()
-                ->where('quote_request_id', $item->quote_request_id)
-                ->where('quote_type_id', $item->quote_type_id)
-                ->latest('updated_at')
-                ->first() ?? null;
+            $latestInsured = $quoteObject->latestInsured ?? null;
 
             $planStartDate = (! empty($quoteObject->policy_start_date) && $quoteObject->policy_start_date != '0000-00-00 00:00:00') ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
             $planEndDate = '';
@@ -100,9 +101,9 @@ class EmbeddedProduct
                 $lastName = $quoteObject->last_name ?? '';
                 $emiratesIdNumber = '';
             } else {
-                $firstName = ($customerInsured?->insured?->first_name ?? $customer?->insured_first_name) ?? '';
-                $lastName = ($customerInsured?->insured?->last_name ?? $customer?->insured_last_name) ?? '';
-                $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
+                $firstName = ($latestInsured?->first_name ?? $customer?->insured_first_name) ?? '';
+                $lastName = ($latestInsured?->last_name ?? $customer?->insured_last_name) ?? '';
+                $emiratesIdNumber = ($latestInsured?->id_number ?? $customer?->emirates_id_number) ?? '';
             }
 
             $item->id = $item->id;
@@ -164,14 +165,67 @@ class EmbeddedProduct
         return $item;
     }
 
+    /**
+     * Process report record for Car/Bike renewals (RDX/COU) that support both quote types.
+     *
+     * @param  object  $quoteObject
+     * @param  object  $item
+     * @return object
+     */
+    protected function processCarBikeReportRecord($quoteObject, $item)
+    {
+        $item->lob = $this->resolveLineOfBusinessLabelForEmbeddedReportRow($item);
+
+        if ($item->quote_type_id == QuoteTypeId::Car) {
+            $carMake = $quoteObject?->carMake?->text ?? '';
+            $carModel = $quoteObject?->carModel?->text ?? '';
+            $item->vehicle = $carMake.' '.$carModel;
+        } elseif ($item->quote_type_id == QuoteTypeId::Bike) {
+            $make = $quoteObject?->bikeQuote?->bikeMake?->text ?? '';
+            $model = $quoteObject?->bikeQuote?->bikeModel?->text ?? '';
+            $item->vehicle = $make.' '.$model;
+        } else {
+            $item->vehicle = 'N/A';
+        }
+
+        $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+        $item->advisor_name = $quoteObject?->advisor?->name ?? '';
+        $item->dob = isset($quoteObject?->dob) ? Carbon::parse($quoteObject?->dob)->format($dateFormat) : '';
+        $item->nationality = $quoteObject?->customer?->nationality?->text ?? '';
+        $item->policy_issuance_date = $quoteObject?->policy_issuance_date ?? '';
+        $item->age = isset($quoteObject?->dob) ?
+            floor(Carbon::parse($quoteObject?->dob)->diffInYears(Carbon::now())).' Years'
+            : '';
+
+        return $item;
+    }
+
+    /**
+     * LOB for the grid/export: prefer {@see EmbeddedTransaction::$quote_type_id}, then parse Courier EP ref (COU-CAR-, COU-HAM- for Home Appliances, …).
+     */
+    protected function resolveLineOfBusinessLabelForEmbeddedReportRow(object $item): string
+    {
+        $quoteTypeId = $item->quote_type_id ?? null;
+        if ($quoteTypeId !== null && $quoteTypeId !== '') {
+            $options = QuoteTypeId::getOptions();
+            $id = (int) $quoteTypeId;
+            if (array_key_exists($id, $options)) {
+                return $options[$id];
+            }
+        }
+
+        $fromRef = EmbeddedProductRepository::lineOfBusinessLabelFromCourierEpCode((string) ($item->code ?? ''));
+
+        return $fromRef ?? '';
+    }
+
     protected function getReportRelations()
     {
         return [
             'product.embeddedProduct',
             'quoteRequest.customer',
             'quoteRequest.customer.nationality',
-            'quoteRequest.customer.customerInsured',
-            'quoteRequest.customer.customerInsured.insured',
+            'quoteRequest.latestInsured',
             'quoteRequest.carMake',
             'quoteRequest.carModel',
             'quoteRequest.quoteStatus',
@@ -183,6 +237,11 @@ class EmbeddedProduct
 
     public function filterReport($ep, $filters)
     {
+        $lobQuoteTypeIds = EmbeddedProductRepository::resolveLobFilterQuoteTypeIds(
+            $ep->short_code,
+            (array) ($filters['lob'] ?? [])
+        );
+
         $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
             $query->where('id', $ep->id);
         });
@@ -193,6 +252,10 @@ class EmbeddedProduct
                     ->where('payments.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
             })
             ->where('embedded_transactions.is_selected', true)
+            ->when(
+                $lobQuoteTypeIds !== null,
+                fn ($query) => $this->applyLobFilterToEmbeddedReportQuery($query, $lobQuoteTypeIds)
+            )
             ->when(! empty($filters['ep_payment_status'] ?? null), function ($query) use ($filters) {
                 $query->whereIn('embedded_transactions.payment_status_id', (array) $filters['ep_payment_status']);
             })
@@ -222,15 +285,7 @@ class EmbeddedProduct
                 });
             })
             ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
-                $query->whereHas('quoteRequest', function ($query) use ($filters) {
-                    $startDate = (isset($filters['date_of_purchase'][0]) && $filters['date_of_purchase'][0] != null && $filters['date_of_purchase'][0] != 'null')
-                        ? Carbon::parse($filters['date_of_purchase'][0])->startOfDay()
-                        : today()->startOfDay();
-                    $endDate = (isset($filters['date_of_purchase'][1]) && $filters['date_of_purchase'][1] != null && $filters['date_of_purchase'][1] != 'null')
-                        ? Carbon::parse($filters['date_of_purchase'][1])->endOfDay()
-                        : today()->endOfDay();
-                    $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
-                });
+                $this->applyDateOfPurchaseFilterToEmbeddedReportQuery($query, $filters);
             })
             ->when(isset($filters['sync_status']), function ($query) use ($filters) {
                 $query->filterBySyncStatus(CourierSyncStatusEnum::tryFrom($filters['sync_status']));
@@ -239,11 +294,7 @@ class EmbeddedProduct
                 $query->whereIn('embedded_transactions.policy_status', (array) $filters['ep_api_status']);
             })
             ->when(! empty($filters['ep_sage_status'] ?? null), function ($query) use ($filters) {
-                $sageStatusIds = SageEmbeddedProductEnum::idsFromValues((array) $filters['ep_sage_status']);
-
-                if (! empty($sageStatusIds)) {
-                    $query->whereIn('embedded_transactions.sage_status_id', $sageStatusIds);
-                }
+                $this->applySageStatusFilterToEmbeddedReportQuery($query, $filters);
             })
             ->when(isset($filters['tax_invoice_no']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.tax_invoice_no', 'like', "%{$filters['tax_invoice_no']}%");
@@ -254,6 +305,77 @@ class EmbeddedProduct
 
         $dataset = $this->updateQuery($dataset, $filters);
 
+        [$sortBy, $sortOrder] = $this->resolveEmbeddedReportSort($filters);
+
+        $dataset = $dataset->orderBy($sortBy, $sortOrder);
+        $dataset = $this->fetchEmbeddedReportResults($dataset, $filters);
+
+        $dataset = $this->postFilterReportProcessing($dataset);
+
+        return $dataset;
+    }
+
+    protected function applyLobFilterToEmbeddedReportQuery(EloquentBuilder|QueryBuilder $query, array $lobQuoteTypeIds): void
+    {
+        if ($lobQuoteTypeIds === []) {
+            $query->whereRaw('0 = 1');
+
+            return;
+        }
+
+        $segments = [];
+        foreach ($lobQuoteTypeIds as $id) {
+            $segment = EmbeddedProductRepository::courierEpRefSegmentForQuoteTypeFilter((int) $id);
+            if ($segment !== null) {
+                $segments[] = $segment;
+            }
+        }
+        $segments = array_values(array_unique($segments));
+
+        $query->where(function ($q) use ($lobQuoteTypeIds, $segments) {
+            $q->whereIn('embedded_transactions.quote_type_id', $lobQuoteTypeIds);
+            if ($segments !== []) {
+                $q->orWhere(function ($sub) use ($segments) {
+                    $sub->whereNull('embedded_transactions.quote_type_id')
+                        ->where(function ($inner) use ($segments) {
+                            foreach ($segments as $segment) {
+                                $inner->orWhereRaw('LOWER(embedded_transactions.code) LIKE ?', [
+                                    'cou-'.strtolower($segment).'-%',
+                                ]);
+                            }
+                        });
+                });
+            }
+        });
+    }
+
+    protected function applyDateOfPurchaseFilterToEmbeddedReportQuery(EloquentBuilder|QueryBuilder $query, array $filters): void
+    {
+        $query->whereHas('quoteRequest', function ($query) use ($filters) {
+            $startDate = (isset($filters['date_of_purchase'][0]) && $filters['date_of_purchase'][0] != null && $filters['date_of_purchase'][0] != 'null')
+                ? Carbon::parse($filters['date_of_purchase'][0])->startOfDay()
+                : today()->startOfDay();
+            $endDate = (isset($filters['date_of_purchase'][1]) && $filters['date_of_purchase'][1] != null && $filters['date_of_purchase'][1] != 'null')
+                ? Carbon::parse($filters['date_of_purchase'][1])->endOfDay()
+                : today()->endOfDay();
+            $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
+        });
+    }
+
+    protected function applySageStatusFilterToEmbeddedReportQuery(EloquentBuilder|QueryBuilder $query, array $filters): void
+    {
+        $sageStatusIds = SageEmbeddedProductEnum::idsFromValues((array) $filters['ep_sage_status']);
+
+        if (! empty($sageStatusIds)) {
+            $query->whereIn('embedded_transactions.sage_status_id', $sageStatusIds);
+        }
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    protected function resolveEmbeddedReportSort(array $filters): array
+    {
         $sortBy = 'embedded_transactions.id';
         $sortOrder = 'desc';
         if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
@@ -265,15 +387,40 @@ class EmbeddedProduct
             $sortOrder = $filters['sortType'] ?? 'desc';
         }
 
-        $dataset = $dataset->orderBy($sortBy, $sortOrder);
+        return [$sortBy, $sortOrder];
+    }
 
+    protected function fetchEmbeddedReportResults(EloquentBuilder|QueryBuilder $dataset, array $filters): Collection|Paginator
+    {
         if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
-            $dataset = $dataset->get();
-        } else {
-            $dataset = $dataset->simplePaginate()->withQueryString();
+            return $dataset->get();
         }
 
-        $dataset = $this->postFilterReportProcessing($dataset);
+        return $dataset->simplePaginate()->withQueryString();
+    }
+
+    protected function loadVehicleRelations($dataset)
+    {
+        // Group transactions by quote_type_id
+        $carTransactions = $dataset->where('quote_type_id', QuoteTypeId::Car);
+        $bikeTransactions = $dataset->where('quote_type_id', QuoteTypeId::Bike);
+
+        // Load car-specific relations in a single query for the car group
+        if ($carTransactions->isNotEmpty()) {
+            $carTransactions->loadMissing([
+                'quoteRequest.carMake',
+                'quoteRequest.carModel',
+            ]);
+        }
+
+        // Load bike-specific relations in a single query for the bike group
+        if ($bikeTransactions->isNotEmpty()) {
+            $bikeTransactions->loadMissing([
+                'quoteRequest.bikeQuote',
+                'quoteRequest.bikeQuote.bikeMake',
+                'quoteRequest.bikeQuote.bikeModel',
+            ]);
+        }
 
         return $dataset;
     }
@@ -324,6 +471,7 @@ class EmbeddedProduct
                 'document_number' => 'Not Applicable',
                 'url' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
                 'path' => EmbeddedProductRepository::SALAMA_POLICY_WORDINGS_URL,
+                'is_policy_wordings' => true,
             ]];
         }
         $epDocuments = [];
@@ -341,6 +489,7 @@ class EmbeddedProduct
                         'document_number' => 'Not Applicable',
                         'url' => $pwDoc,
                         'path' => $item->path,
+                        'is_policy_wordings' => true,
                     ];
                 }
             }
@@ -378,6 +527,7 @@ class EmbeddedProduct
             $documentNumber = $document->document_type_code === QuoteDocumentsEnum::EP ? $document->doc_name : $documentNumbers[$document->document_type_code] ?? '';
 
             return [
+                'id' => $document->id,
                 'watermarked_doc_url' => ! empty($document->watermarked_doc_url) ? $websiteURL.$document->watermarked_doc_url : '',
                 'watermarked_doc_path' => $document->watermarked_doc_url,
                 'is_watermarked' => $document->is_watermarked ?? false,
@@ -385,9 +535,32 @@ class EmbeddedProduct
                 'document_number' => $documentNumber,
                 'url' => $document->doc_url !== '' ? $websiteURL.$document->doc_url : '',
                 'path' => $document->doc_url,
+                'is_policy_wordings' => false,
+                'is_manual_override' => (bool) $document->is_manual_override,
             ];
         })->toArray();
 
         return $docs;
+    }
+
+    /**
+     * Whether the quote satisfies product-specific eligibility. Base implementation always matches;
+     * override in subclasses (e.g. ECB) when EP availability depends on quote data.
+     */
+    protected function isCriteriaMatched(mixed $quote): bool
+    {
+        return true;
+    }
+
+    public function isDisabled(EmbeddedTransaction $epTransaction): bool
+    {
+        return $this->preCheckEpTransactionIsDisabled($epTransaction);
+    }
+
+    protected function preCheckEpTransactionIsDisabled(EmbeddedTransaction $epTransaction): bool
+    {
+        $isPaymentPaid = in_array($epTransaction->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
+
+        return ! $epTransaction->is_active || $isPaymentPaid;
     }
 }

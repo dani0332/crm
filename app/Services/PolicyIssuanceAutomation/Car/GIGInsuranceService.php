@@ -27,7 +27,7 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\User;
-use App\Services\AMLService;
+use App\Services\AML\AMLLookupsService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
@@ -861,14 +861,12 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             'document_type_code' => $documentType->code,
             'document_type_text' => $documentType->text,
             'doc_uuid' => generateUUID(),
+            'document_type_id' => $documentType->id,
         ]);
 
         if ($newDocument->exists) {
-            WatermarkDocumentsJob::dispatch(
-                $newDocument->id,
-                $quote->uuid,
-                $documentType->id
-            );
+            // Delay 10 seconds so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
+            WatermarkDocumentsJob::dispatch($newDocument->id, $quote->uuid, $documentType->id)->delay(now()->addSeconds(10))->afterCommit();
         }
 
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
@@ -1176,9 +1174,11 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     public function getQuoteDetailsFromInsurer($quoteTypeId, $quoteDetails)
     {
         LoggerService::info($this->getLogPrefix(__FUNCTION__).' Quote : '.$quoteDetails->code.' started');
-        $colors = collect(app(AMLService::class)->getAMLLookups($quoteDetails?->plan?->provider_id, [
-            LookupsEnum::VEHICLE_COLOR,
-        ])->toArray()['vehicle_color'] ?? [])->pluck('text', 'code')->toArray();
+        $colors = app(AMLLookupsService::class)
+            ->getAMLLookups($quoteDetails?->plan?->provider_id, [LookupsEnum::VEHICLE_COLOR])
+            ->get('vehicle_color', collect())
+            ->pluck('text', 'code')
+            ->toArray();
 
         $othersColorCode = collect($colors ?? [])->filter(function ($text, $code) {
             return stripos($text, 'other') !== false;
@@ -1296,7 +1296,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
 
                 return $_returnResponse;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info($this->getLogPrefix(__FUNCTION__).' - Error: '.$e->getMessage());
 
             return [

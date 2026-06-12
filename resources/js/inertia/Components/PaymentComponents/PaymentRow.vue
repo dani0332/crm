@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import moment from 'moment';
+import { calculateAge } from '@/inertia/Composables/utilities.js';
 import { usePayment } from '../../Composables/usePayment';
 import { useAMLKYC } from '../../Composables/useAMLKYC';
 
@@ -34,14 +35,13 @@ const props = defineProps({
   payment: Object,
   index: Number,
   isExpanded: Boolean,
-  isChildPaymentDeletable: Boolean,
   isLackingPayment: Boolean,
   isApproveConfirmed: Boolean,
   capturePaymentValidationInProcess: Boolean,
   quoteType: String,
   isFuncsEnabled: {
-    type: Array,
-    default: [],
+    type: Object,
+    default: () => ({}),
   },
   bookPolicyDetails: {
     type: Array,
@@ -55,7 +55,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isAllianceProvider: {
+  isQatarProvider: {
     type: Boolean,
     default: false,
   },
@@ -82,6 +82,58 @@ const deletePayment = () => {
   emit('delete-payment', props.payment);
 };
 
+const travelSeniorMemberAge = Number(
+  genericRequestEnum?.TRAVEL_SENIOR_MEMBER_AGE ?? 65,
+);
+
+const isSeniorSegmentPaymentCode = code => {
+  if (code === null || code === undefined) {
+    return false;
+  }
+  return String(code).trim().endsWith('-1');
+};
+
+const activeTravelTravelers = computed(() =>
+  Array.isArray(page.props.travelers) ? page.props.travelers : [],
+);
+
+const travelerCountForPaymentSegment = payment => {
+  const seniorSegment = isSeniorSegmentPaymentCode(payment?.code);
+  return activeTravelTravelers.value.filter(traveler => {
+    const rawAge = calculateAge(traveler.dob);
+    const age = Number.isFinite(rawAge) ? rawAge : 0;
+    return seniorSegment
+      ? age >= travelSeniorMemberAge
+      : age < travelSeniorMemberAge;
+  }).length;
+};
+
+const travelPaymentStatusesEligibleForDelete = new Set([
+  paymentStatusEnum.PENDING,
+  paymentStatusEnum.NEW,
+  paymentStatusEnum.DRAFT,
+  paymentStatusEnum.OVERDUE,
+  paymentStatusEnum.CANCELLED,
+  paymentStatusEnum.DECLINED,
+  paymentStatusEnum.FAILED,
+]);
+
+const isTravelPaymentDeletableByStatus = payment =>
+  travelPaymentStatusesEligibleForDelete.has(payment?.payment_status_id);
+
+const isTravelDeleteForEmptyMemberSegment = payment => {
+  if (props.quoteType !== quoteTypeCodeEnum.Travel) {
+    return false;
+  }
+  if (!isTravelPaymentDeletableByStatus(payment)) {
+    return false;
+  }
+  if (!Array.isArray(page.props.travelers)) {
+    return false;
+  }
+  return travelerCountForPaymentSegment(payment) === 0;
+};
+
 const voidPayment = () => {
   emit('void-payment', props.payment);
 };
@@ -92,10 +144,12 @@ const can = permission => useCan(permission);
 const getCaptureOption = computed(() => {
   const payment = props.payment;
   if (props.payments.length === 0) return;
-
+  const isTravelOrDeviceQuote =
+    props.quoteType === quoteTypeCodeEnum.Travel ||
+    props.quoteType === quoteTypeCodeEnum.Device;
   let isCaptureButtonEnabled =
     page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
-  if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
+  if (isTravelOrDeviceQuote && !props.sendUpdate) {
     isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
   }
 
@@ -121,7 +175,6 @@ const getCaptureOption = computed(() => {
 const getCaptureValidation = computed(() => {
   const payment = props.payment;
   if (shouldProcessUpdate()) {
-    const isTravelQuote = props.quoteType == quoteTypeCodeEnum.Travel;
     const isInsurerApiStatus = props.quoteRequest.insurer_api_status;
 
     if (payment.is_approved === 1) return false;
@@ -158,25 +211,34 @@ const shouldProcessUpdate = () => {
     props.quoteRequest.quote_status_id ===
     page.props.quoteStatusEnum.TransactionApproved;
   const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
-  const isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
+
+  const kycAmlBypassEligibleQuotes = [
+    quoteTypeCodeEnum.Travel,
+    quoteTypeCodeEnum.CYBER,
+  ];
+  const isKycAmlBypassEligibleQuote = kycAmlBypassEligibleQuotes.includes(
+    props.quoteType,
+  );
+
   const shouldSendUpdate = props.sendUpdate;
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
   const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
   let isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
-  if (isTravelQuote && !props.sendUpdate) {
+  if (isKycAmlBypassEligibleQuote && !props.sendUpdate) {
     isGIGProvider = payment.isGIGProvider;
   }
   const isInsurer = payment?.collection_type == 'insurer';
   const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
   let isInsurerAmlCleared = true;
   let isAMlAndKycTravelComplete =
-    isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
+    isAmlAndKycComplete || isKycAmlBypassEligibleQuote || shouldSendUpdate;
   let enabledQuoteTypesForInsurer = [
     quoteTypeCodeEnum.Car,
     quoteTypeCodeEnum.Home,
     quoteTypeCodeEnum.Bike,
     quoteTypeCodeEnum.Travel,
+    quoteTypeCodeEnum.Device,
   ];
 
   const captureOption = getCaptureOption.value;
@@ -205,7 +267,7 @@ const shouldProcessUpdate = () => {
         insurerAMLStatus ===
         page.props.amlStatusEnum.InsurerAMLScreeningCleared;
     }
-    if (isTravelQuote) {
+    if (isKycAmlBypassEligibleQuote) {
       isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
     } else {
       isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
@@ -464,7 +526,7 @@ const amlAndKycTooltip = computed(() => {
             Edit
           </x-button>
         </template>
-        <template v-if="index == 1 && isChildPaymentDeletable">
+        <template v-if="isTravelDeleteForEmptyMemberSegment(payment)">
           <x-button size="xs" color="orange" outlined @click="deletePayment">
             Delete
           </x-button>

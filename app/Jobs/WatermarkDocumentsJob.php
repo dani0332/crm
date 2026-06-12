@@ -7,17 +7,20 @@ use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
+use App\Traits\ChecksAzureFileExistence;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
+use League\Flysystem\UnableToCheckExistence;
+use Throwable;
 
 class WatermarkDocumentsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use ChecksAzureFileExistence, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 120; // 2 minutes
     public $tries = 3;
@@ -43,40 +46,53 @@ class WatermarkDocumentsJob implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::startQuoteLogging($this->uuid, feature: LoggerFeatureEnum::WATERMARK_DOCUMENT);
+        $refId = "{$this->uuid} - {$this->quoteDocumentId}";
+        LoggerService::startQuoteLogging($refId, feature: LoggerFeatureEnum::WATERMARK_DOCUMENT);
 
-        // Check if the file is already being processed
+        LoggerService::info('WatermarkDocumentsJob started');
+
         if ($this->isFileBeingProcessed()) {
-            LoggerService::info("File is already being processed. Retrying later. Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
-            $this->release(30); // Release the job to be retried in 30 seconds
+            // Release the job to be retried in 30 seconds so a legitimate second attempt (e.g. after a stale cache lock) is not permanently lost.
+            $this->release(30);
 
             return;
         }
 
-        $quoteDocument = QuoteDocument::find($this->quoteDocumentId);
-        $documentType = DocumentType::find($this->documentTypeId);
-
-        // Ensure the quoteDocument and documentType exist
-        if (! $quoteDocument || ! $documentType) {
-            LoggerService::warning('Document or DocumentType not found. Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId.' - Ref ID: '.$this->uuid);
-
+        $quoteDocumentAndType = $this->resolveQuoteDocumentAndDocumentType();
+        if ($quoteDocumentAndType === null) {
             return;
         }
 
-        // Check if the source file exists
-        if (! $this->fileExists($quoteDocument->doc_url)) {
-            LoggerService::error("Source file does not exist: {$quoteDocument->doc_url}");
-
-            return;
-        }
+        [$quoteDocument, $documentType] = $quoteDocumentAndType;
+        $sourcePath = $quoteDocument->doc_url;
 
         try {
+            // Check if the source file exists
+            $sourcePath = (string) ($quoteDocument->doc_url ?? '');
+            if ($sourcePath === '') {
+                LoggerService::warning('Source file path is empty');
+
+                return;
+            }
+
+            if (! $this->fileExists($sourcePath)) {
+                LoggerService::warning("Source file does not exist: {$sourcePath}");
+
+                return;
+            }
+
             // Perform watermarking based on file type
-            $watermarkService = app()->make(QuoteDocumentService::class);
+            $watermarkService = app(QuoteDocumentService::class);
             $fileMimeType = $quoteDocument->doc_mime_type;
             $docName = str_replace('original_', '', $quoteDocument->doc_name);
 
             $extension = strtolower(pathinfo($quoteDocument->doc_name, PATHINFO_EXTENSION));
+
+            LoggerService::info('Watermark starting for document ID', [
+                'doc_name' => $docName,
+                'fileMimeType' => $fileMimeType,
+                'documentType' => $documentType->code,
+            ]);
 
             if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf' || $extension == 'pdf') {
                 $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->uuid, $documentType);
@@ -87,16 +103,54 @@ class WatermarkDocumentsJob implements ShouldQueue
             }
 
             // Update the document with watermark data
-            if (isset($watermarkData['watermarked_doc_name']) && isset($watermarkData['watermarked_doc_url'])) {
+            if (isset($watermarkData['watermarked_doc_name'], $watermarkData['watermarked_doc_url'])) {
                 $quoteDocument->update([
                     'watermarked_doc_name' => $watermarkData['watermarked_doc_name'],
                     'watermarked_doc_url' => $watermarkData['watermarked_doc_url'],
                 ]);
-                LoggerService::info('watermark job completed for '.$this->uuid);
+                LoggerService::info('Watermark job completed');
             }
         } catch (\Exception $e) {
-            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage());
+            cache()->forget("processing_{$this->lockKey}");
+            LoggerService::error('Error processing watermark. Error: '.$e->getMessage(), [], $e);
             throw $e; // Re-throw to trigger job retry
+        } catch (Throwable $t) {
+            // Ensure the processing lock is always cleared for non-Exception Throwables (e.g. TypeError, Error)
+            LoggerService::error('Error processing watermark (Throwable): '.$t->getMessage(), [
+                'throwable_class' => $t::class,
+            ], $t);
+            throw $t;
+        } finally {
+            cache()->forget("processing_{$this->lockKey}");
+        }
+    }
+
+    /**
+     * Resolve QuoteDocument and DocumentType by ID. Returns null if not found, doc_url is empty, or job is failed.
+     *
+     * @return array{0: QuoteDocument, 1: DocumentType}|null
+     */
+    private function resolveQuoteDocumentAndDocumentType(): ?array
+    {
+        try {
+            $quoteDocument = QuoteDocument::findOrFail($this->quoteDocumentId);
+            $documentType = DocumentType::findOrFail($this->documentTypeId);
+
+            $sourcePath = (string) ($quoteDocument->doc_url ?? '');
+            if ($sourcePath === '') {
+                cache()->forget("processing_{$this->lockKey}");
+                LoggerService::warning('Source file path is empty');
+
+                return null;
+            }
+
+            return [$quoteDocument, $documentType];
+        } catch (ModelNotFoundException $e) {
+            cache()->forget("processing_{$this->lockKey}");
+            LoggerService::warning('QuoteDocument or DocumentType not found; failing job.', [], $e);
+            $this->fail($e);
+
+            return null;
         }
     }
 
@@ -108,6 +162,8 @@ class WatermarkDocumentsJob implements ShouldQueue
         // Use cache to track processing status
         $cacheKey = "processing_{$this->lockKey}";
         if (cache()->has($cacheKey)) {
+            LoggerService::info('File is already being processed; skipping this attempt.');
+
             return true;
         }
 
@@ -118,28 +174,37 @@ class WatermarkDocumentsJob implements ShouldQueue
     }
 
     /**
-     * Check if a file exists
+     * Check if a file exists (remote URL or Azure storage).
+     * Returns false only when existence was successfully checked and the file is missing.
+     * Re-throws UnableToCheckExistence and other exceptions so the job retries on transient failures.
      */
-    private function fileExists($path)
+    private function fileExists(string $path): bool
     {
         try {
-            // For local storage
-            if (Storage::disk('azureIMPrivate')->exists($path)) {
-                return true;
-            }
-
-            // For remote URLs
-            if (filter_var($path, FILTER_VALIDATE_URL)) {
-                $headers = get_headers($path);
-
-                return $headers && strpos($headers[0], '200') !== false;
-            }
-
-            return false;
-        } catch (\Exception $e) {
-            LoggerService::error("Error checking file existence: {$path}. Error: ".$e->getMessage());
-
-            return false;
+            return $this->checkAzureFileExistsWithRetry($path);
+        } catch (UnableToCheckExistence $e) {
+            $previous = $e->getPrevious();
+            LoggerService::warning(
+                'Unable to check file existence (Azure transient failure): '.$path,
+                [
+                    'previous_exception_class' => $previous ? $previous::class : null,
+                    'previous_exception_message' => $previous?->getMessage(),
+                ],
+                $e
+            );
+            throw $e;
+        } catch (Throwable $e) {
+            $previous = $e->getPrevious();
+            LoggerService::error(
+                'Error checking file existence: '.$path,
+                [
+                    'exception_class' => $e::class,
+                    'previous_exception_class' => $previous ? $previous::class : null,
+                    'previous_exception_message' => $previous?->getMessage(),
+                ],
+                $e
+            );
+            throw $e;
         }
     }
 

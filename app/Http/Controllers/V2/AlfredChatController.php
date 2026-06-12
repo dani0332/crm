@@ -2,24 +2,25 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\InstantChatReportsEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\TransactionTypeEnum;
-use App\Exports\InstantChatConsolidatedExport;
-use App\Exports\InstantChatDetailedExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
-use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\AlfredChat;
+use App\Models\ApplicationStorage;
 use App\Models\Lookup;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
 use App\Models\RenewalBatch;
+use App\Services\BirdService;
+use App\Services\InstantAlfredExportService;
 use App\Services\InstantAlfredService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AlfredChatController extends Controller
 {
@@ -31,15 +32,13 @@ class AlfredChatController extends Controller
 
         $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
 
-        $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['exportChat']]);
-
         $this->middleware('readonly_db');
     }
 
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function chats(AlfredChatRequest $request)
     {
@@ -66,159 +65,133 @@ class AlfredChatController extends Controller
 
     }
 
-    public function processMongoDBChatFilters(Request $request, $data)
+    public function generateExportUrl(Request $request)
     {
-        if (isset($request->fallback) && $request->fallback != '' || isset($request->channel) && $request->channel != '') {
-
-            $dataArray = json_decode(json_encode($data), true);
-
-            $itemIds = array_column($dataArray, 'uuid');
-
-            $chatPipeline = $this->instantAlfredService->createPipeline($request, $itemIds, 'chat');
-
-            $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
-
-            $refactoredData = array_map(function ($entry) {
-                if (isset($entry['communication_channels']) && $entry['communication_channels'] instanceof \MongoDB\Model\BSONArray) {
-                    $entry['communication_channels'] = $entry['communication_channels']->getArrayCopy();
-                }
-
-                return $entry;
-            }, $mongoResults);
-
-            $dataById = [];
-            foreach ($dataArray as $item) {
-                $dataById[$item['uuid']] = $item;
-            }
-
-            $refactoredById = [];
-            foreach ($refactoredData as $entry) {
-                $refactoredById[$entry['_id']] = $entry;
-            }
-
-            $mergedData = array_map(function ($item) use ($refactoredById) {
-                $uuid = $item['uuid'];
-                if (isset($refactoredById[$uuid])) {
-                    return array_merge($item, $refactoredById[$uuid]);
-                }
-
-                return $item;
-            }, $dataById);
-
-            $mergedData = array_values($mergedData);
-
-            $fallbackFilter = $request->fallback;
-            $channelFilter = $request->channel;
-            $filteredData = [];
-
-            $filteredData = array_filter($mergedData, function ($item) use ($fallbackFilter, $channelFilter) {
-                if ($fallbackFilter) {
-                    $hasFallback = isset($item['fallback']) ? $item['fallback'] : null;
-                    if ($fallbackFilter === quoteTypeCode::yesText && $hasFallback) {
-                        return $item;
-                    } elseif ($fallbackFilter === quoteTypeCode::noText && $hasFallback === null) {
-                        return $item;
-                    }
-                }
-
-                if ($channelFilter && ! empty($item['communication_channels'])) {
-                    $channels = array_filter($item['communication_channels'], function ($channel) {
-                        return is_string($channel);
-                    });
-                    if (array_intersect($channels, [$channelFilter])) {
-                        return $item;
-                    }
-                }
-
-            });
-
-            return $filteredData;
-        } else {
-            return false;
-        }
-    }
-
-    public function exportChat(Request $request)
-    {
-        $fileName = $request->report;
-        switch ($request->report) {
-            case InstantChatReportsEnum::CONSOLIDATED_REPORT:
-                return (new InstantChatConsolidatedExport)->download($fileName);
-
-            case InstantChatReportsEnum::DETAILED_REPORT:
-                return (new InstantChatDetailedExport)->download($fileName);
-
-            default:
-                abort(400, 'Invalid report type requested.');
-        }
-    }
-
-    public function exportChatToEmail(Request $request)
-    {
-        // Validate request parameters
         $request->validate([
-            'report' => 'required|string',
-            'recipientEmail' => 'sometimes|email',
-            'subject' => 'sometimes|string',
-            'ccRecipients' => 'sometimes|array',
-            'ccRecipients.*' => 'email',
+            'report' => 'required|string|in:'.InstantChatReportsEnum::DETAILED_REPORT.','.InstantChatReportsEnum::CONSOLIDATED_REPORT,
+            'recipientEmail' => 'required|email',
+            'recipientName' => 'nullable|string|max:255',
         ]);
 
-        $exportClassMap = [
-            InstantChatReportsEnum::CONSOLIDATED_REPORT => InstantChatConsolidatedExport::class,
-            InstantChatReportsEnum::DETAILED_REPORT => InstantChatDetailedExport::class,
-        ];
-
-        // Check if the requested report type is supported
-        if (! array_key_exists($request->report, $exportClassMap)) {
-            return response()->json([
-                'error' => 'Invalid report type requested.',
-                'available_reports' => array_keys($exportClassMap),
-            ], 400);
-        }
-
-        // Set default recipient email to current user if not provided
-        $recipientEmail = $request->recipientEmail ?? (Auth::check() ? Auth::user()->email : null);
-
-        if (! $recipientEmail) {
-            return response()->json([
-                'error' => 'Recipient email is required.',
-                'message' => 'Please provide a recipient email or ensure you are authenticated.',
-            ], 400);
-        }
-
-        $fileName = $request->report.' '.Carbon::now()->format('Y-m-d_H-i-s');
-        $subject = $request->subject ?? "Chat Report: {$request->report}";
-
-        $requestParams = array_merge($request->all(), [
-            'recipientEmail' => $recipientEmail,
-            'subject' => $subject,
-            'fileName' => $fileName,
-            'ccRecipients' => $request->ccRecipients ?? [],
-            'exportTitle' => 'Chat Report',
-            'user_id' => Auth::id(), // Pass user_id for job context
-        ]);
-
-        // Get the export class
-        $exportClass = $exportClassMap[$request->report];
         try {
-            // Dispatch the job using the existing ExportCsvAndSendEmailJob
-            ExportCsvAndSendEmailJob::dispatch(
-                $exportClass,
-                $recipientEmail,
-                $requestParams
-            );
+            $service = app(InstantAlfredExportService::class);
 
-            return response()->json([
-                'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.',
-                'report_type' => $request->report,
-                'recipient' => $recipientEmail,
-                'subject' => $subject,
-            ]);
+            $params = $this->prepareExportParams($request);
+
+            $result = $service->generateCsvAndGetUrl($params);
+
+            return response()->json($result);
 
         } catch (\Exception $e) {
+            Log::error('API endpoint: Export URL generation failed', [
+                'error' => $e->getMessage(),
+                'recipient' => $request->recipientEmail,
+                'report' => $request->report,
+            ]);
+
             return response()->json([
-                'error' => 'Failed to initiate export.',
+                'success' => false,
+                'error' => 'Failed to generate export URL.',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function prepareExportParams(Request $request): array
+    {
+        if ($request->has('filters') && is_array($request->filters)) {
+            $params = $request->filters;
+
+            $params['report'] = $request->report;
+            $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
+            $params['recipientName'] = $request->recipientName ?? Auth::user()?->name ?? 'User';
+
+            if ($request->has('user_id')) {
+                $params['user_id'] = $request->user_id;
+            }
+        } else {
+            $params = $request->all();
+
+            $params['recipientEmail'] = $request->recipientEmail ?? Auth::user()?->email ?? 'system@example.com';
+            $params['recipientName'] = $request->recipientName ?? Auth::user()?->name ?? 'User';
+
+            if ($request->has('chat_initiated_at') && is_array($request->chat_initiated_at)) {
+                $params['chat_initiated_at'] = $request->chat_initiated_at;
+            }
+        }
+
+        if (! isset($params['report'])) {
+            $params['report'] = $request->report ?? InstantChatReportsEnum::DETAILED_REPORT;
+        }
+
+        unset($params['page'], $params['per_page']);
+
+        return $params;
+    }
+
+    public function exportChatViaBird(Request $request)
+    {
+        $request->validate([
+            'report' => 'required|string|in:'.InstantChatReportsEnum::DETAILED_REPORT.','.InstantChatReportsEnum::CONSOLIDATED_REPORT,
+            'recipientEmail' => 'sometimes|email',
+        ]);
+
+        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW)->first();
+
+        if (! $workflowUrl || empty($workflowUrl->value)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Export workflow URL not configured.',
+                'message' => 'Please contact administrator to configure the export workflow URL.',
+            ], 500);
+        }
+
+        try {
+
+            $birdPayload = [
+                'report' => $request->report,
+                'recipientEmail' => $request->recipientEmail ?? Auth::user()?->email,
+                'recipientName' => Auth::user()?->name ?? 'User',
+                'filters' => $request->except(['report', 'recipientEmail']),
+                'user_id' => Auth::id(),
+                'exportApiUrl' => route('api.instant-alfred.generate-url'),
+            ];
+
+            $birdService = app(BirdService::class);
+            $response = $birdService->triggerWebHookRequest($workflowUrl->value, $birdPayload, 'post', false);
+
+            if (in_array($response->status_code, [200, 201])) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Your export has been queued. You will receive an email with the download link shortly.',
+                    'report_type' => $request->report,
+                ]);
+            }
+
+            Log::error('Export workflow failed for instant alfred export', [
+                'report' => $request->report,
+                'recipient' => $birdPayload['recipientEmail'],
+                'status' => $response->status_code,
+                'response' => $response->body,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to trigger export workflow.',
+                'message' => 'The export workflow could not be initiated. Please try again.',
+            ], 500);
+
+        } catch (\Exception $e) {
+            Log::error('Export workflow exception for instant alfred export', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'report' => $request->report,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to trigger export workflow.',
                 'message' => $e->getMessage(),
             ], 500);
         }

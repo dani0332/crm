@@ -54,7 +54,7 @@ class TravelQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->filter()->with(
+        return $this->filter(paginate: false)->with(
             ['advisor', 'nationality', 'insuranceProvider', 'customer'])->orderBy('created_at', 'desc');
     }
 

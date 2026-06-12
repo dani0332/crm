@@ -26,6 +26,7 @@ use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuoteDetail;
+use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\DocumentTypeRepository;
@@ -283,15 +284,23 @@ trait GenericQueriesAllLobs
         $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
+
+        $deviceType = isset($record->deviceQuote) ? ($record->deviceQuote?->device_type ?? null) : null;
+        $quoteTypeDisplayLabel = QuoteTypeId::displayLabel(
+            $quoteType,
+            $quoteType,
+            $deviceType
+        );
+
         if ($payment) {
-            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
+            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteTypeDisplayLabel, $record);
             $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
         $isAbuDhabiBranch = $this->isAbuDhabiBranch($quoteType, $record);
 
         $bookPolicyDetails = [];
-        $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
+        $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteTypeDisplayLabel);
         $bookPolicyDetails['brokerInvoiceNo'] = $brokerInvoiceNo;
         $bookPolicyDetails['invoiceDescription'] = $invoiceDescription;
         $bookPolicyDetails['bookButton'] = false;
@@ -313,7 +322,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
-        if ($bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Travel) {
+        if ($bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Travel || $bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Device) {
             $payments = $payments->map(function ($payment) use ($quoteType, $record) {
                 $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record, $payment, true);
                 $payment->isCreditCardEnabled = $tapPaymentConfiguration['isCreditCardEnabled'];
@@ -333,6 +342,8 @@ trait GenericQueriesAllLobs
             $bookPolicyDetails['disabled'] = $areSendPolicyDocsUploaded['disabled'];
             $bookPolicyDetails['sendButton'] = true;
             $bookPolicyDetails['requiredDocuments'] = $areSendPolicyDocsUploaded['requiredDocuments'];
+            $bookPolicyDetails['missingDocumentCodes'] = $areSendPolicyDocsUploaded['missingDocumentCodes'];
+            $bookPolicyDetails['missingDocuments'] = $areSendPolicyDocsUploaded['missingDocuments'];
             $bookPolicyDetails['text'] = SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT;
             $bookPolicyDetails['sendPolicyType'] = SendPolicyTypeEnum::CUSTOMER;
             if ($bookPolicyDetails['sendButton']) {
@@ -341,7 +352,6 @@ trait GenericQueriesAllLobs
                 if ($taxDocumentsCount == count($taxDocuments)) {
                     $bookPolicyDetails['editButton'] = true;
                     $areBookingDetailsFilled = $this->areBookingDetailsFilled($payment);
-
                     if ($areBookingDetailsFilled) {
                         $isMainLead = $this->checkMainLead($record, $quoteType);
                         if (! $isMainLead || $record->quote_status_id === QuoteStatusEnum::PolicyCancelledReissued) {
@@ -362,6 +372,8 @@ trait GenericQueriesAllLobs
         }
         // Check if this is an Abu Dhabi quote lead
         $bookPolicyDetails['isAbuDhabiBranch'] = $isAbuDhabiBranch;
+
+        $bookPolicyDetails['isParentPolicyCancellationReissuedPending'] = $this->isParentPolicyCancellationReissuedPending($record, $bookPolicyDetails['text']);
 
         return $bookPolicyDetails;
     }
@@ -676,14 +688,29 @@ trait GenericQueriesAllLobs
         return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 
+    /**
+     * Normalize date value from request. Frontend may send a string or nested array (e.g. [["2024-01-01"]]).
+     * Returns a value suitable for Carbon::parse().
+     */
+    private function normalizeDateValue(mixed $value)
+    {
+        while (is_array($value) && $value !== []) {
+            $value = $value[0];
+        }
+
+        return is_scalar($value) ? $value : now()->endOfDay();
+    }
+
     public function adjustQueryByDateFilters($query, $tablePrefix, $requestParams = [], $useJoin = true)
     {
         $request = $requestParams ? collect($requestParams) : request();
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $defaultDate = now()->endOfDay();
         if (! empty($request->get('payment_due_date')) && ! $useJoin) {
-            $startDate = isset($request['payment_due_date']) ? Carbon::parse($request['payment_due_date'][0])->startOfDay() : $defaultDate;
-            $endDate = isset($request['payment_due_date']) ? Carbon::parse($request['payment_due_date'][1])->endOfDay() : $defaultDate;
+            $startDateRaw = $request['payment_due_date'][0] ?? null;
+            $endDateRaw = $request['payment_due_date'][1] ?? null;
+            $startDate = isset($request['payment_due_date']) ? Carbon::parse($this->normalizeDateValue($startDateRaw))->startOfDay() : $defaultDate;
+            $endDate = isset($request['payment_due_date']) ? Carbon::parse($this->normalizeDateValue($endDateRaw))->endOfDay() : $defaultDate;
 
             $query->whereHas('paymentSplits', function ($q) use ($startDate, $endDate, $dateFormat) {
                 $q->whereBetween('due_date', [
@@ -703,8 +730,10 @@ trait GenericQueriesAllLobs
             return;
         }
         $dateType = $request->get('payment_due_date') ? 'payment_due_date' : 'booking_date';
-        $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultDate;
-        $endDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][1])->endOfDay() : $defaultDate;
+        $startDateRaw = $request[$dateType][0] ?? null;
+        $endDateRaw = $request[$dateType][1] ?? null;
+        $startDate = isset($request[$dateType]) ? Carbon::parse($this->normalizeDateValue($startDateRaw))->startOfDay() : $defaultDate;
+        $endDate = isset($request[$dateType]) ? Carbon::parse($this->normalizeDateValue($endDateRaw))->endOfDay() : $defaultDate;
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
     }
 
@@ -856,7 +885,7 @@ trait GenericQueriesAllLobs
             in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
             && $record?->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
-            $emirate = $record?->latestInsured?->emirate_of_registration_id ?? null;
+            $emirate = $record?->emirate_of_registration_id ?? null;
             $quoteTypeId = QuoteTypeId::GroupMedical;
         }
 
@@ -939,10 +968,15 @@ trait GenericQueriesAllLobs
             return null;
         }
 
-        $nationalityRecord = Nationality::where('text', 'LIKE', '%'.$nationality.'%')
-            ->orWhere('code', $nationality)
-            ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
-            ->first();
+        $cacheKey = 'customer_verification_nationality_'.md5(strtolower($nationality));
+        $nationalityRecord = cache()->remember($cacheKey, now()->addDay(), function () use ($nationality) {
+            return Nationality::whereAny(
+                ['text', 'country_name'],
+                'LIKE',
+                "%{$nationality}%"
+            )->orWhere('code', $nationality)
+                ->first(['id']);
+        });
 
         return $nationalityRecord?->id;
     }
@@ -952,5 +986,37 @@ trait GenericQueriesAllLobs
         $nationalityRecord = Nationality::find($nationalityId);
 
         return $nationalityRecord?->text;
+    }
+
+    /**
+     * Check if the parent policy is created from Cancellation from Inception and Reissuance.
+     * if the policy created via duplicate quote functionality then we don't need to disable CTA.
+     *
+     * @param  object  $record
+     * @param  string  $text
+     * @return bool
+     */
+    public function isParentPolicyCancellationReissuedPending($record, $text)
+    {
+
+        $return = false;
+        if (
+            isset($record->parent_duplicate_quote_id) &&
+            $record->parent_duplicate_quote_id &&
+            str_starts_with($record->code, $record->parent_duplicate_quote_id) && // if pass it means the record is from CIR.
+            $text != SendPolicyTypeEnum::CUSTOMER_BUTTON_TEXT
+        ) {
+            $parentQuoteType = explode('-', $record->parent_duplicate_quote_id)[0];
+            $quoteType = QuoteType::where('short_code', strtoupper($parentQuoteType))->value('code') ?? null;
+            if (! $quoteType) {
+                return $return;
+            }
+            $quoteDetail = $this->getQuoteObjectBy(strtolower($quoteType), $record->parent_duplicate_quote_id, 'code');
+            if ($quoteDetail && $quoteDetail->quote_status_id !== QuoteStatusEnum::PolicyCancelledReissued) {
+                $return = true;
+            }
+        }
+
+        return $return;
     }
 }

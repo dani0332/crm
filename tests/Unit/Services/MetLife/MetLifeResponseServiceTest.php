@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Services\MetLife;
 
 use App\Services\MetLife\MetLifeResponseService;
+use GuzzleHttp\Psr7\Response;
 use Tests\TestCase;
 
 class MetLifeResponseServiceTest extends TestCase
@@ -84,7 +85,7 @@ class MetLifeResponseServiceTest extends TestCase
     public function test_handle_http_response_success()
     {
         $mockResponse = new \Illuminate\Http\Client\Response(
-            new \GuzzleHttp\Psr7\Response(200, [], json_encode(['success' => true]))
+            new Response(200, [], json_encode(['success' => true]))
         );
 
         $result = $this->service->handleHttpResponse($mockResponse, '/test/endpoint');
@@ -97,7 +98,7 @@ class MetLifeResponseServiceTest extends TestCase
     public function test_handle_http_response_failure()
     {
         $mockResponse = new \Illuminate\Http\Client\Response(
-            new \GuzzleHttp\Psr7\Response(404, [], json_encode(['error' => 'Not found']))
+            new Response(404, [], json_encode(['error' => 'Not found']))
         );
 
         $result = $this->service->handleHttpResponse($mockResponse, '/test/endpoint');

@@ -18,6 +18,7 @@ final class TeamNameEnum extends Enum
     public const AFFINITY = 'Affinity';
     public const ORGANIC = 'Organic';
     public const PCP = 'PCP';
+    public const TPL = 'TPL';
     public const EBP = 'Entry-Level';
     public const RM_NB = 'Best';
     public const RM_SPEED = 'Good';
@@ -45,6 +46,10 @@ final class TeamNameEnum extends Enum
     public const TRAVEL_RENEWALS = 'Travel - Renewals';
     public const TRAVEL_TEAM = 'Travel - Team';
     public const GBP = 'GBP';
+    public const PEC = 'PEC';
+    public const AUH = 'AUH';
+    public const CYBER = 'Cyber Insurance';
+    public const DEVICE = 'Device Insurance';
 
     /**
      * Get team ID by team name
@@ -59,5 +64,21 @@ final class TeamNameEnum extends Enum
         ];
 
         return $teamIDs[$teamName] ?? null;
+    }
+    public static function getTeamName(QuoteTypes $quoteType): string
+    {
+        return match ($quoteType) {
+            QuoteTypes::DEVICE => self::DEVICE,
+            QuoteTypes::CYBER => self::CYBER,
+            default => $quoteType->value,
+        };
+    }
+    public static function getQuoteTypeValue(string $teamName): string
+    {
+        return match ($teamName) {
+            self::DEVICE => QuoteTypes::DEVICE->value,
+            self::CYBER => QuoteTypes::CYBER->value,
+            default => $teamName,
+        };
     }
 }

@@ -6,14 +6,20 @@ use App\Enums\FilterTypes;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
 use Config;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Context;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -66,6 +72,21 @@ class BusinessQuote extends Model implements AuditableContract
         ];
     }
 
+    /**
+     * Tag audit entry with source when emirate of registration is updated from Entity profile or AML screen.
+     * Stored as JSON in the audits.tags column so structure is preserved.
+     */
+    public function generateTags(): array
+    {
+        $source = Context::get('emirate_update_source');
+
+        if ($source === null) {
+            return [];
+        }
+
+        return [json_encode(['source' => $source])];
+    }
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
@@ -105,6 +126,11 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->belongsTo(BusinessInsuranceType::class);
     }
 
+    public function groupMedicalType()
+    {
+        return $this->belongsTo(GroupMedicalType::class, 'group_medical_type_id');
+    }
+
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text', 'code']);
@@ -117,6 +143,11 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(User::class, 'advisor_id');
     }
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
     public function previousAdvisor()
     {
         return $this->belongsTo(User::class, 'previous_advisor_id', 'id');
@@ -157,7 +188,7 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 
-    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function activities(): HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Business);
@@ -188,36 +219,27 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasOne(BusinessQuoteRequestDetail::class);
     }
 
+    // Reminder:: This relationship is used when we create child lead through CIR - only active insured record will be cloned
     public function customerInsured()
     {
         return $this->hasOne(CustomerInsured::class, 'quote_request_id', 'id')
-            ->where('quote_type_id', QuoteTypeId::Business);
+            ->where('quote_type_id', QuoteTypeId::Business)
+            ->active();
     }
 
-    // Get all insured records for this quote (multiple AML screenings)
-    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
-    {
-        return $this->hasManyThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id
-            'id', // insured.id
-            'id', // personal_quotes.id
-            'insured_id' // customer_insured.insured_id
-        );
-    }
-
-    // Get the latest/most recent insured record for this quote
-    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    // Reminder::Get the active insured record for this quote
+    public function latestInsured(): HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
             CustomerInsured::class,
             'quote_request_id', // customer_insured.quote_request_id
             'id', // insured.id
-            'id', // personal_quotes.id
+            'id', // business_quote_requests.id
             'insured_id' // customer_insured.insured_id
-        )->latest('customer_insured.updated_at');
+        )
+            ->where('customer_insured.quote_type_id', QuoteTypeId::Business)
+            ->where('customer_insured.is_active', true);
     }
 
     public function amlLogs()
@@ -285,7 +307,7 @@ class BusinessQuote extends Model implements AuditableContract
     /**
      * Get all payments that have IPL splits
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getPaymentsWithInsurerPaymentLink()
     {
@@ -299,7 +321,7 @@ class BusinessQuote extends Model implements AuditableContract
     /**
      * Get the last payment with an IPL split
      *
-     * @return \App\Models\Payment|null
+     * @return Payment|null
      */
     public function getLastPaymentWithInsurerPaymentLink()
     {
@@ -314,7 +336,7 @@ class BusinessQuote extends Model implements AuditableContract
     /**
      * Get all IPL payment splits across all payments
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     public function getAllInsurerPaymentLinkSplits()
     {
@@ -335,9 +357,9 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
 
-    public function personalQuote()
+    public function personalQuote(): HasOne
     {
-        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Business);
+        return $this->hasOne(PersonalQuote::class, 'quote_id', 'id')->where('quote_type_id', QuoteTypes::BUSINESS->id());
     }
 
     public function renewalBatchModel()
@@ -353,5 +375,14 @@ class BusinessQuote extends Model implements AuditableContract
     public function branchOverride()
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
+    public function isPolicyBooked(): bool
+    {
+        return in_array($this->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelledReissued, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled]);
+    }
+
+    public function emirate()
+    {
+        return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
     }
 }

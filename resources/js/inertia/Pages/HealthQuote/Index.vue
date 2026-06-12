@@ -27,10 +27,39 @@ defineProps({
   subSources: { type: Array, default: () => [] },
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
+  healthSignatoryFilterOptions: {
+    type: Array,
+    default: () => [],
+  },
+  healthUaePassApiStatusFilterOptions: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
 const teamNamesEnum = page.props.teamNamesEnum;
+
+const signatoryFilterOptions = computed(() => {
+  const fromServer = page.props.healthSignatoryFilterOptions;
+  if (Array.isArray(fromServer) && fromServer.length > 0) {
+    return fromServer;
+  }
+  return [
+    { value: 'All', label: 'All' },
+    { value: 'policyholder', label: 'Policyholder' },
+    { value: 'insured_member', label: 'Insured Member' },
+    { value: 'someone_else', label: 'Someone Else' },
+  ];
+});
+
+const uaePassApiStatusFilterOptions = computed(() => {
+  const fromServer = page.props.healthUaePassApiStatusFilterOptions;
+  if (Array.isArray(fromServer) && fromServer.length > 0) {
+    return fromServer;
+  }
+  return [{ value: 'All', label: 'All' }];
+});
 const notification = useToast();
 
 const hasRole = role => useHasRole(role);
@@ -177,6 +206,12 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
+  { text: 'SIGNATORY', value: 'signatory_text', is_active: true },
+  {
+    text: 'UAE PASS API STATUS',
+    value: 'uae_pass_api_status_text',
+    is_active: true,
+  },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -211,7 +246,6 @@ const filters = reactive({
   date: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
-  payment_status: [],
   is_cold: false,
   is_stale: false,
   status_filters: null,
@@ -228,8 +262,11 @@ const filters = reactive({
   private_client: 'all',
   emirate_of_your_visa_id: [],
   pec_flag: 'all',
+  signatory: 'ALL',
+  uae_pass_api_status: 'ALL',
   authorize_date: '',
   captured_date: '',
+  payment_status_id: [],
 });
 
 const canExport = ref(false);
@@ -364,8 +401,8 @@ const handleSelectedFilters = selectedFilters => {
     filters.quote_status = selectedFilters.quote_status;
   }
 
-  if (selectedFilters.payment_status) {
-    filters.payment_status = selectedFilters.payment_status;
+  if (selectedFilters.payment_status_id) {
+    filters.payment_status_id = selectedFilters.payment_status_id;
   }
 
   filters.is_cold = selectedFilters.cold;
@@ -418,7 +455,7 @@ function setQueryStringFilters() {
     'insurer_aml_status',
     'advisors',
     'renewal_batches',
-    'payment_status',
+    'payment_status_id',
     'emirate_of_your_visa_id',
     'sub_source_id',
     'page',
@@ -775,6 +812,13 @@ const insurerAMLStatusOption = computed(() => {
 
 // Handle lead creation from modal
 const onLeadConfirmed = leadData => {};
+
+const paymentStatusOptions = computed(() => {
+  return page.props.dropdownSource.payment_status_id.map(status => ({
+    value: Number.parseInt(status.id),
+    label: status.text,
+  }));
+});
 </script>
 
 <template>
@@ -1108,6 +1152,28 @@ const onLeadConfirmed = leadData => {};
           multi-calendars
           multi-calendars-solo
         />
+        <x-select
+          v-model="filters.payment_status_id"
+          label="Payment Status"
+          name="payment_status_id"
+          :options="paymentStatusOptions"
+          placeholder="Please select payment status"
+          class="w-full"
+          filterable
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.payment_status_id = paymentStatusOptions.map(
+                  status => status.value,
+                )
+              "
+              @clear="filters.payment_status_id = []"
+            />
+          </template>
+        </x-select>
         <DatePicker
           v-model="filters.authorize_date"
           label="Payment Authorised Date"
@@ -1204,6 +1270,22 @@ const onLeadConfirmed = leadData => {};
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.signatory"
+          label="Signatory"
+          placeholder="UAE PASS signature match"
+          :options="signatoryFilterOptions"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-model="filters.uae_pass_api_status"
+          label="UAE PASS API Status"
+          placeholder="Latest UAE PASS API status"
+          :options="uaePassApiStatusFilterOptions"
           class="w-full"
           :single="true"
         />
@@ -1389,6 +1471,9 @@ const onLeadConfirmed = leadData => {};
         <p>
           {{ item.renewal_batch_text }}
         </p>
+      </template>
+      <template #item-health_team_type="item">
+        {{ item.health_team_type ?? item.notional_team }}
       </template>
     </DataTable>
 

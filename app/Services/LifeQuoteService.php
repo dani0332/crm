@@ -81,6 +81,7 @@ class LifeQuoteService extends BaseService
                 DB::raw('DATE_FORMAT(lqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
                 'lqr.policy_start_date',
                 'lqr.previous_quote_policy_premium',
+                'lqr.previous_quote_policy_commission',
                 'lqr.customer_id',
                 'lqr.parent_duplicate_quote_id',
                 'lqr.risk_score',

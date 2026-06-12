@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liva Car - Configuration Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #805ad5 0%, #667eea 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #805ad5;
+      }
+
+      .section h3 {
+        color: #805ad5;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .config-section {
+        background: #f8f9fa;
+        border-left: 5px solid #805ad5;
+        padding: 25px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .config-section h4 {
+        color: #805ad5;
+        font-size: 1.3em;
+        margin-bottom: 15px;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #f8f9fa;
+        border-left: 4px solid #805ad5;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.5;
+      }
+
+      .code-block code {
+        color: #f8f9fa;
+      }
+
+      .info-box {
+        background: #ede9fe;
+        border-left: 4px solid #805ad5;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .info-box strong {
+        color: #805ad5;
+      }
+
+      .warning-box {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .success-box {
+        background: #d1fae5;
+        border-left: 4px solid #10b981;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .back-link {
+        display: inline-block;
+        background: linear-gradient(135deg, #805ad5 0%, #667eea 100%);
+        color: white;
+        text-decoration: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        margin-top: 20px;
+      }
+
+      .back-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+
+      table th,
+      table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      table th {
+        background: #805ad5;
+        color: white;
+        font-weight: 600;
+      }
+
+      table tr:hover {
+        background: #f8f9fa;
+      }
+
+      .config-item {
+        background: white;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border-left: 3px solid #805ad5;
+      }
+
+      .config-item strong {
+        color: #805ad5;
+        display: block;
+        margin-bottom: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/index.html">🚗 Car</a>
+        <span>></span>
+        <a href="/docs/policy-automation/car/liva/index.html">Liva (RSA)</a>
+        <span>></span>
+        <span>Configuration</span>
+      </div>
+
+      <div class="header">
+        <h1>🔧 Liva Car Insurance - Configuration</h1>
+        <p>
+          Complete configuration guide for environment variables, OAuth, and
+          feature toggles
+        </p>
+      </div>
+
+      <div class="section">
+        <h2>🌍 Environment Configuration</h2>
+        <p>
+          Liva Car Automation requires several environment variables to be
+          configured in your <code>.env</code> file or Laravel configuration
+          files.
+        </p>
+
+        <div class="info-box">
+          <strong>⚠ Payment Flow:</strong> Payment is
+          <strong>PRE-CAPTURED</strong> before automation starts. The automation
+          sends transaction details (receipt ID, auth code, transaction date,
+          amount) to Liva API to indicate payment was already processed. No
+          payment capture occurs during automation.
+        </div>
+
+        <div class="config-section">
+          <h4>Base URL Configuration</h4>
+          <div class="config-item">
+            <strong>LIVA_API_BASE_URL</strong>
+            <p>Base URL for Liva API endpoints (v2 endpoints)</p>
+            <div class="code-block">
+              LIVA_API_BASE_URL=https://api.liva.insurance.com // API Endpoints
+              (all v2): // - Auth: {LIVA_API_BASE_URL}/auth-token // - Upload:
+              {LIVA_API_BASE_URL}/motor/documents/upload/v2 // - Issue:
+              {LIVA_API_BASE_URL}/motor/policy/create/v2 // - Retrieve:
+              {LIVA_API_BASE_URL}/motor/transactions/retrieve/v2
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>OAuth 2.0 Configuration</h4>
+          <p>OAuth credentials for client credentials flow authentication:</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Variable</th>
+                <th>Description</th>
+                <th>Example</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>LIVA_CLIENT_ID</code></td>
+                <td>OAuth client identifier</td>
+                <td>your-client-id</td>
+              </tr>
+              <tr>
+                <td><code>LIVA_CLIENT_SECRET</code></td>
+                <td>OAuth client secret</td>
+                <td>your-client-secret</td>
+              </tr>
+              <tr>
+                <td><code>LIVA_SCOPE</code></td>
+                <td>OAuth scope for API access</td>
+                <td>api.read api.write</td>
+              </tr>
+              <tr>
+                <td><code>LIVA_BASIC_AUTH</code></td>
+                <td>Basic authentication token</td>
+                <td>base64(client_id:client_secret)</td>
+              </tr>
+              <tr>
+                <td><code>LIVA_PARENT_ID</code></td>
+                <td>Partner/Partner ID</td>
+                <td>PARTNER123</td>
+              </tr>
+              <tr>
+                <td><code>LIVA_LOCATION</code></td>
+                <td>Location code</td>
+                <td>AE</td>
+              </tr>
+              <tr>
+                <td><code>LIVA_SUBSCRIPTION_KEY</code></td>
+                <td>API subscription key</td>
+                <td>your-subscription-key</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="code-block">
+            # OAuth Configuration LIVA_CLIENT_ID=your-client-id
+            LIVA_CLIENT_SECRET=your-client-secret LIVA_SCOPE=api.read api.write
+            LIVA_BASIC_AUTH=base64_encoded_credentials LIVA_PARENT_ID=PARTNER123
+            LIVA_LOCATION=AE LIVA_SUBSCRIPTION_KEY=your-subscription-key
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>⚙️ Feature Toggles (ApplicationStorage)</h2>
+        <p>
+          Feature toggles are managed through the
+          <strong>ApplicationStorageService</strong> and can be enabled/disabled
+          at runtime without code changes.
+        </p>
+
+        <div class="config-section">
+          <h4>Master Automation Toggle</h4>
+          <div class="config-item">
+            <strong>ENABLE_LIVA_CAR_POLICY_ISSUANCE</strong>
+            <p>Master toggle to enable/disable Liva Car automation globally</p>
+            <div class="code-block">
+              // Check if automation is enabled public function
+              isPolicyIssuanceAutomationEnabled(): bool { return (bool)
+              app(ApplicationStorageService::class)
+              ->getValueByKey(ApplicationStorageEnums::ENABLE_LIVA_CAR_POLICY_ISSUANCE);
+              } // Usage if (!$this->isPolicyIssuanceAutomationEnabled()) {
+              return ['error' => 'LIVA Car Automation is disabled']; }
+            </div>
+            <div class="info-box">
+              <strong>Default:</strong> false (disabled by default)<br />
+              <strong>Type:</strong> boolean<br />
+              <strong>Scope:</strong> Global - affects all quotes
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>Timeout Retry Toggle</h4>
+          <div class="config-item">
+            <strong>ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE</strong>
+            <p>Enable retry mechanism for timeout scenarios</p>
+            <div class="code-block">
+              // Check if retry is enabled public function
+              isPolicyIssuanceAutomationRetryEnabledForTimeout(): bool { return
+              (bool) app(ApplicationStorageService::class)
+              ->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE);
+              } // Usage in timeout detection if ($isTimeout &&
+              $this->isPolicyIssuanceAutomationRetryEnabledForTimeout()) { //
+              Allow retry from last completed step }
+            </div>
+            <div class="info-box">
+              <strong>Default:</strong> false (disabled by default)<br />
+              <strong>Type:</strong> boolean<br />
+              <strong>Purpose:</strong> Allows automatic retry when timeout is
+              detected
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>API Timeout Configuration</h4>
+          <div class="config-item">
+            <strong>LIVA_AUTOMATION_API_TIMEOUT</strong>
+            <p>Configurable timeout in seconds for all Liva API calls</p>
+            <div class="code-block">
+              // Get timeout from ApplicationStorage $this->apiTimeout =
+              app(ApplicationStorageService::class)
+              ->getValueByKey(ApplicationStorageEnums::LIVA_AUTOMATION_API_TIMEOUT);
+              // Usage in HTTP calls Http::timeout($this->apiTimeout)
+              ->withHeaders($this->headers) ->post($url, $payload);
+            </div>
+            <div class="info-box">
+              <strong>Default:</strong> 30 seconds (if not configured)<br />
+              <strong>Type:</strong> integer (seconds)<br />
+              <strong>Scope:</strong> Applied to all API calls
+            </div>
+            <div class="warning-box">
+              <strong>⚠ Important:</strong> Set appropriate timeout based on
+              API response times. Too short may cause premature timeouts, too
+              long may cause hanging requests.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>🔐 OAuth Token Management</h2>
+        <p>
+          OAuth tokens are automatically managed with Redis caching to minimize
+          API calls and improve performance.
+        </p>
+
+        <div class="config-section">
+          <h4>Token Caching</h4>
+          <div class="code-block">
+            // Cache Key const POLICY_ISSUANCE_API_ACCESS_TOKEN_KEY =
+            'RSA_POLICY_ISSUANCE_API_ACCESS_TOKEN'; // Token Retrieval Flow 1.
+            Check Redis cache for existing token 2. If token exists and valid →
+            use cached token 3. If token missing/expired → request new token 4.
+            Cache token with expiration time from API response 5. Use token in
+            subsequent API calls
+          </div>
+
+          <div class="info-box">
+            <strong>Cache Duration:</strong> Based on
+            <code>expires_in</code> from OAuth API response (default: 3599
+            seconds / ~60 minutes)<br />
+            <strong>Cache Store:</strong> Redis<br />
+            <strong>Automatic Refresh:</strong> Token is automatically refreshed
+            when expired
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>Token Request Headers</h4>
+          <div class="code-block">
+            // Token Request Headers Content-Type:
+            application/x-www-form-urlencoded // Token Request Payload {
+            'client_id': config('constants.LIVA_CLIENT_ID'), 'client_secret':
+            config('constants.LIVA_CLIENT_SECRET'), 'grant_type':
+            'client_credentials', 'scope': config('constants.LIVA_SCOPE') }
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>API Request Headers (After Token Retrieval)</h4>
+          <div class="code-block">
+            // All API requests include these headers { 'Content-Type':
+            'application/json', 'Authorization': 'Basic {LIVA_BASIC_AUTH}',
+            'PartnerId': '{LIVA_PARENT_ID}', 'location': '{LIVA_LOCATION}',
+            'Authentication': 'Bearer {access_token}', 'SubscriptionKey':
+            '{LIVA_SUBSCRIPTION_KEY}' }
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>📄 Document Type Configuration</h2>
+        <p>
+          Document types are mapped between IMCRM document codes and Liva
+          document type codes.
+        </p>
+
+        <div class="config-section">
+          <h4>Document Type Mapping (Upload)</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>IMCRM Code</th>
+                <th>Liva Code</th>
+                <th>Document Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>DL</code></td>
+                <td><code>4</code></td>
+                <td>Driving License</td>
+              </tr>
+              <tr>
+                <td><code>CEID</code></td>
+                <td><code>16</code></td>
+                <td>Emirates ID</td>
+              </tr>
+              <tr>
+                <td><code>CAR_MULKIY</code></td>
+                <td><code>5</code></td>
+                <td>Registration Card (Mulkiya)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="code-block">
+            // Document Type Mapping Method public function
+            getDocTypeCodeForLIVA($documentType): string { return match
+            ($documentType) { 'CEID' => '16', // Emirates ID 'DL' => '4', //
+            Driving License 'CAR_MULKIY' => '5', // Registration card default =>
+            null }; }
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h4>Document Type Mapping (Retrieve)</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Liva Document Type</th>
+                <th>IMCRM Code</th>
+                <th>Document Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>DebitNote</code></td>
+                <td>TI</td>
+                <td>Tax Invoice</td>
+              </tr>
+              <tr>
+                <td><code>CreditNote</code></td>
+                <td>CTIRBB</td>
+                <td>Tax Invoice Raised By Buyer</td>
+              </tr>
+              <tr>
+                <td><code>PolicySchedule</code></td>
+                <td>POLICY_SCHEDULE</td>
+                <td>Policy Schedule</td>
+              </tr>
+              <tr>
+                <td><code>MotorArabicCertificate</code></td>
+                <td>POLICY_CERTIFICATE</td>
+                <td>Policy Certificate</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>🔧 Runtime Configuration</h2>
+        <p>
+          Configuration values can be updated at runtime through the
+          ApplicationStorageService without requiring code changes or
+          deployments.
+        </p>
+
+        <div class="config-section">
+          <h4>Updating Configuration Values</h4>
+          <div class="code-block">
+            // Example: Enable automation
+            app(ApplicationStorageService::class)->setValueByKey(
+            ApplicationStorageEnums::ENABLE_LIVA_CAR_POLICY_ISSUANCE, true ); //
+            Example: Set API timeout
+            app(ApplicationStorageService::class)->setValueByKey(
+            ApplicationStorageEnums::LIVA_AUTOMATION_API_TIMEOUT, 60 // 60
+            seconds ); // Example: Enable timeout retry
+            app(ApplicationStorageService::class)->setValueByKey(
+            ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE,
+            true );
+          </div>
+        </div>
+
+        <div class="info-box">
+          <strong>Configuration Storage:</strong> Values are stored in the
+          <code>application_storage</code> database table and cached for
+          performance.
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>📊 Configuration Checklist</h2>
+        <p>
+          Use this checklist to ensure all configuration is properly set up:
+        </p>
+
+        <div class="config-section">
+          <h4>Environment Variables</h4>
+          <ul style="list-style: none; padding-left: 0">
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>LIVA_API_BASE_URL</code> configured
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>LIVA_CLIENT_ID</code> configured
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>LIVA_CLIENT_SECRET</code> configured
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>LIVA_SCOPE</code> configured
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>LIVA_BASIC_AUTH</code> configured
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>LIVA_PARENT_ID</code> configured
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>LIVA_LOCATION</code> configured
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>LIVA_SUBSCRIPTION_KEY</code> configured
+            </li>
+          </ul>
+        </div>
+
+        <div class="config-section">
+          <h4>ApplicationStorage Configuration</h4>
+          <ul style="list-style: none; padding-left: 0">
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>ENABLE_LIVA_CAR_POLICY_ISSUANCE</code> set (true/false)
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>LIVA_AUTOMATION_API_TIMEOUT</code> configured (seconds)
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              <code>ENABLE_RETRY_TIMEOUT_LIVA_CAR_POLICY_ISSUANCE</code> set
+              (true/false)
+            </li>
+          </ul>
+        </div>
+
+        <div class="config-section">
+          <h4>Infrastructure</h4>
+          <ul style="list-style: none; padding-left: 0">
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              Redis configured and accessible for token caching
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              Azure storage configured for document storage
+            </li>
+            <li style="padding: 10px 0; padding-left: 30px; position: relative">
+              <span style="position: absolute; left: 0; color: #805ad5">☐</span>
+              Database connection configured
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>🔍 Configuration Validation</h2>
+        <p>
+          The system validates configuration before executing automation steps.
+        </p>
+
+        <div class="code-block">
+          // Configuration validation in executeSteps() public function
+          executeSteps($process) { // Get OAuth token (validates OAuth config)
+          $this->getAccessToken(); // Check if automation is enabled if
+          (!$this->isPolicyIssuanceAutomationEnabled()) { return ['error' =>
+          'LIVA Car Automation is disabled']; } // Check quote-level automation
+          toggle if (!$quote->isQuotePolicyIssuanceAutomationEnabled()) { return
+          ['error' => 'LIVA Car Quote Policy Issuance Automation is disabled'];
+          } // Continue with automation... }
+        </div>
+
+        <div class="warning-box">
+          <strong>⚠ Configuration Errors:</strong> If configuration is missing
+          or invalid, the automation will fail with appropriate error messages.
+          Check logs for detailed error information.
+        </div>
+      </div>
+
+      <div class="section">
+        <a href="/docs/policy-automation/car/liva/index.html" class="back-link"
+          >← Back to Overview</a
+        >
+      </div>
+    </div>
+  </body>
+</html>

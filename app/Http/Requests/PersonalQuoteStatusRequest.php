@@ -6,6 +6,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\PersonalQuote;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -51,7 +52,14 @@ class PersonalQuoteStatusRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $quoteObject = PersonalQuote::with('latestInsured', 'customer')->where('uuid', request()->quote_uuid)->firstOrFail();
+            $quoteTypeId = QuoteTypes::getIdFromValue(request()->quote_type);
+            $quoteObject = PersonalQuote::with([
+                'latestInsured' => function ($query) use ($quoteTypeId) {
+                    $query->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
+                'customer',
+            ])->where('uuid', request()->quote_uuid)->where('quote_type_id', $quoteTypeId)->firstOrFail();
+
             $customerProfileDetails = [
                 'insured_first_name' => ($quoteObject?->latestInsured?->first_name ?? $quoteObject?->customer?->insured_first_name) ?? null,
                 'insured_last_name' => ($quoteObject?->latestInsured?->last_name ?? $quoteObject?->customer?->insured_last_name) ?? null,

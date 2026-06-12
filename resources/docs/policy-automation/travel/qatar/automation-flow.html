@@ -1,0 +1,1450 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qatar Travel Automation Flow - Complete 5-Step Workflow</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #4299e1;
+      }
+
+      .section h3 {
+        color: #4299e1;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #2c3e50;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .workflow-overview {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin: 30px 0;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .workflow-step {
+        background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 12px;
+        flex: 1;
+        min-width: 200px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      .workflow-step h3 {
+        color: white;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.3em;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 10px;
+      }
+
+      .workflow-step .step-number {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .workflow-step p {
+        opacity: 0.95;
+        line-height: 1.7;
+      }
+
+      .step-detail {
+        background: #f8f9fa;
+        border-left: 4px solid #4299e1;
+        padding: 25px;
+        margin: 20px 0;
+        border-radius: 8px;
+      }
+
+      .step-detail h4 {
+        color: #4299e1;
+        margin-top: 0;
+      }
+
+      .process-list {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .process-list li {
+        padding: 12px 0 12px 35px;
+        position: relative;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .process-list li:last-child {
+        border-bottom: none;
+      }
+
+      .process-list li:before {
+        content: counter(step-counter);
+        counter-increment: step-counter;
+        position: absolute;
+        left: 0;
+        top: 12px;
+        background: #4299e1;
+        color: white;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9em;
+      }
+
+      .process-list {
+        counter-reset: step-counter;
+      }
+
+      .success-criteria,
+      .failure-handling {
+        background: #e3f2fd;
+        border-left: 4px solid #4299e1;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+      }
+
+      .failure-handling {
+        background: #ffebee;
+        border-left-color: #e53935;
+      }
+
+      .success-criteria h4,
+      .failure-handling h4 {
+        margin-top: 0;
+      }
+
+      .success-criteria ul,
+      .failure-handling ul {
+        margin-top: 10px;
+        padding-left: 25px;
+      }
+
+      .success-criteria li,
+      .failure-handling li {
+        margin: 8px 0;
+        line-height: 1.6;
+      }
+
+      .data-flow-diagram {
+        background: white;
+        border: 2px solid #4299e1;
+        border-radius: 12px;
+        padding: 30px;
+        margin: 30px 0;
+        overflow-x: auto;
+      }
+
+      .flow-box {
+        background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin: 10px;
+        display: inline-block;
+        min-width: 150px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .flow-arrow {
+        display: inline-block;
+        color: #4299e1;
+        font-size: 1.5em;
+        font-weight: bold;
+        margin: 0 10px;
+        vertical-align: middle;
+      }
+
+      .info-box {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-left: 4px solid #4299e1;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+      }
+
+      .info-box h4 {
+        color: #1976d2;
+        margin-top: 0;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 15px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .code-block code {
+        color: #ecf0f1;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .workflow-overview {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/travel/index.html">✈️ Travel</a>
+        <span>></span>
+        <a href="/docs/policy-automation/travel/qatar/index.html">Qatar</a>
+        <span>></span>
+        <span>Automation Flow</span>
+      </div>
+
+      <div class="header">
+        <h1>🔄 Qatar Travel Automation Flow</h1>
+        <p>
+          Complete 5-Step Policy Issuance Workflow with Detailed Process
+          Documentation
+        </p>
+      </div>
+
+      <!-- Pre-Automation Payment Capture -->
+      <div class="section">
+        <h2>💳 Pre-Automation Payment Capture</h2>
+        <div
+          class="info-box"
+          style="
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border-left-color: #27ae60;
+          "
+        >
+          <h4 style="color: #155724; margin-top: 0; margin-bottom: 15px">
+            🔑 Critical Prerequisite Step
+          </h4>
+          <p style="color: #155724; margin-bottom: 15px; line-height: 1.7">
+            <strong>Auto-capture is a mandatory prerequisite</strong> that
+            executes <strong>BEFORE</strong> the automation workflow begins.
+            Payment must be successfully captured before automation can proceed.
+          </p>
+          <h4 style="color: #155724; margin-top: 20px; margin-bottom: 10px">
+            Payment Flow
+          </h4>
+          <ol style="color: #155724; padding-left: 25px; line-height: 1.8">
+            <li><strong>Customer pays online</strong> → Payment authorized</li>
+            <li>
+              <strong>Background job processes</strong> →
+              <code>CcPaymentProcess</code> handles split payment approval
+            </li>
+            <li>
+              <strong>Auto-capture executes</strong> →
+              <code>SplitPaymentService->processSplitPaymentApprove()</code>
+              calls <code>CRUDService->capturePayment()</code>
+            </li>
+            <li>
+              <strong>Marshall API call</strong> → Creates
+              <code>PaymentAction</code> record with
+              <code>action_type: 'CAPTURE'</code> and <code>amount</code>
+            </li>
+            <li>
+              <strong>Success path:</strong> If capture succeeds → Automation
+              workflow scheduled via
+              <code>createPolicyIssuanceAutomation()</code>
+            </li>
+            <li>
+              <strong>Failure path:</strong> If capture fails →
+              <code>handleAutomationError()</code> sets
+              <code>insurer_api_status_id</code> to
+              <code>AUTO_CAPTURE_FAILED_STATUS_ID</code> and allocates to team
+            </li>
+          </ol>
+          <h4 style="color: #155724; margin-top: 20px; margin-bottom: 10px">
+            Implementation Details
+          </h4>
+          <ul style="color: #155724; padding-left: 25px; line-height: 1.8">
+            <li>
+              <strong>Code Location:</strong>
+              <code>SplitPaymentService.php</code> lines 770-792, 1475-1487
+            </li>
+            <li>
+              <strong>Retry Logic:</strong> Up to 3 attempts with 1-second delay
+              between retries
+            </li>
+            <li>
+              <strong>Provider Support:</strong> Currently implemented for Qatar
+              Travel and other e-commerce providers
+            </li>
+            <li>
+              <strong>Failure Handling:</strong> If capture fails, automation is
+              prevented from starting and quote is allocated for manual handling
+            </li>
+          </ul>
+          <p
+            style="
+              color: #155724;
+              margin-top: 15px;
+              margin-bottom: 0;
+              font-weight: 600;
+            "
+          >
+            ⚠️ <strong>Important:</strong> This explains why documentation
+            refers to "pre-captured" payments - the payment is already captured
+            before any automation steps execute.
+          </p>
+        </div>
+      </div>
+
+      <!-- Workflow Overview -->
+      <div class="section">
+        <h2>📋 Complete Automation Workflow Overview</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 30px">
+          The Qatar Travel Policy Issuance Automation follows a sequential
+          5-step process, where each step must complete successfully before
+          proceeding to the next. The system maintains state throughout the
+          process, allowing for retry mechanisms and manual intervention when
+          needed.
+        </p>
+
+        <div class="workflow-overview">
+          <div class="workflow-step">
+            <span class="step-number">Step 1</span>
+            <h3>Issue Policy</h3>
+            <p>
+              Finalize policy with Qatar API using customer and traveller
+              details. Updates quote with policy ID, premium, VAT, and dates.
+            </p>
+          </div>
+          <div class="workflow-step">
+            <span class="step-number">Step 2</span>
+            <h3>Purchase Policy</h3>
+            <p>
+              Purchase finalized policy and update quote with policy number and
+              payment with tax invoice number.
+            </p>
+          </div>
+          <div class="workflow-step">
+            <span class="step-number">Step 3</span>
+            <h3>Upload Policy Documents</h3>
+            <p>
+              Retrieve policy documents from Qatar (with retry mechanism) and
+              upload to IMCRM with automatic mapping.
+            </p>
+          </div>
+          <div class="workflow-step">
+            <span class="step-number">Step 4</span>
+            <h3>Fill Booking Details</h3>
+            <p>
+              Retrieve buyer tax invoice and update payment/commission details
+              with automatic schedule updates.
+            </p>
+          </div>
+          <div class="workflow-step">
+            <span class="step-number">Step 5</span>
+            <h3>Book Policy</h3>
+            <p>
+              Finalize booking process with Sage ERP integration for commission
+              processing.
+            </p>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <h4>💡 Workflow Characteristics</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>Sequential Execution:</strong> Steps execute in order,
+              each dependent on the previous step's success
+            </li>
+            <li>
+              <strong>State Management:</strong> Completed steps are tracked in
+              the <code>PolicyIssuance</code> model's
+              <code>completed_step</code> field
+            </li>
+            <li>
+              <strong>Resumable:</strong> Failed automations can be resumed from
+              the last completed step
+            </li>
+            <li>
+              <strong>Audit Trail:</strong> Every API call is logged in
+              <code>PolicyIssuanceLog</code> for complete traceability
+            </li>
+            <li>
+              <strong>Error Recovery:</strong> Each step has specific error
+              handling and can be retried independently
+            </li>
+            <li>
+              <strong>Retry Mechanism:</strong> Step 3 includes automatic retry
+              for document generation delays
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 1: Issue Policy -->
+      <div class="section">
+        <h2>1️⃣ Step 1: Issue Policy</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The first step finalizes the policy with Qatar Insurance Company using
+          customer information, traveller details, and plan information. This
+          step establishes the policy foundation and generates the policy ID.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Travel Type Determination:</strong> Determine travel type
+              (Inbound/Outbound) based on quote's <code>direction_code</code>
+            </li>
+            <li>
+              <strong>Plan Selection:</strong> Retrieve selected plan from
+              <code>TravelQuotePlanDetails</code> based on payment's
+              <code>plan_id</code>
+            </li>
+            <li>
+              <strong>Customer Data Collection:</strong> Extract primary member
+              and all travellers from <code>customerMembers</code> relationship
+            </li>
+            <li>
+              <strong>Payload Construction:</strong> Build finalise payload
+              with:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>Quote ID and scheme ID from selected plan</li>
+                <li>
+                  Customer title, first name, last name (from primary member)
+                </li>
+                <li>
+                  Traveller details arrays (title, first name, last name, DOB,
+                  passport, nationality)
+                </li>
+                <li>
+                  Static contact details (email and mobile - privacy protection)
+                </li>
+                <li>Agency reference</li>
+              </ul>
+            </li>
+            <li>
+              <strong>API Call:</strong> Call Qatar API endpoint
+              <code>/v1/quote/{travelType}/finalise</code> via
+              <code>qatarHttpCall()</code>
+            </li>
+            <li>
+              <strong>Response Parsing:</strong> Extract policy ID, premium
+              amount from response
+            </li>
+            <li>
+              <strong>VAT Calculation:</strong> Calculate VAT-applicable price
+              and VAT amount
+            </li>
+            <li>
+              <strong>Cover Days Calculation:</strong> Calculate cover days
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>Multi-trip Inbound: Fixed at 180 days (maximum)</li>
+                <li>
+                  Other types: Uses <code>days_cover_for</code> from quote
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Expiry Date Calculation:</strong> Policy expiry = policy
+              start date + cover days - 1 day
+            </li>
+            <li>
+              <strong>Quote Update:</strong> Update quote with policy ID,
+              premium, VAT, price VAT applicable, policy issuance date, and
+              policy expiry date
+            </li>
+            <li>
+              <strong>API Log Storage:</strong> Store complete API request and
+              response in <code>PolicyIssuanceLog</code>
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed (<code
+                >completed_step = QATAR_TRAVEL_ISSUE_POLICY</code
+              >)
+            </li>
+          </ol>
+        </div>
+
+        <div class="data-flow-diagram">
+          <h4 style="color: #4299e1; margin-bottom: 20px">
+            🔄 Data Flow Diagram
+          </h4>
+          <div style="text-align: center">
+            <div class="flow-box">Quote & Plan Data</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Build Payload</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Qatar API</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Parse Response</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Calculate Dates</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Update Quote</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Store Log</div>
+          </div>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>API returns HTTP 200 status code with successful response</li>
+            <li>Policy ID is generated and present in response</li>
+            <li>Premium amount is extracted from response</li>
+            <li>Quote record is updated with policy ID, premium, VAT, dates</li>
+            <li>Policy expiry date is calculated correctly (last cover day)</li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = QATAR_TRAVEL_ISSUE_POLICY</code
+              >)
+            </li>
+            <li>API log is stored with <code>SUCCESS_STATUS</code></li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>API Error:</strong> Log detailed error including endpoint
+              and payload; update insurer API status to failed; store failed
+              log; return error response
+            </li>
+            <li>
+              <strong>HTTP Exception:</strong> Catch and log exception with full
+              context; update process status; return error response
+            </li>
+            <li>
+              <strong>Missing Data:</strong> Validate required fields before API
+              call; return error with specific missing field
+            </li>
+            <li>
+              <strong>Invalid Response:</strong> Validate response structure;
+              log parsing errors; return error with specific message
+            </li>
+            <li>
+              <strong>Database Update Failure:</strong> Log database errors;
+              maintain API success but flag update failure
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>🔑 Key Data Updates</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>Quote:</strong> <code>insurer_policy_id</code>,
+              <code>price_with_vat</code>, <code>vat</code>,
+              <code>price_vat_applicable</code>,
+              <code>policy_issuance_date</code>, <code>policy_expiry_date</code>
+            </li>
+            <li>
+              <strong>PolicyIssuance:</strong>
+              <code>completed_step = QATAR_TRAVEL_ISSUE_POLICY</code>
+            </li>
+            <li>
+              <strong>PolicyIssuanceLog:</strong> Complete request/response
+              payload, endpoint URL, status, timestamp
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 2: Purchase Policy -->
+      <div class="section">
+        <h2>2️⃣ Step 2: Purchase Policy</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The second step purchases the finalized policy with Qatar Insurance
+          Company. This step generates the policy number and tax invoice number.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Prerequisite Check:</strong> Validate that Step 1 (Issue
+              Policy) completed successfully by checking
+              <code>completed_step</code>
+            </li>
+            <li>
+              <strong>Policy ID Validation:</strong> Ensure
+              <code>insurer_policy_id</code> exists from Step 1
+            </li>
+            <li>
+              <strong>Transaction ID Extraction:</strong> Extract transaction ID
+              from payment splits for agency reference
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  Source:
+                  <code
+                    >$payment->paymentSplits->first()?->paymentCharges?->transaction_id</code
+                  >
+                </li>
+                <li>
+                  <strong>Note:</strong> Payment is PRE-CAPTURED before
+                  automation starts; transaction ID is used as reference only
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Payload Construction:</strong> Build purchase payload
+              with:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>Policy ID from quote</li>
+                <li>Agency reference (transaction ID from payment)</li>
+              </ul>
+            </li>
+            <li>
+              <strong>API Call:</strong> Call Qatar API endpoint
+              <code>/v1/quote/{travelType}/purchase</code> via
+              <code>qatarHttpCall()</code>
+            </li>
+            <li>
+              <strong>Response Parsing:</strong> Extract policy number and tax
+              invoice number from response
+            </li>
+            <li>
+              <strong>Quote Update:</strong> Update quote with policy number
+            </li>
+            <li>
+              <strong>Payment Update:</strong> Update payment record with
+              insurer tax invoice number
+            </li>
+            <li>
+              <strong>API Log Storage:</strong> Store complete API request and
+              response in <code>PolicyIssuanceLog</code>
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed (<code
+                >completed_step = QATAR_TRAVEL_PURCHASE_POLICY</code
+              >)
+            </li>
+          </ol>
+        </div>
+
+        <div class="data-flow-diagram">
+          <h4 style="color: #4299e1; margin-bottom: 20px">
+            🔄 Data Flow Diagram
+          </h4>
+          <div style="text-align: center">
+            <div class="flow-box">Validate Prerequisites</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Build Payload</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Qatar API</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Parse Response</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Update Quote & Payment</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Store Log</div>
+          </div>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>API returns HTTP 200 status code with successful response</li>
+            <li>Policy number is generated and present in response</li>
+            <li>Tax invoice number is generated and present in response</li>
+            <li>Quote record is updated with policy number</li>
+            <li>Payment record is updated with insurer tax invoice number</li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = QATAR_TRAVEL_PURCHASE_POLICY</code
+              >)
+            </li>
+            <li>API log is stored with <code>SUCCESS_STATUS</code></li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>Prerequisite Failure:</strong> Return error if Step 1 not
+              completed; log prerequisite validation error
+            </li>
+            <li>
+              <strong>Missing Policy ID:</strong> Return error if policy ID not
+              found; log validation error
+            </li>
+            <li>
+              <strong>API Error:</strong> Log detailed error; update insurer API
+              status to failed; store failed log; return error response
+            </li>
+            <li>
+              <strong>Invalid Response:</strong> Validate response structure;
+              log parsing errors; return error
+            </li>
+            <li>
+              <strong>Database Update Failure:</strong> Log database errors;
+              maintain API success but flag update failure
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>🔑 Key Data Updates</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li><strong>Quote:</strong> <code>policy_number</code></li>
+            <li><strong>Payment:</strong> <code>insurer_tax_number</code></li>
+            <li>
+              <strong>PolicyIssuance:</strong>
+              <code>completed_step = QATAR_TRAVEL_PURCHASE_POLICY</code>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 3: Upload Policy Documents -->
+      <div class="section">
+        <h2>3️⃣ Step 3: Upload Policy Documents</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The third step retrieves policy documents from Qatar Insurance
+          Company. This step includes a retry mechanism to handle document
+          generation delays, then uploads documents to IMCRM with automatic type
+          mapping.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Prerequisite Check:</strong> Validate that Step 2
+              (Purchase Policy) completed successfully
+            </li>
+            <li>
+              <strong>Policy ID Validation:</strong> Ensure
+              <code>insurer_policy_id</code> exists
+            </li>
+            <li>
+              <strong>Retry Loop:</strong> Attempt to retrieve documents with
+              retry mechanism:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>Max retries: 5 attempts</li>
+                <li>Retry delay: 10 seconds between attempts</li>
+                <li>
+                  Call Qatar API endpoint
+                  <code>/v1/policy/{travelType}/documents</code>
+                </li>
+                <li>
+                  Check if error message contains "Policy documents are still
+                  generating"
+                </li>
+                <li>
+                  Retry only if "still generating" error; break on success or
+                  other errors
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Response Validation:</strong> Validate API response and
+              extract policy documents array
+            </li>
+            <li>
+              <strong>Document Processing Loop:</strong> For each policy
+              document:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  Map Qatar document name to IMCRM document code using
+                  <code>getTravelDocumentMapping()</code>
+                </li>
+                <li>If mapping found, download document from URL</li>
+                <li>Upload to Azure Storage</li>
+                <li>Attach to quote documents with correct document type</li>
+                <li>Trigger watermarking job</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Quote Status Update:</strong> Update quote status to
+              <code>PolicyIssued</code>
+            </li>
+            <li>
+              <strong>API Log Storage:</strong> Store API log for document
+              retrieval
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed (<code
+                >completed_step = QATAR_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code
+              >)
+            </li>
+          </ol>
+        </div>
+
+        <div class="data-flow-diagram">
+          <h4 style="color: #4299e1; margin-bottom: 20px">
+            🔄 Data Flow Diagram
+          </h4>
+          <div style="text-align: center">
+            <div class="flow-box">Validate Prerequisites</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Retry Loop (5x)</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Qatar API</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Map Document Types</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Download & Upload</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Azure Storage</div>
+          </div>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>API returns HTTP 200 with policy documents array</li>
+            <li>All policy documents are successfully retrieved</li>
+            <li>Document types are correctly mapped to IMCRM codes</li>
+            <li>All documents are uploaded to Azure Storage</li>
+            <li>
+              All documents are attached to quote with correct document types
+            </li>
+            <li>Quote status is updated to <code>PolicyIssued</code></li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = QATAR_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code
+              >)
+            </li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>Prerequisite Failure:</strong> Return error if Step 2 not
+              completed
+            </li>
+            <li>
+              <strong>Retry Exhausted:</strong> After 5 retries, log failure and
+              return error
+            </li>
+            <li>
+              <strong>API Error:</strong> Log detailed error; update insurer API
+              status; store failed log
+            </li>
+            <li>
+              <strong>Document Mapping Failure:</strong> Log unmapped document
+              names; continue with other documents
+            </li>
+            <li>
+              <strong>Download Failure:</strong> Log download errors per
+              document; continue with other documents
+            </li>
+            <li>
+              <strong>Upload Failure:</strong> Log Azure upload errors; return
+              error with specific document
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>📄 Document Mapping</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>Policy Tax Invoice</strong> →
+              <code>TRAVEL_TAX_INVOICE</code>
+            </li>
+            <li>
+              <strong>Certificate of Insurance</strong> →
+              <code>TRAVEL_POLICY_SCHEDULE</code>
+            </li>
+            <li>Unmapped documents are logged but do not stop the process</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 4: Fill Booking Details -->
+      <div class="section">
+        <h2>4️⃣ Step 4: Fill Booking Details</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The fourth step retrieves the buyer tax invoice from Qatar and updates
+          payment records with commission details, VAT information, and invoice
+          data. This step also updates the commission schedule.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Prerequisite Check:</strong> Validate that Step 3 (Upload
+              Policy Documents) completed successfully
+            </li>
+            <li>
+              <strong>Policy Data Validation:</strong> Ensure
+              <code>insurer_policy_id</code> and
+              <code>policy_number</code> exist
+            </li>
+            <li>
+              <strong>Payload Construction:</strong> Build buyer tax invoice
+              payload with policy ID and policy number
+            </li>
+            <li>
+              <strong>API Call:</strong> Call Qatar API endpoint
+              <code>/v1/agency/buyer-tax-invoices</code> via
+              <code>qatarHttpCall()</code>
+            </li>
+            <li>
+              <strong>Response Parsing:</strong> Extract buyer tax invoice
+              details from response array
+            </li>
+            <li>
+              <strong>Document Download:</strong> Download buyer tax invoice
+              from URL
+            </li>
+            <li>
+              <strong>Document Upload:</strong> Upload buyer tax invoice to
+              Azure Storage and attach to quote
+            </li>
+            <li>
+              <strong>Date Conversion:</strong> Convert tax invoice date from
+              "d-M-y" format to "Y-m-d"
+            </li>
+            <li>
+              <strong>Commission Calculation:</strong> Calculate commission
+              percentage from buyer tax invoice details
+            </li>
+            <li>
+              <strong>Payment Update:</strong> Update payment record with
+              commission details from buyer tax invoice:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>
+                  Commission amount (including tax): <code>commission</code>
+                </li>
+                <li>Commission VAT: <code>commission_vat</code></li>
+                <li>
+                  Commission VAT applicable:
+                  <code>commission_vat_applicable</code>
+                </li>
+                <li>
+                  Commission percentage: <code>commmission_percentage</code>
+                </li>
+                <li>
+                  Insurer commission invoice number:
+                  <code>insurer_commmission_invoice_number</code>
+                </li>
+                <li>Insurer invoice date: <code>insurer_invoice_date</code></li>
+                <li>Invoice description</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Commission Schedule Update:</strong> Trigger
+              <code>SplitPaymentService->updateCommissionSchedule()</code> to
+              update commission schedule
+            </li>
+            <li>
+              <strong>API Log Storage:</strong> Store API log for buyer tax
+              invoice retrieval
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed (<code
+                >completed_step = QATAR_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code
+              >)
+            </li>
+          </ol>
+        </div>
+
+        <div class="data-flow-diagram">
+          <h4 style="color: #4299e1; margin-bottom: 20px">
+            🔄 Data Flow Diagram
+          </h4>
+          <div style="text-align: center">
+            <div class="flow-box">Validate Prerequisites</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Build Payload</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Qatar API</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Download Invoice</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Calculate Commission</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Update Payment</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Update Schedule</div>
+          </div>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>API returns HTTP 200 with buyer tax invoice details</li>
+            <li>
+              Buyer tax invoice document is downloaded and uploaded successfully
+            </li>
+            <li>Payment record is updated with all commission details</li>
+            <li>Commission percentage is calculated correctly</li>
+            <li>Commission schedule is updated via SplitPaymentService</li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = QATAR_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code
+              >)
+            </li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>Prerequisite Failure:</strong> Return error if Step 3 not
+              completed
+            </li>
+            <li>
+              <strong>API Error:</strong> Log detailed error; update insurer API
+              status; store failed log
+            </li>
+            <li>
+              <strong>Missing Invoice Data:</strong> Validate invoice array
+              exists; return error if empty
+            </li>
+            <li>
+              <strong>Document Download Failure:</strong> Log download errors;
+              return error
+            </li>
+            <li>
+              <strong>Payment Update Failure:</strong> Log database errors;
+              maintain API success but flag update failure
+            </li>
+            <li>
+              <strong>Schedule Update Failure:</strong> Log SplitPaymentService
+              errors; continue with payment update
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>🔑 Key Data Updates</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>Payment:</strong> <code>commission</code>,
+              <code>commission_vat</code>,
+              <code>commission_vat_applicable</code>,
+              <code>commmission_percentage</code>,
+              <code>insurer_commmission_invoice_number</code>,
+              <code>insurer_invoice_date</code>,
+              <code>invoice_description</code>
+            </li>
+            <li>
+              <strong>Quote Documents:</strong> Buyer tax invoice document
+              attached
+            </li>
+            <li>
+              <strong>Commission Schedule:</strong> Updated via
+              SplitPaymentService
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 5: Book Policy -->
+      <div class="section">
+        <h2>5️⃣ Step 5: Book Policy</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The final step triggers the booking process with Sage ERP integration.
+          This step finalizes the policy issuance automation and initiates
+          commission processing.
+        </p>
+
+        <div class="step-detail">
+          <h4>📝 Process Flow</h4>
+          <ol class="process-list">
+            <li>
+              <strong>Prerequisite Check:</strong> Validate that Step 4 (Fill
+              Booking Details) completed successfully
+            </li>
+            <li>
+              <strong>Request Object Creation:</strong> Build Sage booking
+              request object with:
+              <ul style="margin-top: 10px; padding-left: 25px">
+                <li>Quote ID</li>
+                <li>Model type (Travel)</li>
+                <li>Send policy flag (false)</li>
+                <li>Send policy type (SAGE)</li>
+                <li>Transaction payment status (null)</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Sage API Call:</strong> Post booking request to Sage via
+              <code>SageApiService::postBookPolicyToSage()</code>
+            </li>
+            <li>
+              <strong>Response Validation:</strong> Validate Sage API response
+            </li>
+            <li>
+              <strong>Step Completion:</strong> Mark step as completed (<code
+                >completed_step = QATAR_TRAVEL_BOOK_POLICY</code
+              >)
+            </li>
+            <li>
+              <strong>Process Completion:</strong> Mark entire automation
+              process as completed
+            </li>
+          </ol>
+        </div>
+
+        <div class="data-flow-diagram">
+          <h4 style="color: #4299e1; margin-bottom: 20px">
+            🔄 Data Flow Diagram
+          </h4>
+          <div style="text-align: center">
+            <div class="flow-box">Validate Prerequisites</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Build Sage Request</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Sage API</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Complete Automation</div>
+          </div>
+        </div>
+
+        <div class="success-criteria">
+          <h4>✅ Success Criteria</h4>
+          <ul>
+            <li>Sage API returns successful response</li>
+            <li>Booking process is initiated in Sage ERP</li>
+            <li>
+              Step is marked as completed (<code
+                >completed_step = QATAR_TRAVEL_BOOK_POLICY</code
+              >)
+            </li>
+            <li>Automation process status is updated to completed</li>
+            <li>LoggerService logs successful completion</li>
+          </ul>
+        </div>
+
+        <div class="failure-handling">
+          <h4>❌ Failure Handling</h4>
+          <ul>
+            <li>
+              <strong>Prerequisite Failure:</strong> Return error if Step 4 not
+              completed
+            </li>
+            <li>
+              <strong>Sage API Failure:</strong> Log Sage API error; return
+              error with specific message
+            </li>
+            <li>
+              <strong>Invalid Request:</strong> Validate request object; return
+              error with validation details
+            </li>
+            <li>
+              <strong>Process Update Failure:</strong> Log database errors;
+              maintain Sage success but flag update failure
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>🔗 Integration Points</h4>
+          <ul style="margin-top: 10px; padding-left: 25px">
+            <li>
+              <strong>SageApiService:</strong> Creates booking process in Sage
+              ERP
+            </li>
+            <li>
+              <strong>Send Policy Type:</strong> Set to SAGE for commission
+              processing
+            </li>
+            <li>
+              <strong>Send Policy Flag:</strong> Set to false (policy documents
+              sent separately)
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- State Management -->
+      <div class="section">
+        <h2>🔄 State Management & Step Progression</h2>
+        <p style="font-size: 1.1em; color: #7f8c8d; margin-bottom: 20px">
+          The automation system maintains state throughout the process, tracking
+          completed steps and allowing for resumable execution. This enables
+          retry mechanisms and manual intervention when needed.
+        </p>
+
+        <div class="step-detail">
+          <h4>📊 Completed Step Tracking</h4>
+          <p>
+            The <code>PolicyIssuance</code> model tracks progress using the
+            <code>completed_step</code> field:
+          </p>
+          <ul style="margin-top: 15px; padding-left: 25px">
+            <li><code>null</code> - No steps completed yet</li>
+            <li>
+              <code>QATAR_TRAVEL_ISSUE_POLICY</code> - Step 1 completed
+              successfully
+            </li>
+            <li>
+              <code>QATAR_TRAVEL_PURCHASE_POLICY</code> - Steps 1 and 2
+              completed successfully
+            </li>
+            <li>
+              <code>QATAR_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code> - Steps 1, 2,
+              and 3 completed successfully
+            </li>
+            <li>
+              <code>QATAR_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code> - Steps 1,
+              2, 3, and 4 completed successfully
+            </li>
+            <li>
+              <code>QATAR_TRAVEL_BOOK_POLICY</code> - All 5 steps completed
+              successfully
+            </li>
+          </ul>
+        </div>
+
+        <div class="info-box">
+          <h4>🔄 Step Progression Logic</h4>
+          <div class="code-block">
+            <code>
+              // Determine next step based on completed steps<br />
+              getNextStep($completedStep = null): ?string<br />
+              {<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;$allSteps =
+              PolicyIssuanceEnum::getPolicyIssuanceSteps(<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;InsuranceProviderEnum::QIC->value,
+              <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self::TYPE<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;);<br />
+              <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;if (!$completedStep) {<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return
+              $allSteps[0]; // First step<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;}<br />
+              <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;$completedStepIndex =
+              array_search($completedStep, $allSteps);<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;if ($completedStepIndex === false ||
+              <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$completedStepIndex
+              === count($allSteps) - 1) {<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return null; // No
+              next step<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;}<br />
+              <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;return $allSteps[$completedStepIndex +
+              1];<br />
+              }
+            </code>
+          </div>
+        </div>
+
+        <div class="step-detail">
+          <h4>🔄 Resumable Execution</h4>
+          <p>The automation can resume from the last completed step:</p>
+          <ul style="margin-top: 15px; padding-left: 25px">
+            <li>If Step 1 fails, retry starts from Step 1</li>
+            <li>
+              If Step 2 fails, retry starts from Step 2 (Step 1 already
+              completed)
+            </li>
+            <li>
+              If Step 3 fails, retry starts from Step 3 (Steps 1 and 2 already
+              completed)
+            </li>
+            <li>
+              If Step 4 fails, retry starts from Step 4 (Steps 1, 2, and 3
+              already completed)
+            </li>
+            <li>
+              If Step 5 fails, retry starts from Step 5 (Steps 1, 2, 3, and 4
+              already completed)
+            </li>
+          </ul>
+          <p style="margin-top: 15px">
+            This prevents redundant API calls and ensures efficient retry
+            mechanisms.
+          </p>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div
+        class="section"
+        style="
+          text-align: center;
+          background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
+          color: white;
+        "
+      >
+        <h2 style="color: white; border-bottom-color: rgba(255, 255, 255, 0.3)">
+          📚 Related Documentation
+        </h2>
+        <div
+          style="
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+          "
+        >
+          <a
+            href="/docs/policy-automation/travel/qatar/index.html"
+            style="
+              background: rgba(255, 255, 255, 0.2);
+              color: white;
+              padding: 15px 30px;
+              border-radius: 25px;
+              text-decoration: none;
+              font-weight: 600;
+              transition: all 0.3s;
+            "
+            >← Back to Overview</a
+          >
+          <a
+            href="/docs/policy-automation/travel/qatar/architecture.html"
+            style="
+              background: rgba(255, 255, 255, 0.2);
+              color: white;
+              padding: 15px 30px;
+              border-radius: 25px;
+              text-decoration: none;
+              font-weight: 600;
+              transition: all 0.3s;
+            "
+            >View Architecture →</a
+          >
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong>Qatar Travel Insurance Automation Flow Documentation</strong>
+        </p>
+        <p>Complete 5-Step Workflow with State Management and Error Handling</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Version 1.0 | Last Updated: February 2026 | Production Ready
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

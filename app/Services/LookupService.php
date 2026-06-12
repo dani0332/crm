@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CacheKeyEnum;
+use App\Enums\ClaimsEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
@@ -17,6 +18,7 @@ use App\Models\LostReasons;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\PaymentMethod;
+use App\Models\PaymentStatus;
 use App\Models\QuoteStatus;
 use App\Models\SalaryBand;
 use App\Models\Tier;
@@ -277,6 +279,18 @@ class LookupService extends BaseService
             ->get();
     }
 
+    public function getDeviceCoverages()
+    {
+        return CacheManager::remember(CacheKeyEnum::DEVICE_QUOTE_LOOKUPS, function () {
+            return Capi::request('/api/v1-get-all-device-lookups', 'post');
+        });
+    }
+    public function getPaymentStatuses()
+    {
+        return PaymentStatus::where('is_active', 1)
+            ->orderBy('text')
+            ->get(['id', 'text']);
+    }
     public function getSubSource()
     {
         return CacheManager::remember(CacheKeyEnum::SUB_SOURCES, function () {
@@ -285,5 +299,73 @@ class LookupService extends BaseService
                 'is_active' => 1,
             ])->get();
         });
+    }
+
+    /**
+     * Get claim request types
+     */
+    public function getClaimRequestTypes(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::CLAIM_REQUEST_TYPE_KEY, function () {
+            return Lookup::byKey(ClaimsEnum::CLAIM_REQUEST_TYPES_KEY->value)
+                ->active()
+                ->select('id', 'text', 'code')
+                ->orderBySortOrder()
+                ->get()
+                ->toArray();
+        });
+
+    }
+
+    /**
+     * Get claim Service Type
+     */
+    public function getClaimServiceTypes(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::CLAIM_SERVICE_TYPE_KEY, function () {
+            return Lookup::byKey(ClaimsEnum::CLAIM_SERVICE_TYPES_KEY->value)
+                ->active()
+                ->select('id', 'text', 'code')
+                ->orderBySortOrder()
+                ->get()
+                ->toArray();
+        });
+
+    }
+
+    /**
+     * Get claim types from lookup
+     */
+    public function getClaimTypes(): array
+    {
+        return CacheManager::remember(CacheKeyEnum::CLAIM_TYPE_KEY, function () {
+            return Lookup::byKey(ClaimsEnum::CLAIM_TYPES_KEY->value)
+                ->active()
+                ->select('id', 'text', 'code')
+                ->orderBySortOrder()
+                ->get()
+                ->toArray();
+        });
+    }
+
+    public function getCyberQuoteLookUpData()
+    {
+        return CacheManager::remember(CacheKeyEnum::CYBER_QUOTE_LOOKUPS, function () {
+            return Capi::request('/api/cyber/lookup', 'get');
+        });
+    }
+
+    public function getCyberCoverages()
+    {
+        return Cache::remember(
+            'cyber_coverages',
+            now()->addHour(),
+            function () {
+                return Lookup::where('key', LookupsEnum::CYBER_COVERAGE)
+                    ->select('id', 'code', 'text')
+                    ->orderBy('sort_order')
+                    ->get();
+            }
+        );
     }
 }

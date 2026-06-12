@@ -6,6 +6,7 @@ namespace App\Services\CQF;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -38,7 +39,9 @@ class CarCQFRenewalExecutionService
 
         LoggerService::info(self::class." - Car CQF Renewal Leads processing started with Start Date: {$startDate}");
 
-        $isQuoteExists = CarQuote::whereDate('policy_expiry_date', $startDate)
+        $expiryRange = [$startDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
+
+        $isQuoteExists = CarQuote::whereBetween('policy_expiry_date', $expiryRange)
             ->whereNotIn('quote_status_id', [
                 QuoteStatusEnum::PolicyCancelled,
                 QuoteStatusEnum::PolicyCancelledReissued,
@@ -60,7 +63,7 @@ class CarCQFRenewalExecutionService
 
         $renewalsUploadLeads = $this->createRenewalsUploadLeads();
 
-        CarQuote::whereDate('policy_expiry_date', $startDate)
+        CarQuote::whereBetween('policy_expiry_date', $expiryRange)
             ->whereNotIn('quote_status_id', [
                 QuoteStatusEnum::PolicyCancelled,
                 QuoteStatusEnum::PolicyCancelledReissued,
@@ -113,7 +116,7 @@ class CarCQFRenewalExecutionService
         $quoteMappingService = app(CarCQFQuoteMappingService::class);
 
         foreach ($quotes as $quote) {
-            LoggerService::startQuoteLogging($quote, \App\Enums\Logger\LoggerFeatureEnum::CAR_CQF_RENEWALS);
+            LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::CAR_CQF_RENEWALS);
 
             try {
                 $this->totalQuotesProcessed++;

@@ -10,4 +10,5 @@ class DocumentTypeEnum extends Enum
     const RECEIPT = 'Receipt';
     const AUDIT_RECORD = 'Audit Record';
     const ISSUING_DOCUMENTS = 'ISSUING_DOCUMENTS';
+    const CLAIM_DOCUMENTS = 'CLAIM';
 }

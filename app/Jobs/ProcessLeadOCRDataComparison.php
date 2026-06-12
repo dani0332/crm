@@ -16,6 +16,7 @@ use App\Models\Nationality;
 use App\Models\OCRResponseData;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -567,7 +568,7 @@ class ProcessLeadOCRDataComparison implements ShouldQueue
         $priceVatApplicable = $ocrData->price?->baseAmount ?? $quote->price_vat_applicable;
         $priceWithVat = $ocrData->price?->totalAmount ?? $quote->price_with_vat;
 
-        $vatPercentage = app(\App\Services\ApplicationStorageService::class)->getValueByKey(\App\Enums\ApplicationStorageEnums::VAT_VALUE);
+        $vatPercentage = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         $vatAmount = $priceVatApplicable * $vatPercentage / 100;
 
         return [

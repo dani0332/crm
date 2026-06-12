@@ -10,13 +10,16 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Jobs\SendSavingsOCAEmailJob;
+use App\Models\DttRevival;
+use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
+use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
 use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
 use App\Services\RuleService;
-use App\Services\SendEmailCustomerService;
 use App\Traits\LeadDuplicatable;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +43,19 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         return in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id();
     }
 
+    protected function getParentLeadAdvisorId(): ?int
+    {
+        $revivalLead = DttRevival::where('uuid', $this->lead->uuid)->select('previous_quote_id')->first();
+
+        if (! $revivalLead) {
+            return null;
+        }
+
+        $parentLead = PersonalQuote::where('id', $revivalLead->previous_quote_id)->select('advisor_id')->first();
+
+        return $parentLead?->advisor_id;
+    }
+
     public function execute()
     {
         $response = [
@@ -51,39 +67,44 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         try {
             LoggerService::info(self::class.' - execute: Allocation Started');
             $this->resolveLead();
-            if ($this->lead && $this->shouldHandleDuplicateLead()) {
+            if (! $this->lead) {
+                LoggerService::info(self::class.' - execute: Lead not found');
+
+                return $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+            }
+            if (! $this->verifyLeadPreChecks()) {
+                LoggerService::info(self::class.' - execute: Lead not found - excluded from non motor renewal leads');
+
+                return $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+            }
+            if ($this->shouldHandleDuplicateLead()) {
                 $this->resolveDuplicateLeadInfo();
             }
 
-            if (! $this->lead) {
-                LoggerService::info(self::class.' - execute: Lead not found');
-                $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+            $advisor = null;
+            if ($this->hasDuplicateLead) {
+                $advisor = $this->getAdvisorForDuplicateLeadAssignment();
+                LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
+                    'found_advisor' => $advisor ? true : false,
+                    'advisor_id' => $advisor?->id,
+                ]);
+            }
+
+            if (! $advisor) {
+                $advisor = $this->fetchAvailableAdvisor();
+            }
+
+            // if advisor still not found, then we need to fail the lead allocation
+            if (! $advisor) {
+                $this->leadAllocationFailed($this->uuid, $this->quoteType);
+                $this->sendNonAdvisorEmail();
+
+                LoggerService::info(self::class.' - execute: No advisor found');
+
+                $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
             } else {
-                $advisor = null;
-                if ($this->hasDuplicateLead) {
-                    $advisor = $this->getAdvisorForDuplicateLeadAssignment();
-                    LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
-                        'found_advisor' => $advisor ? true : false,
-                        'advisor_id' => $advisor?->id,
-                    ]);
-                }
-
-                if (! $advisor) {
-                    $advisor = $this->fetchAvailableAdvisor();
-                }
-
-                // if advisor still not found, then we need to fail the lead allocation
-                if (! $advisor) {
-                    $this->leadAllocationFailed($this->uuid, $this->quoteType);
-                    $this->sendNonAdvisorEmail();
-
-                    LoggerService::info(self::class.' - execute: No advisor found');
-
-                    $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
-                } else {
-                    $this->assignLead($advisor);
-                    $response = $this->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
-                }
+                $this->assignLead($advisor);
+                $response = $this->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
             }
         } catch (\Throwable $th) {
             $this->leadAllocationFailed($this->uuid, $this->quoteType);
@@ -111,6 +132,12 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             })
             ->when($this->quoteType === QuoteTypes::CORPLINE, function ($q) {
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
+            ->when($this->quoteType === QuoteTypes::LIFE, function ($q) {
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->where('source', '!=', LeadSourceEnum::REVIVAL)
+                        ->orWhereNull('source');
+                });
             })
             ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
     }
@@ -147,6 +174,9 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 fn ($q) => $q->whereIn('users.id', $this->advisorIDs),
                 function ($q) {
                     if (! empty($this->excludedAdvisorIds)) {
+                        LoggerService::info(self::class.' - Excluding advisors from nationality config', extra: [
+                            'excluded_advisor_ids' => $this->excludedAdvisorIds ?? [],
+                        ]);
                         $q->whereNotIn('users.id', $this->excludedAdvisorIds);
                     }
                 },
@@ -155,6 +185,9 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->when($this->skipRuleUsers, function ($q) {
                 $ruleUserIds = app(RuleService::class)->getRuleUserIds($this->quoteType);
                 $ruleUserIds = $this->finalizeExcludedAdvisorIds($ruleUserIds);
+                LoggerService::info(self::class.' - Excluding advisors from rules', extra: [
+                    'excluded_rule_user_ids' => $ruleUserIds ?? [],
+                ]);
                 $q->whereNotIn('users.id', $ruleUserIds);
             })
             ->orderBy('la.last_allocated', 'asc');
@@ -282,10 +315,20 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->quoteType);
 
         if (empty($excludedAdvisorIds)) {
+            LoggerService::info(self::class.' - No excluded advisor IDs from nationality config');
+
             return;
         }
 
+        LoggerService::info(self::class.' - Found excluded advisor IDs from nationality config', extra: [
+            'excluded_advisor_ids_before_finalize' => $excludedAdvisorIds,
+        ]);
+
         $excludedAdvisorIds = $this->finalizeExcludedAdvisorIds($excludedAdvisorIds);
+
+        LoggerService::info(self::class.' - Finalized excluded advisor IDs (after removing super advisors)', extra: [
+            'excluded_advisor_ids_after_finalize' => $excludedAdvisorIds,
+        ]);
 
         $this->excludedAdvisorIds = $excludedAdvisorIds;
     }
@@ -303,16 +346,11 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
             return;
         }
+        // temporary disable non advisor email for savings quote
         if (! $this->lead->isSuppressIntroEmail()) {
-            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail(
-                $this->lead,
-                $this->quoteType->value,
-                isNonAdvisorEmail: true,
-            );
+            SendSavingsOCAEmailJob::dispatch($this->lead->uuid)->delay(now()->addSeconds(10));
+            LoggerService::info(self::class.' - Non Advisor Email job dispatched');
         }
-
-        $this->lead->touch('non_advisor_email_sent_at');
-        LoggerService::info(self::class.' - Non Advisor Email sent to customer');
     }
 
     protected function getAdvisorsByEmailsOrIds(int $onlineStatus, array $roles, ?array $emails = null, ?array $advisorIds = null)
@@ -337,5 +375,18 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         $excludedAdvisorIds = array_values($excludedAdvisorIds);
 
         return $excludedAdvisorIds;
+    }
+
+    protected function verifyLeadPreChecks(): bool
+    {
+        // Block CQF-generated renewal leads from normal advisor allocation — the CQF pipeline manages their assignment.
+        // CORPLINE and GROUP_MEDICAL are not in NonMotorCQFRegistry::supportedLOBs() (they're registered as BUSINESS),
+        // but the BusinessCQF creates new quotes that carry business_type_of_insurance_id, causing allocation to
+        // resolve them as CORPLINE/GROUP_MEDICAL and route here — so they must be explicitly covered.
+        if ((in_array($this->quoteType, NonMotorCQFRegistry::supportedLOBs()) || in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL])) && $this->lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
+            return false;
+        }
+
+        return true;
     }
 }

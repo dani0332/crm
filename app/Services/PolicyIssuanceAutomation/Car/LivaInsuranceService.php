@@ -26,8 +26,9 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
+use App\Models\PolicyIssuance;
 use App\Models\UAELicenseHeldFor;
-use App\Services\AMLService;
+use App\Services\AML\AMLLookupsService;
 use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
@@ -596,6 +597,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'document_type_code' => $documentType->code,
             'document_type_text' => $documentType->text,
             'doc_uuid' => generateUUID(),
+            'document_type_id' => $documentType->id,
         ]);
 
         if ($newDocument?->exists && $documentCode == DocumentTypeCode::POLICY_CERTIFICATE) {
@@ -603,11 +605,8 @@ class LivaInsuranceService implements PolicyIssuanceInterface
         }
 
         if ($newDocument?->exists) {
-            WatermarkDocumentsJob::dispatch(
-                $newDocument->id,
-                $quote->uuid,
-                $documentType->id
-            );
+            // Delay 10 seconds so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
+            WatermarkDocumentsJob::dispatch($newDocument->id, $quote->uuid, $documentType->id)->delay(now()->addSeconds(10))->afterCommit();
         }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
@@ -815,7 +814,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 ];
 
                 LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Document processed: '.$document['document_type_text']);
-            } catch (\Exception $ex) {
+            } catch (Exception $ex) {
                 LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Error processing document', exception: $ex);
 
                 continue;
@@ -1089,7 +1088,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                     'isGetQuoteAPIFailed' => true,
                 ];
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Failed', extra: [
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
@@ -1276,7 +1275,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     public function getLIVALookups($leadSource)
     {
         $insuranceProviderId = InsuranceProvider::where('code', InsuranceProvidersEnum::RSA)->first()->id;
-        $additionalLookups = app(AMLService::class)->getAMLLookups($insuranceProviderId, [
+        $additionalLookups = app(AMLLookupsService::class)->getAMLLookups($insuranceProviderId, [
             LookupsEnum::RTA_TRANSACTION_TYPE,
             LookupsEnum::RTA_PLATE_CATEGORY,
             LookupsEnum::VEHICLE_COLOR,
@@ -1363,7 +1362,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
     /**
      * Check if policy issuance timed out and update status accordingly
      *
-     * @param  \App\Models\PolicyIssuance  $policyIssuance
+     * @param  PolicyIssuance  $policyIssuance
      */
     public function handleTimeoutStatusUpdate($policyIssuance): void
     {
@@ -1382,7 +1381,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
 
                 LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Updated Policy Issuance ID : '.$policyIssuance->id.' to TIMEOUT_STATUS');
             }
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             LoggerService::info($this->className.' fn:'.__FUNCTION__.' - Error Updating Policy Issuance ID : '.$policyIssuance->id, extra: [
                 'errorMessage' => $ex->getMessage(),
             ]);

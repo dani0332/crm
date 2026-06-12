@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -15,7 +14,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
-use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\LeadSource;
@@ -31,8 +29,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ReportService extends BaseService
 {
@@ -128,7 +126,7 @@ class ReportService extends BaseService
             });
         }
 
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER])->get();
         $lobs->push([
             'id' => 999,
             'text' => 'Group Medical',
@@ -205,9 +203,9 @@ class ReportService extends BaseService
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
 
-        if (isset($filters->teams) && count($filters->teams) > 0) {
-            info('teamsFilter are : '.json_encode($filters->teams));
-            $value = $filters->teams;
+        if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
+            info('teamsFilter are : '.json_encode($filters->teamsFilter));
+            $value = $filters->teamsFilter;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
                     ->select('users.id')
@@ -259,6 +257,8 @@ class ReportService extends BaseService
             QuoteTypes::CYCLE,
             QuoteTypes::JETSKI,
             QuoteTypes::SAVINGS,
+            QuoteTypes::CYBER,
+            QuoteTypes::DEVICE,
         ];
 
         $allowedLOBs = [];
@@ -332,7 +332,7 @@ class ReportService extends BaseService
             Carbon::parse(now())->startOfDay()->format($dateFormat),
             Carbon::parse(now())->endOfDay()->format($dateFormat),
         ];
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::Cycle, quoteTypeCode::Bike, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::Cycle, quoteTypeCode::Bike, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER])->get();
 
         return [
             'tiers' => $tiers,
@@ -357,6 +357,7 @@ class ReportService extends BaseService
             QuoteTypes::CYCLE,
             QuoteTypes::CORPLINE,
             QuoteTypes::SAVINGS,
+            QuoteTypes::CYBER,
         ];
 
         $productsName = $products->pluck('name')->toArray();
@@ -387,12 +388,13 @@ class ReportService extends BaseService
 
         $totalOp = $request->filter_by === 'total_opportunity';
 
-        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value || $lob == QuoteTypes::SAVINGS->value) {
+        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value || $lob == QuoteTypes::SAVINGS->value || $lob == QuoteTypes::CYBER->value) {
             $pqs = [
                 QuoteTypes::PET->value => QuoteTypeId::Pet,
                 QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
                 QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
                 QuoteTypes::SAVINGS->value => QuoteTypeId::Savings,
+                QuoteTypes::CYBER->value => QuoteTypeId::Cyber,
             ];
 
             $qtCode = [
@@ -400,6 +402,7 @@ class ReportService extends BaseService
                 QuoteTypes::CYCLE->value => quoteTypeCode::Cycle,
                 QuoteTypes::YACHT->value => quoteTypeCode::Yacht,
                 QuoteTypes::SAVINGS->value => quoteTypeCode::SAVINGS,
+                QuoteTypes::CYBER->value => quoteTypeCode::CYBER,
             ];
 
             $userIds = $this->walkTree($authUserId, $qtCode[$lob]);
@@ -596,7 +599,7 @@ class ReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER])->get();
 
         return [
             'teams' => $teams,
@@ -657,143 +660,136 @@ class ReportService extends BaseService
 
     public function getPaymentAuthorisedSummary($request)
     {
-
         $user = auth()->user();
-        $userTeams = $user->getUserTeams($user->id);
-        $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
-        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
-        $expiryDays = $authorizedDays->value;
 
-        $lobTable = [
-            quoteTypeCode::Car => ['table' => 'car_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Home => ['table' => 'home_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Health => ['table' => 'health_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Business => ['table' => 'business_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Travel => ['table' => 'travel_quote_request', 'quoteTypeId' => null],
-            quoteTypeCode::Life => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Life],
-            quoteTypeCode::Pet => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Pet],
-            quoteTypeCode::Yacht => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Yacht],
-            quoteTypeCode::Bike => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Bike],
-            quoteTypeCode::Cycle => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Cycle],
-            quoteTypeCode::Jetski => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Jetski],
-            quoteTypeCode::SAVINGS => ['table' => 'personal_quotes', 'quoteTypeId' => QuoteTypeId::Savings],
-        ];
-
-        $quoteTypes = [
-            QuoteTypes::CAR,
-            QuoteTypes::HOME,
-            QuoteTypes::HEALTH,
-            QuoteTypes::LIFE,
-            QuoteTypes::BUSINESS,
-            QuoteTypes::BIKE,
-            QuoteTypes::YACHT,
-            QuoteTypes::TRAVEL,
-            QuoteTypes::PET,
-            QuoteTypes::CYCLE,
-            QuoteTypes::JETSKI,
-            QuoteTypes::SAVINGS,
-        ];
-
-        $allowedLOBs = [];
-        if (isset($request->quoteType)) {
-            $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
-            $allowedLOBs[] = $lobTable[ucfirst($quoteType)];
-        } else {
-            $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
-            foreach ($quoteTypes as $quoteType) {
-                if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles) || (auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($quoteType))) {
-                    $allowedLOBs[] = $lobTable[$quoteType->value];
-                } elseif (in_array(RolesEnum::Admin, $userRoles)) {
-                    $allowedLOBs[] = $lobTable[$quoteType->value];
-                } else {
-                    continue;
-                }
+        // Validate and sanitize team filter
+        $userOwnTeamIds = $user->getUserTeamIds();
+        if (! empty($request->selectedTeams)) {
+            $requestedTeams = is_array($request->selectedTeams) ? $request->selectedTeams : [$request->selectedTeams];
+            // Only allow teams that the user actually belongs to
+            $userTeams = array_intersect($requestedTeams, $userOwnTeamIds);
+            // If no valid teams after intersection, fall back to all user's teams
+            if (empty($userTeams)) {
+                $userTeams = $userOwnTeamIds;
             }
+        } else {
+            $userTeams = $userOwnTeamIds;
         }
+
+        $expiryDays = getAppStorageValueByKey(ApplicationStorageEnums::ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS, 1, true);
+
+        $quoteTypeId = $request->quoteTypeId ? (int) $request->quoteTypeId : null;
+        $allowedQuoteTypeIds = QuoteTypes::allowedIdsForUser($user, $quoteTypeId);
 
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $dataCollection = collect();
-        foreach ($allowedLOBs as $details) {
-            $premiumColumn = $details['table'].'.premium';
+        $premiumColumn = 'personal_quotes.premium';
 
-            $query = DB::table($details['table'])
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    'quote_status_id',
-                    DB::raw('COUNT(DISTINCT '.$details['table'].'.code) as total_leads'),
-                    DB::raw('SUM('.$premiumColumn.') as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days"),
-                    DB::raw('DATE_FORMAT(MIN('.$details['table'].'.created_at), "%d-%m-%Y") as created_at_start'),
-                    DB::raw('DATE_FORMAT(MAX('.$details['table'].'.created_at), "%d-%m-%Y") as created_at_end')
-                )
-                ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
-                ->join('users', 'users.id', $details['table'].'.advisor_id')
-                ->when($details['quoteTypeId'] !== null, function ($query) use ($details) {
-                    return $query->where($details['table'].'.quote_type_id', $details['quoteTypeId']);
-                });
-            $query->where(function ($query) use ($thirtyDaysAgo) {
-                $query->where(function ($q) use ($thirtyDaysAgo) {
-                    $q->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                        ->where('py.authorized_at', '>=', $thirtyDaysAgo);
-                })
-                    ->orWhere(function ($q) use ($thirtyDaysAgo) {
-                        $q->where('py.payment_methods_code', PaymentMethodsEnum::InsurerPayment)
-                            ->whereIn('py.payment_status_id', [PaymentStatusEnum::PENDING, PaymentStatusEnum::PAYMENT_LINK_REQUESTED])
-                            ->where('py.collection_date', '>=', $thirtyDaysAgo);
-                    });
-            });
-            $query->where($details['table'].'.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
-            if ($user->isAdvisor()) {
-                $query->where($details['table'].'.advisor_id', $user->id);
-            } else {
-                $query->join('user_team', 'user_team.user_id', 'users.id')
-                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->whereIn('teams.name', $userTeams);
-            }
-            if (isset($request->userIds)) {
-                $query->whereIn('advisor_id', $request->userIds);
-            }
-            if (isset($request->statusId)) {
-                $query->whereIn('quote_status_id', $request->statusId);
-            }
-            if (! empty($request->registration_type) && $request->registration_type != 'All') {
-                $query->where('registration_type', $request->registration_type);
-            }
+        // Define reusable SQL expression for expiry date calculation
+        $expiryDateExpression = "DATE_ADD(py.authorized_at, INTERVAL {$expiryDays} DAY)";
 
-            if (! empty($request->vehicle_use) && $request->vehicle_use != 'All') {
-                $query->where('vehicle_use', $request->vehicle_use);
-            }
+        // Build payment join conditions based on filters
+        $paymentJoinConditions = function ($join) use ($request, $expiryDateExpression, $thirtyDaysAgo) {
+            $join->on('py.code', '=', 'personal_quotes.code')
+                ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+                ->where('py.authorized_at', '>=', $thirtyDaysAgo);
 
             if (isset($request->expireDate)) {
                 $date = Carbon::parse($request->expireDate)->startOfDay();
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $date);
+                $join->whereRaw("{$expiryDateExpression} <= ?", [$date]);
             }
 
             if (isset($request->todayDate)) {
-                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 1);
+                $join->whereRaw("DATEDIFF({$expiryDateExpression}, NOW()) = 1");
             }
 
             if (isset($request->tomorrowDate)) {
-                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 2);
+                $join->whereRaw("DATEDIFF({$expiryDateExpression}, NOW()) = 2");
             }
 
             if (isset($request->thisWeek)) {
                 $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
                 $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startOfWeek, $endOfWeek]);
+                $join->whereRaw("{$expiryDateExpression} BETWEEN ? AND ?", [$startOfWeek, $endOfWeek]);
             }
 
             if (isset($request->customDate)) {
                 $startDate = Carbon::parse($request->customDate[0])->startOfDay();
                 $endDate = Carbon::parse($request->customDate[1])->endOfDay();
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
+                $join->whereRaw("{$expiryDateExpression} BETWEEN ? AND ?", [$startDate, $endDate]);
             }
+        };
 
-            $dataCollection = $dataCollection->merge($query->groupBy('users.id')
-                ->orderBy('total_leads', 'desc')->get());
+        // Build a subquery that gets unique quotes with their premiums
+        // This avoids the duplication issue when a quote has multiple payments
+        $uniqueQuotesSubquery = DB::table('personal_quotes')
+            ->select(
+                'personal_quotes.code',
+                'personal_quotes.advisor_id',
+                'personal_quotes.created_at',
+                DB::raw('MAX('.$premiumColumn.') as premium')
+            )
+            ->leftJoin('payments as py', $paymentJoinConditions)
+            ->whereNotNull('py.code')
+            ->whereIn('personal_quotes.quote_type_id', $allowedQuoteTypeIds)
+            ->where('personal_quotes.source', '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+
+        // Apply user/team filters
+        if ($user->isAdvisor()) {
+            $uniqueQuotesSubquery->where('personal_quotes.advisor_id', $user->id);
+        } else {
+            $uniqueQuotesSubquery->whereExists(function ($subQuery) use ($userTeams) {
+                $subQuery->select(DB::raw(1))
+                    ->from('user_team')
+                    ->whereColumn('user_team.user_id', 'personal_quotes.advisor_id')
+                    ->whereIn('user_team.team_id', $userTeams);
+            });
         }
+
+        if (isset($request->userIds)) {
+            $uniqueQuotesSubquery->whereIn('personal_quotes.advisor_id', $request->userIds);
+        }
+
+        if (isset($request->statusId)) {
+            $uniqueQuotesSubquery->whereIn('personal_quotes.quote_status_id', $request->statusId);
+        }
+
+        // Car-specific filters
+        if ($quoteTypeId === QuoteTypes::getId(QuoteTypes::CAR)) {
+            $hasRegistrationType = ! empty($request->registration_type) && $request->registration_type !== 'All';
+            $hasVehicleUse = ! empty($request->vehicle_use) && $request->vehicle_use !== 'All';
+
+            if ($hasRegistrationType || $hasVehicleUse) {
+                $uniqueQuotesSubquery->join('car_quote_request as cqr', 'cqr.code', '=', 'personal_quotes.code');
+
+                if ($hasRegistrationType) {
+                    $uniqueQuotesSubquery->where('cqr.registration_type', $request->registration_type);
+                }
+
+                if ($hasVehicleUse) {
+                    $uniqueQuotesSubquery->where('cqr.vehicle_use', $request->vehicle_use);
+                }
+            }
+        }
+
+        $uniqueQuotesSubquery->groupBy('personal_quotes.code', 'personal_quotes.advisor_id', 'personal_quotes.created_at');
+
+        // Main query aggregates the unique quotes by advisor
+        $query = DB::table(DB::raw('('.$uniqueQuotesSubquery->toSql().') as unique_quotes'))
+            ->mergeBindings($uniqueQuotesSubquery)
+            ->select(
+                'users.id as advisor_id',
+                'users.name as advisor_name',
+                DB::raw('COUNT(DISTINCT unique_quotes.code) as total_leads'),
+                DB::raw('SUM(unique_quotes.premium) as total_premium'),
+                DB::raw('DATE_FORMAT(MIN(unique_quotes.created_at), "%d-%m-%Y") as created_at_start'),
+                DB::raw('DATE_FORMAT(MAX(unique_quotes.created_at), "%d-%m-%Y") as created_at_end')
+            )
+            ->join('users', 'users.id', '=', 'unique_quotes.advisor_id')
+            ->groupBy('users.id', 'users.name')
+            ->orderBy('total_leads', 'desc');
+
+        $dataCollection = $dataCollection->merge($query->get());
         $items = $dataCollection->groupBy('advisor_id')->map(function ($group) {
             return [
                 'advisor_id' => $group->first()->advisor_id,
@@ -810,38 +806,20 @@ class ReportService extends BaseService
 
         $result = $sorted->values()->all();
 
+        // Use Laravel's LengthAwarePaginator for proper Inertia integration
         $perPage = 5;
         $currentPage = (int) $request->input('page', 1);
         $total = count($result);
-        $lastPage = ceil($total / $perPage);
 
         $paginatedData = array_slice($result, ($currentPage - 1) * $perPage, $perPage);
 
-        $path = $request->fullUrl();
-
-        $key = 'page';
-        // Remove specific parameter from query string
-        $path = preg_replace('~(\?|&)'.$key.'=[^&]*~', '$1', $path);
-
-        $nextPageUrl = $currentPage < $lastPage
-            ? $path.'?&page='.($currentPage + 1) : null;
-
-        $prevPageUrl = $currentPage > 1
-            ? $path.'?&page='.($currentPage - 1) : null;
-
-        $pagination = [
-            'data' => $paginatedData,
-            'current_page' => $currentPage,
-            'per_page' => $perPage,
-            'total' => $total,
-            'last_page' => ceil($total / $perPage),
-            'from' => ($currentPage - 1) * $perPage + 1,
-            'to' => min($currentPage * $perPage, $total),
-            'next_page_url' => $nextPageUrl,
-            'prev_page_url' => $prevPageUrl,
-        ];
-
-        return $pagination;
+        return new LengthAwarePaginator(
+            $paginatedData,
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
     }
 
     public function getRevivalReportsData($request)

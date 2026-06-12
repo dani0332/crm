@@ -80,5 +80,7 @@ const chartOptions = ref({
 });
 </script>
 <template>
+  <!-- <div style="width: 100%"> -->
   <Chart ref="chartRef" :options="chartOptions"></Chart>
+  <!-- </div> -->
 </template>

@@ -23,9 +23,9 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
+use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
-use League\CommonMark\Extension\SmartPunct\Quote;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -312,9 +312,10 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    if (! empty($additionalContact->value)) {
+                    $value = EmailValidationService::sanitize($additionalContact->value ?? '');
+                    if ($value !== null) {
                         $ccAdditional[] = [
-                            'email' => $additionalContact->value,
+                            'email' => $value,
                             'name' => $emailData->customerName,
                         ];
                     }
@@ -322,6 +323,12 @@ class SendEmailCustomerService extends BaseService
             }
 
             $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
+
+            LoggerService::info('OCB Email CC Additional Contacts: ', extra: [
+                'ccAdditional' => $ccAdditional,
+                'ccAdvisor' => $ccAdvisor,
+                'cc' => $body['cc'],
+            ]);
 
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
         } catch (Exception $ex) {
@@ -422,9 +429,10 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    if (! empty($additionalContact->value)) {
+                    $value = EmailValidationService::sanitize($additionalContact->value ?? '');
+                    if ($value !== null) {
                         $ccAdditional[] = [
-                            'email' => $additionalContact->value,
+                            'email' => $value,
                             'name' => $emailData->customerName,
                         ];
                     }
@@ -433,7 +441,11 @@ class SendEmailCustomerService extends BaseService
 
             $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
 
-            LoggerService::info(self::class.' - sendRenewalsOcbEmail - Calling sendMail method');
+            LoggerService::info(self::class.' - sendRenewalsOcbEmail - Calling sendMail method', extra: [
+                'ccAdditional' => $ccAdditional,
+                'ccAdvisor' => $ccAdvisor,
+                'cc' => $body['cc'],
+            ]);
 
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
 
@@ -466,7 +478,7 @@ class SendEmailCustomerService extends BaseService
     public function getEmailSubjectFromSib($messageId)
     {
         try {
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $response = $client->request(
                 'GET',
                 $this->url.'s?messageId='.$messageId.'&sort=desc&limit=1&offset=0',
@@ -999,7 +1011,7 @@ class SendEmailCustomerService extends BaseService
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
             LoggerService::info('Policy documents email payload for quote code: '.$emailData->code.' ---- body '.$body);
 
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $clientResponse = $client->post(
                 config('constants.SIB_URL'),
                 [
@@ -1129,6 +1141,14 @@ class SendEmailCustomerService extends BaseService
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
+                    if (isset($document['isPolicyWording']) && $document['isPolicyWording']) {
+                        $attachments[] = [
+                            'url' => $document['doc_url'],
+                            'name' => $document['document_type_text'],
+                        ];
+
+                        continue;
+                    }
                     $path = ! empty($document['watermarked_doc_url']) ? $document['watermarked_doc_url'] : $document['doc_url'];
                     if (empty($path)) {
                         LoggerService::warning("Send lead document not found for document ID: {$document['id']} Error Code: 404");
@@ -1236,7 +1256,7 @@ class SendEmailCustomerService extends BaseService
 
             LoggerService::info('Send Policy Update email payload', extra: ['payload' => json_encode($body)]);
 
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $clientRequest = $client->post(
                 $this->url,
                 [
@@ -1330,7 +1350,7 @@ class SendEmailCustomerService extends BaseService
                 'templateId' => intval($emailTemplateId),
                 'params' => $params,
             ], JSON_UNESCAPED_SLASHES);
-            $client = new \GuzzleHttp\Client;
+            $client = new Client;
             $clientRequest = $client->post(
                 $this->url,
                 [
@@ -1590,7 +1610,7 @@ class SendEmailCustomerService extends BaseService
             try {
                 $carbonDate = Carbon::parse($healthQuote->previous_policy_expiry_date);
                 $renewalDueDate = $carbonDate->format('jS F Y');
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $renewalDueDate = '';
             }
         }
@@ -1814,7 +1834,7 @@ class SendEmailCustomerService extends BaseService
             'refID' => $quote->code,
             'CarMake' => $quote->carMake->text ?? null,
             'CarModel' => $quote->carModel->text ?? null,
-            'workflowType' => workflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
+            'workflowType' => WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
         ];
         $customerWANotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW);
         if (! empty($customerWANotificationWorkflow)) {
@@ -1939,7 +1959,7 @@ class SendEmailCustomerService extends BaseService
         }
     }
 
-    public function getBCCEmails(string $quoteType, string $source)
+    public function getBCCEmails(string $quoteType, ?string $source = null)
     {
         $bccEmails = [];
 
@@ -1969,7 +1989,9 @@ class SendEmailCustomerService extends BaseService
         $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
         if (! empty($carIntroEmailWorkflowUrl)) {
             $advisor = User::where('id', $quote->advisor_id)->first() ?? null;
-            $emailData = $this->buildEmailDataForBirdFlow($quote, $advisor, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            $workflowType = ! empty($quote->car_make_id) ? WorkflowTypeEnum::CAR_INTRO_EMAIL : WorkflowTypeEnum::CAR_INTRO_EMAIL_WITHOUT_VEHICLE_DETAILS;
+            LoggerService::info('sendCarIntroEmailWithAdvisor - Workflow type: '.$workflowType.' with Car Make ID: '.$quote->car_make_id.' with Ref-ID: '.$quote->uuid);
+            $emailData = $this->buildEmailDataForBirdFlow($quote, $advisor, $workflowType);
             app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
             LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
         } else {
@@ -2006,6 +2028,7 @@ class SendEmailCustomerService extends BaseService
             'advisorId' => $advisor->id ?? null,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'carMakeId' => ! empty($lead->car_make_id) ? true : false,
             'advisorDetails' => $advisor ?? null,
             'documentUrl' => $documentUrl ?? null,
             'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
@@ -2083,5 +2106,4 @@ class SendEmailCustomerService extends BaseService
 
         return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
     }
-
 }

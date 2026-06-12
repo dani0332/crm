@@ -21,7 +21,9 @@ use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BorLog;
 use App\Models\CarPlanPolicyWording;
+use App\Models\Claim;
 use App\Models\DocumentType;
+use App\Models\GenericDocument;
 use App\Models\HealthPlanPolicyWording;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
@@ -30,15 +32,20 @@ use App\Models\TravelPlanPolicyWording;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OCRService;
+use App\Traits\ChecksAzureFileExistence;
 use App\Traits\GenericQueriesAllLobs;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\File;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
+use League\Flysystem\UnableToCheckExistence;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
+use Throwable;
 
 class QuoteDocumentService extends BaseService
 {
@@ -47,6 +54,7 @@ class QuoteDocumentService extends BaseService
     private const LOG_WITH_KEY = ' with key: ';
 
     protected $client;
+    use ChecksAzureFileExistence;
     use GenericQueriesAllLobs;
 
     public function __construct()
@@ -59,13 +67,17 @@ class QuoteDocumentService extends BaseService
      *
      * @return mixed
      */
-    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null)
+    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null, $documentTypeCategory = null)
     {
         return DocumentType::where([
             'is_active' => 1,
             'receive_from_customer' => 1,
             'quote_type_id' => $quoteTypeId,
         ])
+            ->notRestrictedInternalDocument()
+            ->when($documentTypeCategory, function ($query) use ($documentTypeCategory) {
+                $query->where('category', $documentTypeCategory);
+            })
             ->when($quoteTypeId == QuoteTypeId::CompanyCar, function ($query) use ($registrationType, $vehicleUse) {
                 $query->where(function ($query) use ($registrationType) {
                     $query->whereNull('registration_type')
@@ -80,7 +92,13 @@ class QuoteDocumentService extends BaseService
                 return $query;
             })
             ->orderBy('sort_order')
-            ->get();
+            ->get()
+            ->when($documentTypeCategory === DocumentTypeCode::CLAIM, function ($collection) {
+                return $collection->each(function ($documentType) {
+                    $documentType->is_claim_form = str_starts_with($documentType->code, 'CLM_')
+                        && str_ends_with($documentType->code, '_CF');
+                });
+            });
     }
 
     public function isEnabled($quoteModelType)
@@ -124,7 +142,7 @@ class QuoteDocumentService extends BaseService
 
     /**
      * @param  $data  doc_name, doc_uuid
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function deleteQuoteDocument($quoteType, $data)
     {
@@ -154,7 +172,7 @@ class QuoteDocumentService extends BaseService
 
     /**
      * @param  $data  doc_name, doc_uuid
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function deleteBorDocument($quote, $data)
     {
@@ -169,11 +187,11 @@ class QuoteDocumentService extends BaseService
         // check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
+
             // LoggerService::info('Document deleted', [
             //     'quote_uuid' => $data['quote_uuid'],
             //     'doc_name' => $data['doc_name']
             // ]);
-
             return response()->json(['message' => 'document deleted successfully']);
         }
 
@@ -185,27 +203,38 @@ class QuoteDocumentService extends BaseService
      *
      * @param  $documentTypeCode
      * @param  $uuid
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false, $isHealthQuestionnaire = false)
     {
+        // Get quote UUID from quote object or data array for main lead uuid and for send update log quote uuid and for other cases quote uuid.
+        $quoteUUID = $quote->uuid ?? $quote->quote_uuid ?? $data['quote_uuid'];
+
         LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
 
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
+            LoggerService::warning('Invalid document type code provided '.$data['document_type_code']);
+
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
+        LoggerService::info('Watermark qualification check: '.(int) $isWaterMarkQualifyDoc);
         try {
-
             if (data_get($data, 'is_base_64', 0) == 1) {
                 $originalName = data_get($data, 'file_name', 'Base 64 file');
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
 
+                if ($fileMimeType == null || $extension == null) {
+                    $fileName = $data['file_name'] ?? '';
+                    $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                    $fileMimeType = mimeContentType($extension) ?? 'application/octet-stream';
+                    $file_data = $fileOrBase64;
+                }
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$data['document_type_code'].'.'.$extension);
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
 
                 // Set the filename for Azure storage
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
@@ -218,7 +247,7 @@ class QuoteDocumentService extends BaseService
                 $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
@@ -236,7 +265,7 @@ class QuoteDocumentService extends BaseService
                 $fileMimeType = $documentType->accepted_files;
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
@@ -250,7 +279,7 @@ class QuoteDocumentService extends BaseService
                 $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
                 $filePathAzure = 'documents/homeSAL/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
@@ -264,7 +293,7 @@ class QuoteDocumentService extends BaseService
                 $fileMimeType = self::MIME_TYPE_PDF;
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $fileOrBase64);
                 if (! $uploaded) {
@@ -278,7 +307,7 @@ class QuoteDocumentService extends BaseService
                 $fileMimeType = $fileOrBase64->getClientMimeType();
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_original_'.$docName;
+                $fileNameAzure = uniqid().'_'.$quoteUUID.'_original_'.$docName;
                 $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIMPrivate');
             }
 
@@ -288,6 +317,7 @@ class QuoteDocumentService extends BaseService
                 $docUuid = uniqid().rand(1, 100);
             }
 
+            LoggerService::info('Creating quote document record in database');
             $quoteDocument = $quote->documents()->create([
                 'doc_name' => 'original_'.$docName,
                 'original_name' => $originalName,
@@ -295,12 +325,14 @@ class QuoteDocumentService extends BaseService
                 'doc_mime_type' => $fileMimeType,
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentType->text,
+                'document_category' => $documentType->category,
                 'doc_uuid' => $docUuid,
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,
                 'payment_split_id' => $data['payment_split_id'] ?? null,
-                'document_category' => $data['document_category'] ?? null,
-                'created_by_id' => auth()->id(),
+                'created_by_id' => auth()->id() ?? null,
+                'is_restricted_internal_document' => $documentType->is_restricted_internal_document,
+                'document_type_id' => $documentType->id,
             ]);
 
             // update the Bor log reference with uploaded document time and status
@@ -311,20 +343,35 @@ class QuoteDocumentService extends BaseService
                 LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
             }
 
-            LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
-            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType);
+            $this->updateQuoteJourney($quote);
+
+            // Dispatch OCR job
+            if (empty($data['source'])) {
+                LoggerService::info(self::class.' - Dispatching OCR job - Quote UUID: '.$data['quote_uuid']);
+                $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $data['member_detail_id'] ?? 0);
+            } else {
+                LoggerService::info(self::class.' - Skipping OCR job - Quote UUID: '.$data['quote_uuid'].' because source is '.$data['source'], [
+                    'source' => ! empty($data['source']) ? $data['source'] : null,
+                    'document_type_code' => $documentType->code,
+                    'doc_uuid' => $docUuid,
+                ]);
+            }
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL && ! $isHealthQuestionnaire) {
+                LoggerService::info('Dispatching WatermarkDocumentsJob');
+                // Delay 10 seconds so the document is available on Azure storage when the job runs, avoiding "Unable to check existence" and retries.
                 WatermarkDocumentsJob::dispatch(
                     $quoteDocument->id,
-                    $data['quote_uuid'],
+                    $quoteUUID,
                     $documentType->id
-                )->afterCommit();
+                )->delay(now()->addSeconds(10))->afterCommit();
             }
+
+            LoggerService::info('Document uploaded successfully');
 
             return $quoteDocument;
         } catch (\Exception $exception) {
-            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'], exception: $exception);
+            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$quoteUUID, exception: $exception);
 
             return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }
@@ -393,7 +440,12 @@ class QuoteDocumentService extends BaseService
             // Return documents filtered by document type codes if provided
             // If watermarked_doc_url is not null then we can send watermarked document in email
             // Bor Signature document is not show on document section
-            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->with(self::CREATED_BY_RELATION)->latest()->get();
+            $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)
+                ->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)
+                ->with(self::CREATED_BY_RELATION)
+                ->with('memberDetail')
+                ->latest()->get();
+
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
                     // Exclude documents that contain "Certificate of Insurance" followed by any text or space
@@ -405,7 +457,9 @@ class QuoteDocumentService extends BaseService
         }
 
         // Return all documents associated with the quote if no specific document type codes are provided
-        return $quote ? $quote->documents()->with(self::CREATED_BY_RELATION)->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get() : [];
+        return $quote
+            ? $quote->documents()->with(self::CREATED_BY_RELATION)->with('memberDetail')->where('document_type_code', '!=', DocumentTypeCode::BOR_SIGN)->latest()->get()
+            : [];
     }
 
     /**
@@ -525,6 +579,8 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
             QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
             QuoteTypeId::Savings => ['SPD', 'SPDR', 'SDPDR'],
+            QuoteTypeId::Device => [DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_PROOF, DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT, DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_DISCOUNT_PROOF],
+            QuoteTypeId::Cyber => ['CYDPDR', 'CYPD', 'CYPDR'],
         ];
 
         return $mapping[$quoteTypeId] ?? [];
@@ -883,7 +939,7 @@ class QuoteDocumentService extends BaseService
      */
     public function storeWatermarkedMedia($docName, $uuid, $documentType)
     {
-        $watermarkedFile = new \Illuminate\Http\File(storage_path('temp/'.$docName));
+        $watermarkedFile = new File(storage_path('temp/'.$docName));
 
         // Set the filename for Azure storage
         $watermarkedFileNameAzure = uniqid().'_'.$uuid.'_'.$docName;
@@ -917,18 +973,49 @@ class QuoteDocumentService extends BaseService
 
         $tempFile = storage_path('temp/'.$docName);
         file_put_contents($tempFile, $fileContent);
+        $tempOutputFile = $tempFile.'_watermarked.docx';
 
-        $phpWord = IOFactory::load($tempFile);
-        $section = $phpWord->getSection(0);
-        // Define the watermark style
-        $header = $section->addHeader();
-        $header->addWatermark(public_path('images/watermark1.png'));
+        $result = null;
+        try {
+            $phpWord = IOFactory::load($tempFile);
+            $section = $phpWord->getSection(0);
+            // Define the watermark style
+            $header = $section->addHeader();
+            $header->addWatermark(public_path('images/watermark1.png'));
 
-        // Save the modified document
-        $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
-        $objWriter->save($tempFile);
+            // Save to a separate temp path first — writing to the same path that IOFactory::load()
+            // opened (an internal ZipArchive read handle) causes a "Invalid or uninitialized Zip object"
+            // ValueError because PHP can't open the same file for writing while it's still referenced.
+            $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+            $objWriter->save($tempOutputFile);
 
-        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+            // Release the source handle by unsetting, then atomically replace the original temp file
+            unset($phpWord, $objWriter);
+
+            // Check for successful atomic replacement, handle failure
+            if (! @rename($tempOutputFile, $tempFile)) {
+                // Clean up orphaned temp output file if present
+                if (file_exists($tempOutputFile)) {
+                    @unlink($tempOutputFile);
+                }
+                LoggerService::error("Failed to atomically replace temp file with watermarked docx during watermarking of $docName", extra: [
+                    'uuid' => $uuid,
+                    'tempFile' => $tempFile,
+                    'tempOutputFile' => $tempOutputFile,
+                ]);
+                throw new \RuntimeException("Failed to replace unwatermarked temp file with watermarked version for $docName");
+            }
+
+            $result = $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+        } finally {
+            foreach ([$tempOutputFile, $tempFile] as $cleanupPath) {
+                if (file_exists($cleanupPath)) {
+                    @unlink($cleanupPath);
+                }
+            }
+        }
+
+        return $result;
     }
 
     public function isEnableUploadDocument($quoteStatusId)
@@ -940,20 +1027,48 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
-    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5)
+    public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5): ?string
     {
-        // Early return if filePath is empty or null to avoid any errors
         if (empty($filePath)) {
             return null;
         }
 
         $expiryTime = now()->addMinutes($expiryTimeInMinutes);
 
-        if (Storage::disk($storageDisk)->exists(path: $filePath)) {
-            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
-        }
+        try {
+            if (! $this->checkAzureFileExistsWithRetry($filePath, $storageDisk)) {
+                return null;
+            }
 
-        return null;
+            return Storage::disk($storageDisk)->temporaryUrl($filePath, $expiryTime);
+        } catch (UnableToCheckExistence $e) {
+            LoggerService::warning(
+                'Unable to check document existence (Azure); returning no URL',
+                [
+                    'path' => $filePath,
+                    'storage_disk' => $storageDisk,
+                    'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
+                    'previous_exception_message' => $e->getPrevious()?->getMessage(),
+                ],
+                $e
+            );
+
+            return null;
+        } catch (Throwable $e) {
+            LoggerService::error(
+                'Error generating temporary document URL',
+                [
+                    'path' => $filePath,
+                    'storage_disk' => $storageDisk,
+                    'exception_class' => $e::class,
+                    'previous_exception_class' => $e->getPrevious() ? $e->getPrevious()::class : null,
+                    'previous_exception_message' => $e->getPrevious()?->getMessage(),
+                ],
+                $e
+            );
+
+            return null;
+        }
     }
 
     /**
@@ -1167,6 +1282,7 @@ class QuoteDocumentService extends BaseService
      */
     private function updateBorLogReference($borReference, $quoteDocument)
     {
+        LoggerService::info('Updating Bor log reference with uploaded document time and status');
         $borLog = BorLog::where('bor_reference', $borReference)->first();
         if ($borLog) {
             $borLog->update([
@@ -1179,7 +1295,7 @@ class QuoteDocumentService extends BaseService
         }
     }
 
-    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType)
+    private function dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, $memberDetailId)
     {
         LoggerService::info('Dispatching OCR job from API');
 
@@ -1188,7 +1304,197 @@ class QuoteDocumentService extends BaseService
             $quote,
             $filePathAzure,
             $fileMimeType,
+            $memberDetailId,
         );
+    }
+
+    /**
+     * Get claim documents grouped by quote type and insurance provider
+     */
+    public function getClaimDocuments(): array
+    {
+        // Get quote type IDs for claim documents
+        $quoteTypeIds = QuoteTypeId::getClaimDocumentQuoteTypes();
+
+        $documents = GenericDocument::whereIn('quote_type_id', $quoteTypeIds)
+            ->where('documentable_type', Claim::class)
+            ->with(['insuranceProvider', 'businessTypeOfInsurance'])
+            ->get();
+
+        // Fallback to empty response structure if no documents are found
+        if ($documents->isEmpty()) {
+            return $this->getEmptyClaimDocumentsResponseStructure();
+        }
+
+        $grouped = $this->groupClaimDocumentsByQuoteType($documents);
+
+        // Ensure all quote types are present in response even if empty
+        $emptyStructure = $this->getEmptyClaimDocumentsResponseStructure();
+        foreach ($emptyStructure as $lob => $structure) {
+            if (! isset($grouped[$lob])) {
+                $grouped[$lob] = $structure;
+            }
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Get empty response structure with all quote types for claim documents
+     */
+    public function getEmptyClaimDocumentsResponseStructure(): array
+    {
+        $structure = [];
+
+        // Get all quote types from enum
+        $quoteTypeIds = QuoteTypeId::getClaimDocumentQuoteTypes();
+        foreach ($quoteTypeIds as $quoteTypeId) {
+            $lob = QuoteTypeId::getDisplayName($quoteTypeId);
+            if ($lob) {
+                $structure[$lob] = [
+                    'quoteTypeId' => $quoteTypeId,
+                    'docs' => [],
+                ];
+            }
+        }
+
+        return $structure;
+    }
+
+    /**
+     * Group claim documents by quote type and insurance provider
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection  $documents
+     */
+    public function groupClaimDocumentsByQuoteType($documents): array
+    {
+        $grouped = $this->getEmptyClaimDocumentsResponseStructure();
+
+        foreach ($documents as $document) {
+            if (! $document->insuranceProvider) {
+                continue;
+            }
+
+            $quoteTypeId = $document->quote_type_id ?? null;
+
+            // Skip if quote_type_id is null
+            if ($quoteTypeId === null) {
+                continue;
+            }
+
+            $lob = QuoteTypeId::getDisplayName($quoteTypeId);
+
+            // If LOB not found or not in grouped structure, skip this document
+            if (! $lob || ! isset($grouped[$lob])) {
+                continue;
+            }
+
+            $docUrl = $document->path ? storageUrl().$document->path : '';
+
+            $docData = [
+                'insuranceProviderId' => $document->insuranceProvider->id,
+                'insuranceProviderCode' => $document->insuranceProvider->code ?? '',
+                'docUrl' => $docUrl,
+                'docTitle' => $document->name,
+            ];
+
+            // Only include business_type_of_insurance for Business LOB (quote_type_id = 5)
+            if ($quoteTypeId === QuoteTypeId::Business && ! empty($document->business_type_of_insurance_id)) {
+                $docData['businessTypeOfInsuranceId'] = $document->business_type_of_insurance_id;
+                $docData['businessTypeOfInsurance'] = $document->businessTypeOfInsurance ? [
+                    'id' => $document->businessTypeOfInsurance->id,
+                    'text' => $document->businessTypeOfInsurance->text ?? null,
+                    'code' => $document->businessTypeOfInsurance->code ?? null,
+                ] : null;
+            }
+
+            $grouped[$lob]['docs'][] = $docData;
+        }
+
+        return $grouped;
+    }
+
+    public function updateQuoteJourney($quote): void
+    {
+        try {
+            $quoteType = QuoteTypes::getName($quote->quote_type_id);
+            if ($quoteType === null || ! in_array($quoteType, QuoteTypes::quoteJourneyOnCustomerDocumentUploadTypes(), true)) {
+                return;
+            }
+
+            $requiredDocumentTypes = $this->getQuoteDocumentsToReceive(
+                $quote->quote_type_id,
+                $quote->registration_type ?? null,
+                $quote->vehicle_use ?? null
+            );
+
+            $requiredCodes = $requiredDocumentTypes->pluck('code')->unique()->values()->all();
+            if ($requiredCodes === []) {
+                return;
+            }
+
+            $distinctPresent = (int) $quote->documents()
+                ->whereIn('document_type_code', $requiredCodes)
+                ->selectRaw('COUNT(DISTINCT document_type_code) as journey_distinct_types')
+                ->value('journey_distinct_types');
+
+            LoggerService::info('Updating Quote Journey', [
+                'required_documents' => $distinctPresent !== count($requiredCodes) ? 'not completed' : 'completed',
+            ]);
+
+            if ($distinctPresent !== count($requiredCodes)) {
+                return;
+            }
+
+            app(QuoteJourneyService::class)->advanceAfterRequiredCustomerDocuments($quote->uuid, (int) $quote->quote_type_id);
+        } catch (Throwable $e) {
+            LoggerService::error('QuoteDocumentService - updateQuoteJourney failed', [
+                'quote_uuid' => $quote->uuid ?? null,
+                'quote_type_id' => $quote->quote_type_id ?? null,
+            ], exception: $e);
+
+            // swallow exception to avoid blocking main upload flow (OCR, watermark dispatch)
+            return;
+        }
+    }
+
+    public function getArchivedDocuments($quoteType, $quoteId): array
+    {
+        LoggerService::info('fn:getArchivedDocuments - Start - QuoteDocumentService', [], [
+            'quote_type' => $quoteType,
+            'quote_id' => $quoteId,
+        ]);
+
+        $quote = $this->getQuoteObject($quoteType, $quoteId);
+        if (! $quote) {
+            return [];
+        }
+
+        $quote->loadMissing(['insuranceProvider', 'plan']);
+
+        $providerCode = $quote->insuranceProvider?->code;
+        $planCode = $quote->plan?->code;
+
+        return $quote->documents()
+            ->onlyTrashed()
+            ->with(self::CREATED_BY_RELATION)
+            ->latest()
+            ->get()
+            ->map(function (QuoteDocument $document) use ($providerCode, $planCode) {
+                return [
+                    'id' => $document->id,
+                    'document_id' => $document->id,
+                    'provider_code' => $providerCode,
+                    'plan_code' => $planCode,
+                    'maf_label' => $document->original_name,
+                    'doc_url' => $document->doc_url,
+                    'watermarked_doc_url' => $document->watermarked_doc_url,
+                    'submitted_by' => $document->createdBy?->email ?? $document->createdBy?->name,
+                    'submitted_on' => $document->created_at,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
 }

@@ -8,6 +8,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Requests\CustomerAddressRequest;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Services\Logger\LoggerService;
@@ -17,25 +18,42 @@ use Illuminate\Validation\ValidationException;
 
 class CustomerAddressService
 {
-    public function createOrUpdateCustomerAddress(array $address, int $customerId, $quoteUuid)
+    public function createOrUpdateCustomerAddress(array $address, int $customerId, $quoteUuid, $quoteTypeId = null)
     {
+        $addressType = $address['address_type'] ?? null;
         if (! empty(array_filter((array) $address))) {
             $address = [
                 'customer_id' => $customerId,
-                'address_type' => $address['address_type'],
-                'quote_type_id' => QuoteTypes::CAR->id(),
+                'address_type' => $addressType,
+                'quote_type_id' => $quoteTypeId ?? QuoteTypes::CAR->id(),
                 'quote_uuid' => $quoteUuid,
-                'office_number' => $address['villa_apartment_office_no'],
-                'floor_number' => $address['floor_no'],
-                'building_name' => $address['villa_building_name'],
-                'street' => $address['street_name'],
-                'area' => $address['area'],
-                'city' => $address['city'],
-                'landmark' => $address['landmark'],
-                'is_default' => $address['address_type'] == 'Home' ? 1 : 0,
+                'office_number' => $address['villa_apartment_office_no'] ?? null,
+                'floor_number' => $address['floor_no'] ?? null,
+                'building_name' => $address['villa_building_name'] ?? null,
+                'street' => $address['street_name'] ?? null,
+                'area' => $address['area'] ?? null,
+                'city' => $address['city'] ?? null,
+                'landmark' => $address['landmark'] ?? null,
+                'is_default' => $addressType == 'Home' ? 1 : 0,
             ];
             $this->createOrUpdateAddress($address);
         }
+    }
+
+    public function syncCustomerAddress(Request $request, QuoteTypes $quoteType, $quote, string $email)
+    {
+        $this->validateAddress($request);
+
+        $customerId = app(CustomerService::class)->getCustomerIdByEmail($email);
+        $addressObj = $request->input('addressObj', []);
+        $addressType = $addressObj['address_type'] ?? null;
+        if (empty($quote) || empty($customerId) || ! in_array($addressType, ['Home', 'Office'], true) || empty(array_filter((array) $addressObj))) {
+            return;
+        }
+
+        $this->sendAddressNotificationToCustomer($quote, $addressObj, $quoteType->id());
+        $this->createOrUpdateCustomerAddress($addressObj, $customerId, $quote->uuid, $quoteType->id());
+        SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType->id());
     }
 
     public function createOrUpdateAddress(array $address)
@@ -181,17 +199,21 @@ class CustomerAddressService
 
     public function triggerBirdFlow($lead, $address, $actionType, $quoteTypeId)
     {
-        if ($lead->embeddedTransactions()->exists()) {
-            LoggerService::info('Checking for courier transaction for lead : '.$lead->uuid);
-            $courierEmbeddedTransaction = $lead->embeddedTransactions
-                ->filter(function ($transaction) {
-                    return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
-                });
+        if (! $lead->embeddedTransactions()->exists()) {
+            LoggerService::info('No embedded transactions found for lead : '.$lead->uuid);
+
+            return;
         }
+
+        LoggerService::info('Checking for courier transaction for lead : '.$lead->uuid);
+        $courierEmbeddedTransaction = $lead->embeddedTransactions
+            ->filter(function ($transaction) {
+                return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
+            });
 
         if (
             ($selectedTransaction = $courierEmbeddedTransaction?->firstWhere('is_selected', 1)) &&
-            in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
+            in_array($selectedTransaction?->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
         ) {
             LoggerService::info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
             $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;

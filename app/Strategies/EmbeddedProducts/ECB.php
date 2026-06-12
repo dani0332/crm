@@ -2,6 +2,13 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
+use App\Enums\CarPlanType;
+use App\Enums\CarVehicleUse;
+use App\Enums\EpEcbExcludeVehicleEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\EmbeddedTransaction;
+use Carbon\Carbon;
+
 class ECB extends EmbeddedProduct
 {
     public function getExcelColumns()
@@ -61,8 +68,7 @@ class ECB extends EmbeddedProduct
             'quoteRequest.carMake',
             'quoteRequest.carModel',
             'quoteRequest.customer',
-            'quoteRequest.customer.customerInsured',
-            'quoteRequest.customer.customerInsured.insured',
+            'quoteRequest.latestInsured',
             'quoteRequest.quoteStatus',
             'quoteRequest.quoteRequestEntityMapping',
             'paymentStatus',
@@ -91,5 +97,47 @@ class ECB extends EmbeddedProduct
         $item->tax_invoice_buyer_no = $item->tax_invoice_buyer_no ?? '';
 
         return $item;
+    }
+
+    public function isCriteriaMatched($quote): bool
+    {
+        $carMakeCode = $quote->carMake?->code;
+        $carModelCode = $quote->carModel?->code;
+        $planRepairType = $quote->plan?->repair_type;
+
+        if (empty($carMakeCode) || empty($carModelCode)) {
+            return false;
+        }
+
+        $isNotExcludedCarMake = ! in_array($carMakeCode, EpEcbExcludeVehicleEnum::CAR_MAKE_CODES);
+        $isNotExcludedCarModel = ! in_array($carModelCode, EpEcbExcludeVehicleEnum::CAR_MODEL_CODES);
+        $isNotCommercialVehicle = $quote->vehicle_use !== CarVehicleUse::COMMERCIAL;
+        $isNotModifiedVehicle = ! $quote->is_modified;
+        $isNotTPLPlan = $planRepairType !== CarPlanType::TPL;
+
+        return $isNotExcludedCarMake
+            && $isNotExcludedCarModel
+            && $isNotCommercialVehicle
+            && $isNotModifiedVehicle
+            && $isNotTPLPlan;
+    }
+
+    public function isDisabled(EmbeddedTransaction $epTransaction): bool
+    {
+        if ($this->preCheckEpTransactionIsDisabled($epTransaction)) {
+            return true;
+        }
+
+        $quote = $epTransaction->quoteRequest;
+        if ($quote === null) {
+            return true;
+        }
+
+        $isCriteriaUnmatched = ! $this->isCriteriaMatched($quote);
+        $isPolicyBookedDateValid = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked
+            ? isValidDate($quote->policy_booking_date) && Carbon::parse($quote->policy_booking_date)->diffInDays(Carbon::now()) <= 30
+            : true;
+
+        return $isCriteriaUnmatched || ! $isPolicyBookedDateValid;
     }
 }

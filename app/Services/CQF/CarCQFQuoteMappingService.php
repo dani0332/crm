@@ -8,19 +8,26 @@ use App\Enums\CarRegistrationType;
 use App\Enums\carTypeInsuranceCode;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UAELicenseHeldForEnum;
+use App\Models\CarPlan;
 use App\Models\CarQuote;
+use App\Models\PersonalQuote;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\LookupRepository;
 use App\Services\RenewalsAddonServices;
+use App\Traits\ResolvesCommission;
 use Illuminate\Support\Carbon;
 
 class CarCQFQuoteMappingService
 {
+    use ResolvesCommission;
     public function mapCarCQFRenewalQuote(CarQuote $quote, RenewalsUploadLeads $renewalsUploadLeads, string $quoteUuid): array
     {
+        $quote->loadMissing('payments');
+
         $car_type_insurance_id = $this->getCarTypeInsuranceId($quote) ?? null;
         $current_insurance_status = match ((int) $car_type_insurance_id) {
             CarTypeOfInsuranceIdEnum::Comprehensive => 'ACTIVE_COMP',
@@ -49,6 +56,7 @@ class CarCQFQuoteMappingService
             'previous_policy_start_date' => $quote->policy_start_date,
             'previous_policy_expiry_date' => $quote->policy_expiry_date,
             'previous_quote_policy_premium' => $quote->premium,
+            'previous_quote_policy_commission' => $this->resolveTotalCommission($quote->payments->first()),
             'previous_advisor_id' => $quote->advisor_id,
             'previous_quote_id' => $quote->id,
             'car_make_id' => $quote->car_make_id,
@@ -74,8 +82,8 @@ class CarCQFQuoteMappingService
             'uae_license_held_for_id' => $this->getNextUAELicenseHeldForId($quote),
         ];
 
-        $lookup = LookupRepository::where('key', \App\Enums\LookupsEnum::TRANSACTION_TYPES)
-            ->where('code', \App\Enums\LookupsEnum::EXT_CUSTOMER_RENWAL)
+        $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)
+            ->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)
             ->first();
 
         if ($lookup) {
@@ -87,6 +95,8 @@ class CarCQFQuoteMappingService
 
     public function mapFailedQuoteData(CarQuote $quote): array
     {
+        $quote->loadMissing('payments');
+
         return [
             'customer_name' => $quote->first_name.' '.$quote->last_name ?? null,
             'email' => $quote->email ?? null,
@@ -105,6 +115,8 @@ class CarCQFQuoteMappingService
             'year' => $quote->year_of_manufacture ?? null,
             'previous_advisor' => $quote->advisor?->email ?? null,
             'previous_quote_policy_premium' => $quote->premium ?? null,
+            'previous_quote_policy_commission' => $this->resolveTotalCommission($quote->payments->first()),
+            'previous_ref_id' => $quote->code ?? null,
             'source' => $quote->source ?? null,
             'notes' => $quote->additional_notes ?? null,
             'plan_name' => null,
@@ -112,12 +124,14 @@ class CarCQFQuoteMappingService
         ];
     }
 
-    public function getCarTypeInsuranceId(CarQuote $quote)
+    public function getCarTypeInsuranceId(CarQuote|PersonalQuote $quote): ?int
     {
+        $plan = $this->resolveQuotePlan($quote);
+
         // Collect possible fields to check for insurance type
         $fields = [
-            $quote?->plan?->insurance_type ?? '',
-            $quote?->plan?->text ?? '',
+            $plan?->insurance_type ?? '',
+            $plan?->text ?? '',
         ];
 
         // Normalize fields for case-insensitive comparison
@@ -129,30 +143,52 @@ class CarCQFQuoteMappingService
         }
 
         // Check for partial match against enum values
+        // Maps enum values to their car_type_insurance codes (TPL is stored as "Third Party Only")
         $typeInsuranceCodes = [
-            carTypeInsuranceCode::Comprehensive,
-            carTypeInsuranceCode::ThirdPartyOnly,
+            carTypeInsuranceCode::Comprehensive => carTypeInsuranceCode::Comprehensive,
+            carTypeInsuranceCode::ThirdPartyOnly => carTypeInsuranceCode::ThirdPartyOnly,
+            carTypeInsuranceCode::TPL => carTypeInsuranceCode::ThirdPartyOnly,
         ];
 
-        foreach ($typeInsuranceCodes as $enumCase) {
+        foreach ($typeInsuranceCodes as $enumCase => $dbCode) {
             $enumValue = strtolower($enumCase);
 
             foreach ($fields as $field) {
                 if (str_contains($field, $enumValue)) {
-                    return app(RenewalsAddonServices::class)->getCarTypeOfInsurance(ucfirst($enumCase))->id ?? null;
+                    return app(RenewalsAddonServices::class)->getCarTypeOfInsurance($dbCode)->id ?? null;
                 }
             }
         }
 
         // Fallback: return the first non-empty original value
         foreach ($fields as $idx => $field) {
-            $original = $quote?->plan?->insurance_type ?? $quote?->plan?->text;
+            $original = $plan?->insurance_type ?? $plan?->text;
             if (! empty($original)) {
                 return app(RenewalsAddonServices::class)->getCarTypeOfInsurance($original)->id ?? null;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Resolve the related CarPlan without touching CarQuote's column-named relationship
+     * methods (e.g. plan_id()), which recurse infinitely when the model is only partially
+     * hydrated and the plan_id attribute is not loaded.
+     */
+    private function resolveQuotePlan(CarQuote|PersonalQuote $quote): ?CarPlan
+    {
+        if ($quote instanceof PersonalQuote) {
+            return $quote->carPlan;
+        }
+
+        if ($quote->relationLoaded('plan')) {
+            return $quote->getRelation('plan');
+        }
+
+        $planId = $quote->getRawOriginal('plan_id');
+
+        return $planId !== null ? CarPlan::find($planId) : null;
     }
 
     public function getNextUAELicenseHeldForId(CarQuote $quote)

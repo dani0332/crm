@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
@@ -18,6 +19,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\QuoteStatusLogService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -30,8 +32,16 @@ class BusinessQuoteObserver
 
     public function updating(BusinessQuote $quote): void
     {
-        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
-            $quote->quote_status_date = now();
+        if ($quote->isDirty('quote_status_id')) {
+            app(QuoteStatusLogService::class)->createQuoteStatusLog(
+                QuoteTypeId::Business,
+                $quote,
+                $quote->getOriginal('quote_status_id'),
+            );
+
+            if (! $quote->isDirty('quote_status_date')) {
+                $quote->quote_status_date = now();
+            }
         }
     }
 
@@ -65,7 +75,6 @@ class BusinessQuoteObserver
                     $businessTypeInsurance = QuoteTypes::CORPLINE->value;
                     break;
             }
-
             if (! $businessQuote->isSuppressIntroEmail() && $businessQuote->source != LeadSourceEnum::IMCRM && ! empty($businessTypeInsurance)) {
                 LoggerService::info(self::class." -  business_type_of_insurance ID: {$businessQuote->business_type_of_insurance_id} | Ref-ID: {$businessQuote->uuid} ");
                 LoggerService::info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$businessQuote->advisor_id} | Ref-ID: {$businessQuote->uuid}  ");
@@ -119,7 +128,7 @@ class BusinessQuoteObserver
                 $emirateOfRegistrationId = null;
                 if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                     $quoteTypeId = QuoteTypeId::GroupMedical;
-                    $emirateOfRegistrationId = $businessQuote->latestInsured?->emirate_of_registration_id ?? null;
+                    $emirateOfRegistrationId = $businessQuote->emirate_of_registration_id ?? null;
                 }
 
                 app(BranchAssignmentService::class)->saveBranchOverride($businessQuote, $quoteTypeId);
@@ -161,6 +170,24 @@ class BusinessQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            try {
+                // Determine the correct quote type based on business type of insurance
+                $quoteTypeId = QuoteTypeId::Business;
+                if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                    $quoteTypeId = QuoteTypeId::GroupMedical;
+                }
+                QuotePolicyBooked::dispatch($businessQuote->uuid, $quoteTypeId);
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - dispatch QuotePolicyBooked event failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
+            }
         }
 
         if (

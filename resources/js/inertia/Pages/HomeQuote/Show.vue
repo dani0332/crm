@@ -6,10 +6,10 @@ import {
 
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -79,7 +79,7 @@ const can = permission => useCan(permission);
 const modelClass = 'App\\Models\\PersonalQuote';
 const modelClassHome = 'App\\Models\\HomeQuote';
 const processingOCBEmailNB = ref(false);
-
+const genericRequestEnum = page.props.genericRequestEnum;
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
 );
@@ -144,7 +144,6 @@ const confirmDeleteData = reactive({
 
 const contactLoader = ref(false),
   activityActionEdit = ref(false),
-  historyLoading = ref(false),
   toggleLoader = ref(false);
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -322,29 +321,6 @@ const activityDeleteConfirmed = () => {
   );
 };
 
-// history data
-const historyData = ref(null);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    route('getLeadHistory', {
-      modelType: 'home',
-      recordId: page.props.quote.id,
-    }),
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
-
 const dateToYMD = date => {
   if (date) {
     const d = new Date(date);
@@ -397,8 +373,10 @@ const customerProfileForm = useForm({
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
-    page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ??
-    null,
+    page.props.quote?.latest_insured?.id_type ===
+    genericRequestEnum.TRADE_LICENSE
+      ? page.props.quote?.latest_insured?.id_number
+      : null,
   company_name:
     page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
     null,
@@ -462,8 +440,8 @@ const searchByTradeLicense = trigger => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.entity_id = response.id; // this is the insured id
+        tradeLicenseEntity.trade_license = response.id_number;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
         tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
@@ -486,7 +464,7 @@ const linkEntity = () => {
   let entityDetails = {
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
-    entity_id: tradeLicenseEntity.entity_id,
+    entity_id: tradeLicenseEntity.entity_id, // this is the insured id
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
@@ -496,7 +474,7 @@ const linkEntity = () => {
         let response = res.data.response;
 
         // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.trade_license_no = response.trade_license_no; // this details fetched from entity table
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
@@ -1299,7 +1277,7 @@ function handleOcrNotification(event) {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ quote?.car_plan?.insurance_provider?.text }}</dd>
+                <dd>{{ quote?.insurance_provider?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1647,7 +1625,7 @@ function handleOcrNotification(event) {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
-                <dd>{{ quote.currently_insured_with_id_text }}</dd>
+                <dd>{{ quote?.currently_insured_with?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -2544,7 +2522,12 @@ function handleOcrNotification(event) {
       :expanded="sectionExpanded"
     />
 
-    <LeadHistory :quote="$page.props.quote" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      modelType="home"
+      :quoteId="$page.props.quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <CustomerChatLogs
       :customerName="quote?.first_name + ' ' + quote?.last_name"

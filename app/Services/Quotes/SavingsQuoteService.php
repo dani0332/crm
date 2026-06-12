@@ -2,8 +2,12 @@
 
 namespace App\Services\Quotes;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
+use App\Enums\InvestmentFrequencyEnum;
+use App\Enums\LookupsEnum;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
@@ -11,15 +15,24 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
+use App\Models\CurrencyType;
+use App\Models\InsuranceProviderPlan;
+use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
+use App\Models\RiderOption;
 use App\Models\SavingsQuote;
 use App\Services\BranchAssignmentService;
 use App\Services\HttpRequestService;
+use App\Services\KenService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -126,7 +139,7 @@ class SavingsQuoteService extends BaseQuoteService
             'currencyId' => (int) $data['currency_id'],
             'investmentAmount' => (float) $data['investment_amount'],
             'investmentCriteriaId' => (int) $data['investment_frequency'],
-            'additionalNotes' => $data['notes'],
+            'additionalNotes' => $data['additional_notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'utmSource' => '',
@@ -144,7 +157,7 @@ class SavingsQuoteService extends BaseQuoteService
         $response = Capi::request('/api/v1-save-savings-quote', 'post', $data);
 
         if (isset($response->quoteUID)) {
-            $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID, true);
+            $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID, false);
         }
 
         return $response;
@@ -159,7 +172,12 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote.tenure',
             'subSource',
             'subSourceOption',
+            'quoteCustomerPlan',
+            'latestInsured',
+            'latestInsured.insuredKyc',
             'branch:id,name',
+            'customer',
+            'passportVisaDetails',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -221,28 +239,68 @@ class SavingsQuoteService extends BaseQuoteService
             ->where('uuid', $uuid)->firstOrFail();
     }
 
-    public function update(string $uuid, array $data)
+    public function update($uuid, $data)
     {
+        $isAnyFieldChanged = false;
+        $quote = null;
 
-        return DB::transaction(function () use ($uuid, $data) {
+        LoggerService::startQuoteLogging($uuid);
+
+        [$quote, $isAnyFieldChanged] = DB::transaction(function () use ($uuid, $data) {
+            $isAnyFieldChanged = false;
+
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
-                'sub_source_id', 'sub_source_options_id', 'notes',
+                'sub_source_id', 'sub_source_options_id', 'additional_notes',
             ]);
-
             $quoteData['updated_by_id'] = Auth::id();
-
+            LoggerService::info('updateSavingsQuote: ', $quoteData);
             $quote->update($quoteData);
 
-            $quote->savingsQuote()->updateOrCreate(
-                ['personal_quote_id' => $quote->id],
-                $data
-            );
+            if ($quote->savingsQuote) {
+                LoggerService::info('fn: updateSavingsQuote - Savings Quote Found');
 
-            return $quote;
+                $fieldsToRevisePlans = [
+                    'dob',
+                    'nationality_id',
+                    'gender',
+                    'tenure_id',
+                    'currency_id',
+                    'investment_amount',
+                    'investment_criteria_id',
+                    'purpose_id',
+                    'marital_status_id',
+                ];
+
+                $savingsQuote = $quote->savingsQuote;
+                foreach ($fieldsToRevisePlans as $field) {
+                    if (isset($data[$field]) && $data[$field] != $savingsQuote->$field) {
+                        $isAnyFieldChanged = true;
+                        break;
+                    }
+                }
+
+                $savingsQuoteData = Arr::only($data, app(SavingsQuote::class)->getFillable());
+                $quote->savingsQuote->fill($savingsQuoteData);
+                $quote->savingsQuote->save();
+            } else {
+                LoggerService::info('fn: updateSavingsQuote - Savings Quote Not Found, Creating New One');
+
+                $savingsQuoteData = Arr::only($data, app(SavingsQuote::class)->getFillable());
+                $savingsQuote = $quote->savingsQuote()->create($savingsQuoteData);
+            }
+
+            return [$quote, $isAnyFieldChanged];
         });
+
+        if ($isAnyFieldChanged) {
+            $this->getQuotePlans($uuid, true);
+            LoggerService::info('fn: updateSavingsQuote - Fields Changed, Plans to be revised');
+        }
+
+        return $quote;
     }
 
     public function getShowData(string $uuid)
@@ -253,8 +311,28 @@ class SavingsQuoteService extends BaseQuoteService
 
         $data['permissions']['canEditQuote'] = ($this->can(Auth::user(), PermissionsEnum::SAVINGS_QUOTES_EDIT) || (userHasProduct(quoteTypeCode::SAVINGS) && $this->can(Auth::user(), PermissionsEnum::VIEW_ALL_LEADS)));
 
+        // Get lookups for CreatePlan and PlanDetails dropdowns
+        $lookUpData = $this->getSavingsQuoteLookUpData();
+        $localLookups = $this->getLocalLookups();
+
+        $eligiblePlanCodesRaw = (string) getAppStorageValueByKey(
+            ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES,
+            default: '',
+            useCache: true
+        );
+        $passportEligiblePlanCodes = array_values(array_filter(
+            array_map('trim', explode(',', $eligiblePlanCodesRaw)),
+            static fn (string $code): bool => $code !== ''
+        ));
+
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
+            'ocrEligiblePlanCodes' => [
+                OCRDocumentTypeEnum::PASSPORT->value => $passportEligiblePlanCodes,
+            ],
+            'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL'),
+            'lookUpData' => $lookUpData,
+            'localLookups' => $localLookups,
             ...$data,
         ];
     }
@@ -262,6 +340,53 @@ class SavingsQuoteService extends BaseQuoteService
     public function getSavingsQuoteLookUpData()
     {
         return app(LookupService::class)->getSavingsQuoteLookUpData();
+    }
+
+    /**
+     * Get local savings lookups from database for CreatePlan and PlanDetails dropdowns
+     */
+    public function getLocalLookups(): array
+    {
+        // Plan types from lookups table
+        $planTypes = Lookup::where('key', 'plan-type')
+            ->where('quote_type_id', QuoteTypeId::Savings)
+            ->where('is_active', 1)
+            ->select('id', 'code', 'text')
+            ->get();
+
+        // Insurance provider plans from insurance_provider_plans table
+        $providerPlans = InsuranceProviderPlan::where('quote_type_id', QuoteTypeId::Savings)
+            ->active()
+            ->with(['eligibilities', 'currencyCoverages.currency', 'riders'])
+            ->get();
+
+        // Investment frequencies from lookups table
+        $investmentFrequencies = Lookup::where('key', LookupsEnum::INVESTMENT_TYPE)
+            ->where('is_active', 1)
+            ->select('id', 'code', 'text')
+            ->get();
+
+        // Currencies from currency_type table
+        $currencies = CurrencyType::withActive()
+            ->select('id', 'code', 'text')
+            ->get();
+
+        // Payment terms (static values based on investment frequency)
+        $paymentTerms = collect([
+            ['id' => 'monthly', 'code' => 'monthly', 'text' => 'Monthly', 'value' => 12],
+            ['id' => 'quarterly', 'code' => 'quarterly', 'text' => 'Quarterly', 'value' => 3],
+            ['id' => 'semi_annually', 'code' => 'semi_annually', 'text' => 'Semi-Annually', 'value' => 2],
+            ['id' => 'annually', 'code' => 'annually', 'text' => 'Annually', 'value' => 1],
+            ['id' => 'single_payment', 'code' => 'single_payment', 'text' => 'Single Payment', 'value' => 0],
+        ]);
+
+        return [
+            'planTypes' => $planTypes,
+            'providerPlans' => $providerPlans,
+            'investmentFrequencies' => $investmentFrequencies,
+            'currencies' => $currencies,
+            'paymentTerms' => $paymentTerms,
+        ];
     }
 
     public function getInvestmentFrequencies()
@@ -293,9 +418,8 @@ class SavingsQuoteService extends BaseQuoteService
         return $listQuotePlans;
     }
 
-    public function getQuotePlans($id, $extraData = [])
+    public function getQuotePlans(string $uuid, bool $getLatestRating = false)
     {
-        $quoteUuId = SavingsQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-savings-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
@@ -304,12 +428,13 @@ class SavingsQuoteService extends BaseQuoteService
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
-            'quoteUID' => $quoteUuId,
+            'quoteUID' => $uuid,
+            'getLatestRating' => $getLatestRating,
             'lang' => 'en',
-            ...$extraData,
+            'callSource' => 'imcrm',
         ];
 
-        $client = new \GuzzleHttp\Client;
+        $client = new Client;
 
         try {
             $kenRequest = $client->post(
@@ -335,7 +460,7 @@ class SavingsQuoteService extends BaseQuoteService
                 return $getdecodeContents;
 
             }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+        } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -393,6 +518,51 @@ class SavingsQuoteService extends BaseQuoteService
         }
 
         return $response;
+    }
+
+    /**
+     * Toggle visibility for multiple savings plans (Show/Hide)
+     *
+     * @param  Request  $request
+     * @return int|string
+     */
+    public function updateManualPlansBulk($request)
+    {
+        if ($request->planIds && isset($request->toggle) && isset($request->quote_uuid)) {
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-savings-quote-plan';
+            $apiToken = config('constants.KEN_API_TOKEN');
+            $apiTimeout = config('constants.KEN_API_TIMEOUT');
+            $apiUserName = config('constants.KEN_API_USER');
+            $apiPassword = config('constants.KEN_API_PWD');
+
+            $isDisabled = filter_var($request->toggle, FILTER_VALIDATE_BOOLEAN);
+            $plansArray = [];
+
+            foreach ($request->planIds as $planId) {
+                $plansArray[] = [
+                    'planId' => (int) $planId,
+                    'isDisabled' => $isDisabled,
+                ];
+            }
+
+            $dataArray = [
+                'quoteUID' => $request->quote_uuid,
+                'update' => true,
+                'plans' => $plansArray,
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            return $this->httpService->processRequest($dataArray, $apiCreds);
+        }
+
+        return 'Invalid request parameters';
     }
 
     public function isPlanModifyAllowed($data)
@@ -470,9 +640,9 @@ class SavingsQuoteService extends BaseQuoteService
 
         // Determine investment frequency based on the plan source
         $investmentFrequency = match ($planSource) {
-            'regular' => \App\Enums\InvestmentFrequencyEnum::REGULAR->value,
-            'lumpsum' => \App\Enums\InvestmentFrequencyEnum::LUMPSUM->value,
-            default => \App\Enums\InvestmentFrequencyEnum::REGULAR->value
+            'regular' => InvestmentFrequencyEnum::REGULAR->value,
+            'lumpsum' => InvestmentFrequencyEnum::LUMPSUM->value,
+            default => InvestmentFrequencyEnum::REGULAR->value
         };
 
         // Extract eligibility values
@@ -545,10 +715,12 @@ class SavingsQuoteService extends BaseQuoteService
             'keyFeatureDocument' => $plan->keyFeatureDocument ?? [],
             'description' => $plan->description ?? '',
             'policyWordings' => $plan->policyWordings ?? [],
+            'fundDetails' => $plan->fundDetails ?? [],
             'actualPremium' => $plan->actualPremium ?? 0,
             'insurerQuoteNo' => $plan->insurerQuoteNo ?? '',
             'isDisabled' => $plan->isDisabled ?? false,
             'isManualUpdate' => $plan->isManualUpdate ?? false,
+            'instantPolicy' => (bool) ($plan->instantPolicy ?? false),
         ];
     }
 
@@ -561,5 +733,228 @@ class SavingsQuoteService extends BaseQuoteService
         $found = collect($eligibility)->firstWhere('code', $code);
 
         return $found ? $found->value : 'N/A';
+    }
+
+    /**
+     * Call KEN to fetch savings provider plan data (e.g. lump sum for Purple Investment).
+     *
+     * @param  array<string, mixed>  $payload  Body for /fetch-savings-provider-plan (quoteUID is set by the controller).
+     * @return array{success: bool, data?: mixed, message?: string, status?: int}
+     */
+    public function fetchSavingsProviderPlan(array $payload): array
+    {
+        LoggerService::info('SavingsQuoteService - fetchSavingsProviderPlan', [
+            'quoteUID' => $payload['quoteUID'] ?? null,
+            'planId' => $payload['planId'] ?? null,
+        ]);
+
+        try {
+            $response = app(KenService::class)->sendRequest('/fetch-savings-provider-plan', 'post', $payload);
+        } catch (ConnectionException $e) {
+            LoggerService::error('SavingsQuoteService - fetchSavingsProviderPlan connection failed', exception: $e);
+
+            return [
+                'success' => false,
+                'message' => 'Unable to reach the savings provider service. Please try again later.',
+                'status' => 503,
+            ];
+        }
+
+        if ($response->successful()) {
+            return ['success' => true, 'data' => $response->json()];
+        }
+
+        $json = $response->json();
+        $message = 'Failed to fetch savings provider plan';
+        if (is_array($json)) {
+            $message = $json['message'] ?? $json['msg'] ?? $json['error'] ?? $message;
+            if (! is_string($message)) {
+                $message = 'Failed to fetch savings provider plan';
+            }
+        }
+
+        return [
+            'success' => false,
+            'message' => $message,
+            'status' => $response->status(),
+        ];
+    }
+
+    /**
+     * Process savings plan (create or update) - handles new payload structure
+     */
+    public function processSavingsPlan(array $payload, string $quoteUuId)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-savings-quote-plan';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+
+        // Build the payload for Ken API - always use route-validated quoteUuId to prevent IDOR
+        $savingsPlanData = [
+            'quoteUID' => $quoteUuId,
+            'update' => $payload['update'] ?? false,
+            'plans' => [],
+        ];
+
+        // Process each plan in the payload
+        foreach ($payload['plans'] ?? [] as $plan) {
+            $processedPlan = [
+                'actualPremium' => (float) ($plan['actualPremium'] ?? 0),
+                'discountPremium' => (float) ($plan['discountPremium'] ?? 0),
+                'planId' => (int) ($plan['planId'] ?? 0),
+                'isDisabled' => (bool) ($plan['isDisabled'] ?? false),
+                'isManualUpdate' => (bool) ($plan['isManualUpdate'] ?? true),
+                'insurerQuoteNo' => strval($plan['insurerQuoteNo'] ?? ''),
+                'investmentAmount' => (float) ($plan['investmentAmount'] ?? 0),
+                'currency' => strval($plan['currency'] ?? 'AED'),
+                'currencyId' => (int) ($plan['currencyId'] ?? 0),
+                'paymentTerm' => (int) ($plan['paymentTerm'] ?? 0),
+                'tenure' => (int) ($plan['tenure'] ?? 0),
+                'tenureId' => isset($plan['tenureId']) ? (int) $plan['tenureId'] : null,
+                'ror' => (float) ($plan['ror'] ?? 0),
+                'investmentFrequency' => strval($plan['investmentFrequency'] ?? 'Regular'),
+                'investmentFrequencyId' => isset($plan['investmentFrequencyId']) ? (int) $plan['investmentFrequencyId'] : null,
+                'lumpSumPayout' => isset($plan['lumpSumPayout']) ? (float) $plan['lumpSumPayout'] : null,
+            ];
+
+            // Process riders if present
+            if (isset($plan['riders']) && is_array($plan['riders'])) {
+                $processedPlan['riders'] = array_map(function ($rider) {
+                    return [
+                        'riderId' => (int) ($rider['riderId'] ?? 0),
+                        'active' => (bool) ($rider['active'] ?? false),
+                        'price' => isset($rider['price']) ? (float) $rider['price'] : 0,
+                        'coverValue' => isset($rider['coverValue']) ? (float) $rider['coverValue'] : 0,
+                    ];
+                }, $plan['riders']);
+            }
+
+            $savingsPlanData['plans'][] = $processedPlan;
+        }
+
+        $apiCreds = [
+            'apiEndPoint' => $apiEndPoint,
+            'apiToken' => $apiToken,
+            'apiTimeout' => $apiTimeout,
+            'apiUserName' => $apiUserName,
+            'apiPassword' => $apiPassword,
+        ];
+
+        LoggerService::info('SavingsQuoteService - processSavingsPlan', [
+            'quote_uuid' => $quoteUuId,
+            'update' => $savingsPlanData['update'],
+            'plansData' => $savingsPlanData['plans'] ?? [],
+            'url' => strval(request()->url()),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => strval(Auth::id()),
+        ]);
+
+        return $this->httpService->processRequest($savingsPlanData, $apiCreds);
+    }
+
+    /**
+     * Create a new savings plan manually (deprecated - use processSavingsPlan)
+     *
+     * @deprecated Use processSavingsPlan instead
+     */
+    public function createSavingsPlan($request, $quoteUuId)
+    {
+        // Legacy support - convert old format to new format
+        $payload = [
+            'quoteUID' => $quoteUuId,
+            'update' => false,
+            'plans' => [
+                [
+                    'planId' => $request->savings_plan_id,
+                    'investmentAmount' => $request->actual_premium ?? 0,
+                    'currency' => 'AED',
+                    'currencyId' => 2,
+                    'paymentTerm' => 1,
+                    'tenure' => 10,
+                    'ror' => 0,
+                    'investmentFrequency' => 'Regular',
+                    'isDisabled' => false,
+                    'isManualUpdate' => true,
+                    'insurerQuoteNo' => $request->insurer_quote_no ?? '',
+                ],
+            ],
+        ];
+
+        return $this->processSavingsPlan($payload, $quoteUuId);
+    }
+
+    /**
+     * Get provider plans from database (like Life)
+     */
+    public function getProviderPlans($providerId)
+    {
+        return InsuranceProviderPlan::where(['provider_id' => $providerId, 'quote_type_id' => QuoteTypeId::Savings])
+            ->active()
+            ->with(['eligibilities', 'currencyCoverages.currency'])
+            ->get();
+    }
+
+    /**
+     * Get riders for a plan (like Life)
+     */
+    public function getRiders($planId)
+    {
+        return RiderOption::where('plan_id', $planId)
+            ->active()
+            ->whereHas('rider', fn ($q) => $q->active())
+            ->select('id', 'rider_id', 'plan_id', 'input_required', 'input_type', 'max_age', 'cover_type')
+            ->with(['rider' => fn ($q) => $q->select('id', 'text', 'code')->active()])
+            ->get();
+    }
+
+    /**
+     * Toggle savings plan visibility (hide/show)
+     *
+     * @return mixed
+     */
+    public function toggleSavingsPlanVisibility(array $data)
+    {
+        LoggerService::info('fn: toggleSavingsPlanVisibility', extra: [
+            'data' => $data,
+        ]);
+
+        // If providerId is not provided, try to get it from the quote
+        if (empty($data['providerId']) && ! empty($data['quoteUID'])) {
+            $quote = PersonalQuote::where('uuid', $data['quoteUID'])->first();
+            if ($quote && $quote->insurance_provider_id) {
+                $data['providerId'] = $quote->insurance_provider_id;
+            }
+        }
+
+        return app(KenService::class)->request('/toggle-savings-plan-visibility', 'post', $data);
+    }
+
+    public function updateExchangeRate(string $quoteUID, $exchangeRate)
+    {
+        LoggerService::startQuoteLogging($quoteUID);
+
+        LoggerService::info('fn: updateExchangeRate', extra: [
+            'exchangeRate' => $exchangeRate,
+        ]);
+
+        $quote = SavingsQuote::where('uuid', $quoteUID)->first();
+
+        if (! $quote) {
+            LoggerService::error('fn: updateExchangeRate - Quote not found', extra: ['quoteUID' => $quoteUID]);
+
+            return null;
+        }
+
+        $quote->exchange_rate = $exchangeRate;
+        if ($quote->save()) {
+            LoggerService::info('fn: updateExchangeRate - Exchange rate updated successfully');
+        } else {
+            LoggerService::error('fn: updateExchangeRate - Failed to update exchange rate');
+        }
+
+        return $quote;
     }
 }

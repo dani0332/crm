@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -24,7 +25,7 @@ class Customer extends Model implements AuditableContract
     /**
      * customer detail relation
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function getAuditables()
     {
@@ -118,59 +119,23 @@ class Customer extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function additionalContacts()
     {
         return $this->hasMany(CustomerAdditionalContact::class, 'customer_id', 'id');
     }
 
-    public function insured()
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'customer_id', // Foreign key on CustomerInsured table
-            'id', // Foreign key on Insured table
-            'id', // Local key on Customer table
-            'insured_id' // Local key on CustomerInsured table
-        );
-    }
-
-    // Get all insured records for this customer
-    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    public function insureds()
     {
         return $this->hasManyThrough(
             Insured::class,
             CustomerInsured::class,
-            'customer_id', // Foreign key on CustomerInsured table
-            'id', // insured.id
-            'id', // personal_quotes.id
-            'insured_id' // customer_insured.insured_id
-        );
-    }
-
-    // Get the latest/most recent insured record for this quote
-    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
-    {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
             'customer_id', // customer_insured.customer_id
             'id', // insured.id
-            'id', // customer.id
+            'id', // customer.id (customer_insured.customer_id)
             'insured_id' // customer_insured.insured_id
-        )->latest('customer_insured.updated_at');
-    }
-
-    /**
-     * Get all customer insured records associated with this customer.
-     *
-     * @todo Review this relationship after customer insured process is updated
-     */
-    public function customerInsured(): HasMany
-    {
-        return $this->hasMany(CustomerInsured::class, 'customer_id', 'id');
+        )->where('customer_insured.is_active', true);
     }
 
     public function pcpTagFormatted(): Attribute
@@ -185,7 +150,7 @@ class Customer extends Model implements AuditableContract
     public static function formattedPcpTagCase($tableAlias = 'c'): string
     {
         return '
-            CASE 
+            CASE
                 WHEN '.$tableAlias.".pcp_tag = 1 THEN 'Yes'
                 WHEN ".$tableAlias.".pcp_tag = 0 THEN 'Ex-PC'
                 ELSE 'No'
@@ -196,5 +161,10 @@ class Customer extends Model implements AuditableContract
     public function personalQuote(): HasMany
     {
         return $this->hasMany(PersonalQuote::class, 'customer_id', 'id');
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(CustomerBankAccount::class, 'customer_id', 'id');
     }
 }

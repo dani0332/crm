@@ -34,11 +34,11 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
-use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Rules\PlaceholderPrimaryEmail;
 use App\Services\Life\EmbeddedProductService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -528,6 +528,8 @@ class SplitPaymentService
                 return DocumentTypeCode::GMQPD_RECEIPT;
             case QuoteTypes::SAVINGS->value:
                 return DocumentTypeCode::SPD_RECEIPT;
+            case QuoteTypes::DEVICE->value:
+                return DocumentTypeCode::DEVICE_SMARTPHONE_PAYMENT_RECEIPT;
             default:
                 return DocumentTypeCode::CPD_RECEIPT;
         }
@@ -591,7 +593,8 @@ class SplitPaymentService
                 LoggerService::info("Generating embedded payment link for {$request->paymentCode}-{$request->splitPaymentId}.");
                 $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
                 $lob = strtolower($modelType);
-                $paymentLink = "{$paymentLink}/{$lob}-insurance/quote/{$request->quoteUuid}/payment";
+                $urlIdentifier = $this->getPaymentLinkURLIdentifier($modelType);
+                $paymentLink = "{$paymentLink}/{$urlIdentifier}-insurance/quote/{$request->quoteUuid}/payment";
 
                 $insuranceProvider = getInsuranceProvider($payment, $lob);
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
@@ -626,6 +629,11 @@ class SplitPaymentService
         $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
 
         return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
+    }
+
+    private function getPaymentLinkURLIdentifier($modelType)
+    {
+        return strtolower(quoteTypeCode::resolveQuoteType($modelType));
     }
 
     public function generateInsurerPaymentLink($request)
@@ -845,7 +853,6 @@ class SplitPaymentService
                     if (in_array($sendUpdateLog->status, SendUpdateLogStatusEnum::getSendUpdateBookingStatuses())) {
                         LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} Send update log status is already in the list of update booking queued, update booking failed or update booked, so skipping the update");
                     } else {
-                        app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                         $sendUpdateLog->update([
                             'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
                         ]);
@@ -945,6 +952,32 @@ class SplitPaymentService
             return $errorMessage;
         }
 
+        $primaryEmailQuote = $quoteModel;
+        if ($sendUpdateId > 0) {
+            $quoteType = QuoteTypes::getName($quoteModel->quote_type_id)?->value;
+            if ($quoteType) {
+                $primaryEmailQuote = $this->getQuoteObjectBy($quoteType, $quoteModel->quote_uuid, 'uuid');
+            }
+        }
+
+        if (PlaceholderPrimaryEmail::hasPlaceholderPrimaryEmail($primaryEmailQuote ?: null)) {
+            $errorMessage = PlaceholderPrimaryEmail::message();
+            LoggerService::warning('Master payment approval blocked due to placeholder primary email', [
+                'quote_code' => $quoteModel->code,
+                'send_update_id' => $sendUpdateId,
+                'quote_uuid' => $primaryEmailQuote->uuid ?? null,
+            ]);
+
+            if ($isFromJob && $splitPaymentId > 0) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update([
+                    'status' => PaymentProcessJobEnum::FAILED,
+                    'message' => $errorMessage,
+                ]);
+            }
+
+            return $errorMessage;
+        }
+
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $masterPaymentStatus = $masterPayment->payment_status_id;
 
@@ -981,12 +1014,11 @@ class SplitPaymentService
 
             $successMessage = 'Processing master payment approval completed';
 
-            if (($masterPayment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
+            if (($masterPayment->insuranceProvider->code == InsuranceProviderEnum::QIC->value && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
                 if ($sendUpdateId) {
                     if (in_array($quoteModel->status, SendUpdateLogStatusEnum::getSendUpdateBookingStatuses())) {
                         LoggerService::info("Master payment code: {$quoteModel->code} Quote status is already in the list of update booking queued, update booking failed or update booked, so skipping the update");
                     } else {
-                        app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                         $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                         LoggerService::info("Master payment code: {$quoteModel->code} Quote status updated to Transaction Approved for send update");
                     }
@@ -1002,21 +1034,11 @@ class SplitPaymentService
                 }
                 $quoteModel->save();
                 LoggerService::info("Master payment code: {$quoteModel->code} - Old Quote Status: {$oldQuoteStatus} New Quote Status: {$quoteModel->quote_status_id}");
-                if (! $sendUpdateId && $oldQuoteStatus != null && $quoteModel->quote_status_id != $oldQuoteStatus) {
-                    QuoteStatusLog::create([
-                        'quote_type_id' => $quoteTypeId,
-                        'quote_request_id' => $quoteModel->id,
-                        'current_quote_status_id' => $quoteModel->quote_status_id,
-                        'previous_quote_status_id' => $oldQuoteStatus,
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now(),
-                    ]);
-                }
 
                 // Log for creating duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $totalPaymentsCount > 1 && ! $sendUpdateId) {
                     $quoteStatusId = $quoteModel->quote_status_id;
-                    if ($masterPayment->insuranceProvider->code == InsuranceProviderEnum::ALNC->value && $isFromJob && $totalApproved != $totalPaymentsCount) {
+                    if ($masterPayment->insuranceProvider->code == InsuranceProviderEnum::QIC->value && $isFromJob && $totalApproved != $totalPaymentsCount) {
                         $quoteStatusId = QuoteStatusEnum::PaymentPending;
                     }
                     if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel, $quoteStatusId)) {
@@ -1064,7 +1086,7 @@ class SplitPaymentService
             if ($payment->paymentable_type == PersonalQuote::class) {
                 $quoteTypeId = $quoteModel->quote_type_id;
             }
-            if ((in_array($payment->paymentable_type, $ecommQuotes) || $quoteTypeId === QuoteTypeId::Life) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+            if ((in_array($payment->paymentable_type, $ecommQuotes) || in_array($quoteTypeId, [QuoteTypeId::Life, QuoteTypeId::Cyber])) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 $quoteModel->payment_paid_at = now();
                 LoggerService::info("Master payment code: {$payment->code} - Quote type: {$payment->paymentable_type}");
 
@@ -1240,7 +1262,9 @@ class SplitPaymentService
         }
 
         $computedPrice = 0;
-        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home];
+
+        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike, quoteTypeCode::Home, quoteTypeCode::CYBER, quoteTypeCode::Device];
+        $noVatLobs = [quoteTypeCode::Life, quoteTypeCode::SAVINGS];
 
         if ($send_update_id > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
@@ -1260,7 +1284,11 @@ class SplitPaymentService
             }
         }
 
-        if (isset($quoteModel)) {
+        // For Life and Savings LOBs - use masterTotalPrice directly, no VAT
+        if (in_array($modelType, $noVatLobs) && $masterTotalPrice > 0) {
+            $computedPrice = $masterTotalPrice;
+            $priceVatNotApplicable = 0;
+        } elseif (isset($quoteModel)) {
             if (isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
                 $computedPrice = $quoteModel->price_vat_applicable;
                 LoggerService::info('SplitPaymentService - Using price_vat_applicable from quote for payment code: '.$paymentCode, extra: [
@@ -1284,7 +1312,11 @@ class SplitPaymentService
         }
 
         if ($computedPrice > 0) {
-            if (in_array($modelType, $ecommLobs) || $send_update_id > 0) {
+            // For Life and Savings LOBs - no VAT calculation, price_vat_applicable = total_price
+            if (in_array($modelType, $noVatLobs)) {
+                $priceWithoutVat = $computedPrice;
+                $vat = 0;
+            } elseif (in_array($modelType, $ecommLobs) || $send_update_id > 0) {
                 $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
                 $vat = $priceWithoutVat * $vatValue / 100;
                 LoggerService::info('SplitPaymentService - ecommLob VAT calculation for payment code: '.$paymentCode, extra: [
@@ -1400,6 +1432,8 @@ class SplitPaymentService
                     info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     if ($paymentSplit->payment_amount != $payment->total_amount) {
                         $paymentSplit->payment_amount = $payment->total_amount;
+                        $paymentSplit->price_vat_applicable = $payment->price_vat_applicable;
+                        $paymentSplit->price_vat = $payment->price_vat;
                     }
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
@@ -1417,7 +1451,9 @@ class SplitPaymentService
                     $paymentSplit->payment_method = PaymentMethodsEnum::InsurerPayment;
                 }
                 if ($paymentSplit->isDirty()) {
-                    $paymentSplit->save();
+                    PaymentSplits::withoutEvents(function () use ($paymentSplit) {
+                        $paymentSplit->save();
+                    });
                 }
             }
         }
@@ -1477,7 +1513,10 @@ class SplitPaymentService
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
         if ($insuranceProvider) {
             $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
-            if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) {
+            $shouldUpdateAPIIssuanceAndInsurerStatus = (new PolicyIssuanceService)->shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider);
+            if ($quoteType === QuoteTypes::DEVICE->value && $shouldUpdateAPIIssuanceAndInsurerStatus) {
+                app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID, PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE);
+            } elseif (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::AXA])) || $shouldUpdateAPIIssuanceAndInsurerStatus) {
                 app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
             } else {
                 // TODO:: This should be updated with the new function in PolicyIssuanceService
@@ -1485,7 +1524,6 @@ class SplitPaymentService
             }
         }
     }
-
     /**
      * Check if the commission fields in booking details section is disabled
      *
@@ -1516,7 +1554,7 @@ class SplitPaymentService
         $paymentCode = $paymentSplit->code;
         $payment = $paymentSplit->payment;
         $insuranceProvider = $payment->insuranceProvider->code ?? null;
-        $paymentNotApproved = ($modelType == QuoteTypes::TRAVEL->value && $insuranceProvider == InsuranceProvidersEnum::ALNC) ? ! $payment->is_approved : true;
+        $paymentNotApproved = ($modelType == QuoteTypes::TRAVEL->value && $insuranceProvider == InsuranceProvidersEnum::QIC) ? ! $payment->is_approved : true;
 
         LoggerService::info(
             "Evaluating shouldProcessPayment for split payment Code: {$paymentCode}", [
@@ -1527,20 +1565,45 @@ class SplitPaymentService
             ]
         );
 
-        // Check if the job is triggered for Travel or Car quotes
-        $isTravelOrCarQuote = in_array($modelType, [QuoteTypes::TRAVEL->value, QuoteTypes::CAR->value]);
-        LoggerService::info("Split payment Code: {$paymentCode} isTravelOrCarQuote: ".($isTravelOrCarQuote ? 'true' : 'false'));
+        // Travel / Car / Health (TCH) — split-payment job gate for these LOBs
+        $travelCarHealthModelTypes = [
+            QuoteTypes::TRAVEL->value,
+            QuoteTypes::CAR->value,
+            QuoteTypes::HEALTH->value,
+        ];
+        $isTchQuote = in_array($modelType, $travelCarHealthModelTypes);
+        LoggerService::info(
+            "Split payment Code: {$paymentCode} isTchQuote: ".($isTchQuote ? 'true' : 'false'),
+            ['travelCarHealthModelTypes' => $travelCarHealthModelTypes]
+        );
 
-        // Check if the insurance provider is ALNC or AXA
-        $isAlncOrAxa = in_array($insuranceProvider, [InsuranceProvidersEnum::ALNC, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::RSA]);
-        LoggerService::info("Split payment Code: {$paymentCode} isAlncOrAxa: ".($isAlncOrAxa ? 'true' : 'false'));
+        // Split CC job: insurer codes that gate processing with TCH (QIC, AXA, RSA, ADNIC)
+        $qicAxaRsaAdnicProviderCodes = [
+            InsuranceProvidersEnum::QIC,
+            InsuranceProvidersEnum::AXA,
+            InsuranceProvidersEnum::RSA,
+            InsuranceProvidersEnum::ADNIC,
+        ];
+        $isQicAxaRsaAdnicProvider = in_array($insuranceProvider, $qicAxaRsaAdnicProviderCodes);
+
+        // check if cyber quote
+        $isCyberQuote = $modelType == QuoteTypes::CYBER->value;
+        $isAwni = $insuranceProvider == InsuranceProvidersEnum::AWNI;
+
+        $isDeviceQuote = $modelType == QuoteTypes::DEVICE->value;
+        $isNgi = $insuranceProvider == InsuranceProvidersEnum::NGI;
+
+        LoggerService::info("Split payment Code: {$paymentCode} isCyberQuote: ".($isCyberQuote ? 'true' : 'false').' isAwni: '.($isAwni ? 'true' : 'false').' isDeviceQuote: '.($isDeviceQuote ? 'true' : 'false').' isNgi: '.($isNgi ? 'true' : 'false'));
 
         // Only process if payment is not approved and:
         // - not from job, or
-        // - from job AND is Travel/Car AND provider is ALNC/AXA
+        // - from job AND is Travel/Car/Health AND provider is QIC/AXA/RSA/ADNIC
+        // - from job AND is Cyber AND provider is AWNI
         $shouldProcess = $paymentNotApproved && (
             ! $isFromJob ||
-            ($isTravelOrCarQuote && $isAlncOrAxa)
+            ($isTchQuote && $isQicAxaRsaAdnicProvider) ||
+            ($isDeviceQuote && $isNgi) ||
+            ($isCyberQuote && $isAwni)
         );
 
         LoggerService::info("Split payment Code: {$paymentCode} shouldProcess: ".($shouldProcess ? 'true' : 'false'));

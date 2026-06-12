@@ -136,6 +136,8 @@ export const useGetShowPageRoute = (
     9: route('pet-quotes-show', uuid),
     10: route('cycle-quotes-show', uuid),
     18: route('savings-quotes-show', uuid),
+    20: route('device-quotes-show', uuid),
+    19: route('cyber-quotes-show', uuid),
   };
 
   return routesObj[quoteTypeId];
@@ -278,15 +280,26 @@ export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
   return useDateFormat(previousDate, format).value;
 };
 
-export const setQueryStringFilters = (params, filters) => {
+export const setQueryStringFilters = (params, filters, options = {}) => {
+  const { integerFields } = options;
+
   for (const [key] of Object.entries(params)) {
     const val = params[key];
+    let baseKey = key;
+    if (key.includes('[') && key.includes(']')) {
+      baseKey = key.substring(0, key.indexOf('['));
+    }
+
     // Only convert to integer if it's a valid number, not an empty string,
-    // and converting it back to string matches original (preserves leading zeros, floats, etc)
-    params[key] =
-      val !== '' && !isNaN(val) && String(parseInt(val, 10)) === String(val)
-        ? parseInt(val, 10)
-        : val;
+    // and converting it back to string matches original (preserves leading zeros, floats, etc).
+    // If integerFields is set, only coerce keys whose base name is listed (e.g. teams[0] → teams).
+    const looksLikeInt =
+      val !== '' && !isNaN(val) && String(parseInt(val, 10)) === String(val);
+    const mayCoerceInt =
+      looksLikeInt &&
+      (integerFields === undefined ||
+        (Array.isArray(integerFields) && integerFields.includes(baseKey)));
+    params[key] = mayCoerceInt ? parseInt(val, 10) : val;
 
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key];
@@ -479,6 +492,7 @@ export function getQuoteType(id, returnType = 'code') {
     10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
     11: { code: 'JSK', id: 'jetski', link: '/personal-quotes' },
     18: { code: 'SAV', id: 'savings', link: '/personal-quotes' },
+    19: { code: 'CYB', id: 'cyber', link: '/personal-quotes' },
     102: { code: 'BUS', id: 'amt', link: '/medical' },
   };
   return types[id] ? types[id][returnType] : '';
@@ -866,6 +880,25 @@ export const useIsQuoteCreatedAfterCutoff = (createdAtString, cutoffDate) => {
   );
 
   return createdDate >= cutoffDate;
+};
+
+export const formattedDateYmd = dateString => {
+  if (!dateString || dateString == 'null') return '-';
+  return useDateFormat(dateString, 'YYYY-MM-DD').value;
+};
+
+export const formattedDateYmdWithTime = dateString => {
+  if (!dateString || dateString == 'null') return '-';
+  return useDateFormat(dateString, 'YYYY-MM-DD HH:mm:ss').value;
+};
+export const formattedDateDmy = dateString => {
+  if (!dateString || dateString == 'null') return '-';
+  return useDateFormat(dateString, 'DD-MM-YYYY').value;
+};
+
+export const formattedDateDmyWithTime = dateString => {
+  if (!dateString || dateString == 'null') return '-';
+  return useDateFormat(dateString, 'DD-MM-YYYY HH:mm:ss').value;
 };
 
 /**

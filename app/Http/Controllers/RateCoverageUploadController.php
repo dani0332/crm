@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Enums\PermissionsEnum;
 use App\Http\Requests\UploadRateCoverageRequest;
 use App\Services\RateCoverageUploadService;
+use Illuminate\Http\JsonResponse;
+use Inertia\Response;
 
 class RateCoverageUploadController extends Controller
 {
@@ -21,7 +23,7 @@ class RateCoverageUploadController extends Controller
     /**
      * Fetch upload coverages
      *
-     * @return \Inertia\Response
+     * @return Response
      */
     public function uploadCoverages()
     {
@@ -39,7 +41,7 @@ class RateCoverageUploadController extends Controller
     /**
      * Upload coverages file.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function coveragesUploadCreate(UploadRateCoverageRequest $request)
     {
@@ -52,7 +54,7 @@ class RateCoverageUploadController extends Controller
     /**
      * Fetch upload rates
      *
-     * @return \Inertia\Response
+     * @return Response
      */
     public function uploadRates()
     {
@@ -70,7 +72,7 @@ class RateCoverageUploadController extends Controller
     /**
      * Upload rates.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function rateUploadCreate(UploadRateCoverageRequest $request)
     {
@@ -83,7 +85,7 @@ class RateCoverageUploadController extends Controller
      * Fetch bad records.
      *
      * @param  int  $id
-     * @return \Inertia\Response
+     * @return Response
      */
     public function badRecords($id)
     {

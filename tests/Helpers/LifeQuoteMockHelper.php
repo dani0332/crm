@@ -7,13 +7,14 @@ use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Services\CapiRequestService;
 use Mockery;
+use Mockery\MockInterface;
 
 class LifeQuoteMockHelper
 {
     /**
      * Mock CapiRequestService to simulate external API behavior.
      */
-    public static function mockCapiRequestService(string $testUuid): \Mockery\MockInterface
+    public static function mockCapiRequestService(string $testUuid): MockInterface
     {
         $mock = Mockery::mock('alias:'.CapiRequestService::class);
         $mock->shouldReceive('sendCAPIRequest')

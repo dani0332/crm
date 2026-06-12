@@ -15,11 +15,17 @@ defineProps({
   authorizedDays: Number,
   insurerAMLStatus: Array,
   subSources: Array,
+  emirates: Array,
+  assignmentTypes: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const canExport = ref(false);
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
+const hasRole = role => useHasRole(role);
 const teamNamesEnum = page.props.teamNamesEnum;
 const isPcpSubSourceOptionAllowed = ref(
   useHasRole(rolesEnum.Admin) || useHasAnyTeam([{ name: teamNamesEnum.PCP }]),
@@ -84,14 +90,23 @@ const filters = reactive({
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
   advisor_assigned_date: [],
+  assignment_type: 'all',
   authorize_date: '',
   captured_date: '',
+  emirate_of_registration_id: [],
 });
 
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
     value: status.id,
     label: status.text,
+  }));
+});
+
+const emiratesOptions = computed(() => {
+  return (page.props.emirates || []).map(emirate => ({
+    value: emirate.id,
+    label: emirate.text,
   }));
 });
 
@@ -140,12 +155,15 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
   { text: 'PRICE', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
+  { text: 'EMIRATE OF REGISTRATION', value: 'emirate_of_registration_text' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
   { text: 'CREATED AT', value: 'created_at' },
+  { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'Updated AT', value: 'updated_at' },
   {
     text: 'POLICY EXPIRY DATE',
@@ -162,9 +180,26 @@ const tableHeader = [
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text' },
 ];
 
+const filteredTableHeader = computed(() => {
+  if (hasRole(rolesEnum.GMAdvisor)) {
+    return tableHeader.filter(
+      column => column.value !== 'assignment_type_text',
+    );
+  }
+  return tableHeader;
+});
+
 function resetFilters() {
   for (const key in filters) {
-    filters[key] = '';
+    if (key === 'assignment_type') {
+      filters[key] = 'all';
+    } else if (key === 'advisor_assigned_date') {
+      filters[key] = [];
+    } else if (key === 'emirate_of_registration_id') {
+      filters[key] = [];
+    } else {
+      filters[key] = '';
+    }
   }
   router.visit(route('amt.index'), {
     method: 'get',
@@ -196,6 +231,16 @@ function filterQuotes(isValid) {
     if (filters[key] === '') {
       delete filters[key];
     }
+    if (
+      key === 'emirate_of_registration_id' &&
+      Array.isArray(filters[key]) &&
+      filters[key].length === 0
+    ) {
+      delete filters[key];
+    }
+  }
+  if (filters.assignment_type === 'all') {
+    delete filters.assignment_type;
   }
   // if (filters.created_at_start) {
   //   filters.created_at_start = filters.created_at_start.split('T')[0];
@@ -267,9 +312,21 @@ function setQueryFilters() {
     } else if (key.includes('[')) {
       let index = key.replace('[]', '');
       filters[index] = urlParams.getAll(key).map(item => parseInt(item));
+    } else if (key === 'assignment_type') {
+      filters[key] = value;
     } else {
       filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
     }
+  }
+  // Multi-select expects an array (legacy URLs used a single scalar).
+  const emirateVal = filters.emirate_of_registration_id;
+  if (emirateVal !== undefined && !Array.isArray(emirateVal)) {
+    filters.emirate_of_registration_id =
+      emirateVal === '' ||
+      emirateVal === null ||
+      Number.isNaN(Number(emirateVal))
+        ? []
+        : [Number(emirateVal)];
   }
 }
 
@@ -580,6 +637,7 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Search by Email"
           label="Email"
         />
+
         <x-input
           v-model="filters.mobile_no"
           type="search"
@@ -588,6 +646,7 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Search by Mobile Number"
           label="Mobile Number"
         />
+
         <x-input
           v-model="filters.company_name"
           type="search"
@@ -606,12 +665,47 @@ const insurerAMLStatusOption = computed(() => {
           name="created_at_end"
           label="Created Date End"
         />
+
+        <x-select
+          v-model="filters.emirate_of_registration_id"
+          name="emirate_of_registration_id[]"
+          placeholder="Search by Emirate of Registration"
+          :options="emiratesOptions"
+          class="w-full"
+          filterable
+          label="Emirate of Registration"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.emirate_of_registration_id = emiratesOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.emirate_of_registration_id = []"
+            />
+          </template>
+        </x-select>
+
         <DatePicker
           v-model="filters.advisor_assigned_date"
           name="created_at_start"
           label="Advisor Assigned Date"
           range
           format="dd-MM-yyyy"
+        />
+
+        <x-select
+          v-model="filters.assignment_type"
+          label="Assignment Type"
+          name="assignment_type"
+          placeholder="Search by Assignment Type"
+          :options="page.props.assignmentTypes || []"
+          class="w-full"
+          filterable
+          filterPlaceholder="Filter Assignment Type...."
         />
         <x-select
           v-model="filters.leadStatus"
@@ -857,7 +951,7 @@ const insurerAMLStatusOption = computed(() => {
       v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
-      :headers="tableHeader"
+      :headers="filteredTableHeader"
       :items="quotes.data || []"
       border-cell
       hide-rows-per-page

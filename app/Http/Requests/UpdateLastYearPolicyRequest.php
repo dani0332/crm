@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\PermissionsEnum;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,7 +21,7 @@ class UpdateLastYearPolicyRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -32,6 +33,7 @@ class UpdateLastYearPolicyRequest extends FormRequest
             'previous_policy_start_date' => 'nullable|date|before_or_equal:previous_policy_expiry_date',
             'previous_quote_policy_number' => 'nullable|string|max:255',
             'previous_quote_policy_premium' => 'nullable|numeric|min:0',
+            'previous_quote_policy_commission' => 'nullable|numeric|min:0',
             'previous_advisor_id' => 'nullable|integer|exists:users,id',
         ];
     }
@@ -99,6 +101,8 @@ class UpdateLastYearPolicyRequest extends FormRequest
             'previous_policy_start_date.before_or_equal' => 'The previous policy start date must be before or equal to the expiry date.',
             'previous_quote_policy_premium.numeric' => 'The previous policy premium must be a valid number.',
             'previous_quote_policy_premium.min' => 'The previous policy premium must be greater than or equal to 0.',
+            'previous_quote_policy_commission.numeric' => 'The previous policy commission must be a valid number.',
+            'previous_quote_policy_commission.min' => 'The previous policy commission must be greater than or equal to 0.',
             'previous_advisor_id.exists' => 'The selected previous advisor does not exist.',
             'previous_policy_expiry_date.unique_combination' => 'This combination of policy expiry date and policy number already exists in the system.',
             'previous_quote_policy_number.unique_combination' => 'This combination of policy expiry date and policy number already exists in the system.',
@@ -118,6 +122,7 @@ class UpdateLastYearPolicyRequest extends FormRequest
             'previous_policy_start_date' => 'previous policy start date',
             'previous_quote_policy_number' => 'previous policy number',
             'previous_quote_policy_premium' => 'previous policy premium',
+            'previous_quote_policy_commission' => 'previous policy commission',
             'previous_advisor_id' => 'previous advisor',
         ];
     }

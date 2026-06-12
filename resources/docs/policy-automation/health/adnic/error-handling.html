@@ -1,0 +1,1821 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADNIC Error Handling - Comprehensive Guide</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #27ae60;
+      }
+
+      .section h3 {
+        color: #27ae60;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #34495e;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .error-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 15px;
+        padding: 30px;
+        margin: 25px 0;
+        border-left: 5px solid #e74c3c;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .error-card.warning {
+        border-left-color: #f39c12;
+      }
+
+      .error-card.info {
+        border-left-color: #3498db;
+      }
+
+      .error-card.success {
+        border-left-color: #27ae60;
+      }
+
+      .error-card h3 {
+        color: #e74c3c;
+        margin-bottom: 15px;
+        font-size: 1.6em;
+      }
+
+      .error-card.warning h3 {
+        color: #f39c12;
+      }
+
+      .error-card.info h3 {
+        color: #3498db;
+      }
+
+      .error-card.success h3 {
+        color: #27ae60;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+        font-family: 'Courier New', monospace;
+        overflow-x: auto;
+        font-size: 0.9em;
+        line-height: 1.6;
+      }
+
+      .code-block pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .warning-box {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .danger-box {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .success-box {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .info-box {
+        background: #d1ecf1;
+        border-left: 4px solid #17a2b8;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      table th {
+        background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+      }
+
+      table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      table tr:hover {
+        background: #f8f9fa;
+      }
+
+      table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .layer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .layer-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 3px solid #27ae60;
+      }
+
+      .layer-card h4 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+      }
+
+      .layer-card p {
+        color: #7f8c8d;
+        font-size: 0.95em;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        font-weight: 600;
+        margin: 0 5px;
+      }
+
+      .status-badge.success {
+        background: #28a745;
+        color: white;
+      }
+
+      .status-badge.failed {
+        background: #dc3545;
+        color: white;
+      }
+
+      .status-badge.timeout {
+        background: #ffc107;
+        color: #333;
+      }
+
+      .status-badge.pending {
+        background: #6c757d;
+        color: white;
+      }
+
+      ul,
+      ol {
+        margin-left: 20px;
+        margin-top: 10px;
+      }
+
+      ul li,
+      ol li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .layer-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/index.html">🏥 Health</a>
+        <span>></span>
+        <a href="/docs/policy-automation/health/adnic/index.html"
+          >📋 ADNIC Docs</a
+        >
+        <span>></span>
+        <span>Error Handling</span>
+      </div>
+
+      <div class="header">
+        <h1>🛡️ Error Handling Strategy</h1>
+        <p>
+          Comprehensive Error Handling, Recovery Strategies, and Troubleshooting
+          Guide
+        </p>
+      </div>
+
+      <!-- 1. Error Handling Strategy Overview -->
+      <div class="section">
+        <h2>1. Error Handling Strategy Overview</h2>
+        <p style="color: #7f8c8d; font-size: 1.1em; margin-bottom: 20px">
+          The ADNIC automation implements a multi-layer error handling strategy
+          with validation, logging, recovery, and retry mechanisms. This ensures
+          robust error detection, clear error messages, and automatic recovery
+          where possible.
+        </p>
+
+        <div class="layer-grid">
+          <div class="layer-card" style="border-left-color: #3498db">
+            <h4>Layer 1: Pre-validation</h4>
+            <p>
+              Catch errors before API calls via AdnicValidationService to
+              prevent unnecessary API requests and provide immediate feedback.
+            </p>
+          </div>
+          <div class="layer-card" style="border-left-color: #27ae60">
+            <h4>Layer 2: API Response</h4>
+            <p>
+              Parse and handle ADNIC API errors via AdnicResponseHandler to
+              extract meaningful error messages from API responses.
+            </p>
+          </div>
+          <div class="layer-card" style="border-left-color: #e74c3c">
+            <h4>Layer 3: HTTP Errors</h4>
+            <p>
+              Handle connection, timeout, and HTTP status code errors via
+              AdnicHttpClient with configurable timeouts and retry logic.
+            </p>
+          </div>
+          <div class="layer-card" style="border-left-color: #9b59b6">
+            <h4>Layer 4: Exception Handling</h4>
+            <p>
+              Comprehensive try-catch blocks with detailed logging and graceful
+              degradation for unexpected errors.
+            </p>
+          </div>
+          <div class="layer-card" style="border-left-color: #f39c12">
+            <h4>Layer 5: Retry Mechanism</h4>
+            <p>
+              Queue-based retry for transient failures with exponential backoff
+              and maximum retry limits.
+            </p>
+          </div>
+          <div class="layer-card" style="border-left-color: #16a085">
+            <h4>Layer 6: Status Updates</h4>
+            <p>
+              Automatic status updates on failure with detailed error messages
+              stored for troubleshooting.
+            </p>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <strong>Key Principles:</strong>
+          <ul>
+            <li>
+              <strong>Fail Fast:</strong> Validate data before making API calls
+            </li>
+            <li>
+              <strong>Fail Clearly:</strong> Provide specific, actionable error
+              messages
+            </li>
+            <li>
+              <strong>Fail Gracefully:</strong> Update status and log errors
+              without crashing
+            </li>
+            <li>
+              <strong>Recover Automatically:</strong> Retry transient failures
+              automatically
+            </li>
+            <li>
+              <strong>Audit Everything:</strong> Log all errors with full
+              context for debugging
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2. Pre-validation Before API Calls -->
+      <div class="section">
+        <h2>2. Pre-validation Before API Calls</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          Pre-validation prevents unnecessary API calls by catching data issues
+          early. All validation happens in
+          <code>AdnicValidationService</code> before any API communication.
+        </p>
+
+        <div class="error-card">
+          <h3>Validation Service Structure</h3>
+          <div class="code-block">
+            declare(strict_types=1); namespace
+            App\Services\PolicyIssuanceAutomation\Health\Adnic; class
+            AdnicValidationService { /** * Validate required data before Issue
+            Policy API call */ public function
+            validateRequiredData(PersonalQuote $quote): array { // Check
+            customer details if (!$quote->customer || !$quote->customer->name) {
+            return $this->buildErrorResponse('Customer name is required'); } //
+            Check nationality if (!$quote->customer->nationality) { return
+            $this->buildErrorResponse('Customer nationality is required'); } //
+            Check date of birth if (!$quote->customer->date_of_birth) { return
+            $this->buildErrorResponse('Customer date of birth is required'); }
+            // Check plan/product details if (!$quote->product ||
+            !$quote->product->name) { return
+            $this->buildErrorResponse('Product/plan details are required'); } //
+            Check payment information if (!$quote->payment ||
+            !$quote->payment->amount) { return
+            $this->buildErrorResponse('Payment information is required'); }
+            return $this->buildSuccessResponse(); } /** * Validate documents
+            before Upload Documents API call */ public function
+            validateDocuments(PersonalQuote $quote): array { // Check insurer
+            quote number exists if (!$quote->insurer_quote_number) { return
+            $this->buildErrorResponse('Insurer quote number is required'); } //
+            Check Emirates ID document exists $emiratesIdDoc =
+            $this->documentHandler->getDocumentByType( $quote,
+            QuoteDocumentTypeEnum::HEA_EID ); if (!$emiratesIdDoc) { return
+            $this->buildErrorResponse('Emirates ID document is required'); }
+            return $this->buildSuccessResponse(); } /** * Validate document IDs
+            before Download Documents API call */ public function
+            validateDocumentIds(PersonalQuote $quote): array { $errors = []; if
+            (!$quote->insurer_policy_doc_id) { $errors[] = 'Policy document ID
+            is missing'; } if (!$quote->insurer_tax_invoice_doc_id) { $errors[]
+            = 'Tax invoice document ID is missing'; } if
+            (!$quote->insurer_debit_note_doc_id) { $errors[] = 'Debit note
+            document ID is missing'; } if (!empty($errors)) { return
+            $this->buildErrorResponse(implode(', ', $errors)); } return
+            $this->buildSuccessResponse(); } /** * Build standardized error
+            response */ private function buildErrorResponse(string $message):
+            array { return [ 'status' => false, 'completed_step' => null,
+            'message' => 'Validation failed: ' . $message, 'error' => $message,
+            'data' => null ]; } /** * Build standardized success response */
+            private function buildSuccessResponse(): array { return [ 'status'
+            => true, 'completed_step' => null, 'message' => 'Validation passed',
+            'error' => null, 'data' => null ]; } }
+          </div>
+        </div>
+
+        <h3>Validation Types and Examples</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Validation Type</th>
+              <th>What It Checks</th>
+              <th>Error Example</th>
+              <th>When Used</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Required Data</strong></td>
+              <td>Customer, payment, plan details</td>
+              <td>"Customer name is required"</td>
+              <td>Before Issue Policy API</td>
+            </tr>
+            <tr>
+              <td><strong>Document Validation</strong></td>
+              <td>Emirates ID, document availability</td>
+              <td>"Emirates ID document is required"</td>
+              <td>Before Upload Documents API</td>
+            </tr>
+            <tr>
+              <td><strong>Document IDs</strong></td>
+              <td>Policy, tax invoice, debit note IDs</td>
+              <td>"Policy document ID is missing"</td>
+              <td>Before Download Documents API</td>
+            </tr>
+            <tr>
+              <td><strong>Document IDs</strong></td>
+              <td>All 3 policy document IDs must exist</td>
+              <td>"Policy document ID is missing"</td>
+              <td>Before Download Documents API</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="success-box">
+          <strong>✅ Benefits of Pre-validation:</strong>
+          <ul>
+            <li>Prevents unnecessary API calls and associated costs</li>
+            <li>Provides immediate feedback to users</li>
+            <li>Reduces API rate limiting issues</li>
+            <li>Improves user experience with clear error messages</li>
+            <li>Enables faster debugging with specific validation errors</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3. API Error Handling Patterns -->
+      <div class="section">
+        <h2>3. API Error Handling Patterns</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          API errors are handled through <code>AdnicResponseHandler</code> which
+          normalizes different error formats into a consistent structure.
+        </p>
+
+        <div class="error-card warning">
+          <h3>ADNIC API Error Response Format</h3>
+          <div class="code-block">
+            { "Success": false, "Message": "Policy generation failed", "Errors":
+            [ "Invalid Emirates ID format", "Date of birth mismatch with
+            Emirates ID" ], "ErrorCode": "VALIDATION_ERROR", "Data": null }
+          </div>
+        </div>
+
+        <h3>Error Detection Logic</h3>
+        <div class="code-block">
+          namespace App\Services\PolicyIssuanceAutomation\Health\Adnic; class
+          AdnicResponseHandler { /** * Check if API response contains errors */
+          public function hasApiErrors(array $responseBody): bool { // Check
+          Success flag if (isset($responseBody['Success']) &&
+          $responseBody['Success'] === false) { return true; } // Check for
+          Errors array if (!empty($responseBody['Errors'])) { return true; } //
+          Check for error message if (isset($responseBody['Message']) &&
+          stripos($responseBody['Message'], 'error') !== false) { return true; }
+          return false; } /** * Extract error message from API response */
+          public function extractErrorMessage(array $responseBody): string {
+          $errors = $responseBody['Errors'] ?? []; if (!empty($errors)) { return
+          implode(', ', $errors); } return $responseBody['Message'] ??
+          AdnicEnum::UNKNOWN_ERROR; } /** * Parse HTTP response to standard
+          format */ public function parseHttpResponse( Response $httpResponse,
+          string $step ): array { $statusCode = $httpResponse->status();
+          $responseBody = $httpResponse->json() ?? []; // Check for HTTP errors
+          if (!$httpResponse->successful()) { return $this->buildErrorResponse(
+          "HTTP {$statusCode}: " . ($responseBody['Message'] ?? 'Request
+          failed'), $step, $responseBody ); } // Check for API-level errors if
+          ($this->hasApiErrors($responseBody)) { return
+          $this->buildErrorResponse( $this->extractErrorMessage($responseBody),
+          $step, $responseBody ); } return $this->buildSuccessResponse($step,
+          $responseBody); } /** * Build error response structure */ private
+          function buildErrorResponse( string $errorMessage, string $step, array
+          $responseData = null ): array { return [ 'status' => false,
+          'completed_step' => null, 'message' => "Step {$step} failed:
+          {$errorMessage}", 'error' => $errorMessage, 'data' => $responseData ];
+          } /** * Build success response structure */ private function
+          buildSuccessResponse( string $step, array $responseData ): array {
+          return [ 'status' => true, 'completed_step' => $step, 'message' =>
+          "Step {$step} completed successfully", 'error' => null, 'data' =>
+          $responseData ]; } }
+        </div>
+
+        <h3>Common API Error Codes</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Error Code</th>
+              <th>Description</th>
+              <th>Common Causes</th>
+              <th>Resolution</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>VALIDATION_ERROR</strong></td>
+              <td>Invalid or missing field values</td>
+              <td>Wrong data format, missing required fields</td>
+              <td>Fix data and retry</td>
+            </tr>
+            <tr>
+              <td><strong>DUPLICATE_POLICY</strong></td>
+              <td>Policy already exists for this quote</td>
+              <td>Previous successful API call</td>
+              <td>Check existing policy, skip step</td>
+            </tr>
+            <tr>
+              <td><strong>INVALID_DOCUMENT</strong></td>
+              <td>Document format or content invalid</td>
+              <td>Corrupted file, wrong MIME type</td>
+              <td>Re-upload document</td>
+            </tr>
+            <tr>
+              <td><strong>PRODUCT_UNAVAILABLE</strong></td>
+              <td>Product/plan no longer available</td>
+              <td>Product discontinued</td>
+              <td>Select different product</td>
+            </tr>
+            <tr>
+              <td><strong>BROKER_ERROR</strong></td>
+              <td>Broker authorization issue</td>
+              <td>Invalid credentials, expired token</td>
+              <td>Check API credentials</td>
+            </tr>
+            <tr>
+              <td><strong>SYSTEM_ERROR</strong></td>
+              <td>ADNIC system error</td>
+              <td>ADNIC server issues</td>
+              <td>Retry later, contact ADNIC support</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 4. Exception Handling with Try-Catch Blocks -->
+      <div class="section">
+        <h2>4. Exception Handling with Try-Catch Blocks</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          All automation steps are wrapped in try-catch blocks to handle
+          unexpected exceptions gracefully.
+        </p>
+
+        <h3>Standard Exception Handling Pattern</h3>
+        <div class="code-block">
+          namespace App\Services\PolicyIssuanceAutomation\Health\Adnic; class
+          AdnicStepExecutor { public function executeStep( PolicyIssuance
+          $process, string $step ): array { // Initialize response $response = [
+          'status' => false, 'completed_step' => null, 'message' => '', 'error'
+          => null, 'data' => null ]; try { LoggerService::info("Starting step:
+          {$step}", extra: [ 'process_id' => $process->id, 'quote_id' =>
+          $process->quote_id, 'step' => $step ]); // Get step handler method
+          $handlerMethod = $this->stepHandlers[$step] ?? null; if
+          (!$handlerMethod || !method_exists($this, $handlerMethod)) { throw new
+          \Exception("Unknown step: {$step}"); } // Execute step handler
+          $stepResponse = $this->{$handlerMethod}($process); // Check if step
+          succeeded if (!($stepResponse['status'] ?? false)) {
+          LoggerService::error("Step failed: {$step}", extra: [ 'process_id' =>
+          $process->id, 'step' => $step, 'error' => $stepResponse['error'] ??
+          'Unknown error' ]); // Update process status
+          $this->updateProcessOnFailure($process, $step,
+          $stepResponse['error']); return $stepResponse; } // Update completed
+          step if (isset($stepResponse['completed_step'])) {
+          $process->update(['completed_step' =>
+          $stepResponse['completed_step']]); $process->refresh(); }
+          LoggerService::info("Step completed: {$step}", extra: [ 'process_id'
+          => $process->id, 'completed_step' => $stepResponse['completed_step']
+          ?? null ]); return $stepResponse; } catch
+          (\Illuminate\Http\Client\ConnectionException $e) { // Handle
+          connection errors LoggerService::error('Connection exception', extra:
+          [ 'process_id' => $process->id, 'step' => $step, 'error' =>
+          $e->getMessage() ], exception: $e); $response['error'] = 'Connection
+          failed: ' . $e->getMessage(); $response['message'] = "Step {$step}
+          failed due to connection error";
+          $this->updateProcessOnFailure($process, $step, $response['error']);
+          return $response; } catch (\Illuminate\Http\Client\RequestException
+          $e) { // Handle HTTP request errors LoggerService::error('HTTP request
+          exception', extra: [ 'process_id' => $process->id, 'step' => $step,
+          'status_code' => $e->response?->status(), 'error' => $e->getMessage()
+          ], exception: $e); $response['error'] = 'HTTP error: ' .
+          $e->getMessage(); $response['message'] = "Step {$step} failed due to
+          HTTP error"; $this->updateProcessOnFailure($process, $step,
+          $response['error']); return $response; } catch (\Exception $e) { //
+          Handle all other exceptions LoggerService::error('Unexpected
+          exception', extra: [ 'process_id' => $process->id, 'step' => $step,
+          'error' => $e->getMessage(), 'file' => $e->getFile(), 'line' =>
+          $e->getLine() ], exception: $e); $response['error'] = 'Unexpected
+          error: ' . $e->getMessage(); $response['message'] = "Step {$step}
+          failed due to unexpected error";
+          $this->updateProcessOnFailure($process, $step, $response['error']);
+          return $response; } } /** * Update process status on failure */
+          private function updateProcessOnFailure( PolicyIssuance $process,
+          string $step, string $errorMessage ): void { $process->update([
+          'status' => PolicyIssuanceEnum::FAILED_STATUS, 'insurer_api_status' =>
+          'Failed', 'last_error_message' => $errorMessage, 'last_error_at' =>
+          now(), 'failed_attempts' => ($process->failed_attempts ?? 0) + 1 ]); }
+          }
+        </div>
+
+        <h3>Exception Types and Handling</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Exception Type</th>
+              <th>When It Occurs</th>
+              <th>Handling Strategy</th>
+              <th>Retry Eligible</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ConnectionException</code></td>
+              <td>Network unreachable, DNS failure</td>
+              <td>Log error, update status, retry with backoff</td>
+              <td><span class="status-badge success">Yes</span></td>
+            </tr>
+            <tr>
+              <td><code>RequestException</code></td>
+              <td>HTTP errors (4xx, 5xx)</td>
+              <td>Extract error message, log status code</td>
+              <td><span class="status-badge timeout">Conditional</span></td>
+            </tr>
+            <tr>
+              <td><code>TimeoutException</code></td>
+              <td>Request timeout exceeded</td>
+              <td>Mark as timeout, enable retry</td>
+              <td><span class="status-badge success">Yes</span></td>
+            </tr>
+            <tr>
+              <td><code>ValidationException</code></td>
+              <td>Data validation fails</td>
+              <td>Return validation errors, no retry</td>
+              <td><span class="status-badge failed">No</span></td>
+            </tr>
+            <tr>
+              <td><code>\Exception</code></td>
+              <td>Unexpected errors</td>
+              <td>Log full stack trace, update status</td>
+              <td><span class="status-badge failed">No</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 5. Timeout Handling and Retry Mechanisms -->
+      <div class="section">
+        <h2>5. Timeout Handling and Retry Mechanisms</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          Timeout handling is configurable via ApplicationStorage, and retry
+          mechanisms are implemented at both the HTTP client and queue job
+          levels.
+        </p>
+
+        <h3>Timeout Configuration</h3>
+        <div class="code-block">
+          namespace App\Services\PolicyIssuanceAutomation\Health\Adnic; class
+          AdnicHttpClient { private int $apiTimeout; public function
+          __construct() { // Get timeout from ApplicationStorage (runtime
+          configurable) $this->apiTimeout = (int)
+          app(ApplicationStorageService::class) ->getValueByKey(
+          ApplicationStorageEnums::ADNIC_HEALTH_AUTOMATION_API_TIMEOUT ) ?? 30;
+          // Default 30 seconds LoggerService::info('HTTP client initialized',
+          extra: [ 'timeout' => $this->apiTimeout ]); } /** * Make POST request
+          with timeout handling */ public function post( string $endPoint, array
+          $payload = [], array $headers = [] ): Response { $fullUrl =
+          $this->baseUrl . $endPoint; try { $response =
+          Http::timeout($this->apiTimeout)
+          ->withHeaders($this->mergeHeaders($headers)) ->post($fullUrl,
+          $payload); return $response; } catch
+          (\Illuminate\Http\Client\ConnectionException $e) { // Connection
+          timeout or network error LoggerService::error('HTTP connection
+          timeout', extra: [ 'endpoint' => $fullUrl, 'timeout' =>
+          $this->apiTimeout, 'error' => $e->getMessage() ]); throw $e; } catch
+          (\Illuminate\Http\Client\RequestException $e) { // Request timeout if
+          ($e->response && $e->response->status() === 408) {
+          LoggerService::error('HTTP request timeout', extra: [ 'endpoint' =>
+          $fullUrl, 'timeout' => $this->apiTimeout ]); } throw $e; } } }
+        </div>
+
+        <h3>Queue-Based Retry Mechanism</h3>
+        <div class="code-block">
+          namespace App\Jobs; use Illuminate\Bus\Queueable; use
+          Illuminate\Contracts\Queue\ShouldQueue; use
+          Illuminate\Foundation\Bus\Dispatchable; use
+          Illuminate\Queue\InteractsWithQueue; use
+          Illuminate\Queue\SerializesModels; class PolicyIssuanceJob implements
+          ShouldQueue { use Dispatchable, InteractsWithQueue, Queueable,
+          SerializesModels; public $connection = 'redis'; public $queue =
+          'policy-issuance-automation'; // Retry configuration public $tries =
+          3; // Maximum 3 attempts public $backoff = [60, 300]; // 1 min, 5 min
+          delays between retries public $timeout = 600; // 10 minutes job
+          timeout public $maxExceptions = 3; // Max exceptions before failing
+          public function __construct( public int $policyIssuanceId ) {} /** *
+          Execute the job */ public function handle(): void { $process =
+          PolicyIssuance::findOrFail($this->policyIssuanceId); // Check if retry
+          is enabled for timeout $retryEnabled =
+          app(ApplicationStorageService::class) ->getValueByKey(
+          ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ADNIC_HEALTH_POLICY_ISSUANCE
+          ); // Handle timeout status retry if ($process->status ===
+          PolicyIssuanceEnum::TIMEOUT_STATUS && $retryEnabled) {
+          LoggerService::info('Retrying timeout process', extra: [ 'process_id'
+          => $process->id, 'attempt' => $this->attempts() ]); // Reset status to
+          processing $process->update(['status' =>
+          PolicyIssuanceEnum::PROCESSING_STATUS]); } // Get appropriate service
+          and execute steps $service = app(PolicyIssuanceService::class)->init(
+          $process->quote->quote_type, $process->quote->insurer->code ); if
+          (!$service) { throw new \Exception("Service not found for quote type
+          and insurer"); } $service->executeSteps($process); } /** * Handle job
+          failure */ public function failed(\Throwable $exception): void {
+          $process = PolicyIssuance::find($this->policyIssuanceId); if
+          ($process) { LoggerService::error('PolicyIssuanceJob failed
+          permanently', extra: [ 'process_id' => $process->id, 'attempts' =>
+          $this->attempts(), 'exception' => $exception->getMessage(), 'trace' =>
+          $exception->getTraceAsString() ]); // Update process to failed status
+          $process->update([ 'status' => PolicyIssuanceEnum::FAILED_STATUS,
+          'insurer_api_status' => 'Failed', 'last_error_message' =>
+          $exception->getMessage(), 'last_error_at' => now() ]); // Send
+          notification to support team //
+          NotificationService::sendFailureAlert($process); } } /** * Calculate
+          backoff delay for retries */ public function backoff(): array { return
+          [60, 300]; // 1 minute, then 5 minutes } }
+        </div>
+
+        <h3>Retry Strategy Flow</h3>
+        <div class="info-box">
+          <strong>Retry Decision Matrix:</strong>
+          <table style="margin-top: 15px">
+            <thead>
+              <tr>
+                <th>Error Type</th>
+                <th>Status Set</th>
+                <th>Retry Eligible</th>
+                <th>Backoff Delay</th>
+                <th>Max Attempts</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Timeout</td>
+                <td><span class="status-badge timeout">TIMEOUT</span></td>
+                <td><span class="status-badge success">Yes</span></td>
+                <td>60s, 300s</td>
+                <td>3</td>
+              </tr>
+              <tr>
+                <td>Connection Error</td>
+                <td><span class="status-badge timeout">TIMEOUT</span></td>
+                <td><span class="status-badge success">Yes</span></td>
+                <td>60s, 300s</td>
+                <td>3</td>
+              </tr>
+              <tr>
+                <td>HTTP 500</td>
+                <td><span class="status-badge timeout">TIMEOUT</span></td>
+                <td><span class="status-badge success">Yes</span></td>
+                <td>60s, 300s</td>
+                <td>3</td>
+              </tr>
+              <tr>
+                <td>Validation Error</td>
+                <td><span class="status-badge failed">FAILED</span></td>
+                <td><span class="status-badge failed">No</span></td>
+                <td>N/A</td>
+                <td>0</td>
+              </tr>
+              <tr>
+                <td>API Error (4xx)</td>
+                <td><span class="status-badge failed">FAILED</span></td>
+                <td><span class="status-badge failed">No</span></td>
+                <td>N/A</td>
+                <td>0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 6. Status Update Patterns on Failure -->
+      <div class="section">
+        <h2>6. Status Update Patterns on Failure</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          When failures occur, the system updates multiple status fields to
+          provide clear visibility into the failure state.
+        </p>
+
+        <h3>Process Status Updates</h3>
+        <div class="code-block">
+          namespace App\Services\PolicyIssuanceAutomation; class
+          PolicyIssuanceService { /** * Update API issuance and insurer status
+          on failure */ public function updateAPIIssuanceAndInsurerStatus(
+          PersonalQuote $quote, string $quoteType, int $failedStatusId, int
+          $automationStatusId, string $stepName ): void { // Update quote
+          insurer API status $quote->update([ 'insurer_api_status' =>
+          $failedStatusId ]); // Update automation process status $process =
+          PolicyIssuance::where('quote_id', $quote->id) ->where('status',
+          PolicyIssuanceEnum::PROCESSING_STATUS) ->first(); if ($process) {
+          $process->update([ 'status' => PolicyIssuanceEnum::FAILED_STATUS,
+          'insurer_api_status' => 'Failed', 'last_error_message' => "Step
+          {$stepName} failed", 'last_error_at' => now(), 'failed_attempts' =>
+          ($process->failed_attempts ?? 0) + 1 ]); }
+          LoggerService::error('Status updated on failure', extra: [ 'quote_id'
+          => $quote->id, 'step' => $stepName, 'status' =>
+          PolicyIssuanceEnum::FAILED_STATUS ]); } /** * Update process status on
+          timeout */ public function updateProcessOnTimeout( PolicyIssuance
+          $process, string $step ): void { $process->update([ 'status' =>
+          PolicyIssuanceEnum::TIMEOUT_STATUS, 'insurer_api_status' => 'Timeout',
+          'last_error_message' => "Step {$step} timed out", 'last_error_at' =>
+          now(), 'timeout_count' => ($process->timeout_count ?? 0) + 1 ]);
+          LoggerService::warning('Process timed out', extra: [ 'process_id' =>
+          $process->id, 'step' => $step, 'timeout_count' =>
+          $process->timeout_count ]); } }
+        </div>
+
+        <h3>Status Field Reference</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Type</th>
+              <th>Values</th>
+              <th>Updated When</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>status</code></td>
+              <td>string</td>
+              <td>PENDING, PROCESSING, TIMEOUT, FAILED, BOOKING_PENDING</td>
+              <td>On status change</td>
+            </tr>
+            <tr>
+              <td><code>completed_step</code></td>
+              <td>string</td>
+              <td>
+                UploadDocuments, IssuePolicy, UploadPolicyDocumentsToIMCRM
+              </td>
+              <td>On step completion</td>
+            </tr>
+            <tr>
+              <td><code>insurer_api_status</code></td>
+              <td>string</td>
+              <td>Success, Failed, Timeout, Processing</td>
+              <td>On API call result</td>
+            </tr>
+            <tr>
+              <td><code>last_error_message</code></td>
+              <td>string</td>
+              <td>Error description</td>
+              <td>On failure</td>
+            </tr>
+            <tr>
+              <td><code>last_error_at</code></td>
+              <td>datetime</td>
+              <td>Timestamp</td>
+              <td>On failure</td>
+            </tr>
+            <tr>
+              <td><code>failed_attempts</code></td>
+              <td>integer</td>
+              <td>0, 1, 2, 3...</td>
+              <td>On each failure</td>
+            </tr>
+            <tr>
+              <td><code>timeout_count</code></td>
+              <td>integer</td>
+              <td>0, 1, 2, 3...</td>
+              <td>On each timeout</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Status Transition Diagram</h3>
+        <div class="info-box">
+          <strong>Status Flow:</strong>
+          <div
+            style="
+              margin-top: 15px;
+              padding: 15px;
+              background: white;
+              border-radius: 5px;
+            "
+          >
+            <div style="text-align: center; line-height: 2">
+              <span class="status-badge pending">PENDING</span>
+              <span style="margin: 0 10px">→</span>
+              <span class="status-badge success">PROCESSING</span>
+              <span style="margin: 0 10px">→</span>
+              <span class="status-badge success">BOOKING_PENDING</span>
+              <br /><br />
+              <span class="status-badge success">PROCESSING</span>
+              <span style="margin: 0 10px">→</span>
+              <span class="status-badge timeout">TIMEOUT</span>
+              <span style="margin: 0 10px">(retry eligible)</span>
+              <br /><br />
+              <span class="status-badge success">PROCESSING</span>
+              <span style="margin: 0 10px">→</span>
+              <span class="status-badge failed">FAILED</span>
+              <span style="margin: 0 10px">(manual fix required)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. Logging Patterns for Errors -->
+      <div class="section">
+        <h2>7. Logging Patterns for Errors</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          Comprehensive logging is implemented using LoggerService with
+          consistent patterns for all error scenarios.
+        </p>
+
+        <h3>Logging Service Integration</h3>
+        <div class="code-block">
+          namespace App\Services\PolicyIssuanceAutomation\Health\Adnic; class
+          AdnicApiService { /** * Issue policy with comprehensive logging */
+          public function issuePolicy(PersonalQuote $quote): array { // Start
+          logging context LoggerService::startQuoteLogging( $quote,
+          LoggerFeatureEnum::ADNIC_HEALTH_POLICY_AUTOMATION ); try {
+          LoggerService::info('Starting Issue Policy API call', extra: [
+          'quote_id' => $quote->id, 'quote_code' => $quote->quote_code,
+          'insurer_quote_number' => $quote->insurer_quote_number, 'step' =>
+          AdnicEnum::STEP_ISSUE_POLICY ]); // Validation $validationResult =
+          $this->validationService->validateRequiredData($quote); if
+          (!$validationResult['status']) { LoggerService::error('Pre-validation
+          failed', extra: [ 'quote_id' => $quote->id, 'error' =>
+          $validationResult['error'] ]); return $validationResult; } // Build
+          payload $payload =
+          $this->requestBuilder->buildIssuePolicyPayload($quote);
+          LoggerService::info('Payload built', extra: [ 'quote_id' =>
+          $quote->id, 'payload_keys' => array_keys($payload), 'endpoint' =>
+          '/cyber/generatePolicy' ]); // Make API call $endpoint =
+          '/cyber/generatePolicy'; $response =
+          $this->httpClient->post($endpoint, $payload, $headers); // Parse
+          response $parsedResponse = $this->responseHandler->parseHttpResponse(
+          $response, AdnicEnum::STEP_ISSUE_POLICY ); if
+          (!$parsedResponse['status']) { LoggerService::error('API call failed',
+          extra: [ 'quote_id' => $quote->id, 'endpoint' => $endpoint, 'error' =>
+          $parsedResponse['error'], 'http_status' => $response->status() ]); //
+          Store API log $this->storeApiLog( $quote, $payload,
+          $parsedResponse['data'], $endpoint, AdnicEnum::STEP_ISSUE_POLICY,
+          PolicyIssuanceLogStatusesEnum::FAILED_STATUS ); return
+          $parsedResponse; } LoggerService::info('API call successful', extra: [
+          'quote_id' => $quote->id, 'policy_number' =>
+          $parsedResponse['data']['PolicyNumber'] ?? null, 'completed_step' =>
+          AdnicEnum::STEP_ISSUE_POLICY ]); // Store successful API log
+          $this->storeApiLog( $quote, $payload, $parsedResponse['data'],
+          $endpoint, AdnicEnum::STEP_ISSUE_POLICY,
+          PolicyIssuanceLogStatusesEnum::SUCCESS_STATUS ); return
+          $parsedResponse; } catch (\Exception $e) {
+          LoggerService::error('Exception in Issue Policy', extra: [ 'quote_id'
+          => $quote->id, 'error' => $e->getMessage(), 'file' => $e->getFile(),
+          'line' => $e->getLine() ], exception: $e); return [ 'status' => false,
+          'completed_step' => null, 'message' => 'Exception occurred: ' .
+          $e->getMessage(), 'error' => $e->getMessage(), 'data' => null ]; } } }
+        </div>
+
+        <h3>Log Levels and Usage</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Log Level</th>
+              <th>When to Use</th>
+              <th>Example Scenarios</th>
+              <th>Context Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>info()</code></td>
+              <td>Successful operations, step completion</td>
+              <td>Step started, API call successful, step completed</td>
+              <td>Process ID, step name, response data</td>
+            </tr>
+            <tr>
+              <td><code>error()</code></td>
+              <td>Failures, API errors, validation errors</td>
+              <td>API call failed, validation failed, exception occurred</td>
+              <td>Error message, endpoint, status code, stack trace</td>
+            </tr>
+            <tr>
+              <td><code>warning()</code></td>
+              <td>Non-critical issues, retries</td>
+              <td>Automation disabled, timeout occurred, retry attempt</td>
+              <td>Warning message, configuration state</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Log Context Structure</h3>
+        <div class="code-block">
+          // Standard log context structure [ 'process_id' => 123, 'quote_id' =>
+          456, 'quote_code' => 'QT-2026-001', 'step' => 'IssuePolicy',
+          'completed_step' => 'UploadDocuments', 'endpoint' =>
+          '/cyber/generatePolicy', 'payload_keys' => ['Customer', 'Product',
+          'Payment'], 'http_status' => 200, 'error' => 'Error message here',
+          'policy_number' => 'POL-12345', 'timeout' => 30, 'attempt' => 1,
+          'file' => '/path/to/file.php', 'line' => 123 ]
+        </div>
+      </div>
+
+      <!-- 8. Response Structure for Errors -->
+      <div class="section">
+        <h2>8. Response Structure for Errors</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          All error responses follow a consistent structure for easy parsing and
+          handling by calling code.
+        </p>
+
+        <h3>Standard Error Response Format</h3>
+        <div class="code-block">
+          // Standard error response structure [ 'status' => false, // Always
+          false for errors 'completed_step' => null, // No step completed
+          'message' => 'User-friendly message', // Human-readable message
+          'error' => 'Technical error details', // Detailed error for debugging
+          'data' => null // No data on error ] // Example: Validation error [
+          'status' => false, 'completed_step' => null, 'message' => 'Validation
+          failed: Emirates ID is required', 'error' => 'Missing required
+          document: Emirates ID (HEA_EID)', 'data' => null ] // Example: API
+          error [ 'status' => false, 'completed_step' => null, 'message' =>
+          'Step IssuePolicy failed: Invalid Emirates ID format', 'error' =>
+          'Invalid Emirates ID format', 'data' => [ 'Success' => false, 'Errors'
+          => ['Invalid Emirates ID format'], 'ErrorCode' => 'VALIDATION_ERROR' ]
+          ] // Example: HTTP error [ 'status' => false, 'completed_step' =>
+          null, 'message' => 'Step IssuePolicy failed due to HTTP error',
+          'error' => 'HTTP 500: Internal Server Error', 'data' => [
+          'status_code' => 500, 'response' => 'Internal Server Error' ] ] //
+          Example: Exception error [ 'status' => false, 'completed_step' =>
+          null, 'message' => 'Step IssuePolicy failed due to unexpected error',
+          'error' => 'Unexpected error: Connection timeout after 30 seconds',
+          'data' => null ]
+        </div>
+
+        <h3>Success Response Format</h3>
+        <div class="code-block">
+          // Standard success response structure [ 'status' => true, // Always
+          true for success 'completed_step' => 'UploadDocuments', // Completed
+          step identifier 'message' => 'Step completed successfully', 'error' =>
+          null, // No error 'data' => [ // Response data 'PolicyNumber' =>
+          'POL-12345', 'PolicyStartDate' => '2026-02-06', 'PolicyEndDate' =>
+          '2027-02-06', // ... other response data ] ]
+        </div>
+
+        <h3>Response Handling Pattern</h3>
+        <div class="code-block">
+          // Standard response handling pattern $response =
+          $this->apiService->issuePolicy($quote); if (!($response['status'] ??
+          false)) { // Handle error LoggerService::error('Step failed', extra: [
+          'error' => $response['error'], 'message' => $response['message'] ]);
+          // Update status $this->updateProcessOnFailure($process, $step,
+          $response['error']); return $response; } // Handle success if
+          (isset($response['completed_step'])) {
+          $process->update(['completed_step' => $response['completed_step']]); }
+          // Use response data $policyNumber = $response['data']['PolicyNumber']
+          ?? null;
+        </div>
+      </div>
+
+      <!-- 9. Common Error Scenarios and Solutions -->
+      <div class="section">
+        <h2>9. Common Error Scenarios and Solutions</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          Common error scenarios encountered in production and their recommended
+          solutions.
+        </p>
+
+        <div class="error-card">
+          <h3>Scenario 1: Missing Emirates ID Document</h3>
+          <p><strong>Error:</strong> "Emirates ID document is required"</p>
+          <p>
+            <strong>Cause:</strong> Customer has not uploaded Emirates ID
+            document
+          </p>
+          <p><strong>Solution:</strong></p>
+          <ol>
+            <li>Check quote documents in UI</li>
+            <li>Upload Emirates ID document (type: HEA_EID)</li>
+            <li>Retry automation or manually trigger Upload Documents step</li>
+          </ol>
+        </div>
+
+        <div class="error-card warning">
+          <h3>Scenario 2: API Timeout</h3>
+          <p><strong>Error:</strong> "Connection timeout after 30 seconds"</p>
+          <p><strong>Cause:</strong> ADNIC API is slow or network issues</p>
+          <p><strong>Solution:</strong></p>
+          <ol>
+            <li>Check ADNIC API status</li>
+            <li>Increase timeout via ApplicationStorage if persistent</li>
+            <li>Wait for automatic retry (if enabled)</li>
+            <li>Manually retry from last completed step</li>
+          </ol>
+        </div>
+
+        <div class="error-card info">
+          <h3>Scenario 3: Invalid Date Format</h3>
+          <p>
+            <strong>Error:</strong> "Date of birth mismatch with Emirates ID"
+          </p>
+          <p>
+            <strong>Cause:</strong> Date format inconsistency or incorrect date
+          </p>
+          <p><strong>Solution:</strong></p>
+          <ol>
+            <li>Verify customer date of birth in quote</li>
+            <li>Check Emirates ID date format</li>
+            <li>Update date to match ADNIC expected format (YYYY-MM-DD)</li>
+            <li>Retry Issue Policy step</li>
+          </ol>
+        </div>
+
+        <div class="error-card">
+          <h3>Scenario 4: Duplicate Policy</h3>
+          <p><strong>Error:</strong> "Policy already exists for this quote"</p>
+          <p>
+            <strong>Cause:</strong> Previous successful API call created policy
+          </p>
+          <p><strong>Solution:</strong></p>
+          <ol>
+            <li>Check if policy number already exists in quote</li>
+            <li>If policy exists, skip Issue Policy step</li>
+            <li>Continue with next step (Upload Documents)</li>
+            <li>Update completed_step manually if needed</li>
+          </ol>
+        </div>
+
+        <div class="error-card warning">
+          <h3>Scenario 5: Document Upload Failure</h3>
+          <p>
+            <strong>Error:</strong> "Document upload failed: Invalid MIME type"
+          </p>
+          <p>
+            <strong>Cause:</strong> Document format not supported (must be PDF,
+            JPEG, or PNG)
+          </p>
+          <p><strong>Solution:</strong></p>
+          <ol>
+            <li>Verify document format</li>
+            <li>Convert to supported format if needed</li>
+            <li>Re-upload document</li>
+            <li>Retry Upload Documents step</li>
+          </ol>
+        </div>
+
+        <h3>Error Scenario Reference Table</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Error Message</th>
+              <th>Category</th>
+              <th>Common Cause</th>
+              <th>Quick Fix</th>
+              <th>Retry Eligible</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>"Customer name is required"</td>
+              <td>Validation</td>
+              <td>Missing customer data</td>
+              <td>Update quote customer info</td>
+              <td><span class="status-badge failed">No</span></td>
+            </tr>
+            <tr>
+              <td>"Emirates ID document is required"</td>
+              <td>Validation</td>
+              <td>Missing document</td>
+              <td>Upload Emirates ID</td>
+              <td><span class="status-badge failed">No</span></td>
+            </tr>
+            <tr>
+              <td>"Connection timeout"</td>
+              <td>Network</td>
+              <td>Slow API or network</td>
+              <td>Increase timeout, retry</td>
+              <td><span class="status-badge success">Yes</span></td>
+            </tr>
+            <tr>
+              <td>"HTTP 500: Internal Server Error"</td>
+              <td>API</td>
+              <td>ADNIC server error</td>
+              <td>Retry later</td>
+              <td><span class="status-badge success">Yes</span></td>
+            </tr>
+            <tr>
+              <td>"Invalid Emirates ID format"</td>
+              <td>API</td>
+              <td>Wrong ID format</td>
+              <td>Verify and correct ID</td>
+              <td><span class="status-badge failed">No</span></td>
+            </tr>
+            <tr>
+              <td>"Policy document ID is missing"</td>
+              <td>Validation</td>
+              <td>Policy not issued yet</td>
+              <td>Complete Issue Policy first</td>
+              <td><span class="status-badge failed">No</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 10. Error Recovery Strategies -->
+      <div class="section">
+        <h2>10. Error Recovery Strategies</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          Different recovery strategies based on error type and automation
+          state.
+        </p>
+
+        <h3>Automatic Recovery</h3>
+        <div class="success-box">
+          <strong>✅ Automatic Recovery Scenarios:</strong>
+          <ul>
+            <li>
+              <strong>Timeout Errors:</strong> Automatic retry with exponential
+              backoff (if enabled)
+            </li>
+            <li>
+              <strong>Connection Errors:</strong> Automatic retry on next queue
+              execution
+            </li>
+            <li>
+              <strong>Transient API Errors:</strong> Retry with backoff delay
+            </li>
+          </ul>
+        </div>
+
+        <h3>Manual Recovery Process</h3>
+        <div class="code-block">
+          // Manual recovery workflow 1. Identify Failed Process - Check
+          PolicyIssuance table for FAILED status - Review last_error_message
+          field - Check PolicyIssuanceLog for detailed error 2. Analyze Error -
+          Determine error category (validation, API, network) - Check if data
+          fix is needed - Review completed_step to know where to resume 3. Fix
+          Underlying Issue - Update missing/invalid data - Upload missing
+          documents - Correct data formats 4. Resume Automation - Option A:
+          Update process status to PENDING and trigger job - Option B: Use UI to
+          manually complete failed step - Option C: Continue from last completed
+          step 5. Monitor Progress - Watch logs for completion - Verify each
+          step completes successfully - Check final status
+        </div>
+
+        <h3>Recovery Strategies by Error Type</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Error Type</th>
+              <th>Recovery Strategy</th>
+              <th>Steps Required</th>
+              <th>Time Estimate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Validation Error</td>
+              <td>Fix data, retry</td>
+              <td>1. Fix data<br />2. Retry step</td>
+              <td>5-10 minutes</td>
+            </tr>
+            <tr>
+              <td>Timeout Error</td>
+              <td>Automatic retry or increase timeout</td>
+              <td>
+                1. Wait for retry<br />OR<br />2. Increase timeout<br />3. Retry
+              </td>
+              <td>1-5 minutes</td>
+            </tr>
+            <tr>
+              <td>API Error (4xx)</td>
+              <td>Fix request, retry</td>
+              <td>1. Review error<br />2. Fix payload<br />3. Retry</td>
+              <td>10-15 minutes</td>
+            </tr>
+            <tr>
+              <td>API Error (5xx)</td>
+              <td>Wait and retry</td>
+              <td>1. Wait for ADNIC fix<br />2. Retry</td>
+              <td>30+ minutes</td>
+            </tr>
+            <tr>
+              <td>Document Error</td>
+              <td>Re-upload document</td>
+              <td>1. Fix document<br />2. Re-upload<br />3. Retry step</td>
+              <td>5-10 minutes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Resume from Last Completed Step</h3>
+        <div class="info-box">
+          <strong>Resume Logic:</strong>
+          <div class="code-block" style="margin-top: 10px">
+            // Resume automation from last completed step $process =
+            PolicyIssuance::find($processId); // Get last completed step
+            $lastCompletedStep = $process->completed_step; // Determine next
+            step $nextStep = $service->getNextStep($lastCompletedStep); //
+            Execute from next step if ($nextStep) {
+            $service->executeSteps($process); } // Example flow: //
+            completed_step = null → Execute UploadDocuments // completed_step =
+            UploadDocuments → Execute IssuePolicy // completed_step =
+            IssuePolicy → Execute UploadPolicyDocumentsToIMCRM // completed_step
+            = UploadPolicyDocumentsToIMCRM → null (all steps completed) //
+            completed_step = UploadPolicyDocumentsToIMCRM → null (all steps
+            completed)
+          </div>
+        </div>
+      </div>
+
+      <!-- 11. Troubleshooting Guide for Common Issues -->
+      <div class="section">
+        <h2>11. Troubleshooting Guide for Common Issues</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          Step-by-step troubleshooting guide for common issues encountered in
+          production.
+        </p>
+
+        <h3>Issue 1: Automation Not Starting</h3>
+        <div class="error-card info">
+          <h4>Symptoms:</h4>
+          <ul>
+            <li>PolicyIssuance record created but status remains PENDING</li>
+            <li>No logs appearing for automation</li>
+            <li>Job not executing</li>
+          </ul>
+          <h4 style="margin-top: 20px">Troubleshooting Steps:</h4>
+          <ol>
+            <li>
+              <strong>Check Feature Toggle:</strong>
+              <div class="code-block">
+                $enabled = app(ApplicationStorageService::class)
+                ->getValueByKey(
+                ApplicationStorageEnums::ENABLE_ADNIC_HEALTH_POLICY_ISSUANCE );
+                // Should return true
+              </div>
+            </li>
+            <li>
+              <strong>Check Queue Worker:</strong>
+              <div class="code-block">
+                php artisan queue:work redis --queue=policy-issuance-automation
+                // Should be running
+              </div>
+            </li>
+            <li>
+              <strong>Check Job Status:</strong>
+              <div class="code-block">
+                // Check failed_jobs table SELECT * FROM failed_jobs WHERE queue
+                = 'policy-issuance-automation';
+              </div>
+            </li>
+            <li>
+              <strong>Manually Dispatch Job:</strong>
+              <div class="code-block">
+                PolicyIssuanceJob::dispatch($processId)
+                ->onQueue('policy-issuance-automation');
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <h3>Issue 2: Step Failing Repeatedly</h3>
+        <div class="error-card warning">
+          <h4>Symptoms:</h4>
+          <ul>
+            <li>Same step fails multiple times</li>
+            <li>Error message doesn't change</li>
+            <li>Failed attempts count increasing</li>
+          </ul>
+          <h4 style="margin-top: 20px">Troubleshooting Steps:</h4>
+          <ol>
+            <li>
+              <strong>Review Error Logs:</strong>
+              <div class="code-block">
+                // Check PolicyIssuanceLog SELECT * FROM policy_issuance_logs
+                WHERE policy_issuance_id = ? ORDER BY created_at DESC;
+              </div>
+            </li>
+            <li>
+              <strong>Check Validation Errors:</strong>
+              <div class="code-block">
+                // Review validation service logs
+                LoggerService::readLogs($quoteId,
+                LoggerFeatureEnum::ADNIC_HEALTH_POLICY_AUTOMATION);
+              </div>
+            </li>
+            <li>
+              <strong>Verify Data Completeness:</strong>
+              <div class="code-block">
+                // Check quote data $quote = PersonalQuote::find($quoteId); //
+                Verify customer, payment, product, documents
+              </div>
+            </li>
+            <li>
+              <strong>Test API Manually:</strong>
+              <div class="code-block">
+                // Use tinker to test API call php artisan tinker $service =
+                app(AdnicApiService::class); $response =
+                $service->issuePolicy($quote);
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <h3>Issue 3: Documents Not Uploading</h3>
+        <div class="error-card">
+          <h4>Symptoms:</h4>
+          <ul>
+            <li>Document upload API call fails</li>
+            <li>Error about MIME type or format</li>
+            <li>Azure storage access issues</li>
+          </ul>
+          <h4 style="margin-top: 20px">Troubleshooting Steps:</h4>
+          <ol>
+            <li>
+              <strong>Check Document Availability:</strong>
+              <div class="code-block">
+                // Verify document exists in Azure $document =
+                QuoteDocument::where('quote_id', $quoteId)
+                ->where('document_type', QuoteDocumentTypeEnum::HEA_EID)
+                ->first();
+              </div>
+            </li>
+            <li>
+              <strong>Verify MIME Type:</strong>
+              <div class="code-block">
+                // Check allowed types const ALLOWED_MIME_TYPES = [
+                'application/pdf', 'image/jpeg', 'image/png' ];
+              </div>
+            </li>
+            <li>
+              <strong>Test Azure Storage:</strong>
+              <div class="code-block">
+                // Verify Azure connection $content =
+                Storage::disk('azure')->get($document->file_path);
+              </div>
+            </li>
+            <li>
+              <strong>Check Base64 Encoding:</strong>
+              <div class="code-block">
+                // Verify encoding works $base64 = base64_encode($content);
+                $decoded = base64_decode($base64);
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <h3>Issue 4: Policy Documents Not Downloading</h3>
+        <div class="error-card info">
+          <h4>Symptoms:</h4>
+          <ul>
+            <li>One or more policy documents fail to download</li>
+            <li>Step 3 fails even if some documents succeed</li>
+            <li>Missing document IDs in quote</li>
+          </ul>
+          <h4 style="margin-top: 20px">Troubleshooting Steps:</h4>
+          <ol>
+            <li>
+              <strong>Verify All Document IDs Exist:</strong>
+              <div class="code-block">
+                // Check all 3 document IDs are present $quote =
+                PersonalQuote::find($quoteId); // Verify
+                insurer_tax_invoice_doc_id, insurer_debit_note_doc_id,
+                insurer_policy_doc_id
+              </div>
+            </li>
+            <li>
+              <strong>Check Step Prerequisites:</strong>
+              <div class="code-block">
+                // Verify Step 2 completed successfully $process =
+                PolicyIssuance::where('quote_id', $quoteId)->first(); //
+                completed_step should be STEP_ISSUE_POLICY
+              </div>
+            </li>
+            <li>
+              <strong>Review API Response:</strong>
+              <div class="code-block">
+                // Check PolicyIssuanceLog for document download errors SELECT *
+                FROM policy_issuance_logs WHERE policy_issuance_id = ? AND step
+                = 'UploadPolicyDocumentsToIMCRM' ORDER BY created_at DESC;
+              </div>
+            </li>
+            <li>
+              <strong>Verify All 3 Documents Required:</strong>
+              <div class="code-block">
+                // All 3 documents must succeed: // - Tax Invoice // - Tax
+                Invoice Raised By Buyer // - Policy Schedule
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <h3>Quick Reference: Troubleshooting Checklist</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Check</th>
+              <th>Command/Query</th>
+              <th>Expected Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Feature Toggle</td>
+              <td>ApplicationStorage check</td>
+              <td>true</td>
+            </tr>
+            <tr>
+              <td>Queue Worker</td>
+              <td>php artisan queue:work</td>
+              <td>Running</td>
+            </tr>
+            <tr>
+              <td>Process Status</td>
+              <td>SELECT status FROM policy_issuances</td>
+              <td>PROCESSING or PENDING</td>
+            </tr>
+            <tr>
+              <td>Error Logs</td>
+              <td>SELECT * FROM policy_issuance_logs</td>
+              <td>Recent entries</td>
+            </tr>
+            <tr>
+              <td>API Connectivity</td>
+              <td>curl ADNIC API endpoint</td>
+              <td>200 OK</td>
+            </tr>
+            <tr>
+              <td>Document Availability</td>
+              <td>SELECT * FROM quote_documents</td>
+              <td>Required documents exist</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 12. Best Practices for Error Handling -->
+      <div class="section">
+        <h2>12. Best Practices for Error Handling</h2>
+        <p style="color: #7f8c8d; margin-bottom: 20px">
+          Best practices and guidelines for implementing robust error handling
+          in the automation system.
+        </p>
+
+        <h3>DO's ✅</h3>
+        <div class="success-box">
+          <ul>
+            <li>
+              <strong>Always validate before API calls:</strong> Use
+              AdnicValidationService to catch errors early
+            </li>
+            <li>
+              <strong>Use consistent response structure:</strong> Always return
+              the standard response format
+            </li>
+            <li>
+              <strong>Log comprehensively:</strong> Include process_id,
+              quote_id, step, and error details
+            </li>
+            <li>
+              <strong>Update status on failure:</strong> Always update process
+              status and error fields
+            </li>
+            <li>
+              <strong>Store API logs:</strong> Store every API call (success and
+              failure) for audit
+            </li>
+            <li>
+              <strong>Handle exceptions gracefully:</strong> Wrap all API calls
+              in try-catch blocks
+            </li>
+            <li>
+              <strong>Provide clear error messages:</strong> Use user-friendly
+              messages with technical details
+            </li>
+            <li>
+              <strong>Enable retry for transient errors:</strong> Use timeout
+              status for retry-eligible errors
+            </li>
+            <li>
+              <strong>Resume from last step:</strong> Don't restart from
+              beginning on retry
+            </li>
+            <li>
+              <strong>Test error scenarios:</strong> Write tests for all error
+              paths
+            </li>
+          </ul>
+        </div>
+
+        <h3>DON'Ts ❌</h3>
+        <div class="danger-box">
+          <ul>
+            <li>
+              <strong>Don't skip validation:</strong> Always validate before
+              making API calls
+            </li>
+            <li>
+              <strong>Don't ignore errors:</strong> Always handle and log errors
+            </li>
+            <li>
+              <strong>Don't retry validation errors:</strong> Only retry
+              transient failures
+            </li>
+            <li>
+              <strong>Don't log sensitive data:</strong> Never log API tokens or
+              passwords
+            </li>
+            <li>
+              <strong>Don't crash on errors:</strong> Always return error
+              response instead of throwing
+            </li>
+            <li>
+              <strong>Don't hardcode error messages:</strong> Use constants or
+              configurable messages
+            </li>
+            <li>
+              <strong>Don't forget status updates:</strong> Always update
+              process status on failure
+            </li>
+            <li>
+              <strong>Don't retry indefinitely:</strong> Set maximum retry
+              attempts
+            </li>
+            <li>
+              <strong>Don't skip API logs:</strong> Always store API call logs
+            </li>
+            <li>
+              <strong>Don't expose internal errors:</strong> Sanitize error
+              messages for users
+            </li>
+          </ul>
+        </div>
+
+        <h3>Error Handling Checklist</h3>
+        <div class="info-box">
+          <strong>Before deploying error handling code, verify:</strong>
+          <ol>
+            <li>✅ All API calls wrapped in try-catch</li>
+            <li>✅ Validation performed before API calls</li>
+            <li>✅ Consistent response structure used</li>
+            <li>✅ Comprehensive logging implemented</li>
+            <li>✅ Status updates on failure</li>
+            <li>✅ API logs stored for audit</li>
+            <li>✅ Error messages are clear and actionable</li>
+            <li>✅ Retry logic implemented for transient errors</li>
+            <li>✅ Maximum retry limits set</li>
+            <li>✅ Sensitive data excluded from logs</li>
+            <li>✅ Error scenarios tested</li>
+            <li>✅ Documentation updated</li>
+          </ol>
+        </div>
+
+        <h3>Code Review Checklist</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Check</th>
+              <th>Description</th>
+              <th>Required</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Try-Catch Blocks</td>
+              <td>All API calls wrapped in try-catch</td>
+              <td>✅ Required</td>
+            </tr>
+            <tr>
+              <td>Validation</td>
+              <td>Pre-validation before API calls</td>
+              <td>✅ Required</td>
+            </tr>
+            <tr>
+              <td>Response Structure</td>
+              <td>Consistent response format</td>
+              <td>✅ Required</td>
+            </tr>
+            <tr>
+              <td>Logging</td>
+              <td>Comprehensive logging with context</td>
+              <td>✅ Required</td>
+            </tr>
+            <tr>
+              <td>Status Updates</td>
+              <td>Process status updated on failure</td>
+              <td>✅ Required</td>
+            </tr>
+            <tr>
+              <td>API Logs</td>
+              <td>API calls stored in PolicyIssuanceLog</td>
+              <td>✅ Required</td>
+            </tr>
+            <tr>
+              <td>Error Messages</td>
+              <td>Clear, user-friendly messages</td>
+              <td>✅ Required</td>
+            </tr>
+            <tr>
+              <td>Retry Logic</td>
+              <td>Retry for transient errors only</td>
+              <td>✅ Required</td>
+            </tr>
+            <tr>
+              <td>Sensitive Data</td>
+              <td>No tokens/passwords in logs</td>
+              <td>✅ Required</td>
+            </tr>
+            <tr>
+              <td>Tests</td>
+              <td>Error scenarios tested</td>
+              <td>✅ Required</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer">
+        <p><strong>ADNIC Error Handling Documentation</strong></p>
+        <p>Part of the Policy Issuance Automation System</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Version 1.0 | February 2026
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

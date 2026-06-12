@@ -144,7 +144,7 @@
         
         <div class="card">
             <h3>Claims Management</h3>
-            <p>Permissions related to claims processing.</p>
+            <p>Permissions for the new Claims Management module including claim operations, status updates, document handling, and data export across all Lines of Business.</p>
             <a href="claims-management.php">View Permissions</a>
         </div>
         

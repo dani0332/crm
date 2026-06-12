@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Role;
 use App\Models\Team;
@@ -25,14 +26,14 @@ class LeadAllocationDashboardService extends BaseService
     {
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
+            // get the team name for the quote type
+            $teamName = TeamNameEnum::getTeamName($quoteType);
+            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $teamName)->first();
 
-            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $quoteType->value)->first();
             $advisorRoles = $quoteType->advisorRoles();
-
             if ($quoteType == QuoteTypes::SAVINGS) {
                 $advisorRoles[] = RolesEnum::SavingsManager;
             }
-
             $users = User::activeUser()
                 ->select(
                     'users.id as userId',
@@ -76,14 +77,21 @@ class LeadAllocationDashboardService extends BaseService
                 })
                 ->groupBy('users.name', 'users.id', 'la.id');
 
-            if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-                $userTeamIds = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
-                $users = $users->whereIn('teams.id', $userTeamIds);
-            }
+            if (auth()->user()->hasAnyRole([RolesEnum::ManagerLeadAllocationEdit, RolesEnum::ManagerLeadAllocation])
+                && ! auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::SuperManagerLeadAllocation])) {
+                $departmentIds = auth()->user()->department()->pluck('id')->toArray();
+                $users = $users->whereIn('users.department_id', $departmentIds);
+            } else {
 
-            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
-                $users = $users->whereIn('users.id', $userIds);
+                if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+                    $userTeamIds = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
+                    $users = $users->whereIn('teams.id', $userTeamIds);
+                }
+
+                if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+                    $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
+                    $users = $users->whereIn('users.id', $userIds);
+                }
             }
 
             return $users->get();
@@ -93,7 +101,6 @@ class LeadAllocationDashboardService extends BaseService
             return [];
         }
     }
-
     private function getQuotesBaseQuery($quoteType)
     {
         $from = now()->startOfDay();
@@ -104,7 +111,10 @@ class LeadAllocationDashboardService extends BaseService
             ->when($quoteType->isPersonalQuote(), function ($q) use ($quoteType) {
                 $q->where('quote_type_id', $quoteType->id());
             })
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->when($quoteType == QuoteTypes::GROUP_MEDICAL, function ($q) {
+                $q->whereNotNull('health_plan_type_id')
+                    ->whereNotNull('number_of_employees');
+            })->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY]);
     }
 

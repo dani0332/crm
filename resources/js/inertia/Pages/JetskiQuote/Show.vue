@@ -1,6 +1,6 @@
 <script setup>
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
@@ -488,7 +488,11 @@ const record = computed(() => page.props.quote);
       :expanded="sectionExpanded"
     />
 
-    <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="$page.props.quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <lead-raw-data
       :modelType="'Jetski'"

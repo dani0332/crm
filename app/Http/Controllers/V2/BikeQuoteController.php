@@ -58,8 +58,11 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\CentralTrait;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 class BikeQuoteController extends Controller
 {
@@ -73,7 +76,7 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function index()
     {
@@ -98,7 +101,7 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function create(Request $request)
     {
@@ -125,7 +128,7 @@ class BikeQuoteController extends Controller
 
     /**
      * @param  $quoteTypeCode
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function store(BikeQuoteRequest $request)
     {
@@ -139,7 +142,7 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function edit($uuid)
     {
@@ -163,7 +166,7 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @return \Inertia\Response|\Inertia\ResponseFactory
+     * @return Response|ResponseFactory
      */
     public function show($uuid)
     {

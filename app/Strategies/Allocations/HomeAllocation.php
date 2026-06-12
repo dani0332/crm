@@ -67,7 +67,7 @@ class HomeAllocation extends BaseAllocation
     protected function getCorpTeamAdvisorEmails(): array
     {
         LoggerService::info('HomeAllocation: Fetching Corp Team advisor emails');
-        $corpTeamId = Team::where('name', TeamNameEnum::MOTOR_COOPERATE_RENEWALS)->value('id');
+        $corpTeamId = getTeamId(TeamNameEnum::MOTOR_COOPERATE_RENEWALS);
 
         if (! $corpTeamId) {
             LoggerService::warning('HomeAllocation: Corp Team not found');

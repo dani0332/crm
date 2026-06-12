@@ -7,6 +7,8 @@ use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\ClaimRequest;
+use App\Models\ClaimRequestDetail;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
@@ -27,6 +29,8 @@ use App\Observers\BusinessQuoteDetailObserver;
 use App\Observers\BusinessQuoteObserver;
 use App\Observers\CarQuoteDetailObserver;
 use App\Observers\CarQuoteObserver;
+use App\Observers\ClaimRequestDetailObserver;
+use App\Observers\ClaimRequestObserver;
 use App\Observers\CustomerAddressObserver;
 use App\Observers\CustomerObserver;
 use App\Observers\CycleQuoteObserver;
@@ -42,11 +46,13 @@ use App\Observers\SendUpdateLogObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
+use App\Queue\MyAlfredSqsConnector;
 use App\Services\BranchAssignmentService;
 use App\Services\CsvExportService;
 use App\Services\EmailExportService;
 use App\Services\LeadsCountService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -78,6 +84,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        Queue::extend('sqs_myalfred', fn () => new MyAlfredSqsConnector);
+
         CarQuote::observe(CarQuoteObserver::class);
         HealthQuote::observe(HealthQuoteObserver::class);
         LifeQuote::observe(LifeQuoteObserver::class);
@@ -97,6 +105,10 @@ class AppServiceProvider extends ServiceProvider
         PaymentSplits::observe(PaymentSplitsObserver::class);
         CustomerAddress::observe(CustomerAddressObserver::class);
         SendUpdateLog::observe(SendUpdateLogObserver::class);
+
+        // Claim Request Observers
+        ClaimRequest::observe(ClaimRequestObserver::class);
+        ClaimRequestDetail::observe(ClaimRequestDetailObserver::class);
         // TODO: this PolicyIssuanceObserver is not for PROD.
         PolicyIssuance::observe(PolicyIssuanceObserver::class);
         // DB::listen(function($query) {

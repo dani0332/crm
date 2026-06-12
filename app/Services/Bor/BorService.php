@@ -12,7 +12,9 @@ use App\Models\InsuranceProviderContact;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class BorService
 {
@@ -259,7 +261,7 @@ class BorService
     /**
      * Upload a BOR document
      *
-     * @param  \Illuminate\Http\UploadedFile  $file
+     * @param  UploadedFile  $file
      * @param  int  $borLogId
      * @return array
      */
@@ -271,10 +273,10 @@ class BorService
         $quoteObject = checkPersonalQuotes($quoteType) ? $personalQuote : $this->getQuoteObject($quoteType, $personalQuote->quote_id);
 
         // Auto-determine document type code based on the lead's LOB if not provided
-        $documentTypeCode = $data['document_type_code'] ?? $this->determineBorDocumentType($quoteType);
-
+        $documentTypeCodeValue = $data['document_type_code'] ?? $this->determineBorDocumentType($quoteType);
+        $documentTypeCode = is_array($documentTypeCodeValue) ? $documentTypeCodeValue : [$documentTypeCodeValue];
         // Get the document type for this LOB
-        $documentType = DocumentType::where('code', $documentTypeCode)
+        $documentType = DocumentType::whereIn('code', $documentTypeCode)
             ->where('is_active', 1)
             ->where('quote_type_id', $personalQuote->quote_type_id)
             ->when(isset($quoteObject->business_type_of_insurance_id), function ($query) use ($quoteObject) {
@@ -283,7 +285,7 @@ class BorService
             ->first();
 
         if (! $documentType) {
-            throw new \Exception('Invalid document type for BOR upload: '.$documentTypeCode);
+            throw new \Exception('Invalid document type for BOR upload: '.implode(', ', $documentTypeCode));
         }
 
         DB::beginTransaction();
@@ -294,7 +296,7 @@ class BorService
 
             // Prepare data for existing upload logic
             $uploadData = [
-                'document_type_code' => $documentTypeCode,
+                'document_type_code' => $documentType->code,
                 'quote_uuid' => $borLog->bor_reference, // Use BOR reference as identifier
                 'document_category' => $borLog->bor_reference,
             ];
@@ -421,7 +423,7 @@ class BorService
     /**
      * Sign a BOR document
      *
-     * @param  \Illuminate\Http\UploadedFile|string|null  $file
+     * @param  UploadedFile|string|null  $file
      */
     public function signDocument(array $data, $file = null): array
     {
@@ -453,7 +455,7 @@ class BorService
             // Handle previous document deletion if new file is uploaded
             $previousDoc = $borLog->document;
             if ($previousDoc && $previousDoc->doc_url && $file) {
-                \Illuminate\Support\Facades\Storage::disk('azureIMPrivate')->delete($previousDoc->doc_url);
+                Storage::disk('azureIMPrivate')->delete($previousDoc->doc_url);
                 $previousDoc->delete();
             }
 
@@ -502,7 +504,7 @@ class BorService
     /**
      * Upload a quote document for BOR
      *
-     * @param  \Illuminate\Http\UploadedFile|string  $file
+     * @param  UploadedFile|string  $file
      */
     public function uploadQuoteDocument(array $data, $file): array
     {
@@ -588,14 +590,14 @@ class BorService
             ini_set('output_buffering', 0);
             ini_set('implicit_flush', 1);
             ini_set('zlib.output_compression', 0);
-            ini_set('max_execution_time', 600); // 10 minutes for SSE
+            ini_set('max_execution_time', 300); // 5 minutes for SSE
             ini_set('memory_limit', '256M');
 
             // Ignore user disconnect to continue processing
             ignore_user_abort(true);
 
             $lastDataHash = null;
-            $maxIterations = 200; // Maximum 10 minutes (200 * 3 seconds)
+            $maxIterations = 60; // Maximum 5 minutes (60 * 5 seconds)
             $iteration = 0;
 
             LoggerService::info('SSE BOR stream started', ['bor_ref_id' => $borRefId]);
@@ -712,7 +714,7 @@ class BorService
                 $iteration++;
 
                 // Use a shorter sleep with connection check
-                for ($i = 0; $i < 3; $i++) {
+                for ($i = 0; $i < 5; $i++) {
                     sleep(1);
                     // Quick connection check during sleep
                     if (connection_aborted()) {

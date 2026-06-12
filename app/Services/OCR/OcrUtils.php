@@ -8,8 +8,11 @@ use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
+use App\Models\CarQuote;
 use App\Models\DocumentType;
+use App\Models\HealthQuote;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\AccuracyMatrixService;
 use App\Services\Logger\LoggerService;
@@ -20,6 +23,13 @@ use Illuminate\Database\Eloquent\Model;
 
 trait OcrUtils
 {
+    private static function quoteTypesOcrWithoutPayment(): array
+    {
+        return [
+            QuoteTypes::getId(QuoteTypes::HEALTH),
+        ];
+    }
+
     public function getCleanData(array $data): array
     {
         return array_filter($data, function ($value) {
@@ -47,7 +57,7 @@ trait OcrUtils
 
         try {
             return Carbon::parse($date)->format('Y-m-d');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Failed to format date', exception: $e);
 
             return null;
@@ -124,6 +134,14 @@ trait OcrUtils
 
     public function getProvider(Model $quote)
     {
+        $quoteTypeId = $this->getQuoteTypeId($quote);
+        $isOcrWithoutPayment = in_array($quoteTypeId, self::quoteTypesOcrWithoutPayment());
+
+        // Check if quoet type does not require payment for OCR
+        if ($isOcrWithoutPayment) {
+            return $quote->insuranceProvider?->code ?? null;
+        }
+
         if ($quote instanceof SendUpdateLog) {
             return $quote->insuranceProvider?->code ?? null;
         }
@@ -337,7 +355,7 @@ trait OcrUtils
             }
 
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             LoggerService::error('Error checking Group Medical business type', [
                 'error' => $e->getMessage(),
                 'quote_type' => get_class($quote),
@@ -352,18 +370,31 @@ trait OcrUtils
     public function extractProviderCode(Model $quote): ?string
     {
         $providerCode = null;
+        $quoteTypeId = $this->getQuoteTypeId($quote);
+        $isOcrWithoutPayment = in_array($quoteTypeId, self::quoteTypesOcrWithoutPayment());
+        $extractionSource = 'none';
 
-        // First priority: Check payments for all model types
-        if ($quote->payments && $quote->payments->isNotEmpty()) {
+        // Check if quote type does not require payment for OCR
+        if ($isOcrWithoutPayment) {
+            $providerCode = $quote->insuranceProvider?->code ?? null;
+            if ($providerCode) {
+                $extractionSource = 'insuranceProvider';
+            }
+        }
+
+        // First priority: Check payments for all model types if not OCR without payment
+        if (! $isOcrWithoutPayment && $quote->payments && $quote->payments->isNotEmpty()) {
             $latestPayment = $quote->payments->first();
             if ($latestPayment && $latestPayment->insuranceProvider) {
                 $providerCode = $latestPayment->insuranceProvider->code;
+                $extractionSource = 'payments';
             }
         }
 
         // Second priority: For SendUpdateLog, use insuranceProvider if payments didn't yield a result
         if ($providerCode === null && $quote instanceof SendUpdateLog && $quote->insuranceProvider) {
             $providerCode = $quote->insuranceProvider->code;
+            $extractionSource = 'insuranceProvider';
         }
 
         // Log the result for debugging
@@ -372,10 +403,22 @@ trait OcrUtils
             'provider_code' => $providerCode,
             'has_insurance_provider' => $quote instanceof SendUpdateLog ? isset($quote->insuranceProvider) : false,
             'has_payments' => $quote->payments && $quote->payments->isNotEmpty(),
-            'extraction_source' => $providerCode ? ($quote->payments && $quote->payments->isNotEmpty() ? 'payments' : 'insuranceProvider') : 'none',
+            'is_ocr_without_payment' => $isOcrWithoutPayment,
+            'extraction_source' => $extractionSource,
         ]);
 
         return $providerCode;
+    }
+
+    public function getQuoteTypeId($quote): int
+    {
+        return match (true) {
+            $quote instanceof CarQuote => (int) QuoteTypes::CAR->id(),
+            $quote instanceof HealthQuote => (int) QuoteTypes::HEALTH->id(),
+            $quote instanceof PersonalQuote => $quote->quote_type_id,
+            $quote instanceof BusinessQuote => (int) QuoteTypes::BUSINESS->id(),
+            default => $quote->quote_type_id,
+        };
     }
 
     public function getRefId(Model $quote): string
@@ -491,15 +534,22 @@ trait OcrUtils
 
     protected function getNationalityId(?string $nationality): ?int
     {
-        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
         if (empty($nationality)) {
             return null;
         }
+        LoggerService::info('Getting nationality ID for nationality: '.$nationality);
 
-        $query = Nationality::where('text', $nationality)
-            ->orWhere('country_name', $nationality)
-            ->orWhere('code', $nationality);
+        $cacheKey = 'customer_verification_nationality_'.md5((string) $nationality);
+        $nationalityModel = cache()->remember(
+            $cacheKey,
+            now()->addDay(),
+            fn () => Nationality::where(function ($query) use ($nationality) {
+                $query->where('text', 'LIKE', '%'.$nationality.'%')
+                    ->orWhere('country_name', 'LIKE', '%'.$nationality.'%')
+                    ->orWhere('code', $nationality);
+            })->first(['id'])
+        );
 
-        return $query->value('id');
+        return $nationalityModel?->id;
     }
 }

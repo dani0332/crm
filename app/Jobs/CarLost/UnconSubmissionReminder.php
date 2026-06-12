@@ -95,7 +95,7 @@ class UnconSubmissionReminder implements ShouldQueue
             info('UnconSubmissionReminder - Getting advisors for teams: '.implode(',', $teams));
 
             $advisors = User::whereHas('teams', function ($q) use ($teams) {
-                $q->whereIn('name', $teams);
+                $q->whereIn('code', $teams);
             })->whereHas('roles', function ($q) {
                 $q->whereIn('name', [RolesEnum::CarAdvisor]);
             })->activeUser()->with(['managers' => function ($q) {

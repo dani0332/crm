@@ -23,6 +23,12 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             return $next($request);
         }
 
+        if ($this->lead->hasAdnicPlan()) {
+            LoggerService::info('Lead has ADNIC plan, Continuing allocation');
+
+            return $next($request);
+        }
+
         $lead = $this->findLead();
 
         if (! $lead) {

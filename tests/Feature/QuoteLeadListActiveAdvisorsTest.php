@@ -2,17 +2,20 @@
 
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
-use App\Models\ApplicationStorage;
 use App\Models\User;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\Grammars\SQLiteGrammar;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Mockery;
+use Illuminate\Support\Facades\Schema;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     // Ensure default database connection is sqlite for tests
     config(['database.default' => 'sqlite']);
-    \Illuminate\Support\Facades\DB::setDefaultConnection('sqlite');
+    DB::setDefaultConnection('sqlite');
 
     // Override mysql connection to use the same sqlite database
     // This handles models like InsuranceProvider that have protected $connection = 'mysql'
@@ -23,8 +26,8 @@ beforeEach(function () {
         'database.connections.mysql.database' => $sqliteConfig['database'] ?? ':memory:',
         'database.connections.mysql.prefix' => $sqliteConfig['prefix'] ?? '',
     ]);
-    \Illuminate\Support\Facades\DB::purge('mysql');
-    \Illuminate\Support\Facades\DB::reconnect('mysql');
+    DB::purge('mysql');
+    DB::reconnect('mysql');
 
     // Set required config values for date formatting
     config(['constants.DB_DATE_FORMAT_MATCH' => 'Y-m-d H:i:s']);
@@ -42,8 +45,8 @@ beforeEach(function () {
 
     // Ensure activity_log table exists on mysql connection as well
     // (ActivityLog model uses mysql connection, but schema is only created on sqlite)
-    if (! \Illuminate\Support\Facades\Schema::connection('mysql')->hasTable('activity_log')) {
-        \Illuminate\Support\Facades\Schema::connection('mysql')->create('activity_log', function ($table) {
+    if (! Schema::connection('mysql')->hasTable('activity_log')) {
+        Schema::connection('mysql')->create('activity_log', function ($table) {
             $table->id();
             $table->string('log_name')->nullable();
             $table->text('description')->nullable();
@@ -55,6 +58,7 @@ beforeEach(function () {
             $table->unsignedBigInteger('subject_id')->nullable();
             $table->string('causer_type')->nullable();
             $table->unsignedBigInteger('causer_id')->nullable();
+            $table->json('attribute_changes')->nullable();
             $table->text('properties')->nullable();
             $table->string('batch_uuid')->nullable();
             $table->string('code')->nullable();
@@ -64,7 +68,7 @@ beforeEach(function () {
     }
 
     // Set up minimal ApplicationStorage data
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
     $db->table('application_storage')->insertOrIgnore([
         'key_name' => 'PAYMENT_AUTHORISED_DAYS',
         'value' => '30',
@@ -114,10 +118,10 @@ beforeEach(function () {
     }
 
     // Override SQLite grammar to handle CONCAT by replacing it with SQLite's || operator
-    $connection = \Illuminate\Support\Facades\DB::connection('sqlite');
-    $grammar = new class($connection) extends \Illuminate\Database\Query\Grammars\SQLiteGrammar
+    $connection = DB::connection('sqlite');
+    $grammar = new class($connection) extends SQLiteGrammar
     {
-        public function compileSelect(\Illuminate\Database\Query\Builder $query)
+        public function compileSelect(Builder $query)
         {
             $sql = parent::compileSelect($query);
             // Replace CONCAT with SQLite's || operator
@@ -140,16 +144,12 @@ beforeEach(function () {
     $connection->setQueryGrammar($grammar);
 });
 
-afterEach(function () {
-    Mockery::close();
-});
-
 /**
  * Seed required roles and teams for testing
  */
 function seedRolesAndTeams(): int
 {
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
 
     // Create roles
     $roles = [
@@ -195,7 +195,7 @@ function seedRolesAndTeams(): int
  */
 function grantPermissionToUser(User $user, string $permissionName): void
 {
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
 
     // Get or create permission
     $permissionId = $db->table('permissions')->where('name', $permissionName)->where('guard_name', 'web')->value('id');
@@ -226,7 +226,7 @@ function createUserWithRole(string $roleName, bool $isActive = true, ?int $teamI
     ]);
     $user->setConnection('sqlite');
 
-    $db = \Illuminate\Support\Facades\DB::connection('sqlite');
+    $db = DB::connection('sqlite');
     $roleId = $db->table('roles')->where('name', $roleName)->value('id');
 
     if ($roleId) {
@@ -265,7 +265,7 @@ test('pet quotes index returns only active advisors', function () {
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
@@ -291,7 +291,7 @@ test('bike quotes index returns only active advisors', function () {
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
@@ -317,7 +317,7 @@ test('cycle quotes index returns only active advisors', function () {
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
@@ -343,7 +343,7 @@ test('yacht quotes index returns only active advisors', function () {
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
@@ -369,7 +369,7 @@ test('jetski quotes index returns only active advisors', function () {
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
@@ -395,7 +395,7 @@ test('life quotes index returns only active advisors', function () {
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
@@ -421,7 +421,7 @@ test('home quotes index returns only active advisors', function () {
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
@@ -447,7 +447,7 @@ test('car quotes index returns only active advisors', function () {
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
@@ -459,12 +459,12 @@ test('car quotes index returns only active advisors', function () {
 });
 
 test('savings quotes index returns only active advisors', function () {
-    // Mock the CAPI HTTP request for savings lookups
-    Http::fake([
-        '*' => Http::response([
+    // Mock the Capi facade for savings lookups
+    $mockCapi = Mockery::mock('alias:App\Facades\Capi');
+    $mockCapi->shouldReceive('request')
+        ->andReturn((object) [
             'savingsInvestmentType' => [],
-        ], 200),
-    ]);
+        ]);
 
     $teamId = seedRolesAndTeams();
     $admin = TestDataSeeder::createUserWithRole(RolesEnum::Admin);
@@ -481,7 +481,7 @@ test('savings quotes index returns only active advisors', function () {
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
@@ -508,7 +508,7 @@ test('travel quotes index returns only active advisors via CRUDService', functio
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();
@@ -536,7 +536,7 @@ test('health quotes index returns only active advisors via CRUDService', functio
     $response->assertInertia(fn ($page) => $page
         ->has('advisors')
         ->where('advisors', function ($advisors) use ($activeAdvisor, $inactiveAdvisor) {
-            if (! is_array($advisors) && ! ($advisors instanceof \Illuminate\Support\Collection)) {
+            if (! is_array($advisors) && ! ($advisors instanceof Collection)) {
                 return false;
             }
             $advisorIds = collect($advisors)->pluck('id')->toArray();

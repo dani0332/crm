@@ -6,7 +6,6 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SageProcess;
-use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use Carbon\Carbon;
@@ -60,7 +59,6 @@ class SendUpdateSageJob implements ShouldQueue
             $sageApiService->updateSageProcessStatus(sageProcess: $this->sageProcess, status: SageEnum::SAGE_PROCESS_PROCESSING_STATUS, logFor: 'Endorsement Booking Sage Process : '.$this->sendUpdateLog->uuid);
 
             if ($this->sendUpdateLog->status != SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
-                app(CentralService::class)->updateSendUpdateStatusLogs($this->sendUpdateLog->id, $this->sendUpdateLog->status, SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED);
                 $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
             }
 
@@ -86,7 +84,6 @@ class SendUpdateSageJob implements ShouldQueue
                         'SendUpdateUUID' => $this->sendUpdateLog->uuid,
                     ]);
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'SendUpdateUUID: '.$this->sendUpdateLog->uuid);
-                    app(CentralService::class)->updateSendUpdateStatusLogs($this->sendUpdateLog->id, $this->sendUpdateLog->status, SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED);
                     $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
                 }
 
@@ -122,7 +119,6 @@ class SendUpdateSageJob implements ShouldQueue
         LoggerService::info('Updating Sage Process status to failed', extra: ['SageProcessID' => $this->sageProcess->id, 'QuoteType' => $this->requestPayload->quoteType, 'QuoteUUID' => $this->requestPayload->quoteUuid, 'SendUpdateUUID' => $this->sendUpdateLog->uuid]);
         info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' fn:failed - updating status to failed');
 
-        app(CentralService::class)->updateSendUpdateStatusLogs($this->sendUpdateLog->id, $this->sendUpdateLog->status, SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED);
         $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
         LoggerService::info('Updating SendUpdate status to UPDATE_BOOKING_FAILED', extra: ['SendUpdateUUID' => $this->sendUpdateLog->uuid, 'Error' => $message]);
 

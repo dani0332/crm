@@ -7,6 +7,7 @@ use Auth;
 use DataTables;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class HandlerController extends Controller
 {
@@ -15,7 +16,7 @@ class HandlerController extends Controller
 
      *
 
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function __construct()
     {
@@ -33,14 +34,14 @@ class HandlerController extends Controller
 
      *
 
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index(Request $request)
     {
         if ($request->ajax()) {
             $data = Handler::select('*')->orderBy('created_at', 'desc');
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     return view('handler.actions', compact('row'))->render();
@@ -55,7 +56,7 @@ class HandlerController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -65,7 +66,7 @@ class HandlerController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function store(Request $request)
     {
@@ -91,7 +92,7 @@ class HandlerController extends Controller
     /**
      * Display the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show(Handler $handler)
     {
@@ -101,7 +102,7 @@ class HandlerController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit(Handler $handler)
     {
@@ -111,7 +112,7 @@ class HandlerController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, Handler $handler)
     {
@@ -135,7 +136,7 @@ class HandlerController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(Handler $handler)
     {

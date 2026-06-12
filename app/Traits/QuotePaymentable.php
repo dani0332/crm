@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
+use Carbon\Carbon;
 
 trait QuotePaymentable
 {
@@ -48,6 +49,27 @@ trait QuotePaymentable
         return $this->isPaymentAuthorizedOrCapturedOrPaid() || $this->isPaymentDeclinedOrFailed();
     }
 
+    /**
+     * Whether the quote has stayed in draft/new (unauthorized) payment status for at least 12 hours.
+     * Used by Device allocation to allow assignment after 12 hours without payment auth.
+     */
+    public function hasRemainedUnauthorizedFor12Hours(): bool
+    {
+        $isDraftOrNew = in_array(
+            $this->payment_status_id,
+            [PaymentStatusEnum::DRAFT, PaymentStatusEnum::NEW],
+            true
+        );
+
+        if (! $isDraftOrNew) {
+            return false;
+        }
+
+        $twelveHoursAgo = now()->subHours(12);
+
+        return $this->created_at && Carbon::parse($this->created_at)->lte($twelveHoursAgo);
+    }
+
     public function scopePaymentLinkRequested($q)
     {
         $q->where('quote_status_id', QuoteStatusEnum::PaymentLinkRequestedByCustomer);
@@ -86,6 +108,15 @@ trait QuotePaymentable
     {
         $q->where(function ($sq) {
             $sq->where('sic_advisor_requested', 1)->orWhere->hasPaidOrDeclinedStatus()->orWhere->paymentLinkRequested();
+        });
+    }
+
+    public function scopeAdvisorRequestedOrPaymentAuthorizedOrDeclinedCyber($q)
+    {
+        $q->where(function ($sq) {
+            $sq->whereHas('cyberQuote', function ($cyber) {
+                $cyber->where('sic_advisor_requested', 1);
+            })->orWhere->hasPaidOrDeclinedStatus()->orWhere->paymentLinkRequested();
         });
     }
 }

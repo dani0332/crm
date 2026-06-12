@@ -85,6 +85,7 @@ class CsvExportService
         $query = $exporter->getQuery($requestParams);
 
         if ($query) {
+            LoggerService::sql('Export chunked', $query);
             LoggerService::info('Using chunked query processing for CSV export');
 
             // Check if exporter has custom chunked processing

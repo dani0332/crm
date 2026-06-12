@@ -7,12 +7,16 @@ use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Models\CarQuote;
 use App\Models\CustomerInsured;
+use App\Models\PassportVisaDetail;
 use App\Models\QuoteDocument;
 use App\Models\RegistrationCertificate;
 use App\Models\VehicleDriverDetail;
 
 class OCRDocumentValidator
 {
+    protected $quoteId;
+    protected $quoteableType;
+
     private const FIELDS_TO_VERIFY = [
         'DRIVING_LICENSE_FIELDS' => [
             'driver_license_number',
@@ -66,13 +70,24 @@ class OCRDocumentValidator
             'origin',
             'traffic_code_number',
         ],
+        'PASSPORT_FIELDS' => [
+            'passport_number',
+            'passport_country',
+            'passport_expiry_date',
+        ],
     ];
 
-    public function validateDLFields(int $quoteId): bool
+    public function __construct(int $quoteId, string $quoteableType)
+    {
+        $this->quoteId = $quoteId;
+        $this->quoteableType = $quoteableType;
+    }
+
+    public function validateDLFields(string $documentTypeCode): bool
     {
         $fieldsToVerify = self::FIELDS_TO_VERIFY['DRIVING_LICENSE_FIELDS'];
-        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quoteId)
-            ->where('quoteable_type', CarQuote::class)
+        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $this->quoteId)
+            ->where('quoteable_type', $this->quoteableType)
             ->select($fieldsToVerify)
             ->first();
 
@@ -82,19 +97,21 @@ class OCRDocumentValidator
         ));
 
         // Update ocr flag in quote document
-        $this->updateQuoteDocument($quoteId, DocumentTypeCode::DRIVING_LICENSE, $result);
+        $this->updateQuoteDocument($this->quoteId, $documentTypeCode, $result);
 
         return $result;
     }
 
-    public function validateEIDFields(int $quoteId): bool
+    public function validateEIDFields(string $documentTypeCode): bool
     {
-        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quoteId)
-            ->where('quoteable_type', CarQuote::class)
+        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $this->quoteId)
+            ->where('quoteable_type', $this->quoteableType)
             ->select('driver_gender')
             ->first();
 
-        $customerInsured = CustomerInsured::where('quote_request_id', $quoteId)
+        // Reminder:: Quote type id missing here - used forQuote
+        $customerInsured = CustomerInsured::active()
+            ->where('quote_request_id', $this->quoteId)
             ->first();
 
         if (! $customerInsured) {
@@ -121,7 +138,7 @@ class OCRDocumentValidator
         ));
 
         // Update ocr flag in quote document
-        $this->updateQuoteDocument($quoteId, DocumentTypeCode::EMIRATES_ID, $result);
+        $this->updateQuoteDocument($this->quoteId, $documentTypeCode, $result);
 
         return $result;
     }
@@ -150,15 +167,15 @@ class OCRDocumentValidator
         return $result;
     }
 
-    public function validateMulkiyaFields(int $quoteId): bool
+    public function validateMulkiyaFields(string $documentTypeCode): bool
     {
-        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $quoteId)
-            ->where('quoteable_type', CarQuote::class)
+        $vehicleDriverDetails = VehicleDriverDetail::where('quoteable_id', $this->quoteId)
+            ->where('quoteable_type', $this->quoteableType)
             ->select(self::FIELDS_TO_VERIFY['VEHICLE_DRIVER_DETAIL_FIELDS'])
             ->first();
 
-        $registrationCertificate = RegistrationCertificate::where('certificatable_id', $quoteId)
-            ->where('certificatable_type', CarQuote::class)
+        $registrationCertificate = RegistrationCertificate::where('certificatable_id', $this->quoteId)
+            ->where('certificatable_type', $this->quoteableType)
             ->select(self::FIELDS_TO_VERIFY['REGISTRATION_CERTIFICATE_FIELDS'])
             ->first();
 
@@ -170,7 +187,33 @@ class OCRDocumentValidator
             fn ($field) => empty($registrationCertificate->$field)));
 
         // Update ocr flag in quote document
-        $this->updateQuoteDocument($quoteId, DocumentTypeCode::REGISTRATION_CARD_MULKIYA, $result);
+        $this->updateQuoteDocument($this->quoteId, $documentTypeCode, $result);
+
+        return $result;
+    }
+
+    public function validatePassportFields(string $documentTypeCode, int $customerMemberId = 0): bool
+    {
+        $fieldsToVerify = self::FIELDS_TO_VERIFY['PASSPORT_FIELDS'];
+
+        $query = PassportVisaDetail::query()
+            ->where('quoteable_id', $this->quoteId)
+            ->where('quoteable_type', $this->quoteableType);
+
+        if ($customerMemberId > 0) {
+            $query->where('customer_member_id', $customerMemberId);
+        } else {
+            $query->whereNull('customer_member_id');
+        }
+
+        $passportVisaDetail = $query->select($fieldsToVerify)->first();
+
+        $result = $passportVisaDetail && empty(array_filter(
+            $fieldsToVerify,
+            fn (string $field) => empty($passportVisaDetail->$field)
+        ));
+
+        $this->updateQuoteDocument($this->quoteId, $documentTypeCode, $result);
 
         return $result;
     }
