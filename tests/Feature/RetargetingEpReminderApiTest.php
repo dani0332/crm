@@ -27,9 +27,9 @@ describe('POST /api/imcrm/trigger-ep-retargeting-email', function () {
 
             $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
             $response->assertJsonValidationErrors([
-                'attributes.data.quoteId',
-                'attributes.data.quoteTypeId',
-                'attributes.data.embeddedTransactionCode',
+                'params.quoteId',
+                'params.quoteTypeId',
+                'params.embeddedTransactionCode',
             ]);
         });
 
@@ -43,7 +43,7 @@ describe('POST /api/imcrm/trigger-ep-retargeting-email', function () {
             ]);
 
             $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-            $response->assertJsonValidationErrors(['attributes.data.quoteId']);
+            $response->assertJsonValidationErrors(['params.quoteId']);
         });
     });
 
@@ -59,11 +59,11 @@ describe('POST /api/imcrm/trigger-ep-retargeting-email', function () {
             });
 
             $response = $this->postJson(route('trigger.ep-retargeting-email'), [
-                'attributes' => ['data' => [
+                'params' => [
                     'quoteId' => $quote->id,
                     'quoteTypeId' => QuoteTypeId::Bike,
                     'embeddedTransactionCode' => $transaction->code,
-                ]],
+                ],
             ]);
 
             $response->assertStatus(Response::HTTP_OK);
@@ -88,11 +88,11 @@ describe('POST /api/imcrm/trigger-ep-retargeting-email', function () {
             });
 
             $response = $this->postJson(route('trigger.ep-retargeting-email'), [
-                'attributes' => ['data' => [
+                'params' => [
                     'quoteId' => $quote->id,
                     'quoteTypeId' => QuoteTypeId::Bike,
                     'embeddedTransactionCode' => $transaction->code,
-                ]],
+                ],
             ]);
 
             $response->assertStatus(Response::HTTP_OK);
