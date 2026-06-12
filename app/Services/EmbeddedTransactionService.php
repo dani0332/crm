@@ -152,7 +152,7 @@ class EmbeddedTransactionService extends BaseService
 
         $apiResponse = SIBService::createWorkflowEvent($eventName, $quote, [], $emailData);
 
-        return (object) ['status_code' => $apiResponse, 'message' => $apiResponse == Response::HTTP_OK ? 'Bike EP retargeting workflow triggered' : 'Failed to trigger bike EP retargeting workflow'];
+        return (object) ['status_code' => $apiResponse, 'message' => $apiResponse == Response::HTTP_OK || Response::HTTP_NO_CONTENT ? 'Bike EP retargeting workflow triggered' : 'Failed to trigger bike EP retargeting workflow'];
     }
 
     public function triggerRetargetingEpReminderForBike(int $quoteId, int $quoteTypeId, string $embeddedTransactionCode): object
