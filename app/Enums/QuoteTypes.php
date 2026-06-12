@@ -190,6 +190,11 @@ enum QuoteTypes: string
         return $this->model() instanceof PersonalQuote;
     }
 
+    public function supportsPqaAllocation(): bool
+    {
+        return in_array($this, [self::HEALTH, self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL]);
+    }
+
     public function detailModel(): Model
     {
         return match ($this) {

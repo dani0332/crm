@@ -11,6 +11,8 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
+use App\Jobs\DispatchIlaAllocationJob;
+use App\Jobs\DispatchPqaAllocationJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
@@ -198,6 +200,47 @@ class BusinessQuoteObserver
             $payment = $businessQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($businessQuote, $payment, QuoteTypes::BUSINESS->value);
 
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $businessQuote->quote_status_id === QuoteStatusEnum::QualificationPending &&
+            $businessQuote->pq_advisor_id === null
+        ) {
+            try {
+                $pqaQuoteType = (int) $businessQuote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+                    ? QuoteTypes::GROUP_MEDICAL
+                    : QuoteTypes::CORPLINE;
+
+                DispatchPqaAllocationJob::dispatch($businessQuote->uuid, $pqaQuoteType);
+
+                activity()
+                    ->performedOn($businessQuote)
+                    ->withProperties(['lead_status' => 'Qualification Pending'])
+                    ->log('Lead status set to Qualification Pending. PQA allocation triggered.');
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - PQA allocation dispatch failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
+            }
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $businessQuote->quote_status_id === QuoteStatusEnum::Qualified &&
+            $businessQuote->advisor_id === null
+        ) {
+            try {
+                $ilaQuoteType = (int) $businessQuote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+                    ? QuoteTypes::GROUP_MEDICAL
+                    : QuoteTypes::CORPLINE;
+
+                DispatchIlaAllocationJob::dispatch($businessQuote->uuid, $ilaQuoteType);
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - ILA dispatch on Qualified failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
+            }
         }
     }
 }

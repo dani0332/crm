@@ -154,7 +154,9 @@ class AmtController extends Controller
                     WHEN bqr.assignment_type = '.AssignmentTypeEnum::SELF_ASSIGNED.' THEN "Self Assigned"
                     ELSE "" END) as assignment_type_text'),
             );
-        if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
+        if (Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            $data->where('bqr.pq_advisor_id', Auth::id());
+        } elseif (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
@@ -260,6 +262,14 @@ class AmtController extends Controller
                 $data->whereNull('bqr.advisor_id');
             } else {
                 $data->whereIn('bqr.advisor_id', $request->advisor_id);
+            }
+        }
+
+        if (isset($request->pq_advisor_id) && is_array($request->pq_advisor_id) && count($request->pq_advisor_id) > 0) {
+            if (count($request->pq_advisor_id) === 1 && $request->pq_advisor_id[0] == '-1') {
+                $data->whereNull('bqr.pq_advisor_id');
+            } else {
+                $data->whereIn('bqr.pq_advisor_id', $request->pq_advisor_id);
             }
         }
 
@@ -460,7 +470,7 @@ class AmtController extends Controller
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name', 'groupMedicalType:id,text,description']);
+        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name', 'groupMedicalType:id,text,description', 'preQualificationAdvisor:id,name']);
         abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data */

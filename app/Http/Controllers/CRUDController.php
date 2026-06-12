@@ -2030,6 +2030,11 @@ class CRUDController extends Controller
 
     public function updateLeadStatus(UpdateLeadStatusRequest $request)
     {
+        $blockedStatuses = [QuoteStatusEnum::QualificationPending, QuoteStatusEnum::Qualified];
+        if (in_array((int) $request->leadStatus, $blockedStatuses)) {
+            return redirect()->back()->with('error', 'This status can only be set by the system.');
+        }
+
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
             $lead = $this->carQuoteService->getEntityPlain($request->leadId);

@@ -14,6 +14,7 @@ use App\Events\PrivateClientUpdatedEvent;
 use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
+use App\Jobs\DispatchPqaAllocationJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
@@ -221,6 +222,20 @@ class HealthQuoteObserver
 
         if (isset($dirty['kyc_decision'])) {
             app(SLAService::class)->meetSLAOnKYCStatusUpdate($healthQuote);
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $healthQuote->quote_status_id === QuoteStatusEnum::NewLead &&
+            $healthQuote->pq_advisor_id === null
+        ) {
+            try {
+                DispatchPqaAllocationJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH);
+            } catch (Exception $e) {
+                LoggerService::error('HealthQuoteObserver - PQA allocation dispatch failed', [
+                    'uuid' => $healthQuote->uuid,
+                ], exception: $e);
+            }
         }
     }
 }

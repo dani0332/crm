@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\AMLStatusCode;
-use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
@@ -154,6 +153,8 @@ class BusinessQuoteService extends BaseService
                 'b.name as lead_branch_name',
                 'b.id as lead_branch_id',
                 'bqr.is_branch_applicable',
+                'bqr.pq_advisor_id',
+                'pqa_u.name as pre_qualification_advisor_name',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -188,7 +189,8 @@ class BusinessQuoteService extends BaseService
                     ->where('ub.is_primary', '=', 1)
                     ->where('ub.status', '=', 1);
             })
-            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
+            ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id');
     }
 
     public function postProcessBusinessQuotes($quotes)
@@ -410,7 +412,9 @@ class BusinessQuoteService extends BaseService
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
             $this->query->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
-        if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
+        if (Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            $this->query->where('bqr.pq_advisor_id', Auth::id());
+        } elseif (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
@@ -498,6 +502,12 @@ class BusinessQuoteService extends BaseService
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
+                    }
+                } elseif ($item == 'pq_advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    if (count($request[$item]) === 1 && $request[$item][0] == '-1') {
+                        $this->query->whereNull('bqr.pq_advisor_id');
+                    } else {
+                        $this->query->whereIn('bqr.pq_advisor_id', $request[$item]);
                     }
                 } elseif ($item == 'business_type_of_insurance_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('bqr.business_type_of_insurance_id', $request[$item]);
@@ -917,13 +927,6 @@ class BusinessQuoteService extends BaseService
             return null;
         }
 
-        foreach ($parsedIds as $id) {
-            $quote = $this->getEntityPlain($id);
-            if ($quote === null || (int) $quote->business_type_of_insurance_id !== BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
-                return null;
-            }
-        }
-
         $updatedLeadIds = [];
 
         DB::transaction(function () use ($parsedIds, $preQualificationAdvisorUserId, $pqaService, $quoteTypeId, &$updatedLeadIds) {
@@ -940,6 +943,7 @@ class BusinessQuoteService extends BaseService
                 $previousId = $quote->pq_advisor_id !== null ? (int) $quote->pq_advisor_id : null;
 
                 $quote->pq_advisor_id = $preQualificationAdvisorUserId;
+                $quote->pq_assigned_at = now();
                 $quote->save();
 
                 $pqaService->recordManualPqaAssignment($preQualificationAdvisorUserId, $quoteTypeId, $previousId);
@@ -951,7 +955,7 @@ class BusinessQuoteService extends BaseService
         if ($updatedLeadIds === []) {
             $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
 
-            return 'Selected Group Medical leads already have '.$assigneeName.' as Pre‑Qualification Advisor.';
+            return 'Selected leads already have '.$assigneeName.' as Pre‑Qualification Advisor.';
         }
 
         $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';

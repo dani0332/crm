@@ -971,6 +971,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRE-QUALIFICATION ADVISOR</dt>
+                <dd>{{ quote.pre_qualification_advisor_name ?? '—' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote.advisor_id_text }}</dd>
               </div>

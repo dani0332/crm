@@ -86,6 +86,7 @@ const filters = reactive({
   leadStatus: [],
   insurer_aml_status: [],
   advisor_id: '',
+  pq_advisor_id: [],
   support_user_id: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -132,6 +133,15 @@ const supportUserOptions = computed(() => {
   }));
 });
 
+const pqaAdvisorOptions = computed(() => {
+  const list = Array.isArray(page.props.preQualificationAdvisors)
+    ? page.props.preQualificationAdvisors
+    : [];
+  const options = list.map(user => ({ value: user.id, label: user.name }));
+  options.push({ value: '-1', label: 'UnAssigned' });
+  return options;
+});
+
 const assignableSupportUserOptions = computed(() => {
   // Check if user has only OE_AE_CLIENT_SUPPORT role and not OE_AE_CLIENT_SUPPORT_LEAD
   const userRoles = page.props.auth.roles;
@@ -160,11 +170,11 @@ const tableHeader = [
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
   {
     text: 'PRE‑QUALIFICATION ADVISOR',
     value: 'pre_qualification_advisor_name',
   },
+  { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
@@ -789,6 +799,29 @@ const insurerAMLStatusOption = computed(() => {
                 filters.advisor_id = advisorOptions.map(item => item.value)
               "
               @clear="filters.advisor_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.pq_advisor_id"
+          name="pq_advisor_id"
+          placeholder="Search by PQA"
+          :options="pqaAdvisorOptions"
+          class="w-full"
+          filterable
+          label="Pre-Qualification Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.pq_advisor_id = pqaAdvisorOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.pq_advisor_id = []"
             />
           </template>
         </x-select>

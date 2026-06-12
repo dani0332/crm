@@ -436,7 +436,13 @@ class HealthQuoteService extends BaseService
     public function getGridData($model = null, $requestParams = [])
     {
         $query = $this->healthQuoteQueryBuilder->processGridData($requestParams);
-        $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health, user: $requestParams['user'] ?? null);
+
+        if (Auth::check() && Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            $query->where('health_quote_request.pq_advisor_id', Auth::id());
+        } else {
+            $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health, user: $requestParams['user'] ?? null);
+        }
+
         $this->adjustQueryByDateFilters($query, 'health_quote_request', $requestParams);
 
         return $query;

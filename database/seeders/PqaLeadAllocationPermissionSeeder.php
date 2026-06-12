@@ -55,6 +55,8 @@ class PqaLeadAllocationPermissionSeeder extends Seeder
 
         $this->givePermission($role, PermissionsEnum::PQA_LEAD_ALLOCATION_DASHBOARD);
         $this->givePermission($role, PermissionsEnum::PQA_LEAD_ALLOCATION_VIEW_ONLY);
+        $this->givePermission($role, PermissionsEnum::CorpLineQuotesList);
+        $this->givePermission($role, PermissionsEnum::GMQuotesList);
     }
 
     private function ensurePreQualificationLeadRole(): void
