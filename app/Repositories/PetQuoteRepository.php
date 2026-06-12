@@ -324,6 +324,7 @@ class PetQuoteRepository extends BaseRepository
                 },
                 'quoteDetail',
                 'subSource', 'subSourceOption',
+                'renewalBatchModel',
                 'branch:id,name',
             ])
             ->select([
