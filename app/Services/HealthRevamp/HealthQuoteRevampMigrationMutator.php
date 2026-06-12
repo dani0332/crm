@@ -482,7 +482,7 @@ final class HealthQuoteRevampMigrationMutator
     public function getCoverForId($hqr)
     {
 
-        $coverForId = (int) $hqr->cover_for_id;
+        $coverForId = $hqr->cover_for_id;
 
         if (in_array((int) $hqr->cover_for_id, [HealthCoverForEnum::INDIVIDUAL->value, HealthCoverForEnum::FAMILY->value], true)) {
             $coverForId = HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value;
@@ -492,7 +492,7 @@ final class HealthQuoteRevampMigrationMutator
             $coverForId = HealthCoverForEnum::DOMESTIC_HELPER->value;
         }
 
-        return $coverForId;
+        return $coverForId ?? HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value;
     }
 
     public function getMartialStatusId($hqr)
