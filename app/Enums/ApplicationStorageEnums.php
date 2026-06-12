@@ -448,6 +448,12 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR = 'ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR';
     public const BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL = 'BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL';
 
+    /**
+     * Bird workflow URL for notifying compliance when a quote AML risk score is in the High Risk band (>= 35).
+     * Shape of POST body is defined by the Bird flow; see {@see NotifyHighRiskScoreBirdJob}.
+     */
+    public const BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL = 'BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL';
+
     // Health Team Routing
     public const HEALTH_TEAM_ROUTING_ENABLED = 'HEALTH_TEAM_ROUTING_ENABLED';
     public const ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS = 'ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS';
@@ -475,8 +481,6 @@ final class ApplicationStorageEnums extends Enum
      */
     public const CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS = 'CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS';
 
-    // EA (Expert Advisor) Bird Workflow URLs
-    public const BIRD_EA_LEAD_SUBMITTED_WORKFLOW_URL = 'BIRD_EA_LEAD_SUBMITTED_WORKFLOW_URL';
-    public const BIRD_EA_COLLABORATE_REJECTED_WORKFLOW_URL = 'BIRD_EA_COLLABORATE_REJECTED_WORKFLOW_URL';
-    public const BIRD_EA_MANAGER_DECISION_WORKFLOW_URL = 'BIRD_EA_MANAGER_DECISION_WORKFLOW_URL';
+    // Home Revivals
+    public const DTT_HOME_ENABLED = 'DTT_HOME_ENABLED';
 }

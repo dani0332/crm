@@ -7,11 +7,11 @@ use App\Models\QuoteBatches;
 
 class DTTRevivalService
 {
-    public function create($revivalQuoteId, $revivalQuoteUUID, $previousQuoteId, $quoteTypeId)
+    public function create($revivalQuoteId, $revivalQuoteUUID, $previousQuoteId, $quoteTypeId): DttRevival
     {
         $quoteBatch = QuoteBatches::latest()->first();
 
-        DttRevival::create([
+        return DttRevival::create([
             'quote_type_id' => $quoteTypeId,
             'quote_id' => $revivalQuoteId,
             'uuid' => $revivalQuoteUUID,

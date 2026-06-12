@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
-use App\Enums\EaModelEnum;
 use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\MotorRevivalEnum;
@@ -36,7 +35,6 @@ class CarQuote extends BaseModel
     protected $table = 'car_quote_request';
     protected $casts = [
         'dob' => 'datetime',
-        'ea_model' => EaModelEnum::class,
     ];
     protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'pc_qualified_formatted', 'api_issuance_status', 'insurer_api_status'];
     protected $guarded = [];
@@ -63,6 +61,7 @@ class CarQuote extends BaseModel
         'renewal_batch' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
         'quote_batch_id' => FilterTypes::IN,
+        'nationality_id' => FilterTypes::IN,
     ];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
@@ -373,16 +372,6 @@ class CarQuote extends BaseModel
     public function previousAdvisor()
     {
         return $this->hasOne(User::class, 'id', 'previous_advisor_id')->select(['id', 'email', 'name']);
-    }
-
-    public function leadGenerator()
-    {
-        return $this->hasOne(User::class, 'id', 'lead_generator_id')->select(['id', 'email', 'name']);
-    }
-
-    public function expertAdvisor()
-    {
-        return $this->hasOne(User::class, 'id', 'expert_advisor_id')->select(['id', 'email', 'name', 'mobile_no']);
     }
 
     public function customerMembers()

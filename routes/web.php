@@ -30,9 +30,6 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DocsController;
-use App\Http\Controllers\EAApprovalController;
-use App\Http\Controllers\EALeadController;
-use App\Http\Controllers\EAManagerController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -103,6 +100,7 @@ use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\HealthRevivalQuoteController;
 use App\Http\Controllers\V2\HomeQuoteController;
+use App\Http\Controllers\V2\HomeRevivalQuoteController;
 use App\Http\Controllers\V2\ImpersonateController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
@@ -166,16 +164,6 @@ Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@ha
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/login-as/{id}', [ImpersonateController::class, 'loginAs'])->name('login-as.id.login');
     Route::get('/leave-login-as', [ImpersonateController::class, 'leave'])->name('login-as.leave');
-
-    // Expert Advisory Model
-    Route::post('/ea-leads', [EALeadController::class, 'store'])->name('ea-leads.store');
-    Route::post('/ea-leads/{quoteType}/{quoteId}/approve', [EAApprovalController::class, 'approve'])->name('ea-leads.approve');
-    Route::post('/ea-leads/{quoteType}/{quoteId}/reject', [EAApprovalController::class, 'reject'])->name('ea-leads.reject');
-    Route::get('/reports/ea-manager', [EAManagerController::class, 'index'])->name('ea-manager.index');
-    Route::get('/ea-manager/export', [EAManagerController::class, 'export'])->name('ea-manager.export');
-    Route::get('/ea-manager/pending-rejections', [EAManagerController::class, 'pendingRejectionsCount'])->name('ea-manager.pending-rejections');
-    Route::post('/ea-manager/{quoteType}/{quoteId}/decision', [EAManagerController::class, 'decision'])->name('ea-manager.decision');
-    Route::patch('/ea-manager/{quoteType}/{quoteId}/change-model', [EAManagerController::class, 'changeModel'])->name('ea-manager.change-model');
 
     Route::get('docs', [DocsController::class, 'show'])->name('docs.index');
     Route::get('docs/{path}', [DocsController::class, 'show'])->where('path', '.*')->name('docs.show');
@@ -366,6 +354,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('personal-quotes/life-revival/{uuid}', [LifeRevivalQuoteController::class, 'show'])->name('life-revival-quotes-show');
         Route::get('personal-quotes/life-revival/{uuid}/edit', [LifeRevivalQuoteController::class, 'edit'])->name('life-revival-quotes-edit');
         Route::put('personal-quotes/life-revival/{uuid}', [LifeRevivalQuoteController::class, 'update'])->name('life-revival-quotes-update');
+
+        // Routes for home revival quotes
+        Route::get('personal-quotes/home-revival', [HomeRevivalQuoteController::class, 'index'])->name('home-revival-quotes-list');
+        Route::get('personal-quotes/home-revival/{uuid}', [HomeRevivalQuoteController::class, 'show'])->name('home-revival-quotes-show');
+        Route::get('personal-quotes/home-revival/{uuid}/edit', [HomeRevivalQuoteController::class, 'edit'])->name('home-revival-quotes-edit');
+        Route::put('personal-quotes/home-revival/{uuid}', [HomeRevivalQuoteController::class, 'update'])->name('home-revival-quotes-update');
     });
 
     // Claims Management Routes

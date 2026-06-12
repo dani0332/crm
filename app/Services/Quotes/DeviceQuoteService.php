@@ -49,7 +49,6 @@ class DeviceQuoteService extends BaseQuoteService
             'nationality',
             'insuranceProviderPlan',
             'branch:id,name',
-            'leadGenerator:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -65,8 +64,6 @@ class DeviceQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
-            ->filterBy('source')
-            ->filterBy('ea_model')
             ->filterByAdvisorAssignedDates('quoteDetail', ['advisor_assigned_date_start', 'advisor_assigned_date_end'], verifyQuoteStatus: true)
             ->filterIn('renewal_batch_id')
             ->filterBy('assignment_type', ignoreAll: true)

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\EaModelEnum;
 use App\Enums\EmirateEnum;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
@@ -44,9 +43,6 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog, TransformsAuditables;
 
-    protected $casts = [
-        'ea_model' => EaModelEnum::class,
-    ];
     protected $appends = [
         'insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted',
         'pc_qualified_formatted', 'has_pec_tag', 'signatory_text', 'uae_pass_api_status_text', 'is_migrated',
@@ -375,16 +371,6 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(User::class, 'previous_advisor_id');
     }
 
-    public function leadGenerator()
-    {
-        return $this->hasOne(User::class, 'id', 'lead_generator_id')->select(['id', 'email', 'name']);
-    }
-
-    public function expertAdvisor()
-    {
-        return $this->hasOne(User::class, 'id', 'expert_advisor_id')->select(['id', 'email', 'name', 'mobile_no']);
-    }
-
     public function dependentMembers()
     {
         return $this->hasMany(HealthMemberDetail::class, 'health_quote_request_id', 'id')
@@ -633,6 +619,20 @@ class HealthQuote extends Model implements AuditableContract
 
         if (! empty($this->price_starting_from)) {
             if ($this->price_starting_from < $sicConfig->price_starting_from) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    public function hasAnyMemberAgeSixtyOrAbove(): bool
+    {
+        foreach ($this->activeMembers as $member) {
+            if (empty($member->dob)) {
+                continue;
+            }
+
+            if (Carbon::parse($member->dob)->age >= 60) {
                 return true;
             }
         }

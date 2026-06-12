@@ -421,6 +421,8 @@ class CRUDController extends Controller
             $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
             $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses();
 
+            $nationalities = NationalityRepository::withActive()->get(['id', 'text']);
+
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
                 'advisors' => $advisors,
@@ -443,6 +445,7 @@ class CRUDController extends Controller
                 'issuanceStatuses' => $issuanceStatuses,
                 'insurerApiStatus' => $insurerApiStatus,
                 'subSources' => $subSources,
+                'nationalities' => $nationalities,
             ]);
         }
 
@@ -852,21 +855,6 @@ class CRUDController extends Controller
                 }
 
                 $paymentEntityModel->load(['plan.insuranceProvider']);
-
-                if ($record->source === LeadSourceEnum::EA_IMCRM) {
-                    $paymentEntityModel->loadMissing('leadGenerator');
-                    $record->ea_model = $paymentEntityModel->ea_model?->value;
-                    $record->lead_generator_id = $paymentEntityModel->lead_generator_id;
-                    $record->lead_generator = $paymentEntityModel->leadGenerator
-                        ? $paymentEntityModel->leadGenerator->only(['id', 'name', 'email'])
-                        : null;
-                    $record->expert_advisor_id = $paymentEntityModel->expert_advisor_id;
-                    $record->ea_assigned_advisor_approved_at = $paymentEntityModel->ea_assigned_advisor_approved_at;
-                    $record->ea_expert_advisor_approved_at = $paymentEntityModel->ea_expert_advisor_approved_at;
-                    $record->ea_assigned_advisor_rejected_at = $paymentEntityModel->ea_assigned_advisor_rejected_at;
-                    $record->ea_expert_advisor_rejected_at = $paymentEntityModel->ea_expert_advisor_rejected_at;
-                }
-
                 $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
 
                 if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager])) {
@@ -1288,20 +1276,6 @@ class CRUDController extends Controller
                 $lead = $this->healthQuoteService->getLead($record->id);
                 $isAUHLead = $lead->isAUHLead(false);
                 $hasPecTag = $lead->has_pec_tag;
-
-                if ($record->source === LeadSourceEnum::EA_IMCRM) {
-                    $lead->loadMissing('leadGenerator');
-                    $record->ea_model = $lead->ea_model?->value;
-                    $record->lead_generator_id = $lead->lead_generator_id;
-                    $record->lead_generator = $lead->leadGenerator
-                        ? $lead->leadGenerator->only(['id', 'name', 'email'])
-                        : null;
-                    $record->expert_advisor_id = $lead->expert_advisor_id;
-                    $record->ea_assigned_advisor_approved_at = $lead->ea_assigned_advisor_approved_at;
-                    $record->ea_expert_advisor_approved_at = $lead->ea_expert_advisor_approved_at;
-                    $record->ea_assigned_advisor_rejected_at = $lead->ea_assigned_advisor_rejected_at;
-                    $record->ea_expert_advisor_rejected_at = $lead->ea_expert_advisor_rejected_at;
-                }
 
                 $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
 

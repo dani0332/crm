@@ -8,6 +8,7 @@ use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthQuoteDigitalSignatory;
 use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\QuoteTypeId;
+use App\Models\HealthQuote;
 use App\Services\BranchAssignmentService;
 use App\Services\HealthQuoteService;
 use App\Services\LookupService;
@@ -50,8 +51,10 @@ class HealthQuotesExport implements CsvExportableInterface
             'LAST NAME',
             'EMIRATE OF VISA',
             'POLICY PEC FLAG',
+            'IS AGE 60 AND ABOVE',
             'LEAD STATUS',
             'ADVISOR',
+            'UNASSIGNED',
             'OE/AE',
             'BRANCH',
             'ADVISOR EMAIL',
@@ -94,8 +97,6 @@ class HealthQuotesExport implements CsvExportableInterface
             'IMCRM SUB-SOURCE',
             'Signatory',
             'UAE PASS API Status',
-            'EA MODEL',
-            'LEAD GENERATOR',
         ];
     }
 
@@ -107,10 +108,12 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->code,
             $quote->first_name,
             $quote->last_name,
-            $quote->is_migrated && ! $quote->is_policyholder_included ? 'N/A' : $quote->emirate?->text,
+            $quote->emirate?->text ?? '',
             $quote->has_pec_tag ? 'Yes' : 'No',
+            $this->hasMemberAgeSixtyOrAbove($quote) ? 'Yes' : 'No',
             $quote->quoteStatus?->text,
             $quote->advisor?->name,
+            $quote->advisor_id ? 'No' : 'Yes',
             $quote->supportUser?->name ?? '',
             $branchName,
             $quote->advisor?->email,
@@ -153,9 +156,16 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->subSource?->text,
             HealthQuoteDigitalSignatory::displayLabel($quote->digital_signatory),
             HealthQuoteUaePassApiStatus::displayLabel($quote->uae_pass_api_status),
-            $quote->ea_model ?? '',
-            $quote->leadGenerator?->name ?? '',
         ];
+    }
+
+    private function hasMemberAgeSixtyOrAbove(HealthQuote $quote): bool
+    {
+        if (! $quote->relationLoaded('activeMembers')) {
+            return false;
+        }
+
+        return $quote->hasAnyMemberAgeSixtyOrAbove();
     }
 
     /**

@@ -107,6 +107,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'quotePlan',
             'paymentStatus:id,text',
             'payments:id,paymentable_id,paymentable_type,authorized_at',
+            'activeMembers:id,quote_type,quote_id,dob,deleted_at',
             'insuranceProvider:id,text,code',
             'quoteStatus:id,text',
             'wcAdvisor:id,name',
@@ -152,6 +153,25 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByDate('next_followup_date_end', 'next_followup_date', false, requestParams: $requestParams)
             ->filterByAdvisors($this->getFilterValue('advisor_id', $requestParams) ?? $this->getFilterValue('advisors', $requestParams))
             ->filterBy('assignment_type', ignoreAll: true, requestParams: $requestParams)
+            ->when($this->hasFilterValue('unassigned', $requestParams) && strtolower((string) $this->getFilterValue('unassigned', $requestParams)) === 'yes', function ($query) {
+                $query->whereNull('advisor_id')
+                    ->whereNotNull('health_plan_type_id');
+            })
+            ->when($this->hasFilterValue('unassigned', $requestParams) && strtolower((string) $this->getFilterValue('unassigned', $requestParams)) === 'no', function ($query) {
+                $query->whereNotNull('advisor_id');
+            })
+            ->when($this->hasFilterValue('age_sixty_and_above', $requestParams) && strtolower((string) $this->getFilterValue('age_sixty_and_above', $requestParams)) === 'yes', function ($query) {
+                $query->whereHas('activeMembers', function ($membersQuery) {
+                    $membersQuery->whereNotNull('dob')
+                        ->whereDate('dob', '<=', now()->subYears(60)->toDateString());
+                });
+            })
+            ->when($this->hasFilterValue('age_sixty_and_above', $requestParams) && strtolower((string) $this->getFilterValue('age_sixty_and_above', $requestParams)) === 'no', function ($query) {
+                $query->whereDoesntHave('activeMembers', function ($membersQuery) {
+                    $membersQuery->whereNotNull('dob')
+                        ->whereDate('dob', '<=', now()->subYears(60)->toDateString());
+                });
+            })
             ->filterBy('sic_advisor_requested', ignoreAll: true, requestParams: $requestParams)
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
             ->filterIn('emirate_of_your_visa_id', requestParams: $requestParams)
