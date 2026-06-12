@@ -106,24 +106,24 @@ class ApplicationStorageSeeder extends Seeder
         //         'is_active' => 1,
         //     ],
         // );
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
-        //     [
-        //         'value' => 0,
-        //         'is_active' => 1,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        // );
-        // ApplicationStorage::firstOrCreate(
-        //     ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
-        //     [
-        //         'value' => 0,
-        //         'is_active' => 1,
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ],
-        // );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 0,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
         // ApplicationStorage::firstOrCreate(
         //     ['key_name' => ApplicationStorageEnums::LMS_INTRO_BIKE_EMAIL_BCC],
         //     [
@@ -180,9 +180,11 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
         $this->seedDisableClaimsModule();
         $this->seedMotorRevivalWorkflow();
+        $this->seedHighRiskScoreBirdNotificationWorkflowUrl();
         $this->seedAmlAutomationOutcomeWorkflowUrl();
         $this->seedDttLifeEnabled();
         $this->seedOcrPlanValidation();
+        $this->seedDttHomeEnabled();
     }
 
     private function livaCarAutomationSeed()
@@ -365,7 +367,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::TRAVEL_ALLIANCE_FAILED_ALLOCATION_EMAIL_EVENT_URL],
+            ['key_name' => ApplicationStorageEnums::TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/968e6273-9965-473b-a258-2a069c8fb7da/invoke-sync',
                 'created_at' => now(),
@@ -1899,6 +1901,19 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedHighRiskScoreBirdNotificationWorkflowUrl()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/dd811e82-a945-4ed1-a1bb-2e1be15fda12/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedDttLifeEnabled(): void
     {
         ApplicationStorage::firstOrCreate(
@@ -1918,10 +1933,23 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES],
             [
-                'value' => null,
+                'value' => '',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedDttHomeEnabled(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DTT_HOME_ENABLED],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
             ],
         );
     }

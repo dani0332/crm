@@ -29,7 +29,7 @@ class UpdateLeadStatusRequest extends FormRequest
             'quote_type' => 'required',
             'quote_uuid' => ['required', new ValidateQuoteObject],
             'quote_status_id' => 'required|exists:quote_status,id',
-            'life_revival_transition' => ['nullable', 'string', Rule::in(['lost', 'followed_up'])],
+            'workflow_transition' => ['nullable', 'string', Rule::in(['lost', 'followed_up'])],
             'notes' => '',
         ];
     }

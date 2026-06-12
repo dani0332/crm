@@ -185,34 +185,59 @@ class SukoonMedexService
 
             }
 
+            // Capture before sync mutates policy_status (e.g. via updateTransaction).
+            $initialPolicyStatusBeforeDocumentsSync = $this->policyStatus;
+
             // sync documents then update commission
             // STEPS (#12 getPolicyScheduleCoi), (#13 getCustomerTaxInvoice), (#14 listGeneratedDocument), (#15 downloadDocument), (#16 viewQuotePolicy)
             $this->syncAndProcessSukoonDocuments();
 
-            if ($isSendEmail) {
-                $reqWatermarkedDocumentTypes = $this->transaction->documents
-                    ->whereIn('document_type_code', $this->sukoonInitialDocTypeCodes)
-                    ->where('is_watermarked', true)->pluck('document_type_code')->toArray();
-
-                $missingReqWatermarkedDocTypes = array_diff($this->sukoonInitialDocTypeCodes, $reqWatermarkedDocumentTypes);
-
-                // make sure email required watermarked documents is not missing
-                if (empty($missingReqWatermarkedDocTypes)) {
-                    $this->sendDocuments();
-                } else {
-                    LoggerService::info("{$this->logPrefix} Email watermarked documents are not saved, skipping sendDocuments");
-                }
-            }
+            $this->maybeSendDocumentsEmail($isSendEmail, $initialPolicyStatusBeforeDocumentsSync);
 
             $missingReqDocTypes = $this->getMissingReqDocTypes();
             if (! empty($missingReqDocTypes)) {
-                SyncSukoonDocumentsJob::dispatch($this->currentQuote, $this->quoteTypeId, $this->transaction)
+                SyncSukoonDocumentsJob::dispatch($this->currentQuote, $this->quoteTypeId, $this->transaction, $isSendEmail)
                     ->delay(now()->addMinutes(1));
             }
 
         } catch (Throwable $e) {
             LoggerService::info("{$this->logPrefix} processPurchaseFlow failed", extra: ['exception' => $e->getMessage()]);
             throw $e;
+        }
+    }
+
+    /**
+     * Send customer documents email when enabled, watermarks exist, and policy just reached ready-for-Sage.
+     */
+    public function maybeSendDocumentsEmail(bool $isSendEmail, string $initialPolicyStatusBeforeDocumentsSync): void
+    {
+        if (! $isSendEmail) {
+            return;
+        }
+
+        $reqWatermarkedDocumentTypes = $this->transaction->documents
+            ->whereIn('document_type_code', $this->sukoonInitialDocTypeCodes)
+            ->where('is_watermarked', true)->pluck('document_type_code')->toArray();
+
+        $missingReqWatermarkedDocTypes = array_diff($this->sukoonInitialDocTypeCodes, $reqWatermarkedDocumentTypes);
+
+        $hasAllWatermarkedDocs = empty($missingReqWatermarkedDocTypes);
+        $hasAlreadySentDocument = EmbeddedTransactionEnum::checkPolicyStatusPassed(
+            $initialPolicyStatusBeforeDocumentsSync,
+            EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE
+        );
+        $isNowReadyForSage = $this->policyStatus === EmbeddedTransactionEnum::STATUS_READY_FOR_SAGE;
+
+        if (! $hasAllWatermarkedDocs) {
+            LoggerService::info("{$this->logPrefix} Email watermarked documents are not saved, skipping sendDocuments");
+        } elseif (! $hasAlreadySentDocument && $isNowReadyForSage) {
+            $this->sendDocuments();
+        } else {
+            LoggerService::info("{$this->logPrefix} Skipping sendDocuments", extra: [
+                'hasAlreadySentDocument' => $hasAlreadySentDocument,
+                'isNowReadyForSage' => $isNowReadyForSage,
+                'initialPolicyStatusBeforeDocumentsSync' => $initialPolicyStatusBeforeDocumentsSync,
+            ]);
         }
     }
 

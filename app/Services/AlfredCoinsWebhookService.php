@@ -181,11 +181,10 @@ class AlfredCoinsWebhookService
     {
         $now = time();
 
-        if (! str_contains($privateKey, '-----BEGIN')) {
-            $privateKey = "-----BEGIN PRIVATE KEY-----\n"
-                .wordwrap(str_replace(["\r", "\n", ' '], '', $privateKey), 64, "\n", true)
-                ."\n-----END PRIVATE KEY-----";
-        }
+        $rawKey = preg_replace('/-----(?:BEGIN|END)[^-]*-----/', '', $privateKey) ?? '';
+        $privateKey = "-----BEGIN PRIVATE KEY-----\n"
+            .wordwrap(str_replace(["\r", "\n", ' '], '', $rawKey), 64, "\n", true)
+            ."\n-----END PRIVATE KEY-----";
 
         $header = $this->base64UrlEncode(json_encode([
             'alg' => 'RS256',

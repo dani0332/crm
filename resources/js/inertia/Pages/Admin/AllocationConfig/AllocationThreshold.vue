@@ -1,11 +1,18 @@
 <script setup>
+import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 
 const props = defineProps({
   teams: Object,
-  roles: Array,
 });
+
+const page = usePage();
+
+/** Role- and direct-permissions via shared auth; enum map via HandleInertiaRequests `permissionsEnum`. */
+const canEditTeamAllocationThreshold = computed(() =>
+  useCan(page.props.permissionsEnum?.TEAM_ALLOCATION_THRESHOLD_EDIT ?? ''),
+);
 
 const notification = useToast();
 const tabs = reactive([
@@ -192,7 +199,9 @@ onMounted(() => {
                 class="w-full"
                 v-model="team.min_price"
                 label="Min Price"
-                :disabled="team.name != 'GBP' && !roles.includes('ADMIN')"
+                :disabled="
+                  team.name != 'GBP' && !canEditTeamAllocationThreshold
+                "
               />
               <p class="text-xs -mt-4">
                 Minimum annual premium (AED) required for this
@@ -204,7 +213,7 @@ onMounted(() => {
               class="w-full"
               v-model="team.max_price"
               label="Max Price"
-              :disabled="team.name != 'GBP' && !roles.includes('ADMIN')"
+              :disabled="team.name != 'GBP' && !canEditTeamAllocationThreshold"
             />
           </div>
         </x-form>
@@ -215,7 +224,7 @@ onMounted(() => {
           size="sm"
           color="#ff5e00"
           @click="updateTeams()"
-          :disabled="!roles.includes('ADMIN')"
+          :disabled="!canEditTeamAllocationThreshold"
         >
           Update {{ tabs[activeTab].label }}
         </x-button>

@@ -170,6 +170,8 @@ Route::prefix('v1')->group(function () {
 
     Route::post('quotes/send-zero-plans-email', [ApiController::class, 'sendZeroPlansEmail'])->name('sendZeroPlansEmail');
     Route::get('/claim-documents', [QuoteDocumentController::class, 'getClaimDocuments']);
+
+    Route::post('/imcrm/update-revival-lead-source', [ApiController::class, 'updateRevivalLeadSource'])->name('updateRevivalLeadSource');
 });
 
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

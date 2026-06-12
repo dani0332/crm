@@ -10,15 +10,20 @@ use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\ClaimsEnum;
 use App\Enums\CollectionTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthCoverForEnum;
+use App\Enums\HealthInsureEnum;
+use App\Enums\HealthPolicyHolderEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\MemberCategoryEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentCaptureValidationEnum;
@@ -38,11 +43,14 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RelationCodeEnum;
 use App\Enums\RolesEnum;
+use App\Enums\SalaryBandEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Enums\VisaCategoryEnum;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -169,6 +177,14 @@ class HandleInertiaRequests extends Middleware
             'genericRequestEnum' => GenericRequestEnum::asArray(),
             'collectionTypeEnum' => CollectionTypeEnum::asArray(),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'healthInsureEnum' => array_column(HealthInsureEnum::cases(), 'value', 'name'),
+            'healthPolicyHolderEnum' => array_column(HealthPolicyHolderEnum::cases(), 'value', 'name'),
+            'healthCoverForEnum' => array_column(HealthCoverForEnum::cases(), 'value', 'name'),
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'memberCategoryEnum' => array_column(MemberCategoryEnum::cases(), 'value', 'name'),
+            'relationCodeEnum' => array_column(RelationCodeEnum::cases(), 'value', 'name'),
+            'salaryBandEnum' => array_column(SalaryBandEnum::cases(), 'value', 'name'),
+            'visaCategoryEnum' => array_column(VisaCategoryEnum::cases(), 'value', 'name'),
         ];
     }
 
@@ -591,11 +607,24 @@ class HandleInertiaRequests extends Middleware
                 )
                 ->addIf((auth()->user()->can(PermissionsEnum::SAVINGS_QUOTES_LIST) || (userHasProduct(quoteTypeCode::SAVINGS) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Savings Quotes', route('savings-quotes-list'), fn ($s) => $s->attributes(['icon' => 'savings']))
                 ->addIf(
-                    (auth()->user()->can(PermissionsEnum::HomeQuotesList)
+                    (auth()->user()->hasAnyPermission([PermissionsEnum::HomeQuotesList, PermissionsEnum::HOME_REVIVAL_QUOTES_LIST])
                         || (userHasProduct(quoteTypeCode::Home) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Home Quotes',
                     route('home-quotes-list'),
-                    fn ($s) => $s->attributes(['icon' => 'home'])
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'home'])
+                        ->addIf(
+                            (auth()->user()->can(PermissionsEnum::HomeQuotesList) || (userHasProduct(quoteTypeCode::Home) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
+                            'Home Quotes',
+                            route('home-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'home'])
+                        )
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::HOME_REVIVAL_QUOTES_LIST),
+                            'Home Revival Quotes',
+                            route('home-revival-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'home'])
+                        ),
                 )
                 ->addIf((auth()->user()->can(PermissionsEnum::DEVICE_QUOTES_LIST) || (userHasProduct(quoteTypeCode::Device) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Smartphone Quotes', route('device-quotes-list'), fn ($s) => $s->attributes(['icon' => 'box']))
                 ->addIf((auth()->user()->can(PermissionsEnum::PetQuotesList) || (userHasProduct(quoteTypeCode::Pet) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Pet Quotes', route('pet-quotes-list'), fn ($s) => $s->attributes(['icon' => 'pet']))
