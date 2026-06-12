@@ -202,17 +202,16 @@ class BusinessQuoteObserver
 
         }
 
+        $isCorpline = (int) $businessQuote->business_type_of_insurance_id !== BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+
         if (
+            $isCorpline &&
             isset($dirty['quote_status_id']) &&
             $businessQuote->quote_status_id === QuoteStatusEnum::QualificationPending &&
             $businessQuote->pq_advisor_id === null
         ) {
             try {
-                $pqaQuoteType = (int) $businessQuote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
-                    ? QuoteTypes::GROUP_MEDICAL
-                    : QuoteTypes::CORPLINE;
-
-                DispatchPqaAllocationJob::dispatch($businessQuote->uuid, $pqaQuoteType);
+                DispatchPqaAllocationJob::dispatch($businessQuote->uuid, QuoteTypes::CORPLINE);
 
                 activity()
                     ->performedOn($businessQuote)
@@ -226,16 +225,13 @@ class BusinessQuoteObserver
         }
 
         if (
+            $isCorpline &&
             isset($dirty['quote_status_id']) &&
             $businessQuote->quote_status_id === QuoteStatusEnum::Qualified &&
             $businessQuote->advisor_id === null
         ) {
             try {
-                $ilaQuoteType = (int) $businessQuote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
-                    ? QuoteTypes::GROUP_MEDICAL
-                    : QuoteTypes::CORPLINE;
-
-                DispatchIlaAllocationJob::dispatch($businessQuote->uuid, $ilaQuoteType);
+                DispatchIlaAllocationJob::dispatch($businessQuote->uuid, QuoteTypes::CORPLINE);
             } catch (Exception $e) {
                 LoggerService::error('BusinessQuoteObserver - ILA dispatch on Qualified failed', [
                     'uuid' => $businessQuote->uuid,

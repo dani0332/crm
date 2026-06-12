@@ -7,19 +7,11 @@ defineProps({
   leadStatuses: Array,
   advisors: Array,
   supportUsers: Array,
-  preQualificationAdvisors: {
-    type: Array,
-    default: () => [],
-  },
   isManagerORDeputy: Boolean,
   quotes: Object,
   isManualAllocationAllowed: Boolean,
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
-  canAssignPreQualificationAdvisor: {
-    type: Boolean,
-    default: false,
-  },
   authorizedDays: Number,
   insurerAMLStatus: Array,
   subSources: Array,
@@ -86,7 +78,6 @@ const filters = reactive({
   leadStatus: [],
   insurer_aml_status: [],
   advisor_id: '',
-  pq_advisor_id: [],
   support_user_id: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -133,15 +124,6 @@ const supportUserOptions = computed(() => {
   }));
 });
 
-const pqaAdvisorOptions = computed(() => {
-  const list = Array.isArray(page.props.preQualificationAdvisors)
-    ? page.props.preQualificationAdvisors
-    : [];
-  const options = list.map(user => ({ value: user.id, label: user.name }));
-  options.push({ value: '-1', label: 'UnAssigned' });
-  return options;
-});
-
 const assignableSupportUserOptions = computed(() => {
   // Check if user has only OE_AE_CLIENT_SUPPORT role and not OE_AE_CLIENT_SUPPORT_LEAD
   const userRoles = page.props.auth.roles;
@@ -170,10 +152,6 @@ const tableHeader = [
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
-  {
-    text: 'PRE‑QUALIFICATION ADVISOR',
-    value: 'pre_qualification_advisor_name',
-  },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
@@ -804,29 +782,6 @@ const insurerAMLStatusOption = computed(() => {
         </x-select>
 
         <x-select
-          v-model="filters.pq_advisor_id"
-          name="pq_advisor_id"
-          placeholder="Search by PQA"
-          :options="pqaAdvisorOptions"
-          class="w-full"
-          filterable
-          label="Pre-Qualification Advisor"
-          multiple
-          truncate
-        >
-          <template #content-footer>
-            <ui-select-actions
-              @select-all="
-                filters.pq_advisor_id = pqaAdvisorOptions.map(
-                  item => item.value,
-                )
-              "
-              @clear="filters.pq_advisor_id = []"
-            />
-          </template>
-        </x-select>
-
-        <x-select
           v-model="filters.support_user_id"
           name="support_user_id"
           placeholder="Search by OE / AE"
@@ -982,10 +937,8 @@ const insurerAMLStatusOption = computed(() => {
             :selected="quotesSelected.map(e => e.id)"
             :advisors="advisorOptions"
             :supportUsers="assignableSupportUserOptions"
-            :pqaAdvisors="preQualificationAdvisors"
             :canAssignClientSupport="canAssignClientSupport"
             :canAssignLeadAdvisor="canAssignLeadAdvisor"
-            :canAssignPqa="canAssignPreQualificationAdvisor"
             quoteType="business"
             @success="manualAssignmentSuccess"
           />

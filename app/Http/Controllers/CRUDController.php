@@ -138,6 +138,7 @@ use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Response;
@@ -345,6 +346,24 @@ class CRUDController extends Controller
                 && Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD)
                 && Auth::user()->hasProduct(QuoteTypes::HEALTH->value);
 
+            $preQualificationAdvisors = User::activeUser()
+                ->select(
+                    'users.id',
+                    DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::PreQualificationAdvisor."') AS name"),
+                )
+                ->join('model_has_roles as pqa_mr', 'pqa_mr.model_id', '=', 'users.id')
+                ->join('roles as pqa_r', 'pqa_r.id', '=', 'pqa_mr.role_id')
+                ->join('pqa_lead_allocation_config as pqa_cfg', 'pqa_cfg.user_id', '=', 'users.id')
+                ->where('pqa_mr.model_type', User::class)
+                ->where('pqa_r.name', RolesEnum::PreQualificationAdvisor)
+                ->where('pqa_cfg.quote_type_id', QuoteTypes::HEALTH->id())
+                ->orderBy('users.name')
+                ->distinct()
+                ->get();
+
+            $canAssignPreQualificationAdvisor = Auth::user()->can(PermissionsEnum::ASSIGN_GROUP_MEDICAL_PRE_QUALIFICATION_ADVISOR)
+                || Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::LeadPool]);
+
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
                 'renewalBatches' => $renewalBatches,
@@ -365,6 +384,8 @@ class CRUDController extends Controller
                 'subSources' => $subSources,
                 'canAssignLeadAdvisor' => $canAssignLeadAdvisor,
                 'canAssignClientSupport' => $canAssignClientSupport,
+                'canAssignPreQualificationAdvisor' => $canAssignPreQualificationAdvisor,
+                'preQualificationAdvisors' => $preQualificationAdvisors,
                 'supportUsers' => $supportUsers,
                 'dropdownSource' => $dropdownSource,
                 'healthSignatoryFilterOptions' => HealthQuoteDigitalSignatory::filterDropdown(),

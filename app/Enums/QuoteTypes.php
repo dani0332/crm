@@ -192,7 +192,7 @@ enum QuoteTypes: string
 
     public function supportsPqaAllocation(): bool
     {
-        return in_array($this, [self::HEALTH, self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL]);
+        return in_array($this, [self::HEALTH, self::BUSINESS, self::CORPLINE]);
     }
 
     public function detailModel(): Model

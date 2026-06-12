@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
@@ -896,7 +897,7 @@ class BusinessQuoteService extends BaseService
     }
 
     /**
-     * Manually assign or reassign Pre‑Qualification Advisor on Group Medical business quotes (IMCRM list).
+     * Manually assign or reassign Pre‑Qualification Advisor on Corpline business quotes (IMCRM list).
      *
      * @param  array<int, string|int>  $leadIds
      */
@@ -907,7 +908,7 @@ class BusinessQuoteService extends BaseService
         }
 
         $pqaService = app(PqaLeadAllocationService::class);
-        $quoteTypeId = (int) QuoteTypes::BUSINESS->id();
+        $quoteTypeId = (int) QuoteTypes::CORPLINE->id();
 
         if (! $pqaService->userIsEligiblePreQualificationAdvisor($preQualificationAdvisorUserId, $quoteTypeId)) {
             LoggerService::warning(self::class.'::assignPreQualificationAdvisor: ineligible PQA user '.$preQualificationAdvisorUserId);
@@ -932,7 +933,7 @@ class BusinessQuoteService extends BaseService
         DB::transaction(function () use ($parsedIds, $preQualificationAdvisorUserId, $pqaService, $quoteTypeId, &$updatedLeadIds) {
             foreach ($parsedIds as $id) {
                 $quote = $this->getEntityPlain($id);
-                if ($quote === null) {
+                if ($quote === null || (int) $quote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                     continue;
                 }
 

@@ -79,7 +79,6 @@ class AmtController extends Controller
             ->leftJoin('business_type_of_insurance as bit', 'bqr.business_type_of_insurance_id', '=', 'bit.id')
             ->leftJoin('users as u', 'bqr.advisor_id', '=', 'u.id')
             ->leftJoin('users as su', 'bqr.support_user_id', '=', 'su.id')
-            ->leftJoin('users as pqa_u', 'bqr.pq_advisor_id', '=', 'pqa_u.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -110,7 +109,6 @@ class AmtController extends Controller
                 'ls.text as lost_reason',
                 'u.name as advisor_id_text',
                 'su.name as support_user_name',
-                'pqa_u.name as pre_qualification_advisor_name',
                 'bqr.premium',
                 'bqr.company_name',
                 DB::raw('DATE_FORMAT(bqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
@@ -154,9 +152,7 @@ class AmtController extends Controller
                     WHEN bqr.assignment_type = '.AssignmentTypeEnum::SELF_ASSIGNED.' THEN "Self Assigned"
                     ELSE "" END) as assignment_type_text'),
             );
-        if (Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
-            $data->where('bqr.pq_advisor_id', Auth::id());
-        } elseif (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
+        if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
@@ -175,21 +171,6 @@ class AmtController extends Controller
             'include_role_in_name' => true,
             'return_format' => 'collection',
         ]);
-
-        $preQualificationAdvisors = User::activeUser()
-            ->select(
-                'users.id',
-                DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::PreQualificationAdvisor."') AS name"),
-            )
-            ->join('model_has_roles as pqa_mr', 'pqa_mr.model_id', '=', 'users.id')
-            ->join('roles as pqa_r', 'pqa_r.id', '=', 'pqa_mr.role_id')
-            ->join('pqa_lead_allocation_config as pqa_cfg', 'pqa_cfg.user_id', '=', 'users.id')
-            ->where('pqa_mr.model_type', User::class)
-            ->where('pqa_r.name', RolesEnum::PreQualificationAdvisor)
-            ->where('pqa_cfg.quote_type_id', QuoteTypes::BUSINESS->id())
-            ->orderBy('users.name')
-            ->distinct()
-            ->get();
 
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
 
@@ -262,14 +243,6 @@ class AmtController extends Controller
                 $data->whereNull('bqr.advisor_id');
             } else {
                 $data->whereIn('bqr.advisor_id', $request->advisor_id);
-            }
-        }
-
-        if (isset($request->pq_advisor_id) && is_array($request->pq_advisor_id) && count($request->pq_advisor_id) > 0) {
-            if (count($request->pq_advisor_id) === 1 && $request->pq_advisor_id[0] == '-1') {
-                $data->whereNull('bqr.pq_advisor_id');
-            } else {
-                $data->whereIn('bqr.pq_advisor_id', $request->pq_advisor_id);
             }
         }
 
@@ -367,9 +340,7 @@ class AmtController extends Controller
             $isManagerORDeputy ||
             Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
 
-        $canAssignPreQualificationAdvisor = Auth::user()->can(PermissionsEnum::ASSIGN_GROUP_MEDICAL_PRE_QUALIFICATION_ADVISOR);
-
-        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport || $canAssignPreQualificationAdvisor);
+        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
         $quotes = $data->simplePaginate(15)->withQueryString();
 
         $this->postProcessAmtQuotes($quotes);
@@ -378,7 +349,7 @@ class AmtController extends Controller
         $emirates = Emirate::getActiveEmirates();
         $assignmentTypes = AssignmentTypeEnum::withLabels();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'preQualificationAdvisors', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'canAssignPreQualificationAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes'));
     }
 
     /**
@@ -470,7 +441,7 @@ class AmtController extends Controller
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name', 'groupMedicalType:id,text,description', 'preQualificationAdvisor:id,name']);
+        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name', 'groupMedicalType:id,text,description']);
         abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data */

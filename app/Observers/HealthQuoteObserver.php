@@ -231,6 +231,11 @@ class HealthQuoteObserver
         ) {
             try {
                 DispatchPqaAllocationJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH);
+
+                activity()
+                    ->performedOn($healthQuote)
+                    ->withProperties(['lead_status' => 'New Lead'])
+                    ->log('Lead status set to New Lead. PQA allocation triggered.');
             } catch (Exception $e) {
                 LoggerService::error('HealthQuoteObserver - PQA allocation dispatch failed', [
                     'uuid' => $healthQuote->uuid,

@@ -56,7 +56,7 @@ class PqaLeadAllocationPermissionSeeder extends Seeder
         $this->givePermission($role, PermissionsEnum::PQA_LEAD_ALLOCATION_DASHBOARD);
         $this->givePermission($role, PermissionsEnum::PQA_LEAD_ALLOCATION_VIEW_ONLY);
         $this->givePermission($role, PermissionsEnum::CorpLineQuotesList);
-        $this->givePermission($role, PermissionsEnum::GMQuotesList);
+        $this->givePermission($role, PermissionsEnum::HealthQuotesList);
     }
 
     private function ensurePreQualificationLeadRole(): void
@@ -73,6 +73,8 @@ class PqaLeadAllocationPermissionSeeder extends Seeder
         );
 
         $this->givePermission($role, PermissionsEnum::ASSIGN_GROUP_MEDICAL_PRE_QUALIFICATION_ADVISOR);
+        $this->givePermission($role, PermissionsEnum::PQA_LEAD_ALLOCATION_DASHBOARD);
+        $this->givePermission($role, PermissionsEnum::PQA_LEAD_ALLOCATION_VIEW_ONLY);
     }
 
     private function assignDashboardToOperatorRoles(): void

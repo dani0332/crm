@@ -137,7 +137,6 @@ class Kernel extends ConsoleKernel
         $schedule->command('send-failed-ila-leads --quoteType=Yacht')->name('send-failed-ila-leads:cron:yacht')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Jetski')->name('send-failed-ila-leads:cron:jetski')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
 
-        $schedule->job(new PqaAllocationBackupJob(QuoteTypes::GROUP_MEDICAL))->name('pqa-backup:group_medical')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->job(new PqaAllocationBackupJob(QuoteTypes::CORPLINE))->name('pqa-backup:corpline')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->job(new PqaAllocationBackupJob(QuoteTypes::HEALTH))->name('pqa-backup:health')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(8);
 
