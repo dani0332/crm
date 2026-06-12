@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Services\GroupMedical;
 
 use App\Enums\QuoteTypeId;
-use App\Models\CompanyActivityType;
+use App\Enums\QuoteTypes;
 use App\Models\GroupMedicalCategory;
 use App\Models\GroupMedicalNetwork;
 use App\Models\HealthPlanType;
 use App\Models\HealthThirdPartyAdministrator;
+use App\Models\QuoteType;
 use App\Repositories\InsuranceProviderRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -40,10 +41,11 @@ final class GroupMedicalAmtFormDropdownService
             return collect();
         }
 
-        return CompanyActivityType::query()
+        return QuoteType::find(QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL))
+            ->businessActivities()
             ->active()
-            ->select('id', 'text')
-            ->orderBy('text')
+            ->select('business_activities.id', 'business_activities.name as text')
+            ->orderByDesc('sort_order')
             ->get();
     }
 

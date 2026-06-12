@@ -181,8 +181,8 @@ const quoteForm = useForm({
         props.leadSourceParams?.subSourceOption ||
         0,
     ) || null,
-  nature_of_company_activity_id:
-    props.quote?.nature_of_company_activity_id ?? null,
+    business_activity_id:
+    props.quote?.business_activity_id ?? null,
   has_existing_group_health_insurance:
     props.quote?.has_existing_group_health_insurance === undefined ||
     props.quote?.has_existing_group_health_insurance === null
@@ -620,7 +620,7 @@ function onSubmit(isValid) {
         />
 
         <x-select
-          v-model="quoteForm.nature_of_company_activity_id"
+          v-model="quoteForm.business_activity_id"
           :options="companyActivitySelectOptions"
           class="w-full"
           label="NATURE OF COMPANY'S ACTIVITY"
@@ -728,37 +728,67 @@ function onSubmit(isValid) {
                     scope="col"
                     class="min-w-[12rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
-                    CATEGORY
+                    <x-tooltip placement="bottom">
+                      <span class="cursor-default">CATEGORY</span>
+                      <template #tooltip>
+                        Choose the specific employee category this record refers to. Each category may have different plan Benefits and limits.
+                      </template>
+                    </x-tooltip>
                   </th>
                   <th
                     scope="col"
                     class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
-                    EXISTING INSURANCE PROVIDER
+                   <x-tooltip placement="bottom">
+                      <span class="cursor-default">EXISTING INSURANCE PROVIDER</span>
+                      <template #tooltip>
+                        Select the current health insurance provider for this group.
+                      </template>
+                    </x-tooltip>
                   </th>
                   <th
                     scope="col"
                     class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
-                    EXISTING THIRD PARTY ADMINISTRATOR
+                    <x-tooltip placement="bottom">
+                      <span class="cursor-default">EXISTING THIRD PARTY ADMINISTRATOR</span>
+                      <template #tooltip>
+                        Select the current TPA (Third Party Administrator) managing claims and approvals for the existing policy.
+                      </template>
+                    </x-tooltip>
                   </th>
                   <th
                     scope="col"
                     class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
-                    EXISTING NETWORK
+                    <x-tooltip placement="bottom">
+                      <span class="cursor-default">EXISTING NETWORK</span>
+                      <template #tooltip>
+                        Select the current medical provider network name/level under the existing policy.
+                      </template>
+                    </x-tooltip>
                   </th>
                   <th
                     scope="col"
                     class="min-w-[10.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
-                    EXISTING POLICY RENEWAL DATE
+                    <x-tooltip placement="bottom">
+                      <span class="cursor-default">EXISTING POLICY RENEWAL DATE</span>
+                      <template #tooltip>
+                        Enter the expiry date of the client’s current group health insurance policy as shown on the policy schedule.
+                      </template>
+                    </x-tooltip>
                   </th>
                   <th
                     scope="col"
                     class="min-w-[8.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
-                    NUMBER OF PEOPLE
+                    <x-tooltip placement="bottom">
+                      <span class="cursor-default">NUMBER OF PEOPLE</span>
+                      <template #tooltip>
+                        Enter the total number of insured members in this group/category (including employees and, if applicable, their dependents.
+                      </template>
+                    </x-tooltip>
                   </th>
                 </tr>
               </thead>
