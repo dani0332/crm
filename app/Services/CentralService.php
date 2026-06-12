@@ -2738,6 +2738,7 @@ class CentralService extends BaseService
         // exists for the new expiry date yet.
         if ($request->filled('previous_policy_expiry_date') && $this->isNonMotorQuoteType($request->model_type)) {
             $updateData['renewal_batch_id'] = BaseCQFQuoteMappingService::getRenewalBatchIdForDate($request->previous_policy_expiry_date);
+            $updateData['renewal_batch'] = null; // non-motor displays via renewalBatchModel relation; clear legacy text value
         }
 
         // Update the quote with all provided fields
