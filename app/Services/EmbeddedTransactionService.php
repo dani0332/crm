@@ -194,8 +194,8 @@ class EmbeddedTransactionService extends BaseService
             'customerName' => $quote->first_name.' '.$quote->last_name,
             'vehicleName' => $bikeQuote->bikeMake?->text.' '.$bikeQuote->bikeModel?->text,
             'buyNowUrl' => config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL').$quote->uuid.'/payment/?'.http_build_query([
-                'planId' => $bikeQuote->plans?->id,
-                'providerCode' => $bikeQuote->plans?->insuranceProvider?->code,
+                'planId' => $quote->plan?->id ?? $quote->carPlan?->id,
+                'providerCode' => $quote->plan?->insuranceProvider?->code ?? $quote->carPlan?->insuranceProvider?->code,
                 'selectEpShortCode' => $epTransaction->product?->embeddedProduct?->short_code,
             ]),
             'advisor' => [
