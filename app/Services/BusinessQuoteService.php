@@ -307,6 +307,7 @@ class BusinessQuoteService extends BaseService
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
             'additionalNotes' => $request->additional_notes ?? null,
             'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
+            'businessActivityId' => $request->nature_of_company_activity_id,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
 

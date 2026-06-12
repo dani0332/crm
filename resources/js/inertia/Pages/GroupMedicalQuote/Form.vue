@@ -181,7 +181,7 @@ const quoteForm = useForm({
         props.leadSourceParams?.subSourceOption ||
         0,
     ) || null,
-    business_activity_id:
+    nature_of_company_activity_id:
     props.quote?.business_activity_id ?? null,
   has_existing_group_health_insurance:
     props.quote?.has_existing_group_health_insurance === undefined ||
@@ -430,13 +430,23 @@ function onSubmit(isValid) {
     : route('amt.store');
 
   const options = {
-    onError: errors => {
-      quoteForm.setError(errors);
-    },
     onStart: () => {
       quoteForm.clearErrors();
     },
+    onSuccess: page => {
+      notification.success(
+        page?.props?.flash?.message ?? (isEdit.value ? 'Quote updated successfully.' : 'Quote created successfully.'),
+      );
+    },
+    onError: errors => {
+      quoteForm.setError(errors);
+      const firstError = Object.values(errors)[0];
+      if (firstError) {
+        notification.error(firstError);
+      }
+    },
   };
+
   quoteForm.submit(method, url, options);
 }
 </script>
@@ -620,7 +630,7 @@ function onSubmit(isValid) {
         />
 
         <x-select
-          v-model="quoteForm.business_activity_id"
+          v-model="quoteForm.nature_of_company_activity_id"
           :options="companyActivitySelectOptions"
           class="w-full"
           label="NATURE OF COMPANY'S ACTIVITY"

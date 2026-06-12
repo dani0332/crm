@@ -796,7 +796,7 @@ class AmtController extends Controller
     protected function groupMedicalAmtIntakeValidationRules(): array
     {
         return [
-            'nature_of_company_activity_id' => ['required', 'exists:company_activity_type,id'],
+            'nature_of_company_activity_id' => ['required', 'exists:business_activities,id'],
             'has_existing_group_health_insurance' => ['required', 'boolean'],
             'health_plan_type_id' => ['required', 'exists:health_plan_type,id'],
             'categories' => [
@@ -815,7 +815,7 @@ class AmtController extends Controller
                     }
                 },
             ],
-            'categories.*.groupMedicalCategoryId' => ['required', 'integer', 'exists:group_medical_category,id'],
+            // 'categories.*.groupMedicalCategoryId' => ['required', 'integer', 'exists:group_medical_category,id'],
             'categories.*.insuranceProviderId' => ['nullable', 'exists:insurance_provider,id'],
             'categories.*.healthTpaId' => ['nullable', 'exists:group_medical_third_party_administrator,id'],
             'categories.*.groupMedicalNetworkId' => ['nullable', 'exists:group_medical_networks,id'],
