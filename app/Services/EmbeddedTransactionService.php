@@ -174,7 +174,7 @@ class EmbeddedTransactionService extends BaseService
             quoteStatusId: QuoteStatusEnum::PolicyBooked,
         );
 
-        $templateId = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE, 892);
+        $templateId = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE);
 
         if (empty($templateId)) {
             LoggerService::info('sendBikeEpRetargetingEmail: Template ID not configured');
