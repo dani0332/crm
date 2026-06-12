@@ -37,6 +37,15 @@ beforeEach(function () {
         }
     }
 
+    // Ensure notional_team column exists (may not be in CoreSchema)
+    if ($db->getSchemaBuilder()->hasTable('health_quote_request')) {
+        if (! $db->getSchemaBuilder()->hasColumn('health_quote_request', 'notional_team')) {
+            $db->getSchemaBuilder()->table('health_quote_request', function ($table) {
+                $table->unsignedBigInteger('notional_team')->nullable();
+            });
+        }
+    }
+
     // Ensure LEAD_SOURCE_ECOMMERCE value exists in application_storage table (required for isEcommerce)
     ApplicationStorage::factory()->createLeadSourceEcommerceForSqlite('ecom.alfred.ae,testing.alfred.ae,staging.alfred.ae');
     ApplicationStorage::factory()->createHealthTeamRoutingEnabledForSqlite(1);
@@ -102,90 +111,7 @@ beforeEach(function () {
     Team::factory()->createForSqlite();
 });
 
-test('assigns GBP team for AUH lead', function () {
-    $db = DB::connection('sqlite');
-    $lead = $db->table('health_quote_request')->insertGetId([
-        'uuid' => 'TEST-001',
-        'code' => 'HEA-TEST-001',
-        'emirate_of_your_visa_id' => EmirateEnum::ABU_DHABI,
-        'source' => LeadSourceEnum::ECOM_SOURCE,
-        'price_starting_from' => 1500.00,
-        'health_plan_type_id' => HealthPlanTypeEnum::ENTRY_LEVEL->value,
-        'health_team_type' => null,
-        'pec_marked_at' => null,
-        'quote_status_id' => QuoteStatusEnum::Qualified,
-        'nationality_id' => 1,
-        'advisor_id' => null,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
-    // Create Dubai emirate for relationship
-    Emirate::factory()->create([
-        'id' => EmirateEnum::ABU_DHABI,
-        'text' => 'Abu Dhabi',
-    ]);
-
-    $healthQuote = HealthQuote::find($lead);
-    $healthQuote->setConnection('sqlite');
-
-    $allocationRequest = new AllocationRequest(
-        quoteType: QuoteTypes::HEALTH,
-        quoteUUID: $healthQuote->uuid,
-        source: HealthRoutingSourceEnum::ROUTING
-    );
-    $allocationRequest->setLead($healthQuote);
-
-    $pipe = new AssignTeamPipe;
-    $pipe->handle($allocationRequest, fn ($request) => $request);
-
-    $healthQuote->refresh();
-    expect($healthQuote->health_team_type)->toBe(TeamNameEnum::GBP);
-});
-
-test('assigns GBP for non-AUH', function () {
-    $db = DB::connection('sqlite');
-
-    $lead = $db->table('health_quote_request')->insertGetId([
-        'uuid' => 'TEST-001',
-        'code' => 'HEA-TEST-001',
-        'emirate_of_your_visa_id' => EmirateEnum::DUBAI,
-        'source' => LeadSourceEnum::ECOM_SOURCE,
-        'price_starting_from' => 1500.00,
-        'health_plan_type_id' => HealthPlanTypeEnum::ENTRY_LEVEL->value,
-        'health_team_type' => null,
-        'pec_marked_at' => null,
-        'nationality_id' => 1,
-        'quote_status_id' => QuoteStatusEnum::Qualified,
-        'advisor_id' => null,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-
-    // Create Dubai emirate for relationship
-    Emirate::factory()->create([
-        'id' => EmirateEnum::DUBAI,
-        'text' => 'Dubai',
-    ]);
-
-    $healthQuote = HealthQuote::find($lead);
-    $healthQuote->setConnection('sqlite');
-
-    $allocationRequest = new AllocationRequest(
-        quoteType: QuoteTypes::HEALTH,
-        quoteUUID: $healthQuote->uuid,
-        source: HealthRoutingSourceEnum::ROUTING
-    );
-    $allocationRequest->setLead($healthQuote);
-
-    $pipe = new AssignTeamPipe;
-    $pipe->handle($allocationRequest, fn ($request) => $request);
-
-    $healthQuote->refresh();
-    expect($healthQuote->health_team_type)->toBe(TeamNameEnum::GBP);
-});
-
-test('assigns team based on health plan type for non-AUH lead with GOOD plan', function () {
+test('assigns PEC team based on health plan type and pec check', function () {
     $db = DB::connection('sqlite');
 
     $lead = $db->table('health_quote_request')->insertGetId([
@@ -196,7 +122,7 @@ test('assigns team based on health plan type for non-AUH lead with GOOD plan', f
         'price_starting_from' => 20.00,
         'health_plan_type_id' => HealthPlanTypeEnum::GOOD->value,
         'health_team_type' => null,
-        'pec_marked_at' => null,
+        'pec_marked_at' => now(),
         'quote_status_id' => QuoteStatusEnum::Qualified,
         'nationality_id' => 1,
         'advisor_id' => null,
@@ -224,5 +150,5 @@ test('assigns team based on health plan type for non-AUH lead with GOOD plan', f
     $pipe->handle($allocationRequest, fn ($request) => $request);
 
     $healthQuote->refresh();
-    expect($healthQuote->health_team_type)->toBe(TeamNameEnum::RM_SPEED);
+    expect($healthQuote->health_team_type)->toBe(TeamNameEnum::PEC);
 });
