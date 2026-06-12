@@ -622,6 +622,7 @@ class CarQuoteService extends BaseService
                 'cqr.is_branch_applicable',
                 'vdd.driver_eid_number',
                 'vdd.driver_gender',
+                'cqrd.is_update_quote_ready',
                 'cqrd.engagement_level',
                 DB::raw('DATE_FORMAT(cqrd.engagement_level_updated_at, "%d-%m-%Y %H:%i:%s") as engagement_level_updated_at'),
             )
