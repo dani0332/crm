@@ -410,13 +410,13 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
 });
 
 describe('sendBikeEpRetargetingEmail (via Reflection)', function () {
-    function invokeSendBikeEpRetargetingEmail(object $service, array $emailData): object
+    function invokeSendBikeEpRetargetingEmail(object $service, array $emailData, int $templateId): object
     {
         $ref = new ReflectionClass(EmbeddedTransactionService::class);
         $method = $ref->getMethod('sendBikeEpRetargetingEmail');
         $method->setAccessible(true);
 
-        return $method->invoke($service, $emailData);
+        return $method->invoke($service, $emailData, $templateId);
     }
 
     $emailData = fn () => [
@@ -429,22 +429,7 @@ describe('sendBikeEpRetargetingEmail (via Reflection)', function () {
         'customerName' => 'John Doe',
     ];
 
-    test('returns 404 when template ID is not configured', function () use ($emailData) {
-        $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
-
-        $result = invokeSendBikeEpRetargetingEmail($service, $emailData());
-
-        expect($result->status_code)->toBe(Response::HTTP_NOT_FOUND);
-        expect($result->message)->toBe('Bike EP retargeting template not configured');
-    });
-
     test('returns 200 when Brevo responds with 201', function () use ($emailData) {
-        ApplicationStorage::updateOrInsert(
-            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE],
-            ['value' => '999', 'created_at' => now(), 'updated_at' => now()]
-        );
-
         $sendEmailMock = Mockery::mock(SendEmailCustomerService::class);
         $sendEmailMock->shouldReceive('sendBikeEpRetargetingEmail')
             ->once()
@@ -457,18 +442,13 @@ describe('sendBikeEpRetargetingEmail (via Reflection)', function () {
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
         $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class), $sendEmailMock);
 
-        $result = invokeSendBikeEpRetargetingEmail($service, $emailData());
+        $result = invokeSendBikeEpRetargetingEmail($service, $emailData(), 999);
 
         expect($result->status_code)->toBe(Response::HTTP_OK);
         expect($result->message)->toBe('Bike EP retargeting email sent');
     });
 
     test('returns 500 when Brevo responds with non-201', function () use ($emailData) {
-        ApplicationStorage::updateOrInsert(
-            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE],
-            ['value' => '999', 'created_at' => now(), 'updated_at' => now()]
-        );
-
         $sendEmailMock = Mockery::mock(SendEmailCustomerService::class);
         $sendEmailMock->shouldReceive('sendBikeEpRetargetingEmail')
             ->once()
@@ -477,7 +457,7 @@ describe('sendBikeEpRetargetingEmail (via Reflection)', function () {
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
         $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class), $sendEmailMock);
 
-        $result = invokeSendBikeEpRetargetingEmail($service, $emailData());
+        $result = invokeSendBikeEpRetargetingEmail($service, $emailData(), 999);
 
         expect($result->status_code)->toBe(Response::HTTP_INTERNAL_SERVER_ERROR);
         expect($result->message)->toBe('Failed to send bike EP retargeting email');
