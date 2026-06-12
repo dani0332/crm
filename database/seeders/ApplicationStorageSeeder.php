@@ -1419,19 +1419,20 @@ class ApplicationStorageSeeder extends Seeder
 
     private function seedRdxRetargetingEmailConfigurations()
     {
+        $isProd = app()->environment() === EnvEnum::PRODUCTION;
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BREVO_BIKE_EP_RETARGETING_EVENT_NAME],
             [
                 'value' => 'ep_rdx_retargeting_enable',
                 'created_at' => now(),
                 'updated_at' => now(),
-                'is_active' => 1,
+                'is_active' => $isProd ? 0 : 1,
             ],
         );
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_FROM_EMAIL],
             [
-                'value' => 'alfred@notify.insurancemarket.ae',
+                'value' => $isProd ? 'alfred@notify.insurancemarket.ae' : 'alfred@testnotify.alfred.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1440,7 +1441,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_BCC_EMAIL],
             [
-                'value' => 'embeddedproducts@insurancemarket.ae',
+                'value' => $isProd ? 'embeddedproducts@insurancemarket.ae' : 'embeddedproducts@yopmail.com',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1461,7 +1462,7 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 892,
                 'created_at' => now(),
                 'updated_at' => now(),
-                'is_active' => 1,
+                'is_active' => $isProd ? 0 : 1,
             ],
         );
     }
