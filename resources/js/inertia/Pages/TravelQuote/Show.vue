@@ -67,7 +67,7 @@ defineProps({
   access: Object,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
-  isAllianceProvider: Boolean,
+  isQatarProvider: Boolean,
   customerAddressData: Object,
 });
 
@@ -2194,6 +2194,28 @@ const fullAddress = computed(() => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ quote.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ quote.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ quote.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ quote.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ quote.utm_term }}</dd>
+                </div>
+              </template>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INSURER API STATUS</dt>
                 <dd>{{ quote.insurer_api_status }}</dd>
@@ -3476,7 +3498,7 @@ const fullAddress = computed(() => {
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
       :isPlanDetailSectionEnabled="false"
-      :isAllianceProvider="isAllianceProvider"
+      :isQatarProvider="isQatarProvider"
     />
 
     <PaymentTable
@@ -3805,7 +3827,7 @@ const fullAddress = computed(() => {
     />
 
     <PolicyIssuanceApiLogs
-      v-if="isAllianceProvider"
+      v-if="isQatarProvider"
       :type="modelClass"
       :quoteTypeId="$page.props.quoteTypeId"
       :id="$page.props.quote.id"

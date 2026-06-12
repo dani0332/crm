@@ -70,6 +70,11 @@ class DatabaseSeeder extends Seeder
             InsuranceProviderTransitionsSeeder::class,
             BackfillBusinessQuoteEmirateFromInsuredSeeder::class,
             ConverILAGroupMedicalConfigurationBranchWise::class,
+            HealthCoverForSeeder::class,
+            MemberCategorySeeder::class,
+            VisaCategorySeeder::class,
+            SalaryBandSeeder::class,
+            MaritalStatusSeeder::class,
         ]);
     }
 }

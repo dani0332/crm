@@ -98,4 +98,9 @@ enum LoggerFeatureEnum: string
     // Life Revival
     case LIFE_REVIVAL = 'life-revival';
     case SQS_INBOUND_QUEUE = 'sqs-inbound-queue';
+
+    case HEALTH_QUOTE_REVAMP = 'health-quote-revamp';
+
+    // Home Revival
+    case HOME_REVIVAL = 'home-revival';
 }

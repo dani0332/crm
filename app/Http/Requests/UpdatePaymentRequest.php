@@ -3,16 +3,34 @@
 namespace App\Http\Requests;
 
 use App\Enums\PaymentGatewayIdEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\FtcEmailLog;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 
 class UpdatePaymentRequest extends FormRequest
 {
     use GenericQueriesAllLobs;
+
+    /**
+     * Quote from {@see getQuoteObject()} for this request; `false` when not found; unset until {@see rules()} or resolution in {@see withValidator()}.
+     *
+     * @var Model|false|null
+     */
+    private mixed $quoteModel = null;
+
+    private ?Payment $existingPayment = null;
+
+    /** @var Collection<int, PaymentSplits>|null */
+    private ?Collection $existingSplits = null;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -29,6 +47,45 @@ class UpdatePaymentRequest extends FormRequest
      */
     public function rules(): array
     {
+        $this->quoteModel = $this->getQuoteObject($this->input('modelType'), $this->input('quote_id'));
+
+        /*
+         * Collection date and split due dates must be on or after today for quotes that are not
+         * yet Policy Booked. For Policy Booked leads, payment updates may reference historical
+         * collection or instalment dates (on or before policy inception); requiring
+         * `after_or_equal:today` would block legitimate edits. CU: 86exmagnm
+         *
+         * Additionally, collection_date skips after_or_equal:today when the master payment
+         * is already paid/partially paid/captured/partial captured. Per-split due_date
+         * rules below still check each split's own status individually.
+         */
+        $isPolicyBooked = $this->quoteModel !== false
+            && (int) $this->quoteModel->quote_status_id === (int) QuoteStatusEnum::PolicyBooked;
+
+        // Raw DB values — must include both the canonical (PAID/PARTIALLY_PAID) and their DB aliases
+        // (CAPTURED/PARTIAL_CAPTURED) because the getPaymentStatusIdAttribute accessor transforms
+        // CAPTURED→PAID and PARTIAL_CAPTURED→PARTIALLY_PAID on read.
+        $paidStatuses = [
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+            PaymentStatusEnum::CAPTURED,
+            PaymentStatusEnum::PARTIAL_CAPTURED,
+        ];
+
+        $this->existingPayment ??= Payment::where('code', $this->paymentCode)->first();
+        $this->existingSplits ??= $this->existingPayment?->paymentSplits ?? collect();
+
+        $masterPaymentStatusId = $this->existingPayment
+            ? (int) $this->existingPayment->getRawOriginal('payment_status_id')
+            : null;
+
+        $hasPaidMasterPayment = $masterPaymentStatusId !== null
+            && \in_array($masterPaymentStatusId, $paidStatuses, true);
+
+        $collectionDateRule = ($isPolicyBooked || $hasPaidMasterPayment)
+            ? 'required|date'
+            : 'required|date|after_or_equal:today';
+
         $rules = [
             'modelType' => 'required',
             'quote_id' => 'required|numeric',
@@ -43,13 +100,31 @@ class UpdatePaymentRequest extends FormRequest
             'payment.frequency' => 'required|string|in:upfront,monthly,quarterly,semi_annual,split_payments,custom',
             'payment.collection_type' => 'required|string|in:broker,insurer',
             'payment.total_amount' => 'required|numeric|min:0',
-            'payment.collection_date' => 'required|date|after_or_equal:today',
+            'payment.collection_date' => $collectionDateRule,
             'payment.discount_value' => 'nullable|numeric|min:0',
             'payment.payment_methods' => 'required|string',
             'payment.payment_splits.*.sr_no' => 'required|integer|min:1',
             'payment.payment_splits.*.payment_amount' => 'required|numeric',
             'payment.payment_splits.*.payment_method' => 'required|string',
-            'payment.payment_splits.*.due_date' => 'required|date|after_or_equal:today',
+            'payment.payment_splits.*.due_date' => Rule::forEach(function ($_, $attribute) use ($isPolicyBooked, $paidStatuses) {
+                if ($isPolicyBooked) {
+                    return ['required', 'date'];
+                }
+
+                // attribute = "payment.payment_splits.{index}.due_date"
+                $index = explode('.', $attribute)[2] ?? null;
+                $srNo = $index !== null ? (int) $this->input("payment.payment_splits.{$index}.sr_no") : 0;
+
+                if ($srNo > 0) {
+                    $dbSplit = $this->existingSplits?->firstWhere('sr_no', $srNo);
+
+                    if ($dbSplit && in_array((int) $dbSplit->getRawOriginal('payment_status_id'), $paidStatuses)) {
+                        return ['required', 'date'];
+                    }
+                }
+
+                return ['required', 'date', 'after_or_equal:today'];
+            }),
         ];
 
         return $rules;
@@ -62,8 +137,8 @@ class UpdatePaymentRequest extends FormRequest
     {
         $validator->after(function ($validator) {
 
-            $payment = Payment::where('code', request()->paymentCode)->first();
-            $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
+            $payment = Payment::where('code', $this->paymentCode)->first();
+            $quoteModel = $this->quoteModel ?? $this->getQuoteObject($this->input('modelType'), $this->input('quote_id'));
 
             // check if the user is authorized to apply discount
             if (request()->input('payment.discount_value') > 0 && $payment->discount_value != request()->input('payment.discount_value') && auth()->user()->cannot(PermissionsEnum::PAYMENTS_DISCOUNT_ADD)) {

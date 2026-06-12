@@ -34,6 +34,9 @@ class HealthQuoteFactory extends Factory
             'device' => 'desktop',
             'created_at' => now(),
             'updated_at' => now(),
+            'dob' => fake()->date('Y-m-d', '-25 years'),
+            'gender' => fake()->randomElement(['M', 'F']),
+            'is_quote_locked' => false,
         ];
     }
 
@@ -56,4 +59,24 @@ class HealthQuoteFactory extends Factory
             ];
         });
     }
+
+    /**
+     * Quote is locked (no further edits allowed).
+     */
+    public function locked(): self
+    {
+        return $this->state(['is_quote_locked' => true]);
+    }
+
+    /**
+     * Quote with new revamp fields populated.
+     */
+    public function withRevampFields(string $insureCode = 'ONLY_MYSELF', string $policyHolderCode = 'ME'): self
+    {
+        return $this->state([
+            'insure_code' => $insureCode,
+            'policy_holder_code' => $policyHolderCode,
+        ]);
+    }
+
 }

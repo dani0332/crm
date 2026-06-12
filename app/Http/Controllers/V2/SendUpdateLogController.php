@@ -35,7 +35,7 @@ use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
-use App\Services\CRUDService;
+use App\Services\HealthQuoteRevampMigrationService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -65,16 +65,6 @@ class SendUpdateLogController extends Controller
     {
         LoggerService::startQuoteLogging($request->quote_code);
         LoggerService::info('fn:store - Start - SendUpdateLogController');
-
-        $quoteType = QuoteTypes::getName($request->input('quote_type_id'))->value;
-        $modelClass = $this->getModelObject($quoteType);
-        if ($modelClass) {
-            $quote = $modelClass::where('uuid', $request->input('quote_uuid'))->first();
-            if ($quote && ! app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote)) {
-                return redirect()->back()->with('error', 'Send Update can only be created after the policy is fully booked.');
-            }
-        }
-
         try {
             DB::beginTransaction();
 
@@ -95,6 +85,10 @@ class SendUpdateLogController extends Controller
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = app(SendUpdateLogService::class)->createChildLead($quoteModel, $requestData, $quoteType->code);
+
+                if ($requestData['quote_type_id'] == QuoteTypeId::Health && isset($childLeadResponse['id'])) {
+                    app(HealthQuoteRevampMigrationService::class)->dispatchForNewChildLead($childLeadResponse['id']);
+                }
             }
 
             DB::commit();
@@ -313,6 +307,7 @@ class SendUpdateLogController extends Controller
             'cancelOptions' => app(LookupService::class)->getSendUpdateCancelOptions(),
             'isEndorsementBookingActionDisabled' => $this->sendUpdateLogService->isEndorsementBookingActionDisabled($sendUpdateLog),
             'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
+            'hasEndorsementPayments' => $sendUpdateLog->payments()->exists(),
         ]);
     }
 

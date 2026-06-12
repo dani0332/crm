@@ -386,6 +386,13 @@ class CRUDService extends BaseService
                 $this->updatePaymentStatus($entity);
             }
 
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
+                app(HealthQuoteRevampMigrationService::class)->dispatchForLockedLead(
+                    $request->leadId,
+                    $request->leadStatus,
+                );
+            }
+
             return ['entity' => $entity, 'activityResponse' => $activityResponse];
         });
     }
@@ -584,8 +591,15 @@ class CRUDService extends BaseService
         return $this->applicationstorageService->getValueByKey($key);
     }
 
-    public function getGenderOptions()
+    public function getGenderOptions($quoteTypeId = null)
     {
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            return app(LookupService::class)
+                ->getGender()
+                ->pluck('text', 'code')
+                ->all();
+        }
+
         $genderOptions = [
             GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
             GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
@@ -1185,46 +1199,44 @@ class CRUDService extends BaseService
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
+            $uploadResult = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
+            $quoteModel->refresh();
+
+            if ($quoteModel->risk_score >= GenericRequestEnum::HIGH_RISK_SCORE) {
+                LoggerService::info('fn:calculateScore - High risk score detected', context: [
+                    'quote_uuid' => $quoteModel->uuid,
+                    'risk_score' => $quoteModel->risk_score,
+                ]);
+
+                app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification(
+                    $quoteModel,
+                    $type,
+                    $uploadResult,
+                    (int) $results['total'],
+                );
+            }
         }
         LoggerService::info('fn:calculateScore - End');
     }
 
     public function hasAtleastOneStatusPolicyIssued($record): bool
     {
-        return $this->isLegacyPolicy($record)
-            || $this->hasAllowedSendUpdateStatus($record);
-    }
-
-    private function isLegacyPolicy($record): bool
-    {
-        return $record?->insly_migrated
-            || $record?->insly_id
-            || (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id);
-    }
-
-    private function hasAllowedSendUpdateStatus($record): bool
-    {
-        if (! isset($record->quote_status_id)) {
-            return false;
+        if (
+            isset($record->quote_status_id) && in_array($record->quote_status_id, [
+                QuoteStatusEnum::PolicyIssued,
+                QuoteStatusEnum::PolicySentToCustomer,
+                QuoteStatusEnum::PolicyBooked,
+                QuoteStatusEnum::CancellationPending,
+                QuoteStatusEnum::PolicyCancelled,
+                QuoteStatusEnum::PolicyCancelledReissued,
+            ]) ||
+            $record?->insly_migrated || $record?->insly_id ||
+            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id)
+        ) {
+            return true;
         }
 
-        $baseStatuses = [
-            QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending,
-            QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued,
-        ];
-
-        $lifeOnlyStatuses = [
-            QuoteStatusEnum::PolicyIssued,
-            QuoteStatusEnum::PolicySentToCustomer,
-        ];
-
-        $isLifeLob = isset($record->quote_type_id) && $record->quote_type_id === QuoteTypeId::Life;
-        $allowedStatuses = $isLifeLob ? [...$baseStatuses, ...$lifeOnlyStatuses] : $baseStatuses;
-
-        return in_array($record->quote_status_id, $allowedStatuses);
+        return false;
     }
 
     public function getInquiryLogs($modelType, $uuid)

@@ -162,7 +162,7 @@ trait OcrFillable
                 ]);
 
                 // Update customer verification details
-                app(CustomerVerificationService::class)->processOcrVerification($quote, $data, $documentTypeCode);
+                app(CustomerVerificationService::class)->processOcrVerification($quote, $data, $this->documentTypeCode);
             } else {
                 LoggerService::warning(self::class.' - Emirates ID data processing failed - Quote UUID: '.$quote->uuid);
             }

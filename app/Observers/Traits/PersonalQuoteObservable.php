@@ -13,6 +13,7 @@ use App\Events\QuotePolicyBooked;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
+use App\Jobs\OCB\SendDeviceOCBIntroEmailJob;
 use App\Jobs\SendAutomatedHomeRenewalFollowup;
 use App\Jobs\SendAutomatedLifeFollowup;
 use App\Jobs\SendFICEmailForLife;
@@ -160,7 +161,10 @@ trait PersonalQuoteObservable
             SendCyberOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
             LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
         }
-
+        if ($personalQuote->isDevice()) {
+            SendDeviceOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+            LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
+        }
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);
     }
 
@@ -327,7 +331,7 @@ trait PersonalQuoteObservable
         LoggerService::info(self::class.' - handleRevivalQuote - Quote Type Request Received', [
             'uuid' => $personalQuote->uuid,
         ]);
-        if ($personalQuote->quote_type_id == (int) QuoteTypes::LIFE->id() && in_array($personalQuote->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED])) {
+        if (in_array($personalQuote->quote_type_id, [(int) QuoteTypes::LIFE->id(), (int) QuoteTypes::HOME->id()]) && in_array($personalQuote->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_SHORT, LeadSourceEnum::REVIVAL_ANNUAL])) {
             $this->updatePersonalQuote($personalQuote, ['source' => LeadSourceEnum::REVIVAL_PAID], withEvents: true);
             LoggerService::info(self::class.' - handleRevivalQuote - Quote Type Updated to Revival Paid', [
                 'quote_type_id' => $personalQuote->quote_type_id,

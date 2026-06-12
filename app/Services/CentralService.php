@@ -556,9 +556,9 @@ class CentralService extends BaseService
         $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
         $isNormalPlan = $data['planType'] == 'normalPlans';
         $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
-        $isALNCProvider = $data['provider_code'] == InsuranceProviderEnum::ALNC->value;
+        $isQICProvider = $data['provider_code'] == InsuranceProviderEnum::QIC->value;
 
-        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
+        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isQICProvider) {
             $quoteModelObject = $this->getModelObject(strtolower($quoteType));
             $customerMembers = CustomerMembers::where([
                 'quote_type' => ltrim($quoteModelObject, '\\'),
@@ -1843,15 +1843,7 @@ class CentralService extends BaseService
             $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
             if (! empty($handBookDocuments)) {
                 $latestDocument = $quoteTypeId == QuoteTypeId::Health ? collect($handBookDocuments)->first() : collect($handBookDocuments)->last();
-                $url = $latestDocument['url'] ?? null;
-
-                if ($url) {
-                    if (str_contains($url, 'http')) {
-                        $emailData->handBookDocuments = $url;
-                    } else {
-                        $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($url, 'azureIMPrivate') ?? '';
-                    }
-                }
+                $emailData->handBookDocuments = $latestDocument['url'] ?? null;
             } else {
                 $policyHandBook = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH, DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_HANDBOOK]);
@@ -2189,7 +2181,6 @@ class CentralService extends BaseService
             InsuranceProviderEnum::RAK->value,    // RAK_INSURANCE
             InsuranceProviderEnum::TM->value,     // TOKIO_MARINE
             InsuranceProviderEnum::QIC->value,    // QATAR_INSURANCE
-            InsuranceProviderEnum::ALNC->value,   // ALLIANCE_INSURANCE
             InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
@@ -2541,7 +2532,7 @@ class CentralService extends BaseService
 
             AutomationFailedJob::dispatch(
                 $quote->id,
-                QuoteTypeId::Car,
+                $quoteTypeId,
                 $actionRequired,
                 $statusAPIFailed,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
@@ -2595,7 +2586,7 @@ class CentralService extends BaseService
 
                     AutomationFailedJob::dispatch(
                         $quote->id,
-                        QuoteTypeId::Car,
+                        $quoteTypeId,
                         $actionRequired,
                         $statusAPIFailed,
                         PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,

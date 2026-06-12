@@ -99,7 +99,12 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
         $tpc = $isRenewal ? 'renewalsTPC' : 'newBusinessTPC';
 
         if ($this->isValidPaymentStatus($result->payment_status_id)) {
-            $this->{$counts}[$result->payment_status_id]++;
+
+            if ($result->payment_status_id == PaymentStatusEnum::PAID) {
+                $this->{$counts}[PaymentStatusEnum::CAPTURED]++;
+            } else {
+                $this->{$counts}[$result->payment_status_id]++;
+            }
         }
         $this->{$tpc} += $result->premium_captured;
     }
@@ -108,6 +113,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     {
         return in_array($status, [
             PaymentStatusEnum::CAPTURED,
+            PaymentStatusEnum::PAID,
             PaymentStatusEnum::PARTIAL_CAPTURED,
         ]);
     }
