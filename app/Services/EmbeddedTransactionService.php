@@ -262,11 +262,11 @@ class EmbeddedTransactionService extends BaseService
         }
         $isBike = $quoteTypeId === QuoteTypeId::Bike;
 
-        $carMake = $quote->carMake?->text ?? $quote->bikeMake?->text ?? null;
-        $carModel = $quote->carModel?->text ?? $quote->bikeModel?->text ?? null;
+        $carMake = $quote->carMake?->text ?? $quote->bikeQuote?->bikeMake?->text ?? null;
+        $carModel = $quote->carModel?->text ?? $quote->bikeQuote?->bikeModel?->text ?? null;
         $epShortCode = $embeddedTransaction->product?->embeddedProduct?->short_code ?? null;
-        $planId = $quote->plan?->id ?? null;
-        $providerCode = $quote->plan?->insuranceProvider?->code ?? null;
+        $planId = $quote->plan?->id ?? $quote->carPlan?->id ?? null;
+        $providerCode = $quote->plan?->insuranceProvider?->code ?? $quote->carPlan?->insuranceProvider?->code ?? null;
 
         $isEpShortCodeAllowedForReminder = in_array($epShortCode, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS, true);
 
