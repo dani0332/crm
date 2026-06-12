@@ -18,13 +18,13 @@ class TriggerEpRetargetingEmailRequest extends FormRequest
      */
     public function rules(): array
     {
-        $quoteTypeId = (int) $this->input('attributes.data.quoteTypeId');
+        $quoteTypeId = (int) $this->input('params.quoteTypeId');
         $quoteTable = $quoteTypeId === QuoteTypeId::Car ? 'car_quote_request' : 'personal_quotes';
 
         return [
-            'attributes.data.quoteId' => "required|integer|exists:{$quoteTable},id",
-            'attributes.data.quoteTypeId' => 'required|integer|in:'.QuoteTypeId::Car.','.QuoteTypeId::Bike,
-            'attributes.data.embeddedTransactionCode' => 'required|string|exists:embedded_transactions,code',
+            'params.quoteId' => "required|integer|exists:{$quoteTable},id",
+            'params.quoteTypeId' => 'required|integer|in:'.QuoteTypeId::Car.','.QuoteTypeId::Bike,
+            'params.embeddedTransactionCode' => 'required|string|exists:embedded_transactions,code',
         ];
     }
 
@@ -34,15 +34,15 @@ class TriggerEpRetargetingEmailRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'attributes.data.quoteId.required' => 'Quote ID is required',
-            'attributes.data.quoteId.integer' => 'Quote ID must be an integer',
-            'attributes.data.quoteId.exists' => 'The selected quote ID does not exist',
-            'attributes.data.quoteTypeId.required' => 'Quote type ID is required',
-            'attributes.data.quoteTypeId.integer' => 'Quote type ID must be an integer',
-            'attributes.data.quoteTypeId.in' => 'Quote type ID must be Car (1) or Bike (6)',
-            'attributes.data.embeddedTransactionCode.required' => 'Embedded transaction code is required',
-            'attributes.data.embeddedTransactionCode.string' => 'Embedded transaction code must be a string',
-            'attributes.data.embeddedTransactionCode.exists' => 'The selected Embedded transaction code does not exist.',
+            'params.quoteId.required' => 'Quote ID is required',
+            'params.quoteId.integer' => 'Quote ID must be an integer',
+            'params.quoteId.exists' => 'The selected quote ID does not exist',
+            'params.quoteTypeId.required' => 'Quote type ID is required',
+            'params.quoteTypeId.integer' => 'Quote type ID must be an integer',
+            'params.quoteTypeId.in' => 'Quote type ID must be Car (1) or Bike (6)',
+            'params.embeddedTransactionCode.required' => 'Embedded transaction code is required',
+            'params.embeddedTransactionCode.string' => 'Embedded transaction code must be a string',
+            'params.embeddedTransactionCode.exists' => 'The selected Embedded transaction code does not exist.',
         ];
     }
 }

@@ -59,9 +59,9 @@ class EmbeddedProductController extends Controller
 
     public function triggerEpRetargetingEmail(TriggerEpRetargetingEmailRequest $request): JsonResponse
     {
-        $quoteId = $request->integer('attributes.data.quoteId');
-        $quoteTypeId = $request->integer('attributes.data.quoteTypeId');
-        $embeddedTransactionCode = $request->str('attributes.data.embeddedTransactionCode')->value();
+        $quoteId = $request->integer('params.quoteId');
+        $quoteTypeId = $request->integer('params.quoteTypeId');
+        $embeddedTransactionCode = $request->str('params.embeddedTransactionCode')->value();
 
         return response()->json(
             $this->embeddedTransactionService->handleTriggerEpRetargetingEmail($quoteId, $quoteTypeId, $embeddedTransactionCode)
