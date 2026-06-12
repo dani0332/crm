@@ -46,7 +46,10 @@ const selectedLob = ref('');
 
 const lobFilterOptions = computed(() => {
   const codes = [...new Set(props.data.map(item => item.quoteTypeCode))].sort();
-  return [{ value: '', label: 'All' }, ...codes.map(code => ({ value: code, label: code }))];
+  return [
+    { value: '', label: 'All' },
+    ...codes.map(code => ({ value: code, label: code })),
+  ];
 });
 
 const filteredData = computed(() => {
@@ -55,7 +58,10 @@ const filteredData = computed(() => {
 });
 
 const filteredTotalAssigned = computed(() =>
-  filteredData.value.reduce((sum, item) => sum + (item.allocationCount || 0), 0),
+  filteredData.value.reduce(
+    (sum, item) => sum + (item.allocationCount || 0),
+    0,
+  ),
 );
 
 const filteredAvailableUsers = computed(
