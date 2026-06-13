@@ -53,6 +53,18 @@ test('delegates to execution service with correct arguments', function () {
     $job->handle($executionService);
 });
 
+test('logs error on failure', function () {
+    $job = new ProcessNonMotorCQFQuoteJob(
+        quoteId: 1,
+        source: QuoteTypes::PERSONAL->value,
+        quoteType: QuoteTypes::BIKE,
+        renewalsUploadLeadsId: 10,
+        renewalDaysThreshold: 30,
+    );
+
+    expect(fn () => $job->failed(new RuntimeException('test error')))->not->toThrow(Throwable::class);
+});
+
 afterEach(function () {
     Mockery::close();
 });

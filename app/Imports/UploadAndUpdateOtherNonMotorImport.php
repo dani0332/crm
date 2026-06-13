@@ -27,17 +27,14 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
 {
     use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 
-    private $validCount = 0;
-    private $failedCount = 0;
-    private $renewalsUploadLead;
-    private OtherNonMotorRenewalsUploadService $otherNonMotorRenewalsUploadService;
+    private int $validCount = 0;
+    private int $failedCount = 0;
     private array $seenRefIds = [];
 
-    public function __construct(OtherNonMotorRenewalsUploadService $otherNonMotorRenewalsUploadService, RenewalsUploadLeads $renewalsUploadLead)
-    {
-        $this->otherNonMotorRenewalsUploadService = $otherNonMotorRenewalsUploadService;
-        $this->renewalsUploadLead = $renewalsUploadLead;
-    }
+    public function __construct(
+        private OtherNonMotorRenewalsUploadService $otherNonMotorRenewalsUploadService,
+        private RenewalsUploadLeads $renewalsUploadLead,
+    ) {}
 
     /**
      * validation rules for every column in a row.
@@ -102,7 +99,7 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
      *
      * @return array[]
      */
-    public function getColumns()
+    public function getColumns(): array
     {
         return [
             'ref_id' => [
@@ -175,7 +172,7 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
                             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
                             'quote_type' => OtherNonMotorRenewalsUploadService::QUOTE_TYPE,
                             'policy_number' => null,
-                            'data' => $quoteData,
+                            'data' => json_encode($quoteData),
                             'status' => RenewalProcessStatuses::VALIDATION_FAILED,
                             'type' => RenewalsUploadType::UPDATE_LEADS,
                             'created_at' => now(),

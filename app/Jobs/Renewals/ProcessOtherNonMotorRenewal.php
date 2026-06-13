@@ -20,7 +20,7 @@ class ProcessOtherNonMotorRenewal implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 2;
-    public $timeout = 1200;
+    public $timeout = 60;
     public $backoff = 10;
 
     public function __construct(private int $renewalsUploadLeadId, private int $renewalQuoteProcessId)

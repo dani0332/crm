@@ -49,6 +49,12 @@ test('still marks lead as completed when cannot_upload is greater than zero', fu
         ->and((int) $lead->total_records)->toBe(3);
 });
 
+test('logs error on failure', function () {
+    $job = new FinalizeNonMotorCQFLOBJob(99);
+
+    expect(fn () => $job->failed(new RuntimeException('test error')))->not->toThrow(Throwable::class);
+});
+
 test('does not overwrite DB state when lead is already completed on retry', function () {
     $lead = RenewalsUploadLeads::factory()->create([
         'good' => 3,

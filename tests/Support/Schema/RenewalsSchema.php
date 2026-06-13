@@ -82,11 +82,8 @@ class RenewalsSchema
                 $table->string('renewal_import_type')->nullable();
                 $table->unsignedInteger('good')->default(0);
                 $table->unsignedInteger('cannot_upload')->default(0);
-                $table->unsignedInteger('total_records')->nullable();
+                $table->unsignedInteger('total_records')->default(0);
                 $table->boolean('is_sic')->default(0);
-                $table->integer('total_records')->default(0);
-                $table->integer('good')->default(0);
-                $table->integer('cannot_upload')->default(0);
                 $table->integer('skip_plans')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->timestamps();
