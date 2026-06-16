@@ -45,7 +45,7 @@ final class GroupMedicalAmtFormDropdownService
             ->businessActivities()
             ->active()
             ->select('business_activities.id', 'business_activities.name as text')
-            ->orderByDesc('sort_order')
+            ->orderBy('sort_order')
             ->get();
     }
 
