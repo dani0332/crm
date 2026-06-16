@@ -86,6 +86,7 @@ const filters = reactive({
   leadStatus: [],
   insurer_aml_status: [],
   advisor_id: '',
+  pqa_advisor_id: '',
   support_user_id: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -862,6 +863,26 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+        <x-select
+          v-model="filters.pqa_advisor_id"
+          name="advisor_id"
+          placeholder="Search by Pre‑Qualification Advisor"
+          :options="advisorOptions"
+          class="w-full"
+          filterable
+          label="Pre‑Qualification Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.pqa_advisor_id = advisorOptions.map(item => item.value)
+              "
+              @clear="filters.pqa_advisor_id = []"
+            />
+          </template>
+        </x-select>
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_invoice_number"
