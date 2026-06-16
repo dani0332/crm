@@ -70,8 +70,11 @@ class EALeadCreateRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // Manager role can only create Referral model leads
-        if ($this->user()->hasRole(RolesEnum::EAManager) && ! $this->user()->hasRole([RolesEnum::Admin, RolesEnum::Engineering])) {
+        // Any manager role can only create Referral model leads (FRD A.9)
+        $isAnyManager = $this->user()->roles->contains(
+            fn ($role) => str_contains(strtolower($role->name), 'manager')
+        );
+        if ($isAnyManager && ! $this->user()->hasRole([RolesEnum::Admin, RolesEnum::Engineering])) {
             $this->merge(['ea_model' => 'referral']);
         }
 

@@ -31,6 +31,9 @@ const authRoles = computed(() => page.props.auth?.roles ?? []);
 const authPermissions = computed(() => page.props.auth?.permissions ?? []);
 
 const isEAManager = computed(() => authRoles.value.includes('EA_MANAGER'));
+const isAnyManager = computed(() =>
+  authRoles.value.some(role => role.toLowerCase().includes('manager')),
+);
 const canCollaborate = computed(() =>
   authPermissions.value.includes('ea-collaborate'),
 );
@@ -113,7 +116,7 @@ const eaModelOptions = computed(() => {
   const options = [{ value: 'referral', label: 'Referral' }];
   if (
     canCollaborate.value &&
-    !isEAManager.value &&
+    !isAnyManager.value &&
     hasCollaborateEligibleLob.value
   ) {
     options.push({ value: 'collaborate', label: 'Collaborate' });
