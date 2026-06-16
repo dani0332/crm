@@ -127,7 +127,7 @@ class CarQuoteService extends BaseService
             'carMakeId' => $request->car_make_id,
             'carModelId' => $request->car_model_id, // ID
             'currentlyInsuredWith' => $request->currently_insured_with,
-            'source' => config('constants.SOURCE_NAME'),
+            'source' => $request->lead_type === 'expert_advisor_model' ? LeadSourceEnum::EA_IMCRM : config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'gender' => $request->gender ?? null,
             'chassisNumber' => $request->chassis_number,
