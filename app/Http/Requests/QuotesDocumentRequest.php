@@ -103,6 +103,12 @@ class QuotesDocumentRequest extends FormRequest
                 QuoteStatusEnum::POLICY_BOOKING_FAILED,
             ])
         ) {
+            if (
+                in_array(request()->quote_type, [quoteTypeCode::Business, quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])
+            ) {
+                return;
+            }
+
             if ($quoteStatusId == QuoteStatusEnum::PolicyBooked) {
                 $status = 'booked';
             } elseif ($quoteStatusId == QuoteStatusEnum::POLICY_BOOKING_QUEUED) {

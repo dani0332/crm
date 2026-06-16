@@ -138,26 +138,6 @@ class SendUpdateLogService
                 ];
                 break;
 
-            case HomeQuote::class:
-                $quoteRelations = [
-                    'quoteRelations' => [
-                        'homeQuoteRequestDetail' => [
-                            'skipColumns' => $requestDetailsSkipColumns,
-                            'fillColumns' => ['advisor_assigned_date' => now()],
-                        ],
-                        'customerMembers' => [
-                            'isMorph' => true,
-                            'skipColumns' => ['updated_at'],
-                        ],
-                        'quoteRequestEntityMapping' => [],
-                        'customerInsured' => [],
-                        'amlLogs' => [],
-                    ],
-                    'skipParentColumns' => $parentSkipColumns,
-                    'parentClass' => HomeQuote::class,
-                ];
-                break;
-
             case HealthQuote::class:
                 $quoteRelations = [
                     'quoteRelations' => [
@@ -175,26 +155,6 @@ class SendUpdateLogService
                     ],
                     'skipParentColumns' => array_merge($parentSkipColumns, ['health_plan_type_id', 'price_starting_from', 'health_plan_co_payment_id', 'is_quote_locked']),
                     'parentClass' => HealthQuote::class,
-                ];
-                break;
-
-            case LifeQuote::class:
-                $quoteRelations = [
-                    'quoteRelations' => [
-                        'quoteDetail' => [
-                            'skipColumns' => $requestDetailsSkipColumns,
-                            'fillColumns' => ['advisor_assigned_date' => now()],
-                        ],
-                        'customerMembers' => [
-                            'isMorph' => true,
-                            'skipColumns' => ['updated_at'],
-                        ],
-                        'quoteRequestEntityMapping' => [],
-                        'customerInsured' => [],
-                        'amlLogs' => [],
-                    ],
-                    'skipParentColumns' => $parentSkipColumns,
-                    'parentClass' => LifeQuote::class,
                 ];
                 break;
 
@@ -316,6 +276,36 @@ class SendUpdateLogService
                             ],
                         ];
                         break;
+
+                    case quoteTypeCode::Life:
+                        $personalQuoteRelation = [
+                            'lifeQuote' => [
+                                'skipColumns' => $parentSkipColumns,
+                                'parentClass' => LifeQuote::class,
+                                'quoteRelations' => [
+                                    'lifeQuoteRequestDetail' => [
+                                        'skipColumns' => $requestDetailsSkipColumns,
+                                        'fillColumns' => ['advisor_assigned_date' => now()],
+                                    ],
+                                ],
+                            ],
+                        ];
+                        break;
+
+                    case quoteTypeCode::Home:
+                        $personalQuoteRelation = [
+                            'homeQuote' => [
+                                'skipColumns' => $parentSkipColumns,
+                                'parentClass' => HomeQuote::class,
+                                'quoteRelations' => [
+                                    'homeQuoteRequestDetail' => [
+                                        'skipColumns' => $requestDetailsSkipColumns,
+                                        'fillColumns' => ['advisor_assigned_date' => now()],
+                                    ],
+                                ],
+                            ],
+                        ];
+                        break;
                 }
 
                 $quoteRelations = [
@@ -359,10 +349,10 @@ class SendUpdateLogService
             $getNestedRelations = $nestedObject->getRelations();
 
             $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
-            if (in_array($relation, ['bikeQuote', 'yachtQuote', 'petQuote', 'cycleQuote', 'jetskiQuote'])) {
+            if (in_array($relation, ['bikeQuote', 'yachtQuote', 'petQuote', 'cycleQuote', 'jetskiQuote', 'lifeQuote', 'homeQuote'])) {
                 $fillColumns = array_merge($fillColumns, ['personal_quote_id' => $replicateObject->id]);
 
-                if (in_array($relation, ['bikeQuote', 'yachtQuote', 'petQuote'])) {
+                if (in_array($relation, ['bikeQuote', 'yachtQuote', 'petQuote', 'lifeQuote', 'homeQuote'])) {
                     $fillColumns = array_merge($fillColumns, [
                         'code' => $replicateObject->code,
                         'uuid' => $replicateObject->uuid,
@@ -370,7 +360,7 @@ class SendUpdateLogService
                     ]);
                 }
 
-                if ($relation == 'petQuote') {
+                if (in_array($relation, ['petQuote', 'lifeQuote', 'homeQuote'])) {
                     $fillColumns = array_merge($fillColumns, ['parent_duplicate_quote_id' => $replicateObject->parent_duplicate_quote_id]);
                 }
             }

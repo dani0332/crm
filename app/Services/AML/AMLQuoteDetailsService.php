@@ -93,9 +93,10 @@ class AMLQuoteDetailsService
 
         // Get additional fields configuration
         $isAddionalFieldsEnabled = $this->amlService->isAdditionalVehicleAndDriverDetailsEnabled(
-            $quoteType?->code,
-            $insuranceProvider?->code,
-            $quoteRequest?->registration_type
+            quoteTypeCode: $quoteType?->code,
+            insuranceProviderId: $insuranceProvider?->code,
+            vehicleRegistrationType: $quoteRequest?->registration_type,
+            source: $quoteRequest?->source,
         );
 
         // Get business-specific payload
