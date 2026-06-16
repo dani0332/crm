@@ -340,7 +340,11 @@ watch(
           <x-radio value="referral" label="Referral" />
           <x-radio value="early_renewal" label="Early Renewal" />
           <x-radio value="payment_status" label="Payment Status" />
-          <x-radio value="expert_advisor_model" label="Expert Advisor Model" />
+          <x-radio
+            v-if="hasEAReferralAccess"
+            value="expert_advisor_model"
+            label="Expert Advisor Model"
+          />
         </x-form-group>
 
         <!-- Conditional dropdowns for referral option -->
