@@ -23,7 +23,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'confirmed']);
 
-const { isRequired } = useRules();
+const { isRequired, isMobileNo } = useRules();
 const notification = useToast();
 const page = usePage();
 
@@ -455,7 +455,7 @@ watch(
               v-model="leadForm.mobile_no"
               label="PHONE NUMBER"
               name="mobileNo"
-              :rules="[isRequired]"
+              :rules="[isRequired, isMobileNo]"
               :required="true"
             />
 

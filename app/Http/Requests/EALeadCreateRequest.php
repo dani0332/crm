@@ -47,7 +47,21 @@ class EALeadCreateRequest extends FormRequest
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:150'],
-            'mobile_no' => ['required', 'string', 'max:20'],
+            'mobile_no' => [
+                'required',
+                'string',
+                'max:20',
+                function ($_attribute, $value, $fail) {
+                    if (! preg_match('/^[+]?[0-9\s\-\(\)]+$/', $value)) {
+                        $fail('Phone number format is invalid. Only digits, spaces, +, -, and parentheses are allowed.');
+
+                        return;
+                    }
+                    if (strlen(preg_replace('/[^0-9]/', '', $value)) < 7) {
+                        $fail('Phone number must be at least 7 digits long.');
+                    }
+                },
+            ],
             'business_type_of_insurance_id' => [
                 Rule::requiredIf($quoteTypeId === QuoteTypeId::Corpline),
                 'nullable',
