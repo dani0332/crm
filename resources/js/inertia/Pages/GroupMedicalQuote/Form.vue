@@ -693,12 +693,7 @@ function onSubmit(isValid) {
                 id="gm-category-intake-help"
                 class="mt-1 max-w-2xl text-xs leading-relaxed text-gray-500"
               >
-                Add one row per insured band. Pick the
-                <span class="font-medium text-gray-700">member category</span>,
-                optional existing insurer / TPA / network, renewal date, and
-                headcount. Use
-                <span class="font-medium text-gray-700">Add row</span>
-                to append lines (max {{ gmCategoryRowMax }}).
+                Please provide the number of people to be insured for each category.
               </p>
             </div>
             <div
