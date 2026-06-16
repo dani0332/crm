@@ -202,7 +202,7 @@ class OtherNonMotorRenewalsUploadService
         $renewalsUploadLead->increment('good');
     }
 
-    public function findEligibleQuote(string $refId)
+    public function findEligibleQuote(string $refId): ?PersonalQuote
     {
         return PersonalQuote::whereIn('quote_type_id', $this->allowedPersonalQuoteTypeIds)
             ->where(function ($query) use ($refId) {
@@ -211,7 +211,7 @@ class OtherNonMotorRenewalsUploadService
             })->first();
     }
 
-    public function isManuallyAssigned($quote): bool
+    public function isManuallyAssigned(PersonalQuote $quote): bool
     {
         return in_array($quote->assignment_type, [
             AssignmentTypeEnum::MANUAL_ASSIGNED,

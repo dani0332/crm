@@ -113,7 +113,7 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
 
                         // Prevent duplicate Ref-IDs within the same file to avoid race conditions later
                         if (isset($this->seenRefIds[$refId])) {
-                            $fail('Duplicate Ref-ID found in file');
+                            $fail('Duplicate Ref-ID found in file : '.$refId);
 
                             return;
                         }
@@ -122,17 +122,17 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
                         $quote = $this->otherNonMotorRenewalsUploadService->findEligibleQuote($refId);
 
                         if (! $quote) {
-                            $fail('No eligible renewal lead found for provided Ref-ID');
+                            $fail('No eligible renewal lead found for provided Ref-ID : '.$refId);
 
                             return;
                         }
 
                         if ($quote->source !== LeadSourceEnum::RENEWAL_UPLOAD) {
-                            $fail('Lead source must be renewal_upload');
+                            $fail('Lead source must be renewal_upload : '.$refId);
                         }
 
                         if ($this->otherNonMotorRenewalsUploadService->isManuallyAssigned($quote)) {
-                            $fail('Lead is manually assigned and was not updated');
+                            $fail('Lead is manually assigned and was not updated : '.$refId);
                         }
                     },
                 ],
@@ -172,11 +172,9 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
                             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
                             'quote_type' => OtherNonMotorRenewalsUploadService::QUOTE_TYPE,
                             'policy_number' => null,
-                            'data' => json_encode(json_encode($quoteData)),
+                            'data' => $quoteData,
                             'status' => RenewalProcessStatuses::VALIDATION_FAILED,
                             'type' => RenewalsUploadType::UPDATE_LEADS,
-                            'created_at' => now(),
-                            'updated_at' => now(),
                         ];
 
                         $this->failedCount++;
@@ -186,11 +184,11 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
                     foreach ($failure->errors() as $error) {
                         $validationErrors[] = $error;
                     }
-                    $failed[$failure->row()]['validation_errors'] = json_encode($validationErrors);
+                    $failed[$failure->row()]['validation_errors'] = $validationErrors;
                 }
 
                 if (! empty($failed)) {
-                    RenewalQuoteProcess::insert($failed);
+                    RenewalQuoteProcess::insert(array_map(fn ($r) => RenewalQuoteProcess::prepareForBulkInsert($r), $failed));
                 }
             },
         ];

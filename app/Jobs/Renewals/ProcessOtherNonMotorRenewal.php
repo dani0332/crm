@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs\Renewals;
 
 use App\Enums\ProcessStatusCode;
@@ -19,9 +21,9 @@ class ProcessOtherNonMotorRenewal implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 2;
-    public $timeout = 60;
-    public $backoff = 10;
+    public int $tries = 2;
+    public int $timeout = 60;
+    public int $backoff = 10;
 
     public function __construct(private int $renewalsUploadLeadId, private int $renewalQuoteProcessId)
     {
@@ -44,7 +46,7 @@ class ProcessOtherNonMotorRenewal implements ShouldQueue
     public function failed(Throwable $exception)
     {
         $renewalsUploadLead = RenewalsUploadLeads::find($this->renewalsUploadLeadId);
-        $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+        $renewalsUploadLead?->update(['status' => ProcessStatusCode::FAILED]);
         LoggerService::info('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage());
     }
 }
