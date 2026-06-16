@@ -104,6 +104,7 @@ class SaleDetailReportExport implements CsvExportableInterface
             'Payment Frequency',
             'Lead Created Date',
             'Branch',
+            'Lead Type',
         ];
     }
 
@@ -159,6 +160,7 @@ class SaleDetailReportExport implements CsvExportableInterface
             $quote->payment_frequency ?? 'N/A',
             $quote->quote_created_at ?? 'N/A',
             $quote->branch_name ?? 'N/A',
+            $quote->lead_type ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {
