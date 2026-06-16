@@ -739,7 +739,7 @@ function onSubmit(isValid) {
                     class="min-w-[12rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                     <x-tooltip placement="bottom">
-                      <span class="cursor-default">CATEGORY</span>
+                      <span class="cursor-default underline decoration-dotted decoration-white">CATEGORY</span>
                       <template #tooltip>
                         Choose the specific employee category this record refers to. Each category may have different plan Benefits and limits.
                       </template>
@@ -750,7 +750,7 @@ function onSubmit(isValid) {
                     class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                    <x-tooltip placement="bottom">
-                      <span class="cursor-default">EXISTING INSURANCE PROVIDER</span>
+                      <span class="cursor-default underline decoration-dotted decoration-white">EXISTING INSURANCE PROVIDER</span>
                       <template #tooltip>
                         Select the current health insurance provider for this group.
                       </template>
@@ -761,7 +761,7 @@ function onSubmit(isValid) {
                     class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                     <x-tooltip placement="bottom">
-                      <span class="cursor-default">EXISTING THIRD PARTY ADMINISTRATOR</span>
+                      <span class="cursor-default underline decoration-dotted decoration-white">EXISTING THIRD PARTY ADMINISTRATOR</span>
                       <template #tooltip>
                         Select the current TPA (Third Party Administrator) managing claims and approvals for the existing policy.
                       </template>
@@ -772,7 +772,7 @@ function onSubmit(isValid) {
                     class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                     <x-tooltip placement="bottom">
-                      <span class="cursor-default">EXISTING NETWORK</span>
+                      <span class="cursor-default underline decoration-dotted decoration-white">EXISTING NETWORK</span>
                       <template #tooltip>
                         Select the current medical provider network name/level under the existing policy.
                       </template>
@@ -783,7 +783,7 @@ function onSubmit(isValid) {
                     class="min-w-[10.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                     <x-tooltip placement="bottom">
-                      <span class="cursor-default">EXISTING POLICY RENEWAL DATE</span>
+                      <span class="cursor-default underline decoration-dotted decoration-white">EXISTING POLICY RENEWAL DATE</span>
                       <template #tooltip>
                         Enter the expiry date of the client’s current group health insurance policy as shown on the policy schedule.
                       </template>
@@ -794,7 +794,7 @@ function onSubmit(isValid) {
                     class="min-w-[8.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                     <x-tooltip placement="bottom">
-                      <span class="cursor-default">NUMBER OF PEOPLE</span>
+                      <span class="cursor-default underline decoration-dotted decoration-white">NUMBER OF PEOPLE</span>
                       <template #tooltip>
                         Enter the total number of insured members in this group/category (including employees and, if applicable, their dependents.
                       </template>
