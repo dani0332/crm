@@ -44,7 +44,9 @@ final class GroupMedicalEcommerceJourneyLinkService
             return null;
         }
 
-        return rtrim($base, '/').'/'.$quote->uuid.'/plan-type';
+        $resource = $quote->quote_status_id == QuoteStatusEnum::QualificationPending ? 'documents' : 'plan-type';
+
+        return rtrim($base, '/')."/{$quote->uuid}/{$resource}";
     }
 
     public function recordAdvisorCopyLinkAudit(BusinessQuote $quote, User $user): void
