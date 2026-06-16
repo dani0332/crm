@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\EaModelEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -32,8 +33,12 @@ class EALeadCreateRequest extends FormRequest
             'quote_type_id' => [
                 'required',
                 'integer',
-                'exists:quote_type,id',
                 function ($attribute, $value, $fail) use ($isCollaborate, $collaborateForbiddenLobs) {
+                    if (! QuoteTypes::getName((int) $value)) {
+                        $fail('The selected line of business is invalid.');
+
+                        return;
+                    }
                     if ($isCollaborate && in_array((int) $value, $collaborateForbiddenLobs)) {
                         $fail('The collaborate model is not available for the selected LOB.');
                     }
