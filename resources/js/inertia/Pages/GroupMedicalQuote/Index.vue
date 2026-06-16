@@ -6,6 +6,7 @@ defineProps({
   model: String,
   leadStatuses: Array,
   advisors: Array,
+  pqas: Array,
   supportUsers: Array,
   preQualificationAdvisors: {
     type: Array,
@@ -123,6 +124,13 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
+  }));
+});
+
+const pqaOptions = computed(() => {
+  return page.props.pqas.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name
   }));
 });
 
@@ -867,7 +875,7 @@ const insurerAMLStatusOption = computed(() => {
           v-model="filters.pqa_advisor_id"
           name="advisor_id"
           placeholder="Search by Pre‑Qualification Advisor"
-          :options="advisorOptions"
+          :options="pqaOptions"
           class="w-full"
           filterable
           label="Pre‑Qualification Advisor"

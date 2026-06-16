@@ -181,6 +181,16 @@ class AmtController extends Controller
             ->whereIn('r.name', ['GM_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
 
+        // Fetch PQA
+        $pqas = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->where('r.name', RolesEnum::PreQualificationAdvisor)
+            ->select('u.id', 'u.name')
+            ->orderBy('u.name')
+            ->distinct()
+            ->get();
+
         // Get support users (OE role with Group Medical product access)
         $supportUsers = app(UserService::class)->getSupportUsers([
             'product_filter' => QuoteTypes::GROUP_MEDICAL,
@@ -382,7 +392,7 @@ class AmtController extends Controller
         $emirates = Emirate::getActiveEmirates();
         $assignmentTypes = AssignmentTypeEnum::withLabels();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'preQualificationAdvisors', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'canAssignPreQualificationAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'pqas', 'supportUsers', 'preQualificationAdvisors', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'canAssignPreQualificationAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes'));
     }
 
     /**
