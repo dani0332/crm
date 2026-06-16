@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\TeamTypeEnum;
 use App\Http\Requests\AllocationConfigurationRequest;
 use App\Http\Requests\FetchAllocationConfigurationRequest;
@@ -111,10 +112,13 @@ class AllocationConfigurationController extends Controller
         }
     }
 
-    public function getPlanTypes()
+    public function getPlanTypes(?string $quoteType)
     {
         try {
-            $planTypes = HealthPlanType::orderBy('text')->get(['id', 'text']);
+            $planTypes = HealthPlanType::query()
+                ->when($quoteType === QuoteTypes::GROUP_MEDICAL->value, fn ($q) => $q->forGroupMedical())
+                ->orderBy('text')
+                ->get(['id', 'text']);
 
             return response()->json([
                 'success' => true,
