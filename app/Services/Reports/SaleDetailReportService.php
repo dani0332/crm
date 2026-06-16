@@ -101,6 +101,7 @@ class SaleDetailReportService extends ManagementReport
                 'personal_quotes.created_at as quote_created_at',
                 'ipp.text as plan_name',
                 DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
+                'bqr.lead_type',
             );
         $this->paymentJoin($query);
         $query->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -134,7 +135,11 @@ class SaleDetailReportService extends ManagementReport
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Travel);
             })
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
-            ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id');
+            ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
+            ->leftJoin('business_quote_request as bqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'bqr.id')
+                    ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Business);
+            });
 
         $this->branchJoin($query);
         $this->applyFilters($query, $request);

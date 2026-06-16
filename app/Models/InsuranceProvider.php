@@ -16,6 +16,14 @@ class InsuranceProvider extends BaseModel implements AuditableContract
     protected $connection = 'mysql';
     protected $table = 'insurance_provider';
     protected $guarded = ['id'];
+
+    protected function casts(): array
+    {
+        return [
+            'aml_lookups_enabled' => 'boolean',
+        ];
+    }
+
     public $access = [
 
         'write' => ['advisor', 'oe'],
