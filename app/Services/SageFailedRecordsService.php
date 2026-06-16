@@ -32,6 +32,10 @@ class SageFailedRecordsService extends BaseService
 {
     const MODEL_TYPE_MAIN_LEAD = 'Main Lead';
     const MODEL_TYPE_SEND_UPDATE = 'Send Update';
+    const LEAD_STATUS_FILTER_POLICY_BOOKING_FAILED = 'Policy Booking Failed';
+    const LEAD_STATUS_FILTER_OTHER_STATUS = 'Other Status';
+    const DATE_FILTER_TYPE_LEAD_CREATED = 'Lead Created Date';
+    const DATE_FILTER_TYPE_SAGE_API_FAILURE = 'Sage API Failure Date';
     private const DROPDOWN_CACHE_TTL_HOURS = 5;
     private const CACHE_KEY_INSURANCE_PROVIDERS = 'sage_failed_records.dropdown.insurance_providers';
     private const CACHE_KEY_QUOTE_TYPES = 'sage_failed_records.dropdown.quote_types';
@@ -45,6 +49,16 @@ class SageFailedRecordsService extends BaseService
             'options' => [
                 ['id' => self::MODEL_TYPE_MAIN_LEAD, 'text' => self::MODEL_TYPE_MAIN_LEAD],
                 ['id' => self::MODEL_TYPE_SEND_UPDATE, 'text' => self::MODEL_TYPE_SEND_UPDATE],
+            ],
+            'leadStatusOptions' => [
+                [
+                    'id' => self::LEAD_STATUS_FILTER_POLICY_BOOKING_FAILED,
+                    'text' => 'Policy Booking Failed + Sage API Failed',
+                ],
+                [
+                    'id' => self::LEAD_STATUS_FILTER_OTHER_STATUS,
+                    'text' => 'Other Status + Sage API Failed',
+                ],
             ],
         ];
     }
@@ -139,30 +153,43 @@ class SageFailedRecordsService extends BaseService
     private function getFailedLeadsUnionSubquery(\PDO $pdo, ValidatedInput|array $request, array $filteredSources): string
     {
         $queries = [];
-        $startDate = $request['date_from']
-            ? Carbon::parse($request['date_from'])->startOfDay()
-            : Carbon::now()->startOfMonth();
 
-        $endDate = $request['date_to']
-            ? Carbon::parse($request['date_to'])->endOfDay()
-            : Carbon::now()->endOfMonth();
+        $statusOperator = ($request['lead_status_filter'] ?? null) === self::LEAD_STATUS_FILTER_OTHER_STATUS
+            ? 'NOT IN'
+            : 'IN';
 
-        $startDateSql = $pdo->quote($startDate->format(config('constants.DB_DATE_FORMAT_MATCH')));
-        $endDateSql = $pdo->quote($endDate->format(config('constants.DB_DATE_FORMAT_MATCH')));
+        $leadDateFilterSql = '';
+        if ($this->shouldFilterByLeadCreatedDate($request)) {
+            $startDate = $request['date_from']
+                ? Carbon::parse($request['date_from'])->startOfDay()
+                : Carbon::now()->startOfMonth();
+
+            $endDate = $request['date_to']
+                ? Carbon::parse($request['date_to'])->endOfDay()
+                : Carbon::now()->endOfMonth();
+
+            $startDateSql = $pdo->quote($startDate->format(config('constants.DB_DATE_FORMAT_MATCH')));
+            $endDateSql = $pdo->quote($endDate->format(config('constants.DB_DATE_FORMAT_MATCH')));
+            $leadDateFilterSql = "AND created_at BETWEEN {$startDateSql} AND {$endDateSql}";
+        }
 
         foreach ($filteredSources as $source) {
             $model = $pdo->quote($source['model']);
             $quoteTypeFilterSql = $this->buildPersonalQuoteTypeIdFilterSql($source);
+
+            $clauses = array_filter([
+                "WHERE {$source['status_column']} {$statusOperator} ({$source['statuses']})",
+                $leadDateFilterSql,
+                $quoteTypeFilterSql,
+            ]);
 
             $queries[] = "
                 SELECT
                     {$model} AS section_type,
                     id AS section_id
                 FROM {$source['table']}
-                WHERE {$source['status_column']} IN ({$source['statuses']})
-                AND created_at BETWEEN {$startDateSql} AND {$endDateSql}
-                {$quoteTypeFilterSql}
-            ";
+                ".implode("\n                ", $clauses).'
+            ';
         }
 
         if ($queries === []) {
@@ -517,7 +544,35 @@ class SageFailedRecordsService extends BaseService
         $query
             ->when(! empty($request->insurance_provider_id), function ($q) use ($request) {
                 $q->whereIn('sage_processes.insurance_provider_id', $request->insurance_provider_id);
+            })
+            ->when($this->shouldFilterBySageApiFailureDate($request), function ($q) use ($request) {
+                $startDate = $request['date_from']
+                    ? Carbon::parse($request['date_from'])->startOfDay()
+                    : Carbon::now()->startOfMonth();
+
+                $endDate = $request['date_to']
+                    ? Carbon::parse($request['date_to'])->endOfDay()
+                    : Carbon::now()->endOfMonth();
+
+                $q->whereBetween('sage_api_logs.created_at', [$startDate, $endDate]);
             });
+    }
+
+    // When lead_status_filter = Other Status AND date_filter_type = Sage API Failure Date only,
+    // the leads subquery has no date bound on the lead tables — it scans all non-booking-failed
+    // leads. The sage_api_logs date filter still applies on the outer query.
+    private function shouldFilterByLeadCreatedDate(ValidatedInput|array $request): bool
+    {
+        $types = (array) ($request['date_filter_type'] ?? []);
+
+        return empty($types) || in_array(self::DATE_FILTER_TYPE_LEAD_CREATED, $types, true);
+    }
+
+    private function shouldFilterBySageApiFailureDate(ValidatedInput|array $request): bool
+    {
+        $types = (array) ($request['date_filter_type'] ?? []);
+
+        return in_array(self::DATE_FILTER_TYPE_SAGE_API_FAILURE, $types, true);
     }
     // endregion
 }

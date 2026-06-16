@@ -186,17 +186,17 @@ class TravelQuoteService extends BaseService
             'tqr.gender',
             DB::raw('
                 CASE
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
-                    WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
-                    ELSE insurer_aml_status
+                    WHEN tqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                    WHEN tqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                    WHEN tqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                    WHEN tqr.insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                    ELSE tqr.insurer_aml_status
                 END AS insurer_aml_status_display
             '),
             'c.pcp_tag',
             'tqr.pc_qualified',
             DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
-            DB::raw(TravelQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+            DB::raw(TravelQuote::formattedPcQualifiedCase('tqr').' as pc_qualified_formatted'),
             // Sub-source fields
             'tqr.sub_source_id',
             'tqr.sub_source_options_id',
@@ -248,6 +248,25 @@ class TravelQuoteService extends BaseService
                     ->where('ub.status', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'tqr.branch_id');
+    }
+
+    private function applyUtmJoin(): void
+    {
+        if (auth()->user()?->can(PermissionsEnum::VIEW_UTM_SECTION)) {
+            $this->query
+                ->leftJoin('personal_quotes as pq', function ($join) {
+                    $join->on('pq.uuid', '=', 'tqr.uuid')
+                        ->where('pq.quote_type_id', '=', QuoteTypeId::Travel);
+                })
+                ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', '=', 'pq.id')
+                ->addSelect(
+                    'pqd.utm_source',
+                    'pqd.utm_medium',
+                    'pqd.utm_campaign',
+                    'pqd.utm_content',
+                    'pqd.utm_term',
+                );
+        }
     }
 
     public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
@@ -500,6 +519,8 @@ class TravelQuoteService extends BaseService
 
     public function getEntity($id)
     {
+        $this->applyUtmJoin();
+
         return $this->query->addSelect(['tqr.email', 'tqr.mobile_no'])->where('tqr.uuid', $id)->first();
     }
 
