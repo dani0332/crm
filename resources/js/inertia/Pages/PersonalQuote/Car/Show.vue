@@ -1128,6 +1128,7 @@ const onLeadStatus = () => {
 const toggleLoader = ref(false);
 const exportLoader = ref(false);
 const isLoadingAvailablePlans = ref(false);
+const isLoading = ref(false);
 
 const onTogglePlans = toggle => {
   toggleLoader.value = true;
@@ -1893,6 +1894,10 @@ const handleCancelConfirmationModal = () => {
 };
 
 const { openTempUrl } = useDocumentTempUrl();
+
+const isCars24 = computed(() => {
+  return page.props.record.source == page.props.leadSourceEnum.CARS24;
+});
 </script>
 
 <template>
@@ -2415,12 +2420,38 @@ const { openTempUrl } = useDocumentTempUrl();
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ record.transaction_approved_at }}</dd>
               </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ record.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ record.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ record.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ record.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ record.utm_term }}</dd>
+                </div>
+              </template>
               <div
                 class="grid sm:grid-cols-2"
                 v-if="can(permissionEnum.VIEW_PCP)"
               >
                 <dt class="font-medium">PC-Qualified</dt>
                 <dd>{{ record.pc_qualified_formatted }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS UPDATE QUOTE READY</dt>
+                <dd>{{ record.is_update_quote_ready ? 'YES' : 'NO' }}</dd>
               </div>
             </dl>
           </div>
@@ -3695,10 +3726,29 @@ const { openTempUrl } = useDocumentTempUrl();
                   puaType,
                   isSystemDiscountPrice,
                   tags,
+                  insurerQuoteStatus,
                 }"
               >
                 <p>{{ providerName }}</p>
                 <div class="flex gap-1">
+                  <x-tag
+                    v-if="
+                      isCars24 &&
+                      [
+                        genericRequestEnum.QUOTE_INITIATED,
+                        genericRequestEnum.QUOTE_FINALIZED,
+                      ].includes(insurerQuoteStatus)
+                    "
+                    size="xs"
+                    :color="
+                      insurerQuoteStatus === genericRequestEnum.QUOTE_INITIATED
+                        ? 'error'
+                        : 'success'
+                    "
+                    class="mt-0.5 text-[10px]"
+                  >
+                    {{ insurerQuoteStatus }}
+                  </x-tag>
                   <x-tag
                     v-if="isManualUpdate"
                     size="xs"
@@ -3731,27 +3781,29 @@ const { openTempUrl } = useDocumentTempUrl();
                   >
                     SDP
                   </x-tag>
-                  <x-tag
-                    v-if="puaType"
-                    size="xs"
-                    class="mt-0.5 text-[10px] text-white"
-                    style="background-color: #e00000"
-                  >
-                    <x-tooltip placement="right">
-                      <template #tooltip>
-                        <span
-                          class="font-medium"
-                          v-if="puaType == puaTypeEnum.PPUA"
-                        >
-                          {{ puaTypeEnum.PPUA_TOOLTIP }}
-                        </span>
-                        <span class="font-medium" v-else>
-                          {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
-                        </span>
-                      </template>
-                      {{ puaType }}
-                    </x-tooltip>
-                  </x-tag>
+                  <x-tooltip placement="right">
+                    <x-tag
+                      v-if="puaType"
+                      size="xs"
+                      class="mt-0.5 text-[10px] text-white"
+                      style="background-color: #e00000"
+                    >
+                      <span>{{ puaType }}</span>
+                    </x-tag>
+
+                    <template #tooltip>
+                      <span
+                        class="font-medium"
+                        v-if="puaType == puaTypeEnum.PPUA"
+                      >
+                        {{ puaTypeEnum.PPUA_TOOLTIP }}
+                      </span>
+                      <span class="font-medium" v-else>
+                        {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+
                   <x-tag
                     v-for="tag in tags
                       ? tags.split(',').filter(t => t.trim())

@@ -1018,13 +1018,17 @@ class QuoteDocumentService extends BaseService
         return $result;
     }
 
-    public function isEnableUploadDocument($quoteStatusId)
+    public function isEnableDocumentUploadOrDelete($quoteStatusId, ?string $quoteType = null): array
     {
         if (in_array($quoteStatusId, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
-            return false;
+            if (in_array($quoteType, [quoteTypeCode::Business, quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])) {
+                return ['upload' => true, 'delete' => false];
+            }
+
+            return ['upload' => false, 'delete' => false];
         }
 
-        return true;
+        return ['upload' => true, 'delete' => true];
     }
 
     public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5): ?string
@@ -1456,6 +1460,45 @@ class QuoteDocumentService extends BaseService
             // swallow exception to avoid blocking main upload flow (OCR, watermark dispatch)
             return;
         }
+    }
+
+    public function getArchivedDocuments($quoteType, $quoteId): array
+    {
+        LoggerService::info('fn:getArchivedDocuments - Start - QuoteDocumentService', [], [
+            'quote_type' => $quoteType,
+            'quote_id' => $quoteId,
+        ]);
+
+        $quote = $this->getQuoteObject($quoteType, $quoteId);
+        if (! $quote) {
+            return [];
+        }
+
+        $quote->loadMissing(['insuranceProvider', 'plan']);
+
+        $providerCode = $quote->insuranceProvider?->code;
+        $planCode = $quote->plan?->code;
+
+        return $quote->documents()
+            ->onlyTrashed()
+            ->with(self::CREATED_BY_RELATION)
+            ->latest()
+            ->get()
+            ->map(function (QuoteDocument $document) use ($providerCode, $planCode) {
+                return [
+                    'id' => $document->id,
+                    'document_id' => $document->id,
+                    'provider_code' => $providerCode,
+                    'plan_code' => $planCode,
+                    'maf_label' => $document->original_name,
+                    'doc_url' => $document->doc_url,
+                    'watermarked_doc_url' => $document->watermarked_doc_url,
+                    'submitted_by' => $document->createdBy?->email ?? $document->createdBy?->name,
+                    'submitted_on' => $document->created_at,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
 }

@@ -43,6 +43,50 @@ $user = User::create(['name' => 'Test', 'email' => 'test@example.com', ...]);
 $user = User::factory()->create();
 ```
 
+## No DB Facade in Tests
+
+Flag any `DB::` calls inside test files. Use model factories, Eloquent methods, or Pest assertion helpers instead.
+
+```php
+// Bad
+DB::table('users')->insert([...]);
+DB::table('orders')->where('id', $id)->first();
+
+// Good
+User::factory()->create([...]);
+$this->assertModelExists($order);
+```
+
+## No Repeated Manual Service Resolution
+
+Flag service classes resolved manually more than once across tests in the same file. Resolve once in `beforeEach()` and share via a closure variable.
+
+```php
+// Bad — resolving on every test
+it('does X', function () {
+    $service = app(BookingService::class);
+    ...
+});
+
+it('does Y', function () {
+    $service = app(BookingService::class); // duplicate resolution
+    ...
+});
+
+// Good — resolve once
+beforeEach(function () {
+    $this->service = app(BookingService::class);
+});
+
+it('does X', function () {
+    $this->service->doX();
+});
+
+it('does Y', function () {
+    $this->service->doY();
+});
+```
+
 ## Fakes After Factory Setup
 
 Flag `Event::fake()`, `Queue::fake()`, `Mail::fake()` called before factory or model setup. Fakes must come before the action under test, but after any prerequisite data is created.

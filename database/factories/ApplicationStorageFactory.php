@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Jobs\NotifyHighRiskScoreBirdJob;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -30,6 +31,18 @@ class ApplicationStorageFactory extends Factory
             'value' => $this->faker->word(),
             'is_active' => 1,
         ];
+    }
+
+    /**
+     * Bird AML high-risk notification workflow URL (see {@see NotifyHighRiskScoreBirdJob}).
+     */
+    public function birdHighRiskAmlScoreNotificationWorkflow(string $workflowUrl = 'https://bird.example/flow'): static
+    {
+        return $this->state(fn (): array => [
+            'key_name' => ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL,
+            'value' => $workflowUrl,
+            'is_active' => 1,
+        ]);
     }
 
     /**
