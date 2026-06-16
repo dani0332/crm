@@ -172,7 +172,7 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
                             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
                             'quote_type' => OtherNonMotorRenewalsUploadService::QUOTE_TYPE,
                             'policy_number' => null,
-                            'data' => json_encode($quoteData),
+                            'data' => json_encode(json_encode($quoteData)),
                             'status' => RenewalProcessStatuses::VALIDATION_FAILED,
                             'type' => RenewalsUploadType::UPDATE_LEADS,
                             'created_at' => now(),

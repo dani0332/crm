@@ -31,8 +31,8 @@ class OtherNonMotorRenewalsUploadService
             QuoteTypes::YACHT->id(),
             QuoteTypes::PET->id(),
             QuoteTypes::CYCLE->id(),
-            QuoteTypes::CORPLINE->id(),
-            QuoteTypes::GROUP_MEDICAL->id(),
+            QuoteTypes::BIKE->id(),
+            QuoteTypes::BUSINESS->id(),
         ];
     }
 
@@ -59,7 +59,7 @@ class OtherNonMotorRenewalsUploadService
             DB::transaction(function () use ($renewalsUploadLead) {
                 $upload = new UploadAndUpdateOtherNonMotorImport($this, $renewalsUploadLead);
                 $leadFile = $renewalsUploadLead->file_path;
-                $upload->import($leadFile, 'azureIM');
+                $upload->import($leadFile, 'azureIMPrivate');
             });
 
             $validationFailedCount = RenewalQuoteProcess::where('renewals_upload_lead_id', $renewalsUploadLead->id)
@@ -76,7 +76,10 @@ class OtherNonMotorRenewalsUploadService
 
             if ($validationSuccessCount === 0) {
                 LoggerService::info('No validated jobs to dispatch for lead: '.$renewalsUploadLead->id);
-                $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                $renewalsUploadLead->update([
+                    'status' => ProcessStatusCode::COMPLETED,
+                    'total_records' => $validationFailedCount,
+                ]);
                 $result = false;
             } else {
                 LoggerService::info('Validated jobs to dispatch for lead: '.$renewalsUploadLead->id);
@@ -117,7 +120,11 @@ class OtherNonMotorRenewalsUploadService
             ->name('Other Non Motor Renewals Batch')
             ->then(function () use ($renewalsUploadLead) {
                 LoggerService::info('OTH FN: All jobs completed successfully');
-                $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                $renewalsUploadLead->refresh();
+                $renewalsUploadLead->update([
+                    'status' => ProcessStatusCode::COMPLETED,
+                    'total_records' => (int) $renewalsUploadLead->good + (int) $renewalsUploadLead->cannot_upload,
+                ]);
             })
             ->catch(function () use ($renewalsUploadLead) {
                 LoggerService::info('OTH FN: One or more jobs failed');
