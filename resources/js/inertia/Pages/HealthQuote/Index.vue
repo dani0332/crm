@@ -47,6 +47,7 @@ defineProps({
 });
 
 const page = usePage();
+// console.log('first quote item:', page.props.quotes?.data?.[0]);
 const teamNamesEnum = page.props.teamNamesEnum;
 
 const signatoryFilterOptions = computed(() => {
@@ -141,7 +142,7 @@ const tableHeader = ref([
   },
   {
     text: 'PRE‑QUALIFICATION ADVISOR',
-    value: 'preQualificationAdvisor.name',
+    value: 'pre_qualification_advisor',
     is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
@@ -1660,6 +1661,9 @@ const paymentStatusOptions = computed(() => {
           >
           <span v-else>{{ item.salary_band?.text ?? 'N/A' }}</span>
         </p>
+      </template>
+      <template #item-pre_qualification_advisor="{ pre_qualification_advisor }">
+        <span>{{ pre_qualification_advisor?.name ?? '—' }}</span>
       </template>
     </DataTable>
 

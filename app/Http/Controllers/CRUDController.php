@@ -1311,6 +1311,9 @@ class CRUDController extends Controller
                 // Health show uses DB::table() entity (not Eloquent), so model appends are not applied; set label here.
                 $record->signatory_text = HealthQuoteDigitalSignatory::displayLabel($record->digital_signatory ?? null);
                 $record->uae_pass_api_status_text = HealthQuoteUaePassApiStatus::displayLabel($record->uae_pass_api_status ?? null);
+                $record->preQualificationAdvisor = $record->pq_advisor_id
+                    ? User::select('id', 'name')->find($record->pq_advisor_id)
+                    : null;
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,

@@ -289,7 +289,7 @@ class HealthQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
+        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no', 'hqr.pq_advisor_id'])->where('hqr.uuid', $id)->first();
     }
 
     public function getLead($id): HealthQuote
