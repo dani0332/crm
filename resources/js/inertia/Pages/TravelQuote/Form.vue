@@ -152,7 +152,7 @@ const quoteForm = useForm({
     parseInt(props.quote?.sub_source_options_id, 10) ||
     parseInt(props.leadSourceParams?.subSourceOption, 10) ||
     null,
-    lead_type : props.leadSourceParams?.type || null,
+  lead_type: props.leadSourceParams?.type || null,
   additional_notes: (() => {
     let notes = props.quote?.additional_notes || '';
     return notes;
