@@ -18,4 +18,5 @@ final class QuoteTagEnums extends Enum
     public const EMBEDDED_PRODUCT_BOOKED_ON_SAGE = 'EPBOS';
     public const TAP_PAYMENT_CAPTURE_PROCESS_START = 'TPCPS';
     public const TAP_PAYMENT_CAPTURE_PROCESS_SU_START = 'TPCPSUS';
+    public const PARTNER_POLICY_DOCUMENT_SENT = 'PPDS';
 }

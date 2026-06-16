@@ -1199,7 +1199,22 @@ class CRUDService extends BaseService
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
+            $uploadResult = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
+            $quoteModel->refresh();
+
+            if ($quoteModel->risk_score >= GenericRequestEnum::HIGH_RISK_SCORE) {
+                LoggerService::info('fn:calculateScore - High risk score detected', context: [
+                    'quote_uuid' => $quoteModel->uuid,
+                    'risk_score' => $quoteModel->risk_score,
+                ]);
+
+                app(HighRiskScoreBirdNotificationService::class)->queueHighRiskBirdNotification(
+                    $quoteModel,
+                    $type,
+                    $uploadResult,
+                    (int) $results['total'],
+                );
+            }
         }
         LoggerService::info('fn:calculateScore - End');
     }

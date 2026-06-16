@@ -114,7 +114,10 @@ class HealthQuoteObserver
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
                     if ($healthQuote->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-                        OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
+                        $delay = app()->isProduction()
+                            ? Carbon::now()->addDays($delayDays)
+                            : Carbon::now()->addMinutes($delayDays);
+                        OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay($delay);
                         LoggerService::info('OCAHealthFollowupEmailJob dispatched ');
                     }
 
@@ -160,7 +163,7 @@ class HealthQuoteObserver
         $introEmailEligibleStatuses = [QuoteStatusEnum::NewLead, QuoteStatusEnum::Qualified, QuoteStatusEnum::Quoted];
         if (isset($dirty['advisor_id']) && in_array($healthQuote->quote_status_id, $introEmailEligibleStatuses)) {
             info("Quote status changed to {$healthQuote->quote_status_id} | Ref-ID: {$healthQuote->uuid} | Time: ".now());
-            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $healthQuote->uuid, 'send-rm-intro-email', null, false);
+            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $healthQuote->uuid, 'send-rm-intro-email', null, false)->delay(Carbon::now()->addSeconds(15));
         }
         if (
             isset($dirty['quote_status_id']) &&

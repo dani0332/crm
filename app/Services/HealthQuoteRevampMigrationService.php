@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\HealthCoverForEnum;
+use App\Enums\HealthInsureEnum;
+use App\Enums\HealthPolicyHolderEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Events\HealthQuoteMigration;
@@ -133,6 +135,25 @@ class HealthQuoteRevampMigrationService
         }
 
         HealthQuoteMigration::dispatch($healthQuoteId);
+    }
+
+    public function dispatchForRenewalLead(?int $healthQuoteId): void
+    {
+        if ($healthQuoteId === null) {
+            return;
+        }
+
+        $healthQuote = HealthQuote::find($healthQuoteId);
+        $healthQuote->cover_for_id = HealthCoverForEnum::FAMILY->value;
+        $healthQuote->save();
+
+        HealthQuoteMigration::dispatch($healthQuoteId);
+
+        $healthQuote->refresh();
+        $healthQuote->insure_code = HealthInsureEnum::MYSELF_AND_MY_FAMILY_MEMBERS->value;
+        $healthQuote->policy_holder_code = HealthPolicyHolderEnum::ME->value;
+        $healthQuote->save();
+
     }
 
     public function isMigrated(HealthQuote $healthQuote): bool
