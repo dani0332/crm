@@ -286,6 +286,9 @@ class AmtController extends Controller
                 $data->whereIn('bqr.advisor_id', $request->advisor_id);
             }
         }
+        if (isset($request->pq_advisor_id) && is_array($request->pq_advisor_id)) {
+            $data->whereIn('bqr.pq_advisor_id', $request->pq_advisor_id);
+        }
 
         if (isset($request->support_user_id) && is_array($request->support_user_id) && count($request->support_user_id) > 0) {
             if (count($request->support_user_id) === 1 && $request->support_user_id[0] == '-1') {

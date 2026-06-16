@@ -87,7 +87,7 @@ const filters = reactive({
   leadStatus: [],
   insurer_aml_status: [],
   advisor_id: '',
-  pqa_advisor_id: '',
+  pq_advisor_id: '',
   support_user_id: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -872,8 +872,8 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars-solo
         />
         <x-select
-          v-model="filters.pqa_advisor_id"
-          name="advisor_id"
+          v-model="filters.pq_advisor_id"
+          name="pq_advisor_id"
           placeholder="Search by Pre‑Qualification Advisor"
           :options="pqaOptions"
           class="w-full"
@@ -885,9 +885,9 @@ const insurerAMLStatusOption = computed(() => {
           <template #content-footer>
             <ui-select-actions
               @select-all="
-                filters.pqa_advisor_id = advisorOptions.map(item => item.value)
+                filters.pq_advisor_id = pqaOptions.map(item => item.value)
               "
-              @clear="filters.pqa_advisor_id = []"
+              @clear="filters.pq_advisor_id = []"
             />
           </template>
         </x-select>
