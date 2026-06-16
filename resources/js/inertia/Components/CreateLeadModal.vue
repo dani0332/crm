@@ -23,7 +23,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'confirmed']);
 
-const { isRequired, isMobileNo } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 const notification = useToast();
 const page = usePage();
 
@@ -447,7 +447,7 @@ watch(
               label="EMAIL ADDRESS"
               name="email"
               type="email"
-              :rules="[isRequired]"
+              :rules="[isRequired, isEmail]"
               :required="true"
             />
 

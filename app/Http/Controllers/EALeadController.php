@@ -7,6 +7,7 @@ use App\Http\Requests\EALeadCreateRequest;
 use App\Jobs\SendEALeadSubmittedEmailJob;
 use App\Services\EALeadCapiService;
 use App\Services\EALeadDuplicateService;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\JsonResponse;
 
 class EALeadController extends Controller
@@ -42,7 +43,18 @@ class EALeadController extends Controller
 
         $isCollaborate = $request->ea_model === 'collaborate';
 
-        $capiResponse = $this->eaLeadCapiService->createLead($request, $quoteTypeId, $isCollaborate);
+        try {
+            $capiResponse = $this->eaLeadCapiService->createLead($request, $quoteTypeId, $isCollaborate);
+        } catch (RequestException $e) {
+            $body = (string) $e->getResponse()?->getBody();
+            $decoded = json_decode($body, true);
+            $capiMessage = $decoded['message'] ?? null;
+
+            $userMessage = $this->resolveCapiErrorMessage($capiMessage);
+
+            return response()->json(['success' => false, 'message' => $userMessage], 422);
+        }
+
         if (! isset($capiResponse->quoteUID)) {
             return response()->json([
                 'success' => false,
@@ -74,5 +86,14 @@ class EALeadController extends Controller
             'code' => $quote->code,
             'message' => 'EA lead created successfully.',
         ]);
+    }
+
+    private function resolveCapiErrorMessage(?string $capiMessage): string
+    {
+        if ($capiMessage && str_contains(strtolower($capiMessage), 'email')) {
+            return 'Please enter a valid email address.';
+        }
+
+        return 'Unable to create EA lead. Please check your inputs and try again.';
     }
 }
