@@ -16,6 +16,7 @@ defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  leadTypeOptions: Array,
 });
 
 const page = usePage();
@@ -97,6 +98,7 @@ const filters = reactive({
   advisors: [],
   authorize_date: '',
   captured_date: '',
+  lead_type: [],
 });
 
 watch(
@@ -270,6 +272,7 @@ const setIntialState = () => {
     policy_expiry_date_end: '',
     last_modified_date: null,
     advisor_assigned_date: '',
+    lead_type: [],
   });
   filtersCount.value = 0;
 };
@@ -616,6 +619,10 @@ const insurerAMLStatusOption = computed(() => {
     value: key,
     label: value,
   }));
+});
+
+const leadTypeSelectOptions = computed(() => {
+  return page.props.leadTypeOptions || [];
 });
 </script>
 
@@ -1047,6 +1054,29 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+
+        <x-select
+          v-model="filters.lead_type"
+          name="lead_type"
+          placeholder="Search by Lead Type"
+          :options="leadTypeSelectOptions"
+          class="w-full"
+          filterable
+          label="Lead Type"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.lead_type = leadTypeSelectOptions.map(
+                  option => option.value,
+                )
+              "
+              @clear="filters.lead_type = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

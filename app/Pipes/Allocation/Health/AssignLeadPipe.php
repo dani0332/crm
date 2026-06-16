@@ -3,6 +3,7 @@
 namespace App\Pipes\Allocation\Health;
 
 use App\Enums\HealthTeamType;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TeamNameEnum;
 use App\Jobs\GetQuotePlansJob;
@@ -29,6 +30,12 @@ class AssignLeadPipe extends BaseAllocationPipe
 
         if (! $advisor) {
             LoggerService::info('No advisor available in AssignLeadPipe - cannot proceed with assignment');
+            // if lead is sic2 and not sic1 and no advisor assigned then mark the lead as qualified
+            if ($this->lead->isSIC2() && ! $this->lead->isSIC1() && ! $this->lead->advisor_id) {
+                LoggerService::info('Marking lead as qualified in AssignLeadPipe - cannot proceed with assignment');
+                $this->lead->quote_status_id = QuoteStatusEnum::Qualified;
+                $this->lead->save();
+            }
             $this->allocationRequest->markAsFailed();
             $this->throw('Advisor not found', self::OK);
         }
@@ -56,7 +63,7 @@ class AssignLeadPipe extends BaseAllocationPipe
                 ]
             )
                 ->then(function () use ($lead, $isReAssignment, $previousAdvisorId) {
-                    if (in_array($lead->health_team_type, [
+                    if (in_array($lead->health_team_type ?? $lead->notional_team, [
                         HealthTeamType::EBP,
                         HealthTeamType::RM_NB,
                         HealthTeamType::RM_SPEED,

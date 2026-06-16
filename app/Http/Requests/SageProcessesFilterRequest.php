@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Services\Logger\LoggerService;
+use App\Services\SageFailedRecordsService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -39,6 +41,15 @@ class SageProcessesFilterRequest extends FormRequest
             'quote_type_id' => ['nullable', 'array'],
             'quote_type_id.*' => ['required_with:quote_type_id', 'string'],
             'option' => ['nullable', 'string'],
+            'lead_status_filter' => ['nullable', 'string', Rule::in([
+                SageFailedRecordsService::LEAD_STATUS_FILTER_POLICY_BOOKING_FAILED,
+                SageFailedRecordsService::LEAD_STATUS_FILTER_OTHER_STATUS,
+            ])],
+            'date_filter_type' => ['nullable', 'array'],
+            'date_filter_type.*' => ['string', Rule::in([
+                SageFailedRecordsService::DATE_FILTER_TYPE_LEAD_CREATED,
+                SageFailedRecordsService::DATE_FILTER_TYPE_SAGE_API_FAILURE,
+            ])],
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
         ];
@@ -59,9 +70,14 @@ class SageProcessesFilterRequest extends FormRequest
             'quote_type_id.*.required_with' => 'Quote type ID is required.',
             'quote_type_id.*.string' => 'Each quote type ID must be a string.',
             'option.string' => 'Option must be a string.',
-            'date_from.date' => 'From date must be a valid date.',
-            'date_to.date' => 'To date must be a valid date.',
-            'date_to.after_or_equal' => 'To date must be equal to or after from date.',
+            'lead_status_filter.string' => 'Lead status filter must be a string.',
+            'lead_status_filter.in' => 'Lead status filter must be '.SageFailedRecordsService::LEAD_STATUS_FILTER_POLICY_BOOKING_FAILED.' or '.SageFailedRecordsService::LEAD_STATUS_FILTER_OTHER_STATUS.'.',
+            'date_filter_type.array' => 'Date filter type must be an array.',
+            'date_filter_type.*.string' => 'Each date filter type must be a string.',
+            'date_filter_type.*.in' => 'Each date filter type must be '.SageFailedRecordsService::DATE_FILTER_TYPE_LEAD_CREATED.' or '.SageFailedRecordsService::DATE_FILTER_TYPE_SAGE_API_FAILURE.'.',
+            'date_from.date' => 'Start date must be a valid date.',
+            'date_to.date' => 'End date must be a valid date.',
+            'date_to.after_or_equal' => 'End date must be equal to or after start date.',
         ];
     }
 
@@ -76,8 +92,11 @@ class SageProcessesFilterRequest extends FormRequest
             'insurance_provider_id' => 'insurance provider',
             'quote_type_id' => 'quote type',
             'option' => 'option',
-            'date_from' => 'from date',
-            'date_to' => 'to date',
+            'lead_status_filter' => 'lead status filter',
+            'date_filter_type' => 'date filter type',
+            'date_filter_type.*' => 'date filter type value',
+            'date_from' => 'start date',
+            'date_to' => 'end date',
         ];
     }
 

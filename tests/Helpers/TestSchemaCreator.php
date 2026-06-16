@@ -7,6 +7,7 @@ use Tests\Support\Schema\CoreSchema;
 use Tests\Support\Schema\CyberSchema;
 use Tests\Support\Schema\EaSchema;
 use Tests\Support\Schema\OCRSchema;
+use Tests\Support\Schema\PartnerSchema;
 use Tests\Support\Schema\RenewalsSchema;
 use Tests\Support\Schema\RulesSchema;
 
@@ -22,6 +23,13 @@ class TestSchemaCreator
     public static function createMinimalSchema(): void
     {
         (new CoreSchema)->register();
+    }
+
+    public static function createPartnerSchema(): void
+    {
+        self::createMinimalSchema();
+
+        (new PartnerSchema)->register();
     }
 
     public static function ensureMinimalSchema(): void

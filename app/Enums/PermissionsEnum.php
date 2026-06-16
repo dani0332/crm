@@ -222,6 +222,7 @@ final class PermissionsEnum extends Enum
     public const UtmLeadsSalesReport = 'utm-leads-sales-report';
     public const UtmReportExport = 'utm-report-export';
     public const TeamThresholdView = 'team-allocation-threshold-view';
+    public const TEAM_ALLOCATION_THRESHOLD_EDIT = 'team-allocation-threshold-edit';
     public const CAR_REVIVAL_QUOTE_LIST = 'carrevival-quotes-list';
     public const CAR_REVIVAL_QUOTES_EDIT = 'carrevival-quotes-edit';
     public const CAR_REVIVAL_QUOTES_SHOW = 'carrevival-quotes-show';
@@ -437,6 +438,7 @@ final class PermissionsEnum extends Enum
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
     public const NATIONALITY_POOL_CONFIG = 'nationality-pool-config';
+    public const NATIONALITY_POOL_CONFIG_EDIT = 'nationality-pool-config-edit';
     public const VIEW_PCP = 'view-pc-qualified';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
     public const RETRY_PREPAYMENT_BUTTON = 'retry-prepayment-button';
@@ -554,6 +556,8 @@ final class PermissionsEnum extends Enum
     // Expert Advisory Model Permissions
     public const EaCollaborate = 'ea-collaborate';
     public const AssignedExpertAdvisor = 'assigned-expert-advisor';
+    public const VIEW_UTM_SECTION = 'view-utm-section';
+
     // Home Revivals Permissions
     public const HOME_REVIVAL_QUOTES_LIST = 'home-revival-quotes-list';
     public const HOME_REVIVAL_QUOTES_EDIT = 'home-revival-quotes-edit';

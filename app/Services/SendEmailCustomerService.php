@@ -692,6 +692,15 @@ class SendEmailCustomerService extends BaseService
 
             return;
         }
+        if (! $healthQuote->advisor_id) {
+            LoggerService::info('sendRMIntroEmail: No advisor assigned to quote, skipping CAPI call for uuid: '.$quoteUuid, extra: [
+                'quoteUuid' => $quoteUuid,
+                'previousAdvisorId' => $previousAdvisorId,
+                'isReassignment' => $isReassignment,
+            ]);
+
+            return;
+        }
 
         $dataArr = [
             'quoteUID' => $quoteUuid,

@@ -421,6 +421,8 @@ class CRUDController extends Controller
             $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
             $insurerApiStatus = app(PolicyIssuanceService::class)->getInsurerAPIStatuses();
 
+            $nationalities = NationalityRepository::withActive()->get(['id', 'text']);
+
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
                 'advisors' => $advisors,
@@ -443,6 +445,7 @@ class CRUDController extends Controller
                 'issuanceStatuses' => $issuanceStatuses,
                 'insurerApiStatus' => $insurerApiStatus,
                 'subSources' => $subSources,
+                'nationalities' => $nationalities,
             ]);
         }
 
