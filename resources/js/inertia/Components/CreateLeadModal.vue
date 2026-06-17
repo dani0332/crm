@@ -124,6 +124,23 @@ const eaModelOptions = computed(() => {
   return options;
 });
 
+const collaborateRouteMap = {
+  1: 'car.create',
+  2: 'home-quotes-create',
+  3: 'health.create',
+  4: 'life-quotes-create',
+  5: 'business.create',
+  6: 'bike-quotes-create',
+  7: 'yacht-quotes-create',
+  8: 'travel.create',
+  9: 'pet-quotes-create',
+  10: 'cycle-quotes-create',
+  11: 'jetski-quotes-create',
+  18: 'savings-quotes-create',
+  101: 'business.create',
+  102: 'amt.create',
+};
+
 const onConfirmCreateLead = async isValid => {
   if (!isValid) return;
 
@@ -144,7 +161,9 @@ const onConfirmCreateLead = async isValid => {
           health_plan_type_id: leadForm.health_plan_type_id,
         }),
       };
-      router.get(route(props.routeName), collaborateData);
+      const collaborateRoute =
+        collaborateRouteMap[Number(leadForm.quote_type_id)] ?? props.routeName;
+      router.get(route(collaborateRoute), collaborateData);
       isModalOpen.value = false;
       resetForm();
     } else {
