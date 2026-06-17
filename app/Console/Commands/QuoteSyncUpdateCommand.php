@@ -9,9 +9,10 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Console\Isolatable;
 use Illuminate\Support\Facades\DB;
 
-class QuoteSyncUpdateCommand extends Command
+class QuoteSyncUpdateCommand extends Command implements Isolatable
 {
     use PersonalQuoteSyncTrait;
 
