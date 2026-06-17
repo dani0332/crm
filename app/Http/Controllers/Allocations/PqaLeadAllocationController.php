@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Allocations;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PqaAllocationAvailabilityRequest;
@@ -12,11 +15,14 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\PqaAllocation\PqaLeadAllocationService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class PqaLeadAllocationController extends Controller
 {
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Request $request)
     {
         $user = $request->user();
         if ($user === null) {
@@ -73,16 +79,39 @@ class PqaLeadAllocationController extends Controller
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, object>
+     * @return Collection<int, object>
      */
     private function getPreQualificationAdvisors()
     {
         try {
+            $healthTypeId = QuoteTypes::HEALTH->id();
+            $corplineTypeId = QuoteTypes::CORPLINE->id();
+            $healthNewLeadStatus = QuoteStatusEnum::NewLead;
+            $corplineQualPendingStatus = QuoteStatusEnum::QualificationPending;
+            $groupMedicalTypeId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+
             $rows = User::activeUser()
                 ->select(
                     'users.id as userId',
                     'users.name as userName',
-                    DB::raw('(la.manual_assignment_count + la.auto_assignment_count) as allocationCount'),
+                    DB::raw("(
+                        CASE
+                            WHEN la.quote_type_id = {$healthTypeId} THEN (
+                                SELECT COUNT(*)
+                                FROM health_quote_request hqr
+                                WHERE hqr.pq_advisor_id = users.id
+                                  AND hqr.quote_status_id = {$healthNewLeadStatus}
+                            )
+                            WHEN la.quote_type_id = {$corplineTypeId} THEN (
+                                SELECT COUNT(*)
+                                FROM business_quote_request bqr
+                                WHERE bqr.pq_advisor_id = users.id
+                                  AND bqr.quote_status_id = {$corplineQualPendingStatus}
+                                  AND bqr.business_type_of_insurance_id != {$groupMedicalTypeId}
+                            )
+                            ELSE 0
+                        END
+                    ) as allocationCount"),
                     'la.last_allocated as lastAllocatedTs',
                     'la.max_capacity as maxCapacity',
                     'users.status as isAvailable',
@@ -127,7 +156,7 @@ class PqaLeadAllocationController extends Controller
         }
     }
 
-    public function updateAvailability(PqaAllocationAvailabilityRequest $request): \Illuminate\Http\JsonResponse
+    public function updateAvailability(PqaAllocationAvailabilityRequest $request): JsonResponse
     {
         $this->authorizePqaMutation();
 
@@ -144,7 +173,7 @@ class PqaLeadAllocationController extends Controller
         ], 200);
     }
 
-    public function updateCaps(PqaAllocationAvailabilityRequest $request): \Illuminate\Http\JsonResponse
+    public function updateCaps(PqaAllocationAvailabilityRequest $request): JsonResponse
     {
         $this->authorizePqaMutation();
 
@@ -161,7 +190,7 @@ class PqaLeadAllocationController extends Controller
         ], 200);
     }
 
-    public function updateResetCapSwitch(PqaAllocationAvailabilityRequest $request): \Illuminate\Http\JsonResponse
+    public function updateResetCapSwitch(PqaAllocationAvailabilityRequest $request): JsonResponse
     {
         $this->authorizePqaMutation();
 
