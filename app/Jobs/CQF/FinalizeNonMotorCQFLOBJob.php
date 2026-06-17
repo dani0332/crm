@@ -53,7 +53,7 @@ class FinalizeNonMotorCQFLOBJob implements ShouldBeUnique, ShouldQueue
         $totalProcessed = (int) $lead->good + (int) $lead->cannot_upload;
 
         // Only write DB state on the first attempt; on retries the lead is
-        // already COMPLETED/deleted, so we skip straight to the Bird call.
+        // already COMPLETED/deleted, so we skip straight to the Brevo call.
         if ($lead->status !== ProcessStatusCode::COMPLETED && ! $lead->is_deleted) {
             if ($totalProcessed > 0) {
                 $lead->total_records = $totalProcessed;

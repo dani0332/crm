@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Enums\ProcessStatusCode;
 use App\Jobs\CQF\FinalizeNonMotorCQFLOBJob;
 use App\Models\RenewalsUploadLeads;
-use App\Services\BirdService;
+use App\Services\CQF\NonMotor\NonCQFRenewalBrevoMailService;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -14,7 +14,7 @@ beforeEach(function () {
 
 test('returns early without changes when lead is not found', function () {
     $job = new FinalizeNonMotorCQFLOBJob(99999);
-    $job->handle(Mockery::mock(BirdService::class));
+    $job->handle(Mockery::mock(NonCQFRenewalBrevoMailService::class));
 
     expect(RenewalsUploadLeads::count())->toBe(0);
 });
@@ -22,7 +22,7 @@ test('returns early without changes when lead is not found', function () {
 test('marks lead as completed and sets total_records when quotes were processed', function () {
     $lead = RenewalsUploadLeads::factory()->create(['good' => 3, 'cannot_upload' => 0]);
 
-    (new FinalizeNonMotorCQFLOBJob($lead->id))->handle(Mockery::mock(BirdService::class));
+    (new FinalizeNonMotorCQFLOBJob($lead->id))->handle(Mockery::mock(NonCQFRenewalBrevoMailService::class));
 
     $lead->refresh();
     expect($lead->status)->toBe(ProcessStatusCode::COMPLETED)
@@ -32,7 +32,7 @@ test('marks lead as completed and sets total_records when quotes were processed'
 test('marks lead as deleted when no quotes were processed', function () {
     $lead = RenewalsUploadLeads::factory()->create(['good' => 0, 'cannot_upload' => 0]);
 
-    (new FinalizeNonMotorCQFLOBJob($lead->id))->handle(Mockery::mock(BirdService::class));
+    (new FinalizeNonMotorCQFLOBJob($lead->id))->handle(Mockery::mock(NonCQFRenewalBrevoMailService::class));
 
     $lead->refresh();
     expect((int) $lead->is_deleted)->toBe(1);
@@ -42,7 +42,7 @@ test('still marks lead as completed when cannot_upload is greater than zero', fu
     // getBirdWorkflowUrl returns null (no ApplicationStorage row), so sendViaBird exits early
     $lead = RenewalsUploadLeads::factory()->create(['good' => 2, 'cannot_upload' => 1]);
 
-    (new FinalizeNonMotorCQFLOBJob($lead->id))->handle(Mockery::mock(BirdService::class));
+    (new FinalizeNonMotorCQFLOBJob($lead->id))->handle(Mockery::mock(NonCQFRenewalBrevoMailService::class));
 
     $lead->refresh();
     expect($lead->status)->toBe(ProcessStatusCode::COMPLETED)
@@ -64,7 +64,7 @@ test('does not overwrite DB state when lead is already completed on retry', func
     ]);
 
     // Simulate a retry: handle() must not reset total_records or status
-    (new FinalizeNonMotorCQFLOBJob($lead->id))->handle(Mockery::mock(BirdService::class));
+    (new FinalizeNonMotorCQFLOBJob($lead->id))->handle(Mockery::mock(NonCQFRenewalBrevoMailService::class));
 
     $lead->refresh();
     expect($lead->status)->toBe(ProcessStatusCode::COMPLETED)

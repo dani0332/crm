@@ -16,6 +16,7 @@ final class QuoteTypeShortCode extends Enum
     const CAR = 'CAR';
     const HEA = 'HEA';
     const HOM = 'HOM';
+    const OTH_NON_MOTOR = 'OTH_NON_MOTOR';
     const LIF = 'LIF';
     const TRA = 'TRA';
     const YAC = 'YAC';

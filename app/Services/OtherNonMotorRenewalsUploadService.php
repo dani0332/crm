@@ -8,6 +8,7 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Imports\UploadAndUpdateOtherNonMotorImport;
 use App\Jobs\Renewals\ProcessOtherNonMotorRenewal;
@@ -22,7 +23,7 @@ use Illuminate\Support\Facades\DB;
 
 class OtherNonMotorRenewalsUploadService
 {
-    public const QUOTE_TYPE = 'OTH_NON_MOTOR';
+    public const QUOTE_TYPE = QuoteTypeShortCode::OTH_NON_MOTOR;
 
     private array $allowedPersonalQuoteTypeIds;
 

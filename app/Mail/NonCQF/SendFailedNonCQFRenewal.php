@@ -63,7 +63,7 @@ class SendFailedNonCQFRenewal extends Mailable
             $body = [
                 'to' => [['email' => $emailData->renewalManagerEmail]],
                 'cc' => array_map(fn ($email) => ['email' => $email], $emailData->renewalsManagersEmails),
-                'templateId' => $templateId ?? 918,
+                'templateId' => $templateId,
                 'params' => (array) $emailData,
                 'tags' => ['non-motor-cqf-failed-renewal'],
                 'attachment' => $emailData->attachment,

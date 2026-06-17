@@ -505,21 +505,21 @@ class RenewalsUploadController extends Controller
 
     public function downloadValidationFailed($id)
     {
-        $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
+        $renewalUploadLead = RenewalsUploadLeads::findOrFail($id);
 
         $export = null;
 
-        if ($renewaUploadLead->quote_type == OtherNonMotorRenewalsUploadService::QUOTE_TYPE) {
-            $export = new RenewalOtherNonMotorFailedValidationExport($renewaUploadLead);
-        } elseif ($renewaUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
-            $export = new RenewalHealthUpdateFailedValidationExport($renewaUploadLead);
-        } elseif ($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
-            $export = new RenewalHomeFailedValidationExport($renewaUploadLead);
+        if ($renewalUploadLead->quote_type == OtherNonMotorRenewalsUploadService::QUOTE_TYPE) {
+            $export = new RenewalOtherNonMotorFailedValidationExport($renewalUploadLead);
+        } elseif ($renewalUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewalUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+            $export = new RenewalHealthUpdateFailedValidationExport($renewalUploadLead);
+        } elseif ($renewalUploadLead->quote_type == QuoteTypeShortCode::HOM && $renewalUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+            $export = new RenewalHomeFailedValidationExport($renewalUploadLead);
         } else {
-            $export = new RenewalFailedValidationExport($renewaUploadLead);
+            $export = new RenewalFailedValidationExport($renewalUploadLead);
         }
 
-        return Excel::download($export, 'failed_'.$renewaUploadLead->file_name);
+        return Excel::download($export, 'failed_'.$renewalUploadLead->file_name);
     }
 
     public function validationPassed($id)
@@ -569,7 +569,7 @@ class RenewalsUploadController extends Controller
                 break;
 
             case OtherNonMotorRenewalsUploadService::QUOTE_TYPE:
-                $otherNonMotorQuote = PersonalQuote::where('id', $renewalLead->quote_id)->orderBy('created_at', 'DESC')->first();
+                $otherNonMotorQuote = PersonalQuote::find($renewalLead->quote_id);
                 if (! $otherNonMotorQuote) {
                     return abort(404);
                 }

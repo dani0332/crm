@@ -8,9 +8,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class RenewalsUploadRequest extends FormRequest
 {
-    // Defined here rather than imported from OtherNonMotorRenewalsUploadService to avoid coupling a Form Request to a service class.
-    public const OTH_NON_MOTOR = 'OTH_NON_MOTOR';
-
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -34,7 +31,7 @@ class RenewalsUploadRequest extends FormRequest
             'lob' => 'nullable',
         ];
 
-        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && ! in_array(request()->lob, [QuoteTypeShortCode::HEA, QuoteTypeShortCode::HOM, self::OTH_NON_MOTOR])) {
+        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && ! in_array(request()->lob, [QuoteTypeShortCode::HEA, QuoteTypeShortCode::HOM, QuoteTypeShortCode::OTH_NON_MOTOR])) {
             $rules['skip_plans'] = 'required';
             $rules['is_sic'] = 'required';
         }
