@@ -572,6 +572,14 @@ class TravelQuoteService extends BaseService
         $travelQuote->last_name = $request->last_name;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->premium = $request->premium;
+        $fetchLatestRating = (
+            $travelQuote->direction_code != $request->direction_code ||
+            $travelQuote->coverage_code != $request->coverage_code ||
+            $travelQuote->destination_id != $request->destination_id ||
+            $travelQuote->region_cover_for_id != $request->region_cover_for_id ||
+            $travelQuote->start_date != $request->start_date
+        );
+
         if (
             $travelQuote->days_cover_for != $request->days_cover_for ||
             $travelQuote->destination_id != $request->destination_id ||
@@ -628,6 +636,14 @@ class TravelQuoteService extends BaseService
         }
 
         $travelQuote->save();
+
+        if ($fetchLatestRating) {
+            LoggerService::info('Fields changed, Fetching quote plans with latest rating', extra: [
+                'getLatestRating' => true,
+                'uuid' => $travelQuote->uuid,
+            ]);
+            $this->getQuotePlans($id, ['getLatestRating' => true]);
+        }
 
         $customerId = app(CustomerService::class)->getCustomerIdByEmail($travelQuote->email);
         if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj'))))) {
