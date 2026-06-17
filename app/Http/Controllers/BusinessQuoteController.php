@@ -134,7 +134,7 @@ class BusinessQuoteController extends Controller
             ->join('pqa_lead_allocation_config as pqa_cfg', 'pqa_cfg.user_id', '=', 'users.id')
             ->where('pqa_mr.model_type', User::class)
             ->where('pqa_r.name', RolesEnum::PreQualificationAdvisor)
-            ->where('pqa_cfg.quote_type_id', QuoteTypes::CORPLINE->id())
+            ->whereIn('pqa_cfg.quote_type_id', [QuoteTypes::CORPLINE->id(), QuoteTypes::BUSINESS->id()])
             ->orderBy('users.name')
             ->distinct()
             ->get();
