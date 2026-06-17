@@ -139,6 +139,7 @@ class BusinessQuoteService extends BaseService
                 'py.payment_status_id',
                 'bqr.insly_migrated',
                 'bqr.aml_status',
+                'bqr.lead_type',
                 DB::raw('
                     CASE
                         WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
@@ -544,6 +545,10 @@ class BusinessQuoteService extends BaseService
             $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
             $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
             $this->query->whereBetween('py.captured_at', [$startDate, $endDate]);
+        }
+
+        if (! empty($request->lead_type) && is_array($request->lead_type)) {
+            $this->query->whereIn('bqr.lead_type', $request->lead_type);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');
