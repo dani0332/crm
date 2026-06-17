@@ -18,6 +18,7 @@ use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
+use App\Traits\SendsEpFailureEmail;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use stdClass;
@@ -26,6 +27,7 @@ class SageApiEmbeddedProductService
 {
     use GenericQueriesAllLobs;
     use SageLoggable;
+    use SendsEpFailureEmail;
     use TeamHierarchyTrait;
 
     const CLASSNAME = 'sageApiEmbeddedProductService';
@@ -2240,6 +2242,9 @@ class SageApiEmbeddedProductService
         ]);
         if ($embeddedTransaction->sage_status_id != $status) {
             $embeddedTransaction->update(['sage_status_id' => $status]);
+            if ($status === SageEmbeddedProductEnum::BOOKING_FAILED->id()) {
+                $this->sendEpFailureEmail((int) $embeddedTransaction->quote_request_id, (int) $embeddedTransaction->quote_type_id, (int) $embeddedTransaction->id, $logFor, true);
+            }
             LoggerService::info($logFor.' Embedded Product Sage Booking Status Updated to : '.$status);
         }
     }
