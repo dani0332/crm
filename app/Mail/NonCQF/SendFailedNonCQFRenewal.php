@@ -8,15 +8,17 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RolesEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Exports\RenewalFailedValidationExport;
 use App\Models\ApplicationStorage;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Models\User;
-use App\Services\BirdService;
+use App\Services\CQF\NonMotor\NonCQFRenewalBrevoMailService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SendFailedNonCQFRenewal extends Mailable
 {
@@ -35,15 +37,12 @@ class SendFailedNonCQFRenewal extends Mailable
             ]);
     }
 
-    /**
-     * Send failed non-motor CQF renewal notification via Bird (same pattern as BorRequestMail).
-     */
-    public function sendViaBird(BirdService $birdService): bool
+    public function sendViaBrevo(NonCQFRenewalBrevoMailService $emailService): bool
     {
-        $workflowUrl = $this->getBirdWorkflowUrl();
+        $templateId = (int) ($this->getBrevoTemplateId() ?? 918);
 
-        if (! $workflowUrl) {
-            LoggerService::error(self::class.' - Bird workflow URL not configured', [
+        if (! $templateId) {
+            LoggerService::error(self::class.' - Brevo template ID not configured', [
                 'renewals_upload_lead_id' => $this->renewalsUploadLeadsId,
             ]);
 
@@ -51,19 +50,38 @@ class SendFailedNonCQFRenewal extends Mailable
         }
 
         try {
-            $birdData = $this->buildBirdEmailData();
-            $response = $birdService->triggerWebHookRequest($workflowUrl, $birdData);
+            $emailData = $this->buildEmailData();
 
-            LoggerService::info(self::class.' - Non-motor CQF renewals errors sent via Bird', [
+            if (empty($emailData->renewalsManagersEmails)) {
+                LoggerService::error(self::class.' - No RenewalsManager recipients found', [
+                    'renewals_upload_lead_id' => $this->renewalsUploadLeadsId,
+                ]);
+
+                return false;
+            }
+
+            $body = [
+                'to' => [['email' => $emailData->renewalManagerEmail]],
+                'cc' => array_map(fn ($email) => ['email' => $email], $emailData->renewalsManagersEmails),
+                'templateId' => $templateId ?? 918,
+                'params' => (array) $emailData,
+                'tags' => ['non-motor-cqf-failed-renewal'],
+                'attachment' => $emailData->attachment,
+            ];
+
+            $result = $emailService->send($body);
+
+            LoggerService::info(self::class.' - Non-motor CQF renewals errors sent via Brevo', [
                 'renewals_upload_lead_id' => $this->renewalsUploadLeadsId,
-                'lob' => $birdData->lob ?? null,
-                'failed_leads_count' => $birdData->failedLeadsCount ?? 0,
-                'response_status' => $response->status_code,
+                'lob' => $emailData->lob ?? null,
+                'failed_leads_count' => $emailData->failedLeadsCount ?? 0,
+                'sent' => $result['sent'],
+                'message_id' => $result['object']->messageId ?? null,
             ]);
 
-            return $response->status_code >= 200 && $response->status_code < 300;
+            return $result['sent'] === 1;
         } catch (\Exception $e) {
-            LoggerService::error(self::class.' - Non-motor CQF renewals errors not sent via Bird', [
+            LoggerService::error(self::class.' - Non-motor CQF renewals errors not sent via Brevo', [
                 'renewals_upload_lead_id' => $this->renewalsUploadLeadsId,
                 'error' => $e->getMessage(),
             ]);
@@ -72,12 +90,25 @@ class SendFailedNonCQFRenewal extends Mailable
         }
     }
 
-    /**
-     * Bird workflow URL for non-motor CQF failed renewals (reuses customer notify unavailable advisor workflow).
-     */
-    protected function getBirdWorkflowUrl(): ?string
+    protected function buildAttachment(?RenewalsUploadLeads $lead, string $safeLobForFile, string $date): array
     {
-        $config = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW)->first();
+        if (! $lead) {
+            return [];
+        }
+
+        $content = Excel::raw(new RenewalFailedValidationExport($lead), \Maatwebsite\Excel\Excel::XLSX);
+
+        return [
+            [
+                'content' => base64_encode($content),
+                'name' => "cqf-renewals-failed-leads-{$safeLobForFile}-{$date}.xlsx",
+            ],
+        ];
+    }
+
+    protected function getBrevoTemplateId(): ?string
+    {
+        $config = ApplicationStorage::where('key_name', ApplicationStorageEnums::NON_MOTOR_CQF_FAILED_RENEWAL_BREVO_TEMPLATE)->first();
 
         return $config?->value;
     }
@@ -87,7 +118,7 @@ class SendFailedNonCQFRenewal extends Mailable
      *
      * @return object{failedQuotes: string, quoteUID: string, renewalsManagersEmails: array, validationErrors: string, fileName: string, lob: string, ...}
      */
-    public function buildBirdEmailData(): object
+    public function buildEmailData(): object
     {
         $lead = RenewalsUploadLeads::find($this->renewalsUploadLeadsId);
         $lob = $lead?->quote_type ?: 'Non-motor';
@@ -114,13 +145,12 @@ class SendFailedNonCQFRenewal extends Mailable
             'quoteUID' => '',
             'renewalsManagersEmails' => $renewalsManagersEmails,
             'validationErrors' => "CQF renewal failed for {$lob} leads.",
-            'fileName' => "cqf-renewals-failed-leads-{$safeLobForFile}-{$date}.xlsx",
             'lob' => $lob,
             'renewalManagerEmail' => $renewalsManagersEmails[0] ?? '',
             'workflowType' => WorkflowTypeEnum::CQF_NON_MOTOR_RENEWALS,
             'dateOfAttempt' => $date,
             'failedLeadsCount' => count($failedPolicyNumbers),
-            'fileDownloadUrl' => route('downloadValidationFailedFile', ['id' => $this->renewalsUploadLeadsId]),
+            'attachment' => $this->buildAttachment($lead, $safeLobForFile, $date),
         ];
     }
 }

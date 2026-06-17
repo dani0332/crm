@@ -6,6 +6,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\ProcessStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Imports\UploadAndUpdateOtherNonMotorImport;
@@ -192,6 +193,7 @@ class OtherNonMotorRenewalsUploadService
         $process->update([
             'quote_type' => self::QUOTE_TYPE,
             'quote_id' => $quote->id,
+            'policy_number' => $quote->previous_quote_policy_number,
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
             'status' => RenewalProcessStatuses::PROCESSED,
             'validation_errors' => [],
@@ -223,6 +225,15 @@ class OtherNonMotorRenewalsUploadService
     {
         $quote->advisor_id = $advisorId;
         $quote->assignment_type = AssignmentTypeEnum::SYSTEM_REASSIGNED;
+        $quote->quote_status_id = QuoteStatusEnum::Allocated;
         $quote->save();
+
+        $businessQuote = $quote->businessQuote;
+        if ($businessQuote) {
+            $businessQuote->advisor_id = $advisorId;
+            $businessQuote->assignment_type = AssignmentTypeEnum::SYSTEM_REASSIGNED;
+            $businessQuote->quote_status_id = QuoteStatusEnum::Allocated;
+            $businessQuote->save();
+        }
     }
 }

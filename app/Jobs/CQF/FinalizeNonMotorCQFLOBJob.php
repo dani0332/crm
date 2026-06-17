@@ -7,7 +7,7 @@ namespace App\Jobs\CQF;
 use App\Enums\ProcessStatusCode;
 use App\Mail\NonCQF\SendFailedNonCQFRenewal;
 use App\Models\RenewalsUploadLeads;
-use App\Services\BirdService;
+use App\Services\CQF\NonMotor\NonCQFRenewalBrevoMailService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -41,7 +41,7 @@ class FinalizeNonMotorCQFLOBJob implements ShouldBeUnique, ShouldQueue
         return [10, 30, 60];
     }
 
-    public function handle(BirdService $birdService): void
+    public function handle(NonCQFRenewalBrevoMailService $brevoMailService): void
     {
         $lead = RenewalsUploadLeads::find($this->renewalsUploadLeadsId);
         if ($lead === null) {
@@ -67,7 +67,7 @@ class FinalizeNonMotorCQFLOBJob implements ShouldBeUnique, ShouldQueue
 
         if ($lead->cannot_upload > 0 && $lead->status === ProcessStatusCode::COMPLETED) {
             $mail = new SendFailedNonCQFRenewal($this->renewalsUploadLeadsId);
-            $mail->sendViaBird($birdService);
+            $mail->sendViaBrevo($brevoMailService);
         }
     }
 

@@ -30,6 +30,7 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
     private int $validCount = 0;
     private int $failedCount = 0;
     private array $seenRefIds = [];
+    private array $resolvedPolicyNumbers = [];
 
     public function __construct(
         private OtherNonMotorRenewalsUploadService $otherNonMotorRenewalsUploadService,
@@ -54,11 +55,12 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
         $this->validCount++;
 
         $quoteData = $this->mapQuoteData($row);
+        $refId = strtoupper(trim((string) ($quoteData['ref_id'] ?? '')));
 
         return new RenewalQuoteProcess([
             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
             'quote_type' => OtherNonMotorRenewalsUploadService::QUOTE_TYPE,
-            'policy_number' => null,
+            'policy_number' => $this->resolvedPolicyNumbers[$refId] ?? null,
             'data' => $quoteData,
             'status' => RenewalProcessStatuses::NEW,
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
@@ -127,6 +129,8 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
                             return;
                         }
 
+                        $this->resolvedPolicyNumbers[$refId] = $quote->previous_quote_policy_number;
+
                         if ($quote->source !== LeadSourceEnum::RENEWAL_UPLOAD) {
                             $fail('Lead source must be renewal_upload : '.$refId);
                         }
@@ -168,10 +172,11 @@ class UploadAndUpdateOtherNonMotorImport implements SkipsOnFailure, ToModel, Wit
                 foreach ($this->failures() as $failure) {
                     if (! isset($failed[$failure->row()])) {
                         $quoteData = $this->mapData($failure->values());
+                        $refId = strtoupper(trim((string) ($quoteData['ref_id'] ?? '')));
                         $failed[$failure->row()] = [
                             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
                             'quote_type' => OtherNonMotorRenewalsUploadService::QUOTE_TYPE,
-                            'policy_number' => null,
+                            'policy_number' => $this->resolvedPolicyNumbers[$refId] ?? null,
                             'data' => $quoteData,
                             'status' => RenewalProcessStatuses::VALIDATION_FAILED,
                             'type' => RenewalsUploadType::UPDATE_LEADS,

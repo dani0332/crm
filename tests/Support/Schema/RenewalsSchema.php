@@ -301,6 +301,7 @@ class RenewalsSchema
                 'operator_experience' => fn (Blueprint $t) => $t->integer('operator_experience')->nullable(),
             ]),
             'business_quote_request' => array_merge($lobRenewalColumns, [
+                'quote_status_date' => fn (Blueprint $t) => $t->dateTime('quote_status_date')->nullable(),
                 'transaction_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('transaction_type_id')->nullable(),
                 'business_cover_type_id' => fn (Blueprint $t) => $t->unsignedBigInteger('business_cover_type_id')->nullable(),
                 'communication_mode_id' => fn (Blueprint $t) => $t->unsignedBigInteger('communication_mode_id')->nullable(),
@@ -328,6 +329,7 @@ class RenewalsSchema
                 'company_address' => fn (Blueprint $t) => $t->string('company_address')->nullable(),
                 'previous_quote_id' => fn (Blueprint $t) => $t->unsignedBigInteger('previous_quote_id')->nullable(),
                 'quote_id' => fn (Blueprint $t) => $t->unsignedBigInteger('quote_id')->nullable(),
+                'previous_quote_policy_number' => fn (Blueprint $t) => $t->string('previous_quote_policy_number')->nullable(),
             ],
             'car_quote_request_detail' => [
                 'chassis_number' => fn (Blueprint $t) => $t->string('chassis_number')->nullable(),

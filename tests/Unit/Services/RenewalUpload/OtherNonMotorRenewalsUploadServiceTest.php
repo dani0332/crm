@@ -6,9 +6,11 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ProcessStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Models\BusinessQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
@@ -68,7 +70,7 @@ function makePendingProcess(RenewalsUploadLeads $lead, array $data): RenewalQuot
 
 test('assigns advisor for eligible other non-motor renewal lead', function () {
     $advisor = User::factory()->create(['email' => 'advisor@example.com']);
-    $quote = makeOtherNonMotorQuote();
+    $quote = makeOtherNonMotorQuote(['previous_quote_policy_number' => 'POL-2024-001']);
     $lead = makeUploadLead();
     $process = makePendingProcess($lead, [
         'ref_id' => $quote->code,
@@ -85,10 +87,12 @@ test('assigns advisor for eligible other non-motor renewal lead', function () {
     expect($process->status)->toBe(RenewalProcessStatuses::PROCESSED)
         ->and($process->fetch_plans_status)->toBe(FetchPlansStatuses::PENDING)
         ->and($process->quote_id)->toBe($quote->id)
+        ->and($process->policy_number)->toBe('POL-2024-001')
         ->and($lead->good)->toBe(1)
         ->and($lead->cannot_upload)->toBe(0)
         ->and($quote->advisor_id)->toBe($advisor->id)
-        ->and((int) $quote->assignment_type)->toBe(AssignmentTypeEnum::SYSTEM_REASSIGNED);
+        ->and((int) $quote->assignment_type)->toBe(AssignmentTypeEnum::SYSTEM_REASSIGNED)
+        ->and($quote->quote_status_id)->toBe(QuoteStatusEnum::Allocated);
 });
 
 test('skips lead when advisor record is missing at processing time', function () {
@@ -136,9 +140,13 @@ test('skips lead when ref-id resolves to a disallowed quote type', function () {
         ->and($quote->advisor_id)->toBeNull();
 });
 
-test('assigns advisor for business renewal lead', function () {
+test('assigns advisor for business renewal lead and syncs to business_quote_request', function () {
     $advisor = User::factory()->create(['email' => 'advisor@example.com']);
-    $quote = makeOtherNonMotorQuote(['quote_type_id' => QuoteTypes::BUSINESS->id()]);
+    $businessQuote = BusinessQuote::factory()->create(['advisor_id' => null]);
+    $quote = makeOtherNonMotorQuote([
+        'quote_type_id' => QuoteTypes::BUSINESS->id(),
+        'quote_id' => $businessQuote->id,
+    ]);
     $lead = makeUploadLead();
     $process = makePendingProcess($lead, [
         'ref_id' => $quote->code,
@@ -151,10 +159,15 @@ test('assigns advisor for business renewal lead', function () {
     $process->refresh();
     $lead->refresh();
     $quote->refresh();
+    $businessQuote->refresh();
 
     expect($process->status)->toBe(RenewalProcessStatuses::PROCESSED)
         ->and($lead->good)->toBe(1)
-        ->and($quote->advisor_id)->toBe($advisor->id);
+        ->and($quote->advisor_id)->toBe($advisor->id)
+        ->and($quote->quote_status_id)->toBe(QuoteStatusEnum::Allocated)
+        ->and($businessQuote->advisor_id)->toBe($advisor->id)
+        ->and((int) $businessQuote->assignment_type)->toBe(AssignmentTypeEnum::SYSTEM_REASSIGNED)
+        ->and($businessQuote->quote_status_id)->toBe(QuoteStatusEnum::Allocated);
 });
 
 test('skips lead when ref-id resolves to a group medical quote type', function () {

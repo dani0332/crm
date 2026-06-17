@@ -72,7 +72,7 @@ class RenewalQuotesExport implements FromCollection, ShouldAutoSize, WithHeading
             $quote->code,
             $quote->customer_id,
             $quote->first_name.' '.$quote->last_name,
-            $quote->currentlyInsuredWith != null ? ($quote->currentlyInsuredWith->text ? $quote->currentlyInsuredWith->text : $quote->currentlyInsuredWith) : ($quote->currently_insured_with != null ? $quote->currently_insured_with : ''),
+            $quote->currentlyInsuredWith?->text ?? $quote->currently_insured_with ?? $quote->personalQuote?->currentlyInsuredWith?->text ?? '',
             $this->exportType,
             $quote->previous_quote_policy_number,
             $quote->previous_policy_start_date ? Carbon::parse($quote->previous_policy_start_date)->format(config('constants.DATE_FORMAT_ONLY')) : null,
