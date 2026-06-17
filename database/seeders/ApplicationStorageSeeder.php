@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
@@ -178,6 +179,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedHealthTeamRoutingEnabled();
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
+        $this->seedPartnerAutomation();
         $this->seedDisableClaimsModule();
         $this->seedMotorRevivalWorkflow();
         $this->seedHighRiskScoreBirdNotificationWorkflowUrl();
@@ -1873,6 +1875,44 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         // endregion
+    }
+
+    private function seedPartnerAutomation()
+    {
+        $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/092b76fa-f599-43a3-8927-edc7b7b4a9cd/invoke-sync';
+        if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
+            $birdWorkflowUrl = '';
+        }
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL],
+            [
+                'value' => $birdWorkflowUrl,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AXA_POLICY_MANDATORY_DOCUMENTS],
+            [
+                'value' => json_encode([DocumentTypeCode::TI, DocumentTypeCode::CTIRBB, DocumentTypeCode::CPC, DocumentTypeCode::CPS]),
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CARS24_SEND_POLICY_CC_EMAILS],
+            [
+                'value' => 'fni.uae@cars24.com, abhishek.pandey@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => true,
+            ],
+        );
     }
 
     private function seedHealthTeamRoutingEnabled()

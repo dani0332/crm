@@ -59,6 +59,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
             'IMCRM SUB-SOURCE',
+            'LEAD TYPE',
         ];
     }
 
@@ -94,6 +95,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             optional($quote->subSource)->text,
+            $quote->lead_type ?? '',
         ];
     }
 
