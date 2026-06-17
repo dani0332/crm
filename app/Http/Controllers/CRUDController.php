@@ -2666,6 +2666,6 @@ class CRUDController extends Controller
             return Redirect::back()->with('success', $successMessage);
         }
 
-        return Redirect::back()->with('error', 'Could not assign Pre‑Qualification Advisor. Ensure all selected rows are Group Medical leads and the advisor is enabled for PQA allocation.');
+        return Redirect::back()->with('error', 'Could not assign Pre‑Qualification Advisor. Ensure all selected rows are Group Medical leads and the advisor is enabled for PQA allocation and Eligibility criteria meets.');
     }
 }

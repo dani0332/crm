@@ -903,14 +903,12 @@ class BusinessQuoteService extends BaseService
      */
     public function assignPreQualificationAdvisor(array $leadIds, int $preQualificationAdvisorUserId, string $modelType): ?string
     {
-        if (strtolower($modelType) !== strtolower(quoteTypeCode::Business)) {
-            return null;
-        }
 
         $pqaService = app(PqaLeadAllocationService::class);
-        $quoteTypeId = (int) QuoteTypes::CORPLINE->id();
+        $quoteTypeId = (int) QuoteTypes::BUSINESS->id();
 
         if (! $pqaService->userIsEligiblePreQualificationAdvisor($preQualificationAdvisorUserId, $quoteTypeId)) {
+
             LoggerService::warning(self::class.'::assignPreQualificationAdvisor: ineligible PQA user '.$preQualificationAdvisorUserId);
 
             return null;
