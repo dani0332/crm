@@ -29,9 +29,10 @@ class AMLLookupsService
 
         // Check if additional fields are enabled
         $isAddionalFieldsEnabled = $this->amlService->isAdditionalVehicleAndDriverDetailsEnabled(
-            $quoteType?->code,
-            $insuranceProvider?->code,
-            $quoteRequest?->registration_type
+            quoteTypeCode: $quoteType?->code,
+            insuranceProviderId: $insuranceProvider?->code,
+            vehicleRegistrationType: $quoteRequest?->registration_type,
+            source: $quoteRequest?->source,
         );
 
         // Merge additional lookups if enabled

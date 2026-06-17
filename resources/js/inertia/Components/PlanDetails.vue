@@ -16,6 +16,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isSaveDisabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
@@ -325,6 +329,12 @@ watch(
             This lead is now locked as the policy has been booked. If changes
             are needed, go to 'Send Update', select 'Add Update', and choose
             'Correction of Policy'
+          </template>
+        </x-tooltip>
+        <x-tooltip v-else-if="props.isSaveDisabled" placement="bottom">
+          <SavePlanDetailsButtonReuseTemplate :isDisabled="true" />
+          <template #tooltip>
+            Please select Renewal or Non-Renewal before adding a plan.
           </template>
         </x-tooltip>
         <SavePlanDetailsButtonReuseTemplate v-else />
