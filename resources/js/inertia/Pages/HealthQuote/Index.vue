@@ -285,7 +285,14 @@ const filters = reactive({
   authorize_date: '',
   captured_date: '',
   payment_status_id: [],
+  ea_model: null,
+  lead_generator: '',
 });
+
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborate' },
+];
 
 const canExport = ref(false);
 watch(
@@ -1356,6 +1363,21 @@ const paymentStatusOptions = computed(() => {
           :options="emirates"
           class="w-full"
           :single="false"
+        />
+        <x-select
+          v-model="filters.ea_model"
+          label="EA Model"
+          placeholder="All Models"
+          :options="eaModelOptions"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.lead_generator"
+          type="search"
+          name="lead_generator"
+          label="Lead Generator"
+          class="w-full"
+          placeholder="Search by lead generator name"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

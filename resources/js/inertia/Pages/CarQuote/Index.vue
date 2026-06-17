@@ -41,6 +41,11 @@ const loader = reactive({
   export: false,
 });
 
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborate' },
+];
+
 let availableFilters = {
   code: '',
   first_name: '',
@@ -49,6 +54,8 @@ let availableFilters = {
   previous_quote_policy_number: '',
   renewal_batch: '',
   quote_batch_id: '',
+  ea_model: '',
+  lead_generator: '',
   page: 1,
 };
 
@@ -313,6 +320,23 @@ const nbFollowupTemplates = [
             />
           </template>
         </x-select>
+
+        <x-select
+          label="EA Model"
+          v-model="filters.ea_model"
+          placeholder="All Models"
+          :options="eaModelOptions"
+          class="w-full"
+        />
+
+        <x-input
+          v-model="filters.lead_generator"
+          type="search"
+          name="lead_generator"
+          label="Lead Generator"
+          class="w-full"
+          placeholder="Search by lead generator name"
+        />
       </div>
       <div class="flex justify-end gap-3 mb-5">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

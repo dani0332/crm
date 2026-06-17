@@ -85,6 +85,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'policy_holder_category_code',
             'visa_category_id',
             'cover_for_id',
+            'ea_model',
+            'lead_generator_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -120,6 +122,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'genderLookup:id,code,text',
             'latestInsured',
             'activeMembers',
+            'leadGenerator:id,name',
         ]);
     }
 
@@ -297,6 +300,16 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
         $uaePassApiStatus = $this->getFilterValue('uae_pass_api_status', $requestParams);
         if ($uaePassApiStatus && $uaePassApiStatus != GenericRequestEnum::ALL && HealthQuoteUaePassApiStatus::isStoredValue($uaePassApiStatus)) {
             $query->where('uae_pass_api_status', $uaePassApiStatus);
+        }
+
+        $eaModel = $this->getFilterValue('ea_model', $requestParams);
+        if ($eaModel) {
+            $query->where('ea_model', $eaModel);
+        }
+
+        $leadGenerator = $this->getFilterValue('lead_generator', $requestParams);
+        if ($leadGenerator) {
+            $query->whereHas('leadGenerator', fn ($uq) => $uq->where('name', 'like', '%'.$leadGenerator.'%'));
         }
     }
 
