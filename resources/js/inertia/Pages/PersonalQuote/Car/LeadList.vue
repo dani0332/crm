@@ -116,6 +116,8 @@ const tableHeader = [
   { text: 'Renewal Batch', value: 'renewal_batch' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text' },
+  { text: 'EA MODEL', value: 'ea_model' },
+  { text: 'LEAD GENERATOR', value: 'lead_generator' },
 ];
 
 const ecommerceOptions = [
@@ -1623,6 +1625,14 @@ const onConfirmPUAExport = () => {
         <p v-if="item.payment_status?.text === 'AUTHORISED'">
           {{ daysAgoFromAuthorizedDate(item.payment?.authorized_at_formatted) }}
         </p>
+      </template>
+
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+
+      <template #item-lead_generator="item">
+        {{ item.lead_generator?.name }}
       </template>
     </DataTable>
 

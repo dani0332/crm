@@ -139,6 +139,8 @@ const tableHeader = [
     value: 'advisor_assigned_date',
   },
   { text: 'ADVISOR', value: 'advisor' },
+  { text: 'EA MODEL', value: 'ea_model' },
+  { text: 'LEAD GENERATOR', value: 'lead_generator' },
 ];
 
 const can = permission => useCan(permission);
@@ -450,6 +452,14 @@ const nbFollowupTemplates = [
 
       <template #item-advisor_assigned_date="item">
         {{ item?.car_quote_request_detail?.advisor_assigned_date }}
+      </template>
+
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+
+      <template #item-lead_generator="item">
+        {{ item.lead_generator?.name }}
       </template>
     </DataTable>
 

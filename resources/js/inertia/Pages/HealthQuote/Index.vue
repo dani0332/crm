@@ -228,6 +228,8 @@ const tableHeader = ref([
     value: 'uae_pass_api_status_text',
     is_active: true,
   },
+  { text: 'EA MODEL', value: 'ea_model', is_active: true },
+  { text: 'LEAD GENERATOR', value: 'lead_generator', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -1634,6 +1636,14 @@ const paymentStatusOptions = computed(() => {
           >
           <span v-else>{{ item.salary_band?.text ?? 'N/A' }}</span>
         </p>
+      </template>
+
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+
+      <template #item-lead_generator="item">
+        {{ item.lead_generator?.name }}
       </template>
     </DataTable>
 
