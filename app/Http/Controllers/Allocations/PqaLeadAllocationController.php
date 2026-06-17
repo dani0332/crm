@@ -9,6 +9,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PqaAllocationAvailabilityRequest;
 use App\Models\User;
@@ -89,6 +90,10 @@ class PqaLeadAllocationController extends Controller
             $healthNewLeadStatus = QuoteStatusEnum::NewLead;
             $corplineQualPendingStatus = QuoteStatusEnum::QualificationPending;
             $groupMedicalTypeId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+            $businessQuoteTypeId = (int) QuoteTypes::BUSINESS->id();
+            $productType = TeamTypeEnum::PRODUCT;
+            $corplineName = QuoteTypes::CORPLINE->value;
+            $groupMedicalName = QuoteTypes::GROUP_MEDICAL->value;
 
             $rows = User::activeUser()
                 ->select(
@@ -119,12 +124,26 @@ class PqaLeadAllocationController extends Controller
                     'la.manual_assignment_count as manualAllocationCount',
                     'la.auto_assignment_count as autoAllocationCount',
                     'la.reset_cap',
-                    'qt.code as quoteTypeCode',
+                    DB::raw("COALESCE(
+                        CASE
+                            WHEN la.quote_type_id = {$businessQuoteTypeId} THEN (
+                                SELECT t.name
+                                FROM user_products up2
+                                JOIN teams t ON t.id = up2.product_id
+                                    AND t.type = {$productType}
+                                    AND t.name IN ('{$corplineName}', '{$groupMedicalName}')
+                                WHERE up2.user_id = users.id
+                                LIMIT 1
+                            )
+                            ELSE qt.code
+                        END,
+                        la.quote_type
+                    ) as quoteTypeCode"),
                 )
                 ->join('pqa_lead_allocation_config as la', 'la.user_id', '=', 'users.id')
                 ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
                 ->join('roles as r', 'r.id', '=', 'mhr.role_id')
-                ->join('quote_type as qt', 'qt.id', '=', 'la.quote_type_id')
+                ->leftJoin('quote_type as qt', 'qt.id', '=', 'la.quote_type_id')
                 ->where('mhr.model_type', User::class)
                 ->where('r.name', RolesEnum::PreQualificationAdvisor)
                 ->groupBy(
