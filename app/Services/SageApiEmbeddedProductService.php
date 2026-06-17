@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEmbeddedProductEnum;
 use App\Enums\SageEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\EmbeddedTransaction;
+use App\Models\EpLog;
 use App\Models\InsuranceProvider;
 use App\Models\InsurerRequestResponse;
 use App\Models\Payment;
@@ -114,6 +116,322 @@ class SageApiEmbeddedProductService
         }
     }
 
+    /**
+     * Queue Sage reversal for an embedded transaction after IMCRM confirms refund (MEDEX / RDX / ECB).
+     *
+     * @param  array{etId: int, quoteId: int, quoteTypeId: int}  $payload
+     * @return array{
+     *     status: bool,
+     *     message: string,
+     *     cancellation_callback_error_code?: 'not_found'|'payment_not_refunded',
+     *     reversal_skipped?: bool,
+     *     embedded_transaction_id?: int
+     * }
+     */
+    public function scheduleReversalOfEmbeddedProduct(array $payload): array
+    {
+        $quoteTypeEnum = QuoteTypes::getName((int) $payload['quoteTypeId']);
+        if ($quoteTypeEnum === null) {
+            return ['status' => false, 'message' => 'Invalid quoteTypeId'];
+        }
+
+        return $this->runScheduleReversalOfEmbeddedProduct($payload, $quoteTypeEnum);
+    }
+
+    /**
+     * @param  array{etId: int, quoteId: int, quoteTypeId: int}  $payload
+     * @return array{
+     *     status: bool,
+     *     message: string,
+     *     cancellation_callback_error_code?: 'not_found'|'payment_not_refunded',
+     *     reversal_skipped?: bool,
+     *     embedded_transaction_id?: int
+     * }
+     */
+    private function runScheduleReversalOfEmbeddedProduct(array $payload, QuoteTypes $quoteTypeEnum): array
+    {
+        $etId = (int) $payload['etId'];
+        $quoteId = (int) $payload['quoteId'];
+        $quoteTypeId = (int) $payload['quoteTypeId'];
+        $modelType = $quoteTypeEnum->value;
+        $quote = $this->getQuoteObjectBy($modelType, $quoteId);
+
+        if (! $quote) {
+            return ['status' => false, 'message' => 'Quote not found'];
+        }
+
+        $epTransaction = EmbeddedTransaction::query()
+            ->whereKey($etId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $quoteId)
+            ->whereHas('product.embeddedProduct', function ($query): void {
+                $query->whereIn('short_code', EmbeddedProductEnum::getSageReversableEpShortCodes());
+            })
+            ->with(['product.embeddedProduct', 'payments'])
+            ->first();
+
+        $result = $this->reversalScheduleResultWhenTransactionInvalid($epTransaction, $quote);
+        if ($result === null && $epTransaction instanceof EmbeddedTransaction) {
+            $result = $this->reversalScheduleResultWhenPaymentNotRefunded($epTransaction)
+                ?? $this->reversalScheduleResultWhenSageNotBookedSoSkip($epTransaction)
+                ?? $this->reversalScheduleResultWhenInsurerNotAllowed($epTransaction);
+        }
+
+        if ($result !== null) {
+            return $result;
+        }
+
+        /** @var EmbeddedTransaction $epTransaction */
+        $payment = $this->resolveMainLeadPaymentForSageReversalQuote($quote);
+
+        return (! $payment || $payment->paymentSplits->isEmpty())
+            ? ['status' => false, 'message' => 'Main lead payment or splits not found for Sage payload']
+            : $this->finalizeScheduleReversalOfEmbeddedProduct(
+                $modelType,
+                $quote,
+                $epTransaction,
+                $quoteId,
+                $quoteTypeId,
+                $payment,
+            );
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function reversalScheduleResultWhenTransactionInvalid(?EmbeddedTransaction $epTransaction, object $quote): ?array
+    {
+        if (! $epTransaction || $epTransaction->quote_request_type !== $quote->getMorphClass()) {
+            return [
+                'status' => false,
+                'message' => 'Embedded transaction not found or EP type is not eligible for Sage reversal or quote does not belong to the embedded transaction',
+                'cancellation_callback_error_code' => 'not_found',
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function reversalScheduleResultWhenPaymentNotRefunded(EmbeddedTransaction $epTransaction): ?array
+    {
+        if ((int) $epTransaction->payment_status_id !== PaymentStatusEnum::REFUNDED) {
+            return [
+                'status' => false,
+                'message' => 'Embedded transaction payment is not in refunded status',
+                'cancellation_callback_error_code' => 'payment_not_refunded',
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Skip scheduling only when Sage booking cannot complete or already failed/cancelled.
+     * {@see SageEmbeddedProductEnum::BOOKING_QUEUED} must not skip — a pending book job may still complete.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function reversalScheduleResultWhenSageNotBookedSoSkip(EmbeddedTransaction $epTransaction): ?array
+    {
+        $sageStatusId = (int) $epTransaction->sage_status_id;
+
+        if (
+            $sageStatusId === SageEmbeddedProductEnum::BOOKING_COMPLETED->id()
+            || $sageStatusId === SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id()
+            || $sageStatusId === SageEmbeddedProductEnum::BOOKING_QUEUED->id()
+        ) {
+            return null;
+        }
+
+        EpLog::create([
+            'embedded_transaction_id' => $epTransaction->id,
+            'event' => 'sage_reversal_callback_skipped',
+            'values' => json_encode([
+                'reason' => 'Sage booking not in Booked state',
+                'sage_status_id' => $epTransaction->sage_status_id,
+            ]),
+            'loggable_id' => $epTransaction->id,
+            'loggable_type' => $epTransaction->getMorphClass(),
+        ]);
+
+        return [
+            'status' => true,
+            'message' => 'No Sage reversal required (EP is not booked on Sage)',
+            'reversal_skipped' => true,
+        ];
+    }
+
+    /**
+     * Whether the embedded transaction has a completed Sage AR premium booking log.
+     */
+    private function embeddedProductHasSageArPremiumBookingLog(EmbeddedTransaction $embeddedProductTransaction): bool
+    {
+        $embeddedProductTransaction->loadMissing('sageApiLogs');
+
+        return $embeddedProductTransaction->sageApiLogs
+            ->contains('sage_request_type', SageEnum::EP_SRT_CREATE_AR_PREM_COMM_INV);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function reversalScheduleResultWhenInsurerNotAllowed(EmbeddedTransaction $epTransaction): ?array
+    {
+        $insuranceProviderId = (int) ($epTransaction->product?->embeddedProduct?->insurance_provider_id ?? 0);
+        $insuranceProvider = InsuranceProvider::find($insuranceProviderId);
+        $isInAllowedInsuranceProvider = in_array($insuranceProvider?->code, $this->sageApiService->allowedProviderForSageEPBooking(), true);
+        if ($isInAllowedInsuranceProvider) {
+            return null;
+        }
+
+        return ['status' => false, 'message' => 'Sage reversal cannot be scheduled because current insurer is '.$insuranceProvider?->text];
+    }
+
+    private function resolveMainLeadPaymentForSageReversalQuote(object $quote): ?Payment
+    {
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->with('paymentSplits')->first();
+        }
+
+        return $payment;
+    }
+
+    /**
+     * Builds the first argument for {@see bookReversalOfEmbeddedProductOnSage} / {@see bookReversalOfEmbeddedProductOnSageAfterImcrmRefund} plus the SageProcess request payload metadata.
+     *
+     * @return array{
+     *     sageRequestDataArray: array{0: object, 1: object, 2: object, 3: EmbeddedTransaction},
+     *     requestPayload: array{modelType: string, quoteId: int, quoteTypeId: int, epTransactionId: int, insuranceProviderId: int}
+     * }
+     */
+    private function buildSageRequestDataArrayForBookReversalOfEmbeddedProductOnSage(
+        string $modelType,
+        object $quote,
+        EmbeddedTransaction $epTransaction,
+        object $reversalSageLogOwner,
+        int $quoteId,
+        int $quoteTypeId,
+        Payment $payment,
+    ): array {
+        $insuranceProviderId = (int) ($epTransaction->product?->embeddedProduct?->insurance_provider_id ?? 0);
+        $paymentSplits = $payment->paymentSplits;
+        $user = auth()->user();
+        $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($modelType, $payment, $quote, $paymentSplits);
+        $sageRequest->userId = $user?->id;
+        $sageRequest->insurerID = $insuranceProviderId;
+        $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_REVERSE_EMBEDDED_PRODUCT_REQUEST;
+        $sageRequest->epTransactionId = $epTransaction->id;
+        $sageRequest->epInsuranceProviderId = $insuranceProviderId;
+        $sageRequest->quoteType = $modelType;
+        $sageRequest->quoteId = $quoteId;
+        $sageRequest->quoteTypeId = $quoteTypeId;
+        $sageRequest->quoteCode = $quote->code;
+        $sageRequest->epShortCode = $epTransaction->product?->embeddedProduct?->short_code;
+
+        $sageRequest->bookingDate = Carbon::now()->format(config('constants.DATE_FORMAT_ONLY'));
+        $sageRequest->policyBookingDate = Carbon::now()->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
+
+        $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
+        $sageRequest->customerId = $this->sageApiService->verifySageCustomer($quote->customer_id, $data, $quote, 15);
+
+        return [
+            'sageRequestDataArray' => [$quote, $reversalSageLogOwner, $sageRequest, $epTransaction],
+            'requestPayload' => [
+                'modelType' => $modelType,
+                'quoteId' => $quoteId,
+                'quoteTypeId' => $quoteTypeId,
+                'epTransactionId' => $epTransaction->id,
+                'insuranceProviderId' => $insuranceProviderId,
+            ],
+        ];
+    }
+
+    /**
+     * @return array{
+     *     status: bool,
+     *     message: string,
+     *     embedded_transaction_id: int
+     * }
+     */
+    private function finalizeScheduleReversalOfEmbeddedProduct(
+        string $modelType,
+        object $quote,
+        EmbeddedTransaction $epTransaction,
+        int $quoteId,
+        int $quoteTypeId,
+        Payment $payment,
+    ): array {
+        $built = $this->buildSageRequestDataArrayForBookReversalOfEmbeddedProductOnSage(
+            $modelType,
+            $quote,
+            $epTransaction,
+            $epTransaction,
+            $quoteId,
+            $quoteTypeId,
+            $payment,
+        );
+        $sageRequestDataArray = $built['sageRequestDataArray'];
+        $sageRequest = $sageRequestDataArray[2];
+        $requestPayload = $built['requestPayload'];
+
+        $sageProcessData = [
+            'user_id' => $sageRequest->userId,
+            'insurance_provider_id' => $sageRequest->insurerID,
+            'request' => json_encode([
+                'sagePayload' => $sageRequest,
+                'requestPayload' => $requestPayload,
+            ]),
+            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
+        ];
+
+        $sageProcess = SageProcess::query()->where([
+            'model_type' => $epTransaction::class,
+            'model_id' => $epTransaction->id,
+        ])->first();
+
+        if ($sageProcess) {
+            $decoded = json_decode($sageProcess->request ?? '', true);
+            $existingType = $decoded['sagePayload']['sageProcessRequestType'] ?? null;
+            $isActiveSageProcess = in_array(
+                $sageProcess->status,
+                [SageEnum::SAGE_PROCESS_PENDING_STATUS, SageEnum::SAGE_PROCESS_PROCESSING_STATUS],
+                true,
+            );
+
+            if ($isActiveSageProcess && $existingType === SageEnum::SAGE_PROCESS_REVERSE_EMBEDDED_PRODUCT_REQUEST) {
+                return ['status' => false, 'message' => 'Sage EP reversal is already pending or processing for EP Code: '.$epTransaction->code];
+            }
+
+            if ($isActiveSageProcess && $existingType === SageEnum::SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST) {
+                return ['status' => false, 'message' => 'Sage EP booking is still pending or processing for EP Code: '.$epTransaction->code];
+            }
+
+            $sageProcess->update($sageProcessData);
+        } else {
+            $sageProcessData['model_type'] = $epTransaction::class;
+            $sageProcessData['model_id'] = $epTransaction->id;
+            SageProcess::create($sageProcessData);
+        }
+
+        $this->updateAndLogEPBookingStatus($epTransaction, SageEmbeddedProductEnum::BOOKING_QUEUED->id(), self::CLASSNAME.' fn: scheduleReversalOfEmbeddedProduct');
+        $epTransaction->update(['is_selected' => false, 'is_active' => false]);
+        $this->sageApiService->scheduleSageProcesses($sageRequest->insurerID);
+
+        return [
+            'status' => true,
+            'message' => 'Embedded Product Sage reversal scheduled for EP Code: '.$epTransaction->code,
+            'embedded_transaction_id' => $epTransaction->id,
+        ];
+    }
+
     public function getInsurerRequestResponse($quote, $epShortCode, $insuranceProviderId = null)
     {
         return match ($epShortCode) {
@@ -142,9 +460,12 @@ class SageApiEmbeddedProductService
         ])->latest()->first();
     }
 
+    /**
+     * @param  array{0: object, 1: object, 2: object, 3: EmbeddedTransaction}  $sageRequestDataArray  Same shape as {@see buildSageRequestDataArrayForBookReversalOfEmbeddedProductOnSage}: quote, model that owns reversal sageApiLogs (e.g. SendUpdateLog, or embedded transaction for IMCRM), sage request, embedded transaction
+     */
     public function bookReversalOfEmbeddedProductOnSage($sageRequestDataArray, $epShortCode = null)
     {
-        [$quote ,$sendUpdateLog, $sageRequest, $embeddedProductTransaction] = $sageRequestDataArray;
+        [$quote, $sendUpdateLog, $sageRequest, $embeddedProductTransaction] = $sageRequestDataArray;
 
         LoggerService::startQuoteLogging($embeddedProductTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING_REVERSAL);
         LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - SendUpdate Code: '.$sendUpdateLog->code.' - Embedded Product Booking Reversal started for EP Code: '.$embeddedProductTransaction->code);
@@ -184,6 +505,107 @@ class SageApiEmbeddedProductService
         LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - SendUpdate Code: '.$sendUpdateLog->code.' - Reversal of Embedded Product Booking Process Completed for EP Code: '.$embeddedProductTransaction->code);
 
         return ['status' => true, 'message' => 'Reversal of Embedded Product is Booked for SendUpdate Code : '.$sendUpdateLog->code.' and EP Code: '.$embeddedProductTransaction->code];
+    }
+
+    /**
+     * IMCRM refund path only: same Sage reversal sequence as {@see bookReversalOfEmbeddedProductOnSage} with step logs on the embedded transaction and {@see SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED} when a terminal failure status update is requested.
+     *
+     * @param  array{0: object, 1: object, 2: object, 3: EmbeddedTransaction}  $sageRequestDataArray  Same shape as {@see buildSageRequestDataArrayForBookReversalOfEmbeddedProductOnSage}: quote, sage log owner (embedded transaction), sage request, embedded transaction
+     * @param  bool  $updateEmbeddedTransactionStatusOnFailure  When false, leaves sage_status unchanged on API failure so the job can retry before the final attempt. Conflict responses never update sage_status because the job resets the Sage process for another attempt.
+     * @return array{status: bool, message?: string|null, error?: mixed}
+     */
+    public function bookReversalOfEmbeddedProductOnSageAfterImcrmRefund($sageRequestDataArray, $epShortCode = null, bool $updateEmbeddedTransactionStatusOnFailure = true): array
+    {
+        [$quote, $reversalSageLogOwner, $sageRequest, $embeddedProductTransaction] = $sageRequestDataArray;
+
+        LoggerService::startQuoteLogging($embeddedProductTransaction, LoggerFeatureEnum::SAGE_EP_BOOKING_REVERSAL);
+        LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - EP Code (log target): '.$reversalSageLogOwner->code.' - Embedded Product Booking Reversal started for EP Code: '.$embeddedProductTransaction->code);
+
+        $notBookedOutcome = $this->resolveImcrmRefundReversalWhenNotBookedOnSage($embeddedProductTransaction);
+        if ($notBookedOutcome !== null) {
+            return $notBookedOutcome;
+        }
+
+        $result = null;
+
+        $reversalSageLogOwner->loadMissing('sageApiLogs');
+        $sageLogArray = $reversalSageLogOwner->sageApiLogs->keyBy('step')->toArray();
+
+        if (! $this->embeddedProductHasSageArPremiumBookingLog($reversalSageLogOwner)) {
+            $result = ['status' => false, 'message' => 'No Sage AR premium booking log found for EP Code: '.$embeddedProductTransaction->code];
+        } else {
+            $insurerRequestResponse = $this->getInsurerRequestResponse($quote, $epShortCode);
+            $sageRequestEmbeddedProduct = self::createEmbeddedProductPayload($embeddedProductTransaction, $insurerRequestResponse, $epShortCode);
+            $reversalPayload = [$reversalSageLogOwner, $embeddedProductTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray];
+
+            $createARInvoicePremAndComm = $this->createARInvoicePremAndCommReversal($reversalPayload, true, $quote);
+            if (! $createARInvoicePremAndComm['status']) {
+                $result = $createARInvoicePremAndComm;
+            } else {
+                $createAPInvoicePrem = $this->createAPPremInvoiceReversal($reversalPayload, true, $quote);
+                if (! $createAPInvoicePrem['status']) {
+                    $result = $createAPInvoicePrem;
+                }
+            }
+        }
+
+        if ($result === null) {
+            $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_CANCELLED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
+
+            LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' - Sage Booking - EP Code (log target): '.$reversalSageLogOwner->code.' - Reversal of Embedded Product Booking Process Completed for EP Code: '.$embeddedProductTransaction->code);
+
+            return [
+                'status' => true,
+                'message' => 'Reversal of Embedded Product is Booked for EP Code (log target): '.$reversalSageLogOwner->code.' and EP Code: '.$embeddedProductTransaction->code,
+            ];
+        }
+
+        if ($updateEmbeddedTransactionStatusOnFailure
+            && (string) ($result['message'] ?? '') !== SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
+            $this->updateAndLogEPBookingStatus($embeddedProductTransaction, SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED->id(), self::CLASSNAME.' fn: '.__FUNCTION__);
+        }
+
+        return $result;
+    }
+
+    /**
+     * IMCRM refund reversal when booking never reached Sage (queued/failed without AR logs).
+     *
+     * @return array{status: true, message: string}|null
+     */
+    private function resolveImcrmRefundReversalWhenNotBookedOnSage(EmbeddedTransaction $embeddedProductTransaction): ?array
+    {
+        if ((int) $embeddedProductTransaction->sage_status_id === SageEmbeddedProductEnum::BOOKING_COMPLETED->id()) {
+            return null;
+        }
+
+        if ($this->embeddedProductHasSageArPremiumBookingLog($embeddedProductTransaction)) {
+            return null;
+        }
+
+        $this->updateAndLogEPBookingStatus(
+            $embeddedProductTransaction,
+            SageEmbeddedProductEnum::BOOKING_CANCELLED->id(),
+            self::CLASSNAME.' fn: resolveImcrmRefundReversalWhenNotBookedOnSage',
+        );
+
+        EpLog::create([
+            'embedded_transaction_id' => $embeddedProductTransaction->id,
+            'event' => 'sage_reversal_not_required',
+            'values' => json_encode([
+                'reason' => 'No Sage AR booking exists to reverse',
+                'sage_status_id' => $embeddedProductTransaction->sage_status_id,
+            ]),
+            'loggable_id' => $embeddedProductTransaction->id,
+            'loggable_type' => $embeddedProductTransaction->getMorphClass(),
+        ]);
+
+        LoggerService::info(self::CLASSNAME.' fn: resolveImcrmRefundReversalWhenNotBookedOnSage - No Sage booking to reverse for EP Code: '.$embeddedProductTransaction->code);
+
+        return [
+            'status' => true,
+            'message' => 'No Sage booking to reverse for EP Code: '.$embeddedProductTransaction->code,
+        ];
     }
 
     public function bookEmbeddedProductOnSage($sageRequestDataArray, $epShortCode = null)
@@ -731,7 +1153,7 @@ class SageApiEmbeddedProductService
                         $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to get status of AR Invoice Premium and Commission batch - '.$sageResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
                     } else {
                         LoggerService::info('Error while making EP AR Invoice Premium and Commission ready to post to sage', extra: [
                             'BatchNumber' => $sageResponse['BatchNumber'],
@@ -739,7 +1161,7 @@ class SageApiEmbeddedProductService
                         $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to post AR Invoice Premium and Commission Ready To Post batch - '.$sageResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
                     }
                 } else {
                     if ($isLiveApiCallStep2) {
@@ -812,7 +1234,7 @@ class SageApiEmbeddedProductService
                 $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Error while making Ar invoice & prem Posted to sage';
                 $message = ' EP code: '.$embeddedTransaction->code.' : aRPostInvoices - '.$sageResponse['BatchNumber'].' failed';
 
-                return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
             }
             LoggerService::info('EP AR Invoice Premium and Commission AR Post completed successfully', extra : [
                 'BatchNumber' => $sageResponse['BatchNumber'],
@@ -824,7 +1246,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Ar invoice & prem failed from sage';
             $message = ' EP code: '.$embeddedTransaction->code.' : createARInvoicePremAndComm  failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $payLoadOptions, $sageResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $sageResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
 
         LoggerService::info('Completed EP AR Invoice Premium and Commission creation successfully');
@@ -908,7 +1330,7 @@ class SageApiEmbeddedProductService
                         $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to get status of AP Invoice Premium batch - '.$postedResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
                     } else {
                         LoggerService::info('Error while making EP AP Invoice Premium ready to post to sage', extra: [
                             'BatchNumber' => $postedResponse['BatchNumber'],
@@ -916,7 +1338,7 @@ class SageApiEmbeddedProductService
                         $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $embeddedTransaction, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to post AP Invoice Premium Ready To Post batch - '.$postedResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
                     }
                 } else {
                     if ($isLiveApiCallStep6) {
@@ -990,7 +1412,7 @@ class SageApiEmbeddedProductService
                 $errorMessage = 'Error while making EP AP invoices Posted to sage';
                 $message = 'aPPostInvoices failed';
 
-                return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
             } else {
                 LoggerService::info('EP AP Invoice Premium AP Post completed successfully', extra : [
                     'BatchNumber' => $apBatchNumber,
@@ -1003,7 +1425,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Ap invoice prem failed from sage';
             $message = ' EP code: '.$embeddedTransaction->code.' : createAPInvoicePrem  failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
 
         LoggerService::info('Completed EP AP Invoice Premium creation successfully');
@@ -1013,9 +1435,10 @@ class SageApiEmbeddedProductService
         return $returnMessage;
     }
 
-    private function createARInvoicePremAndCommReversal($sageRequestDataArray, $isReversal = false)
+    private function createARInvoicePremAndCommReversal($sageRequestDataArray, $isReversal = false, $quote = null)
     {
         [$sendUpdateLog, $embeddedTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray] = $sageRequestDataArray;
+        $model = $quote ?? $sendUpdateLog;
 
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
@@ -1040,7 +1463,7 @@ class SageApiEmbeddedProductService
         if (isset($sageResponse['BatchNumber']) && ! empty($sageResponse['BatchNumber'])) {
             LoggerService::info('Reversal of EP AR Invoice Premium and Commission batch number - '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep1) {
-                $this->logSageApiCall($payLoadOptions, $sageResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                $this->logSageApiCall($payLoadOptions, $sageResponse, $sendUpdateLog, $model, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
 
             $isLiveApiCallStep2 = true;
@@ -1081,31 +1504,31 @@ class SageApiEmbeddedProductService
                         LoggerService::info('Reversal of EP AR Invoice Premium and Commission batch already posted', extra: [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAr, '', $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAr, '', $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                         $isAlreadyPosted = true;
                     } elseif (! isset($arInvoiceBatch['BatchStatus'])) {
                         LoggerService::info('Failed to get Reversal EP AR Invoice Premium and Commission batch status', extra: [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to get status of Reversal AR Invoice Premium and Commission batch - '.$sageResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$model, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $sendUpdateLog);
                     } else {
                         LoggerService::info('Error while making Reversal EP AR Invoice Premium and Commission ready to post to sage', extra: [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = ' EP code: '.$embeddedTransaction->code.' : Failed to post Reversal AR Invoice Premium and Commission Ready To Post batch - '.$sageResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$model, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $sendUpdateLog);
                     }
                 } else {
                     if ($isLiveApiCallStep2) {
                         LoggerService::info('Logging Reversal EP AR Invoice Premium and Commission Ready To Post batch successfully', extra: [
                             'BatchNumber' => $sageResponse['BatchNumber'],
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                     }
                 }
             } else {
@@ -1113,7 +1536,7 @@ class SageApiEmbeddedProductService
                     LoggerService::info('Logging Reversal EP AR Invoice Premium and Commission Ready To Post batch successfully with empty response', extra: [
                         'BatchNumber' => $sageResponse['BatchNumber'],
                     ]);
-                    $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                 }
             }
 
@@ -1171,19 +1594,19 @@ class SageApiEmbeddedProductService
                 $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Error while making Ar invoice & prem Posted to sage';
                 $message = ' EP code: '.$embeddedTransaction->code.' : aRPostInvoices - '.$sageResponse['BatchNumber'].' failed';
 
-                return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                return $this->sageApiService->logErrorAndReturn([$model, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $sendUpdateLog);
             }
             LoggerService::info('Reversal of EP AR Invoice Premium and Commission AR Post completed successfully', extra : [
                 'BatchNumber' => $sageResponse['BatchNumber'],
             ]);
             if ($isLiveApiCallStep3) {
-                $this->logSageApiCall($aRPostInvoices, $postedResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                $this->logSageApiCall($aRPostInvoices, $postedResponse, $sendUpdateLog, $model, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
         } else {
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' : Ar invoice & prem failed from sage';
             $message = ' EP code: '.$embeddedTransaction->code.' : createARInvoicePremAndComm  failed';
 
-            return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $payLoadOptions, $sageResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$model, $message, $errorMessage, $payLoadOptions, $sageResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $sendUpdateLog);
         }
 
         LoggerService::info('Completed Reversal of EP AR Invoice Premium and Commission creation successfully');
@@ -1194,9 +1617,10 @@ class SageApiEmbeddedProductService
 
     }
 
-    private function createAPPremInvoiceReversal($sageRequestDataArray, $isReversal = false)
+    private function createAPPremInvoiceReversal($sageRequestDataArray, $isReversal = false, $quote = null)
     {
         [$sendUpdateLog, $embeddedTransaction, $sageRequest, $sageRequestEmbeddedProduct, $sageLogArray] = $sageRequestDataArray;
+        $model = $quote ?? $sendUpdateLog;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
         $totalSteps = 30;
@@ -1228,7 +1652,7 @@ class SageApiEmbeddedProductService
                 'SendUpdateCode' => $sendUpdateLog->code,
             ]);
             if ($isLiveApiCallStep28) {
-                $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $sendUpdateLog, $model, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
             }
 
             $isLiveApiCallStep29 = true;
@@ -1270,26 +1694,26 @@ class SageApiEmbeddedProductService
                     ]);
 
                     if (isset($aPInvoiceBatch['BatchStatus']) && $aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
-                        $this->logSageApiCall($readyToPostInvoiceAP, '', $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAP, '', $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                         $isAlreadyPosted = true;
                     } elseif (! isset($aPInvoiceBatch['BatchStatus'])) {
                         LoggerService::info('Failed to get Reversal EP AP Invoice Premium batch status', extra: [
                             'BatchNumber' => $postedResponse['BatchNumber'],
                             'SendUpdateCode' => $sendUpdateLog->code,
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : Failed to get status of AP Invoice Premium batch - '.$postedResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$model, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $sendUpdateLog);
                     } else {
                         LoggerService::info('Error while making Reversal EP AP Invoice Premium ready to post to sage', extra: [
                             'BatchNumber' => $postedResponse['BatchNumber'],
                             'SendUpdateCode' => $sendUpdateLog->code,
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId);
                         $message = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : Failed to post AP Invoice Premium Ready To Post batch - '.$postedResponse['BatchNumber'].' failed';
 
-                        return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                        return $this->sageApiService->logErrorAndReturn([$model, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $sendUpdateLog);
                     }
                 } else {
                     if ($isLiveApiCallStep29) {
@@ -1297,7 +1721,7 @@ class SageApiEmbeddedProductService
                             'BatchNumber' => $postedResponse['BatchNumber'],
                             'SendUpdateCode' => $sendUpdateLog->code,
                         ]);
-                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                     }
                 }
             } else {
@@ -1306,7 +1730,7 @@ class SageApiEmbeddedProductService
                         'BatchNumber' => $postedResponse['BatchNumber'],
                         'SendUpdateCode' => $sendUpdateLog->code,
                     ]);
-                    $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $sendUpdateLog, $model, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                 }
             }
 
@@ -1373,21 +1797,21 @@ class SageApiEmbeddedProductService
                 $errorMessage = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' Error while making AP invoices Posted to sage';
                 $message = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' aPPostInvoices failed';
 
-                return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                return $this->sageApiService->logErrorAndReturn([$model, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $sendUpdateLog);
             } else {
                 LoggerService::info('Reversal of EP AP Invoice Premium AP Post completed successfully', extra : [
                     'BatchNumber' => $apBatchNumber,
                     'SendUpdateCode' => $sendUpdateLog->code,
                 ]);
                 if ($isLiveApiCallStep30) {
-                    $this->logSageApiCall($aPPostInvoices, $postedResponse, $sendUpdateLog, $sendUpdateLog, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    $this->logSageApiCall($aPPostInvoices, $postedResponse, $sendUpdateLog, $model, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
                 }
             }
         } else {
             $errorMessage = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : Ap invoice prem failed from sage';
             $message = 'SendUpdate Code : '.$sendUpdateLog->code.' Reversal of EP code: '.$embeddedTransaction->code.' : createAPInvoicePrem  failed';
 
-            return $this->sageApiService->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$model, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $sendUpdateLog);
         }
 
         LoggerService::info('Completed Reversal of EP AP Invoice Premium creation successfully');
@@ -1430,7 +1854,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' Error while making split prepayments to sage';
             $message = ' EP code: '.$embeddedTransaction->code.' createPaymentReceiptOneInvoice failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
 
         $batchNumber = $postedResponse['BatchNumber'];
@@ -1458,7 +1882,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.'  : Error while making Apply payment ready to post to sage';
             $message = ' EP code: '.$embeddedTransaction->code.'  : readyToPostReceiptAr failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         } else {
             LoggerService::info('EP Apply Payment Receipt ready to post completed successfully', extra: [
                 'BatchNumber' => $batchNumber,
@@ -1523,7 +1947,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.'  : Error while making Apply payment Posted to sage';
             $message = ' EP code: '.$embeddedTransaction->code.'  :aRPostReceipts failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
         LoggerService::info('EP Apply Payment AR Post completed successfully', extra: [
             'BatchNumber' => $batchNumber,
@@ -2377,7 +2801,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.' Error while making split prepayments to sage';
             $message = ' EP code: '.$embeddedTransaction->code.' createAPPaymentReceiptOneInvoice failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
 
         $batchNumber = $postedResponse['BatchNumber'];
@@ -2400,7 +2824,7 @@ class SageApiEmbeddedProductService
             $errorMessage = ' EP code: '.$embeddedTransaction->code.'  : Error while making Apply AP payment ready to post to sage';
             $message = ' EP code: '.$embeddedTransaction->code.'  : readyToPostReceiptAP failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $readyToPostReceiptAP, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAP, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         } else {
             LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.'  : '.$quote->code.' : readyToPostReceiptAP completed successfully');
             if ($isLiveApiCallStep14) {
@@ -2454,7 +2878,7 @@ class SageApiEmbeddedProductService
             $errorMessage = $isErrorOccurred ? $sageErrorMessageOnSuccess : ' EP code: '.$embeddedTransaction->code.'  : Error while making Apply AP payment Posted to sage';
             $message = $isErrorOccurred ? $sageErrorMessageOnSuccess : ' EP code: '.$embeddedTransaction->code.'  :aPPostReceipts failed';
 
-            return $this->sageApiService->logErrorAndReturn([$embeddedTransaction, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+            return $this->sageApiService->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL, $sageRequest->userId], true, $embeddedTransaction);
         }
         LoggerService::info(self::CLASSNAME.' fn: '.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' EP code: '.$embeddedTransaction->code.'  : '.$quote->code.' : aPPostReceipts completed successfully');
         if ($isLiveApiCallStep15) {

@@ -10,12 +10,12 @@ use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
-use App\Traits\SeedsFirstOrCreateIfMissing;
+use App\Traits\SeedsIfMissing;
 use Illuminate\Database\Seeder;
 
 class LookupSeeder extends Seeder
 {
-    use SeedsFirstOrCreateIfMissing;
+    use SeedsIfMissing;
 
     /**
      * Run the database seeds.
@@ -44,6 +44,27 @@ class LookupSeeder extends Seeder
         $this->createRmCategories();
         $this->createReferralSources();
         $this->healthRevampLookups();
+        $this->createCorplineLeadTypes();
+    }
+
+    private function createCorplineLeadTypes(): void
+    {
+        $types = [
+            ['code' => 'renewal', 'text' => 'Renewal'],
+            ['code' => 'non-renewal', 'text' => 'Non-Renewal'],
+            ['code' => 'extendable', 'text' => 'Extendable'],
+        ];
+
+        foreach ($types as $type) {
+            Lookup::firstOrCreate([
+                'key' => LookupsEnum::CORPLINE_LEAD_TYPE->value,
+                'code' => $type['code'],
+            ], [
+                'text' => $type['text'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     private function sendUpdateCancelOptions(): void
