@@ -130,8 +130,7 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
                     (int) $this->request->quoteId,
                     (int) $this->request->quoteTypeId,
                     (int) $this->epTransaction->id,
-                    $this->logFor,
-                    $message
+                    $this->logFor
                 );
                 app(SageApiService::class)->scheduleSageProcesses($this->sageRequest->insurerID);
 
@@ -206,8 +205,7 @@ class ReverseEmbeddedProductOnSageJob implements ShouldQueue
             (int) $this->request->quoteId,
             (int) $this->request->quoteTypeId,
             (int) $this->epTransaction->id,
-            $this->logFor,
-            $message
+            $this->logFor
         );
 
         $sageApiService->scheduleSageProcesses($this->sageRequest->insurerID);

@@ -95,10 +95,10 @@ trait SendsEpFailureEmail
     /**
      * Notify finance/engineering when Sage EP booking reversal exhausts retries or the job fails.
      */
-    protected function sendEpReversalFailureEmail(int $quoteId, int $quoteTypeId, int $etId, string $logPrefix, string $errorMessage): void
+    protected function sendEpReversalFailureEmail(int $quoteId, int $quoteTypeId, int $etId, string $logPrefix): void
     {
         try {
-            Mail::send(new EpReversalFailureNotification($quoteId, $quoteTypeId, $etId, $errorMessage));
+            Mail::send(new EpReversalFailureNotification($quoteId, $quoteTypeId, $etId));
             LoggerService::info("{$logPrefix} EP Sage reversal failure email sent", extra: [
                 'etId' => $etId,
             ]);
