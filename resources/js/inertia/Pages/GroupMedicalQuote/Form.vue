@@ -199,8 +199,12 @@ const selectedEmirateId = computed(() =>
   normalizeEmirateId(quoteForm.emirate_of_registration_id),
 );
 
+const fetchedHealthPlanTypes = ref([]);
+
 const healthPlanTypeSelectOptions = computed(() =>
-  toSelectOptions(healthPlansForEmirate(selectedEmirateId.value)),
+  fetchedHealthPlanTypes.value.length
+    ? fetchedHealthPlanTypes.value
+    : toSelectOptions(healthPlansForEmirate(selectedEmirateId.value)),
 );
 
 const isHealthPlanTypeSelectDisabled = computed(
@@ -393,6 +397,10 @@ onMounted(() => {
     ),
   ];
   uniqueTpaIds.forEach(fetchNetworksForTpa);
+
+  if (quoteForm.emirate_of_registration_id) {
+    onEmirateChange(quoteForm.emirate_of_registration_id);
+  }
 });
 
 const emirateOfRegistrationFieldError = computed(() => {
@@ -416,6 +424,20 @@ const emirateOfRegistrationFieldError = computed(() => {
 });
 
 const isEmptyField = ref(false);
+
+async function onEmirateChange(value) {
+  quoteForm.emirate_of_registration_id = value;
+
+  try {
+    const { data } = await axios.get(route('planTypesByEmirates', { emirateId: value }));
+    fetchedHealthPlanTypes.value = (data.data ?? []).map(item => ({
+      value: item.id,
+      label: item.text,
+    }));
+  } catch (error) {
+    notification.error({ title: error, position: 'top' });
+  }
+}
 
 function onSubmit(isValid) {
   if (!isValid) return;
@@ -608,8 +630,8 @@ function onSubmit(isValid) {
           :required="!props.isEmirateDisabled"
           :disabled="props.isEmirateDisabled"
           tooltip="Select the Emirate where the company is legally registered or primarily operates."
-        >
-        </x-select>
+          @update:modelValue="onEmirateChange"
+        />
 
         <x-textarea
           v-model="quoteForm.brief_details"
