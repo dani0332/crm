@@ -159,10 +159,10 @@ class UserController extends Controller
     {
         switch ($type) {
             case QuoteTypes::CORPLINE->value:
-                return QuoteTypes::BUSINESS->value;
+                return QuoteTypes::CORPLINE->value;
                 break;
             case QuoteTypes::GROUP_MEDICAL->value:
-                return QuoteTypes::BUSINESS->value;
+                return QuoteTypes::GROUP_MEDICAL->value;
                 break;
             default:
                 return QuoteTypes::BUSINESS->value;
@@ -215,7 +215,7 @@ class UserController extends Controller
                             app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
                         if ($user->hasAnyRole([RolesEnum::PreQualificationAdvisor])) {
-                            app(PqaLeadAllocationService::class)->syncPqaAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                            app(PqaLeadAllocationService::class)->syncPqaAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId, 'quote_type' => $quoteTypeName]);
                         }
                     }
                 }
