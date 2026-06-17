@@ -35,6 +35,7 @@ use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthPlanTypeController;
 use App\Http\Controllers\HealthQuoteController;
+use App\Http\Controllers\HealthThirdPartyAdministrator;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
@@ -1006,6 +1007,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/api/plan-types/{quoteType?}', [AllocationConfigurationController::class, 'getPlanTypes'])
         ->name('admin.allocation-configuration.plan-types');
     Route::get('/plan-types-by-emirates/{emirateId}', [HealthPlanTypeController::class, 'getByEmirate'])->name('planTypesByEmirates');
+    Route::get('/tpa-by-insurance-provider/{insuranceProviderId}', [HealthThirdPartyAdministrator::class, 'getByInsuranceProvider'])->name('tpaByInsuranceProvider');
     Route::get('/api/business-types', [AllocationConfigurationController::class, 'getBusinessTypes'])
         ->name('admin.allocation-configuration.business-types');
     Route::get('/api/sub-areas', [AllocationConfigurationController::class, 'getSubAreas'])

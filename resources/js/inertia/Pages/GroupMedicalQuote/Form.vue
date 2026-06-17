@@ -120,9 +120,11 @@ const insuranceProviderSelectOptions = computed(() =>
   toSelectOptions(props.insuranceProviders),
 );
 
-const healthTpaSelectOptions = computed(() =>
-  toSelectOptions(props.healthThirdPartyAdministrators),
-);
+const tpaCache = ref({});
+
+function tpaOptionsForRow(idx) {
+  return tpaCache.value[idx] ?? [];
+}
 
 const networksCache = ref({});
 const networksFetching = ref({});
@@ -436,6 +438,19 @@ async function onEmirateChange(value) {
     }));
   } catch (error) {
     notification.error({ title: error, position: 'top' });
+  }
+}
+
+async function onInsuranceProviderChange(value, idx) {
+  try {
+    const { data } = await axios.get(route('tpaByInsuranceProvider', { insuranceProviderId: value }));
+    tpaCache.value[idx] = (data.data ?? []).map(item => ({
+      value: item.id,
+      label: item.text,
+    }));
+  } catch (error) {
+    const message = error?.response?.data?.message ?? 'Something went wrong while fetching TPAs.';
+    notification.error({ title: message, position: 'top' });
   }
 }
 
@@ -851,12 +866,13 @@ function onSubmit(isValid) {
                           `categories.${idx}.insuranceProviderId`
                         ]
                       "
+                      @update:modelValue="value => onInsuranceProviderChange(value, idx)"
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
                       v-model="row.healthTpaId"
-                      :options="healthTpaSelectOptions"
+                      :options="tpaOptionsForRow(idx)"
                       class="w-full min-w-[10rem]"
                       placeholder="Select TPA"
                       filterable
