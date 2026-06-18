@@ -302,7 +302,8 @@ const permissionsEnum = page.props.permissionsEnum;
       </template>
       <template #item-currently_insured_with="item">
         {{
-          (item.currently_insured_with?.text ?? item.currently_insured_with) ??
+          item.currently_insured_with?.text ??
+          item.currently_insured_with ??
           item.personal_quote?.currently_insured_with?.text
         }}
       </template>
@@ -312,10 +313,14 @@ const permissionsEnum = page.props.permissionsEnum;
       <template #item-customer_pcp_tag="{ customer }">
         {{ customer?.pcp_tag == 1 ? 'Yes' : 'No' }}
       </template>
-      <template #item-previous_policy_start_date="{ previous_policy_start_date }">
+      <template
+        #item-previous_policy_start_date="{ previous_policy_start_date }"
+      >
         {{ dateFormat(previous_policy_start_date) }}
       </template>
-      <template #item-previous_policy_expiry_date="{ previous_policy_expiry_date }">
+      <template
+        #item-previous_policy_expiry_date="{ previous_policy_expiry_date }"
+      >
         {{ dateFormat(previous_policy_expiry_date) }}
       </template>
     </DataTable>
