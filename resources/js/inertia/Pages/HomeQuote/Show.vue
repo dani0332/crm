@@ -558,6 +558,10 @@ const availablePlansTable = reactive({
       value: 'actualPremium',
     },
     {
+      text: 'Discounted Price',
+      value: 'discountPremiumPrice',
+    },
+    {
       text: 'Total Price',
       value: 'discountPremium',
     },
@@ -1639,6 +1643,28 @@ function handleOcrNotification(event) {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ quote.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ quote.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ quote.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ quote.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ quote.utm_term }}</dd>
+                </div>
+              </template>
               <div
                 class="grid sm:grid-cols-2"
                 v-if="can(permissionEnum.VIEW_PCP)"
@@ -2255,6 +2281,15 @@ function handleOcrNotification(event) {
                   {{
                     item.actualPremium
                       ? parseFloat(item.actualPremium).toFixed(2)
+                      : '0.00'
+                  }}
+                </span>
+              </template>
+              <template #item-discountPremiumPrice="item">
+                <span class="text-primary-600" v-if="item.isDiscountApplied">
+                  {{
+                    item.discountPremium
+                      ? parseFloat(item.discountPremium).toFixed(2)
                       : '0.00'
                   }}
                 </span>

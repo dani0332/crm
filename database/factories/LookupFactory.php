@@ -10,18 +10,20 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class LookupFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = Lookup::class;
+
     public function definition(): array
     {
         return [
             'key' => $this->faker->slug(2),
-            'code' => $this->faker->word(),
-            'text' => $this->faker->words(3, true),
-            'is_active' => 1,
+            'code' => $this->faker->unique()->slug(2),
+            'text' => $this->faker->words(2, true),
+            'is_active' => true,
         ];
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(['is_active' => false]);
     }
 }

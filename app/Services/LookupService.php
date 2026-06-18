@@ -4,6 +4,10 @@ namespace App\Services;
 
 use App\Enums\CacheKeyEnum;
 use App\Enums\ClaimsEnum;
+use App\Enums\GenericRequestEnum;
+use App\Enums\HealthInsureEnum;
+use App\Enums\HealthPolicyHolderEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
@@ -24,8 +28,10 @@ use App\Models\SalaryBand;
 use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
+use App\Models\VisaCategory;
 use App\Models\YearOfManufacture;
 use App\Services\Cache\CacheManager;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class LookupService extends BaseService
@@ -53,6 +59,16 @@ class LookupService extends BaseService
     public function getMemberCategories()
     {
         return MemberCategory::active()->get();
+    }
+
+    /** Returns an id → text map of all member categories for display purposes. */
+    public function getAllMemberCategories(): array
+    {
+        return Cache::remember(
+            CacheKeyEnum::MEMBER_CATEGORY_DISPLAY_MAP_KEY->value,
+            CacheKeyEnum::MEMBER_CATEGORY_DISPLAY_MAP_KEY->expiry(),
+            fn () => MemberCategory::select('id', 'text')->get()->pluck('text', 'id')->all()
+        );
     }
 
     public function getSalaryBands()
@@ -367,5 +383,191 @@ class LookupService extends BaseService
                     ->get();
             }
         );
+    }
+
+    public function getGender()
+    {
+        return Cache::remember(
+            CacheKeyEnum::GENDER_KEY->value,
+            CacheKeyEnum::GENDER_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::GENDER)
+                ->select('text', 'code')
+                ->get()
+        );
+    }
+
+    /**
+     * @return Collection<int, Lookup>
+     */
+    public function getHealthInsureOptions(?string $leadSource = null): Collection
+    {
+        $rows = Cache::remember(
+            CacheKeyEnum::HEALTH_INSURE_OPTIONS_KEY->value,
+            CacheKeyEnum::HEALTH_INSURE_OPTIONS_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::HEALTH_INSURE_OPTIONS)->get()
+        );
+
+        if (! in_array($leadSource, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD], true)) {
+            return $rows;
+        }
+
+        return $rows->map(function ($item) {
+            $code = $item->code ?? null;
+            if (! is_string($code)) {
+                return $item;
+            }
+            $case = HealthInsureEnum::tryFrom($code);
+            if ($case === null) {
+                return $item;
+            }
+            $row = clone $item;
+            $row->text = $case->getLabel();
+
+            return $row;
+        })->values();
+    }
+
+    /**
+     * @return Collection<int, Lookup>
+     */
+    public function getPolicyHolder(?string $leadSource = null): Collection
+    {
+        $rows = Cache::remember(
+            CacheKeyEnum::POLICY_HOLDER_KEY->value,
+            CacheKeyEnum::POLICY_HOLDER_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::POLICY_HOLDER_OPTIONS)->get()
+        );
+
+        if (! in_array($leadSource, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD], true)) {
+            return $rows;
+        }
+
+        return $rows->map(function ($item) {
+            $code = $item->code ?? null;
+            if (! is_string($code)) {
+                return $item;
+            }
+            $case = HealthPolicyHolderEnum::tryFrom($code);
+            if ($case === null) {
+                return $item;
+            }
+            $row = clone $item;
+            $row->text = $case->getLabel();
+
+            return $row;
+        })->values();
+    }
+
+    public function getPolicyHolderCategory()
+    {
+        return Cache::remember(
+            CacheKeyEnum::POLICY_HOLDER_CATEGORY_KEY->value,
+            CacheKeyEnum::POLICY_HOLDER_CATEGORY_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::POLICY_HOLDER_CATEGORY)->get()
+        );
+    }
+
+    public function getVisaCategory()
+    {
+        return Cache::remember(
+            CacheKeyEnum::VISA_CATEGORY_KEY->value,
+            CacheKeyEnum::VISA_CATEGORY_KEY->expiry(),
+            fn () => VisaCategory::active()->orderBy('sort_order')->get()
+        );
+    }
+
+    public function getMemberRelations()
+    {
+        return Cache::remember(
+            CacheKeyEnum::MEMBER_RELATIONS_KEY->value,
+            CacheKeyEnum::MEMBER_RELATIONS_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::MEMBER_RELATION->value)
+                ->where('is_active', true)->orderBy('sort_order')
+                ->get()
+        );
+    }
+
+    public function getHealthMemberRelations()
+    {
+        return Cache::remember(
+            CacheKeyEnum::HEALTH_MEMBER_RELATIONS_KEY->value,
+            CacheKeyEnum::HEALTH_MEMBER_RELATIONS_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::HEALTH_MEMBER_RELATION->value)
+                ->where('is_active', true)->orderBy('sort_order')
+                ->get()
+        );
+    }
+
+    public function getDomesticWorkerRelations()
+    {
+        return Cache::remember(
+            CacheKeyEnum::DOMESTIC_WORKER_RELATIONS_KEY->value,
+            CacheKeyEnum::DOMESTIC_WORKER_RELATIONS_KEY->expiry(),
+            fn () => Lookup::where('key', LookupsEnum::DOMESTIC_WORKER_RELATION->value)
+                ->where('is_active', true)->orderBy('sort_order')
+                ->get()
+        );
+    }
+
+    /**
+     * Returns a code → label map built from all three member relation lookup keys:
+     * 'member-relation', 'health-member-relation', and 'domestic-worker-relation'.
+     *
+     * Use this for display only so any relation_code stored in a record resolves
+     * to its label regardless of which set it originated from.
+     */
+    public function getMemberRelationDisplayMap(): array
+    {
+        return Cache::remember(
+            CacheKeyEnum::MEMBER_RELATION_DISPLAY_MAP_KEY->value,
+            CacheKeyEnum::MEMBER_RELATION_DISPLAY_MAP_KEY->expiry(),
+            function () {
+                $toMap = fn ($collection) => $collection->pluck('text', 'code')->all();
+
+                return array_merge(
+                    $toMap($this->getMemberRelations()),
+                    $toMap($this->getHealthMemberRelations()),
+                    $toMap($this->getDomesticWorkerRelations()),
+                );
+            }
+        );
+    }
+
+    /**
+     * Returns a code → label map for resolving the display text of gender values
+     * stored in health quote records, including legacy codes written before the
+     * gender lookup was introduced (M/FS/FM/Male/Female).
+     *
+     * Use this for display only; use getGenderOptions(QuoteTypeId::Health) for dropdowns.
+     */
+    public function getHealthGenderDisplayMap(): array
+    {
+        return Cache::remember(
+            CacheKeyEnum::HEALTH_GENDER_DISPLAY_MAP_KEY->value,
+            CacheKeyEnum::HEALTH_GENDER_DISPLAY_MAP_KEY->expiry(),
+            function () {
+                $newOptions = $this->getGender()->pluck('text', 'code')->all();
+
+                $legacyOptions = [
+                    GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
+                    GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
+                    GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
+                    GenericRequestEnum::FEMALE_SHORT_VALUE => GenericRequestEnum::FEMALE,
+                    GenericRequestEnum::MALE_SINGLE => GenericRequestEnum::MALE_SINGLE,
+                    GenericRequestEnum::FEMALE => GenericRequestEnum::FEMALE,
+                ];
+
+                // New lookup entries take precedence; legacy entries fill in any gaps.
+                return array_merge($legacyOptions, $newOptions);
+            }
+        );
+    }
+
+    public function getCorplineLeadTypes(): Collection
+    {
+        return Lookup::where('key', LookupsEnum::CORPLINE_LEAD_TYPE->value)
+            ->select('code', 'text')
+            ->get()
+            ->map(fn ($lookup) => ['value' => $lookup->code, 'label' => $lookup->text]);
     }
 }

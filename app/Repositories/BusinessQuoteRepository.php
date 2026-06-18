@@ -109,6 +109,11 @@ class BusinessQuoteRepository extends BaseRepository
             $query->whereIn('business_quote_request.assignment_type', $values);
         }
 
+        if (! empty($requestParams['lead_type'])) {
+            $values = (array) $requestParams['lead_type'];
+            $query->whereIn('business_quote_request.lead_type', $values);
+        }
+
         if (! empty($requestParams['emirate_of_registration_id']) && $quoteType == quoteTypeCode::GroupMedical) {
             $ids = self::normalizeEmirateOfRegistrationIds($requestParams['emirate_of_registration_id']);
             if ($ids !== []) {

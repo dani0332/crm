@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
@@ -110,6 +111,25 @@ class LifeQuoteService extends BaseService
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'lqr.insurance_provider_id');
     }
 
+    private function applyUtmJoin(): void
+    {
+        if (auth()->user()?->can(PermissionsEnum::VIEW_UTM_SECTION)) {
+            $this->query
+                ->leftJoin('personal_quotes as pq', function ($join) {
+                    $join->on('pq.uuid', '=', 'lqr.uuid')
+                        ->where('pq.quote_type_id', '=', QuoteTypeId::Life);
+                })
+                ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', '=', 'pq.id')
+                ->addSelect(
+                    'pqd.utm_source',
+                    'pqd.utm_medium',
+                    'pqd.utm_campaign',
+                    'pqd.utm_content',
+                    'pqd.utm_term',
+                );
+        }
+    }
+
     public function saveLifeQuote(Request $request)
     {
         $dataArr = [
@@ -151,6 +171,8 @@ class LifeQuoteService extends BaseService
 
     public function getEntity($id)
     {
+        $this->applyUtmJoin();
+
         return $this->query->where('lqr.uuid', $id)->first();
     }
 

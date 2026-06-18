@@ -16,6 +16,7 @@ use App\Traits\QuoteModelTrait;
 use App\Traits\QuoteTraits\PersonalQuotable;
 use App\Traits\SpatieActivityLog;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -717,6 +718,19 @@ class PersonalQuote extends Model implements AuditableContract
     public function isAutomationCompleted()
     {
         return $this->policyIssuance?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
+    }
+
+    public function dttRevivalsAsParent(): HasMany
+    {
+        return $this->hasMany(DttRevival::class, 'previous_quote_id');
+    }
+
+    public function scopeWhereShortRevivalNotConverted(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('dttRevivalsAsParent', function ($q): void {
+            $q->join('personal_quotes as revival_child', 'revival_child.id', '=', 'dtt_revivals.quote_id')
+                ->where('revival_child.quote_status_id', QuoteStatusEnum::PolicyBooked);
+        });
     }
 
 }

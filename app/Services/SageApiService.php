@@ -21,11 +21,13 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Exceptions\BookingValidationException;
 use App\Factories\SagePayloadFactory;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Jobs\BookEmbeddedProductOnSageJob;
 use App\Jobs\BookPolicyOnSageJob;
 use App\Jobs\PostPrepaymentToSageJob;
+use App\Jobs\ReverseEmbeddedProductOnSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendUpdateSageJob;
 use App\Models\Customer;
@@ -731,6 +733,18 @@ class SageApiService
             ])->mainLeadPayment()->with('paymentSplits')->first();
         }
         $paymentSplits = $payment->paymentSplits;
+
+        try {
+            app(BookingValidationService::class)->validate($payment, $quoteTypeId);
+        } catch (BookingValidationException $e) {
+            LoggerService::warning(self::class.' fn: '.__FUNCTION__.' - Booking validation failed for '.$quote->code, extra: [
+                'quote_type_id' => $quoteTypeId,
+                'errors' => $e->errors,
+            ]);
+            $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED);
+
+            return ['status' => false, 'message' => $e->getMessage()];
+        }
 
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
 
@@ -3214,11 +3228,12 @@ class SageApiService
         return $returnMessage;
     }
 
-    public function logErrorAndReturn($logDataArray, $storeSageApiLog = true): array
+    public function logErrorAndReturn($logDataArray, $storeSageApiLog = true, $sectionData = null): array
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         $logDataArray = array_pad($logDataArray, 9, null);
         [$quote, $message, $errorMessage, $payload, $response, $currentStep, $totalSteps, $status, $userId] = $logDataArray;
+        $section = $sectionData ?? $quote;
 
         LoggerService::info(self::class.' fn: '.__FUNCTION__." - SAGE API: $quote->code - $message");
         LoggerService::info(self::class.' fn: '.__FUNCTION__." - SAGE API: $quote->code - $errorMessage");
@@ -3232,25 +3247,25 @@ class SageApiService
         $returnMessage['error'] = $sageErrorMessage;
         if ($this->sageHasProcessingConflict($sageErrorMessage)) {
             $returnMessage['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
-        } elseif ($quote instanceof EmbeddedTransaction && $this->isEPDocumentNumberAlreadyExistsMessage($sageErrorMessage)) {
+        } elseif ($section instanceof EmbeddedTransaction && $this->isEPDocumentNumberAlreadyExistsMessage($sageErrorMessage)) {
 
             LoggerService::info('Updating Tax Invoice/Commission Invoice number in insurer request response for EP Sage booking to resolve already exists document error');
 
             $documentNumber = $this->extractDocumentNumberFromErrorMessage($sageErrorMessage);
-            $isDocumentNumberUpdated = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($quote, $documentNumber);
+            $isDocumentNumberUpdated = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($section, $documentNumber);
 
             if ($isDocumentNumberUpdated) {
                 $returnMessage['message'] = SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE;
             } else {
                 LoggerService::warning('EP Sage booking duplicate document number detected, but insurer request response document numbers were not updated', extra: [
-                    'ep_code' => $quote->code,
+                    'ep_code' => $section->code,
                     'sage_error_message' => $sageErrorMessage,
                 ]);
             }
         }
 
         if ($storeSageApiLog) {
-            $this->logSageApiCall($payload, $response, $quote, $quote, $currentStep, $totalSteps, $status, $userId);
+            $this->logSageApiCall($payload, $response, $section, $quote, $currentStep, $totalSteps, $status, $userId);
         }
 
         return $returnMessage;
@@ -3519,6 +3534,16 @@ class SageApiService
                                     continue;
                                 }
                                 BookEmbeddedProductOnSageJob::dispatch($sageRequest, $ePTransaction, $request, $sageProcess)->onQueue('insly');
+                            } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_REVERSE_EMBEDDED_PRODUCT_REQUEST) {
+                                $ePTransaction = $sageProcess->model;
+                                if (! $ePTransaction) {
+                                    LoggerService::warning('ePTransaction not found for REVERSE_EMBEDDED_PRODUCT_REQUEST', extra: [
+                                        'SageProcessID' => $sageProcess->id,
+                                    ]);
+
+                                    continue;
+                                }
+                                ReverseEmbeddedProductOnSageJob::dispatch($sageRequest, $ePTransaction, $request, $sageProcess)->onQueue('insly');
                             }
                         } catch (\Throwable $e) {
                             LoggerService::warning('Error processing individual sage process', extra: [

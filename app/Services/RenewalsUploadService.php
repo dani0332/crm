@@ -1027,6 +1027,10 @@ class RenewalsUploadService
 
             $quote = $quoteObject->create($quoteData);
 
+            if ($quoteType->id == QuoteTypeId::Health) {
+                app(HealthQuoteRevampMigrationService::class)->dispatchForRenewalLead($quote->id);
+            }
+
             if (! $isQuotePersonal) {
                 $this->syncQuote($quote, $quoteData);
             }

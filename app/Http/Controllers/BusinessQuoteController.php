@@ -28,6 +28,7 @@ use App\Models\BusinessQuote;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\KycLog;
+use App\Models\Lookup;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -52,8 +53,10 @@ use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 
@@ -130,6 +133,7 @@ class BusinessQuoteController extends Controller
         $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
         $subSources = app(LookupService::class)->getSubSource();
+        $leadTypeOptions = $this->lookupService->getCorplineLeadTypes();
 
         return inertia('CorpLineQuote/Index', compact(
             'quotes',
@@ -142,7 +146,8 @@ class BusinessQuoteController extends Controller
             'totalCount',
             'authorizedDays',
             'insurerAMLStatus',
-            'subSources'
+            'subSources',
+            'leadTypeOptions'
         ));
     }
 
@@ -389,6 +394,7 @@ class BusinessQuoteController extends Controller
             'paymentDocument' => $paymentDocuments,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'leadTypeOptions' => $this->lookupService->getCorplineLeadTypes(),
         ]);
     }
 
@@ -437,6 +443,19 @@ class BusinessQuoteController extends Controller
         $this->businessQuoteService->updateBusinessQuote($request, $id);
 
         return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
+    }
+
+    public function updateLeadType(Request $request, $uuid): RedirectResponse
+    {
+        $validValues = Lookup::where('key', LookupsEnum::CORPLINE_LEAD_TYPE->value)->pluck('code');
+
+        $request->validate([
+            'lead_type' => ['required', Rule::in($validValues)],
+        ]);
+
+        BusinessQuote::where('uuid', $uuid)->update(['lead_type' => $request->lead_type]);
+
+        return back();
     }
 
     public function cardsView(Request $request)

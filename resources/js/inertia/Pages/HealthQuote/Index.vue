@@ -35,6 +35,7 @@ defineProps({
     type: Array,
     default: () => [],
   },
+  genderDisplayMap: Object,
 });
 
 const page = usePage();
@@ -61,6 +62,7 @@ const uaePassApiStatusFilterOptions = computed(() => {
   return [{ value: 'All', label: 'All' }];
 });
 const notification = useToast();
+const healthCoverForEnum = page.props.healthCoverForEnum;
 
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
@@ -110,8 +112,13 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'EMIRATE OF VISA', value: 'emirate.text', is_active: true },
+  { text: 'EMIRATE OF VISA', value: 'emirates', is_active: true },
   { text: 'POLICY PEC FLAG', value: 'has_pec_tag', is_active: true },
+  {
+    text: 'IS AGE 60 AND ABOVE',
+    value: 'is_age_sixty_and_above',
+    is_active: true,
+  },
   {
     text: 'PAYMENT AUTHORISED DATE',
     value: 'payment.authorized_at',
@@ -125,6 +132,7 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
+  { text: 'UNASSIGNED', value: 'unassigned', is_active: true },
   { text: 'OE/AE', value: 'support_user.name', is_active: true },
   { text: 'BRANCH', value: 'branch_name', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
@@ -172,12 +180,20 @@ const tableHeader = ref([
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LEAD TYPE', value: 'health_lead_type.text', is_active: true },
-  { text: 'SALARY BAND', value: 'salary_band.text', is_active: true },
   {
     text: 'MEMBER CATEGORY',
     value: 'member_category.text',
     is_active: true,
   },
+  {
+    text: 'PolicyHolder Category',
+    value: 'policy_holder_category.text',
+    is_active: true,
+  },
+  { text: 'Visa Category', value: 'visa_category.text', is_active: true },
+  { text: 'Gender', value: 'gender_lookup.text', is_active: true },
+  { text: 'Marital Status', value: 'marital_status.text', is_active: true },
+  { text: 'SALARY', value: 'salary_band.text', is_active: true },
   {
     text: 'CURRENTLY INSURED WITH',
     value: 'insurance_provider.text',
@@ -238,6 +254,8 @@ const filters = reactive({
   quote_status: [],
   insurer_aml_status: [],
   advisors: [],
+  unassigned: '',
+  age_sixty_and_above: 'all',
   support_user_id: [],
   is_ecommerce: '',
   is_renewal: '',
@@ -525,6 +543,25 @@ const fixedValue = numberString => {
       maximumFractionDigits: 2,
     });
   }
+};
+
+const hasMemberAgeSixtyOrAbove = quote => {
+  const members = quote?.active_members ?? [];
+  const cutoffDate = new Date();
+  cutoffDate.setHours(0, 0, 0, 0);
+  cutoffDate.setFullYear(cutoffDate.getFullYear() - 60);
+
+  return members.some(member => {
+    if (!member?.dob) {
+      return false;
+    }
+    const memberDob = new Date(member.dob);
+    if (Number.isNaN(memberDob.getTime())) {
+      return false;
+    }
+
+    return memberDob <= cutoffDate;
+  });
 };
 
 const can = permission => useCan(permission);
@@ -1078,6 +1115,18 @@ const paymentStatusOptions = computed(() => {
           class="w-full"
         />
         <x-select
+          v-model="filters.unassigned"
+          label="Unassigned"
+          placeholder="Search by Unassigned"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]"
+          class="w-full"
+        />
+
+        <x-select
           v-model="filters.is_renewal"
           label="Renewal"
           placeholder="Search by Renewal"
@@ -1273,6 +1322,17 @@ const paymentStatusOptions = computed(() => {
           class="w-full"
           :single="true"
         />
+        <x-select
+          v-model="filters.age_sixty_and_above"
+          label="Is Age 60 and above"
+          placeholder="Search by Age 60 and above"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]"
+          class="w-full"
+        />
         <ComboBox
           v-model="filters.signatory"
           label="Signatory"
@@ -1429,6 +1489,23 @@ const paymentStatusOptions = computed(() => {
           </x-tag>
         </div>
       </template>
+      <template #item-is_age_sixty_and_above="item">
+        <div class="text-center">
+          <x-tag
+            size="sm"
+            :color="hasMemberAgeSixtyOrAbove(item) ? 'success' : 'error'"
+          >
+            {{ hasMemberAgeSixtyOrAbove(item) ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-unassigned="{ advisor_id }">
+        <div class="text-center">
+          <x-tag size="sm" :color="advisor_id ? 'error' : 'success'">
+            {{ advisor_id ? 'No' : 'Yes' }}
+          </x-tag>
+        </div>
+      </template>
       <template #item-authorized_at="item">
         <p v-if="item.payment_status?.payment_status_text === 'AUTHORISED'">
           {{ item.payments.authorized_at }}
@@ -1472,8 +1549,69 @@ const paymentStatusOptions = computed(() => {
           {{ item.renewal_batch_text }}
         </p>
       </template>
+      <template #item-emirates="item">
+        <span>{{ item?.emirate?.text ?? 'N/A' }}</span>
+      </template>
       <template #item-health_team_type="item">
         {{ item.health_team_type ?? item.notional_team }}
+      </template>
+      <template #item-member_category.text="item">
+        <p>
+          <span v-if="item.is_entity">N/A</span>
+          <span v-else>{{ item.member_category?.text ?? 'N/A' }}</span>
+        </p>
+      </template>
+      <template #item-policy_holder_category.text="item">
+        <p>
+          <span v-if="item.is_entity || !item.is_migrated">N/A</span>
+          <span v-else>{{ item.policy_holder_category?.text ?? 'N/A' }}</span>
+        </p>
+      </template>
+      <template #item-visa_category.text="item">
+        <p>
+          <span v-if="item.is_entity || !item.is_migrated">N/A</span>
+          <span v-else>{{ item.visa_category?.text ?? 'N/A' }}</span>
+        </p>
+      </template>
+      <template #item-gender_lookup.text="item">
+        <p>
+          <span
+            v-if="
+              item.is_entity ||
+              !item.is_migrated ||
+              (item.is_migrated && !item.is_policyholder_included)
+            "
+            >N/A</span
+          >
+          <span v-else>{{
+            item.gender_lookup?.text ?? genderDisplayMap[item.gender] ?? 'N/A'
+          }}</span>
+        </p>
+      </template>
+      <template #item-marital_status.text="item">
+        <p>
+          <span
+            v-if="
+              item.is_entity ||
+              !item.is_migrated ||
+              (item.is_migrated && !item.is_policyholder_included)
+            "
+            >N/A</span
+          >
+          <span v-else>{{ item.marital_status?.text ?? 'N/A' }}</span>
+        </p>
+      </template>
+      <template #item-salary_band.text="item">
+        <p>
+          <span
+            v-if="
+              item.is_entity ||
+              item.cover_for_id == healthCoverForEnum.DOMESTIC_HELPER
+            "
+            >N/A</span
+          >
+          <span v-else>{{ item.salary_band?.text ?? 'N/A' }}</span>
+        </p>
       </template>
     </DataTable>
 

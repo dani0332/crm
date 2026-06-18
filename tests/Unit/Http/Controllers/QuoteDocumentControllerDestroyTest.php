@@ -30,10 +30,10 @@ test('destroy does not delete document when policy is locked', function () {
 
     $quoteDocumentService = Mockery::mock(QuoteDocumentService::class);
     $quoteDocumentService
-        ->shouldReceive('isEnableUploadDocument')
+        ->shouldReceive('isEnableDocumentUploadOrDelete')
         ->once()
         ->with($quote->quote_status_id)
-        ->andReturn(false);
+        ->andReturn(['upload' => false, 'delete' => false]);
     $this->app->instance(QuoteDocumentService::class, $quoteDocumentService);
 
     $this->from('/quotes/business/8U8SCYTZ')

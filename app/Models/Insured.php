@@ -10,8 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class Insured extends Model implements AuditableContract
 {
-    use Auditable;
-    use HasFactory;
+    use Auditable, HasFactory;
     use IdNumberFormatting;
 
     protected $table = 'insured';
