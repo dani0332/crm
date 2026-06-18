@@ -864,6 +864,7 @@ class CoreSchema
                 $table->string('tax_invoice_buyer_no')->nullable();
                 $table->boolean('is_selected')->default(false);
                 $table->unsignedBigInteger('payment_status_id')->nullable();
+                $table->unsignedTinyInteger('sage_status_id')->nullable();
                 $table->string('policy_status')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();

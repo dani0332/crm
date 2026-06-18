@@ -40,4 +40,18 @@ final class EmbeddedProductEnum extends Enum
             self::RDX,
         ];
     }
+
+    /**
+     * EP short codes eligible for Sage booking reversal after IMCRM refund (MEDEX, RDX, Excess Cashback).
+     *
+     * @return array<int, string>
+     */
+    public static function getSageReversableEpShortCodes(): array
+    {
+        return [
+            self::MDX,
+            self::RDX,
+            self::ECB,
+        ];
+    }
 }
