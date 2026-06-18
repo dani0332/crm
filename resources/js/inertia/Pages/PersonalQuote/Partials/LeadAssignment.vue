@@ -260,7 +260,9 @@ onMounted(() => {
 
       <div
         v-if="
-          (props.quoteType === 'business' || props.quoteType === 'health' || props.quoteType === 'group_medical') &&
+          (props.quoteType === 'business' ||
+            props.quoteType === 'health' ||
+            props.quoteType === 'group_medical') &&
           props.canAssignPqa &&
           props.pqaAdvisors &&
           props.pqaAdvisors.length > 0
