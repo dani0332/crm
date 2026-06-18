@@ -46,8 +46,8 @@ const yesNoOptions = [
   { value: 0, label: 'No' },
 ];
 
-const emptyCategoryRow = () => ({
-  groupMedicalCategoryId: null,
+const emptyCategoryRow = (idx = null) => ({
+  groupMedicalCategoryId: idx !== null ? (props.groupMedicalCategories[idx]?.id ?? null) : null,
   insuranceProviderId: null,
   healthTpaId: null,
   groupMedicalNetworkId: null,
@@ -66,15 +66,18 @@ function getGmCategoryRowMax() {
  * Builds initial intake rows: prefers saved JSON; otherwise one empty row (appender).
  */
 function buildInitialCategoryRows(quote) {
+  console.log('------------------------');
+  console.log(quote?.group_medical_categories);
   const rowMax = getGmCategoryRowMax();
-  const intake = quote?.categories;
+  const intake = quote?.group_medical_categories;
+
   if (Array.isArray(intake) && intake.length > 0) {
     return intake.slice(0, rowMax).map(row => ({ ...emptyCategoryRow(), ...row }));
   }
   const savedN = parseInt(quote?.number_of_categories, 10);
   const n = Math.min(rowMax, Math.max(1, savedN || 1));
 
-  return Array.from({ length: n }, () => emptyCategoryRow());
+  return Array.from({ length: n }, (_, i) => emptyCategoryRow(i));
 }
 
 const initialGmRows = buildInitialCategoryRows(props.quote);
@@ -142,14 +145,19 @@ async function fetchNetworksForTpa(tpaId) {
   }
 }
 
+function tpaIdForRow(idx) {
+  const row = quoteForm.categories[idx];
+  return row?.health_third_party_administrator_id ?? row?.healthTpaId ?? null;
+}
+
 function networkOptionsForRow(idx) {
-  const tpaId = quoteForm.categories[idx]?.healthTpaId;
+  const tpaId = tpaIdForRow(idx);
   if (!tpaId) return [];
   return networksCache.value[tpaId] ?? [];
 }
 
 function isNetworkLoadingForRow(idx) {
-  const tpaId = quoteForm.categories[idx]?.healthTpaId;
+  const tpaId = tpaIdForRow(idx);
   return !!tpaId && networksFetching.value[tpaId];
 }
 
@@ -265,7 +273,7 @@ watch(
     const current = quoteForm.categories.length;
     if (n > current) {
       for (let i = current; i < n; i++) {
-        quoteForm.categories.push(emptyCategoryRow());
+        quoteForm.categories.push(initialGmRows[i] ? { ...initialGmRows[i] } : emptyCategoryRow(i));
       }
     } else if (n < current) {
       quoteForm.categories.splice(n);
@@ -282,7 +290,7 @@ function addCategoryRow() {
     });
     return;
   }
-  quoteForm.categories.push(emptyCategoryRow());
+  quoteForm.categories.push(emptyCategoryRow(quoteForm.categories.length));
   syncNumberOfCategoriesFromIntake();
 }
 
@@ -394,11 +402,17 @@ onMounted(() => {
   const uniqueTpaIds = [
     ...new Set(
       quoteForm.categories
-        .map(row => row.healthTpaId)
+        .flatMap(row => [row.health_third_party_administrator_id, row.healthTpaId])
         .filter(id => !!id),
     ),
   ];
   uniqueTpaIds.forEach(fetchNetworksForTpa);
+
+  quoteForm.categories.forEach((row, idx) => {
+    if (row.insurance_provider_id) {
+      onInsuranceProviderChange(row.insurance_provider_id, idx);
+    }
+  });
 
   if (quoteForm.emirate_of_registration_id) {
     onEmirateChange(quoteForm.emirate_of_registration_id);
@@ -847,16 +861,12 @@ function onSubmit(isValid) {
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <span class="block text-sm text-gray-800">
-                      {{
-                        memberCategoryOptionsForRow(idx).find(
-                          o => o.value == row.groupMedicalCategoryId,
-                        )?.label ?? '-'
-                      }}
+                      {{ props.groupMedicalCategories[idx]?.text ?? '-' }}
                     </span>
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
-                      v-model="row.insuranceProviderId"
+                      v-model="row.insurance_provider_id"
                       :options="insuranceProviderSelectOptions"
                       class="w-full min-w-[10rem]"
                       placeholder="Select provider"
@@ -871,7 +881,7 @@ function onSubmit(isValid) {
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
-                      v-model="row.healthTpaId"
+                      v-model="row.health_third_party_administrator_id"
                       :options="tpaOptionsForRow(idx)"
                       class="w-full min-w-[10rem]"
                       placeholder="Select TPA"
@@ -881,17 +891,18 @@ function onSubmit(isValid) {
                           `categories.${idx}.healthTpaId`
                         ]
                       "
+                      @update:modelValue="value => fetchNetworksForTpa(value)"
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
-                      v-model="row.groupMedicalNetworkId"
+                      v-model="row.health_network_id"
                       :options="networkOptionsForRow(idx)"
-                      :disabled="!row.healthTpaId || isNetworkLoadingForRow(idx)"
+                      :disabled="!tpaIdForRow(idx) || isNetworkLoadingForRow(idx)"
                       :placeholder="
                         isNetworkLoadingForRow(idx)
                           ? 'Loading...'
-                          : !row.healthTpaId
+                          : !tpaIdForRow(idx)
                             ? 'Select TPA first'
                             : 'Select network'
                       "
@@ -906,7 +917,7 @@ function onSubmit(isValid) {
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-input
-                      v-model="row.renewalDate"
+                      v-model="row.renewal_date"
                       type="date"
                       class="w-full min-w-[9.5rem]"
                       size="sm"
@@ -921,7 +932,7 @@ function onSubmit(isValid) {
                     class="border-r border-gray-100 px-3 py-3 text-right align-middle"
                   >
                     <x-input
-                      v-model="row.numberOfPeople"
+                      v-model="row.number_of_people"
                       type="number"
                       class="w-full min-w-[7.5rem]"
                       size="sm"

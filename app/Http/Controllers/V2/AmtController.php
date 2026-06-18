@@ -693,7 +693,7 @@ class AmtController extends Controller
     public function edit($id)
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
-        $record = BusinessQuote::with('quoteRequestEntityMapping.entity')
+        $record = BusinessQuote::with(['quoteRequestEntityMapping.entity', 'groupMedicalCategories.category'])
             ->where([['uuid', $id], ['business_type_of_insurance_id', 5]])
             ->first();
 

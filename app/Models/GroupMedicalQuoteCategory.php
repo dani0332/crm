@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GroupMedicalQuoteCategory extends Model
 {
@@ -20,4 +21,9 @@ class GroupMedicalQuoteCategory extends Model
         'sort_order',
         'group_medical_network_id',
     ];
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(GroupMedicalCategory::class, 'group_medical_category_id', 'id');
+    }
 }
