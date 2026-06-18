@@ -1450,7 +1450,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_EMAIL_SUBJECT],
             [
-                'value' => 'Add Rider Medical Cover to Your Motor Policy in Just Seconds (REF-ID)',
+                'value' => 'Add Rider Medical Cover to Your Bike Policy in Just Seconds (REF-ID)',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

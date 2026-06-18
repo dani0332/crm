@@ -2137,7 +2137,7 @@ class SendEmailCustomerService extends BaseService
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
             $senderEmail = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_FROM_EMAIL);
             $bccEmail = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_BCC_EMAIL);
-            $subject = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_EMAIL_SUBJECT, 'Add Rider Medical Cover to Your Motor Policy in Just Seconds (REF-ID)');
+            $subject = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_EMAIL_SUBJECT, 'Add Rider Medical Cover to Your Bike Policy in Just Seconds (REF-ID)');
             $subject = str_replace('REF-ID', $emailData['refId'] ?? '', $subject);
             $headers = [
                 'Accept' => $this->accept,
