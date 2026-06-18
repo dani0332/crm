@@ -69,6 +69,7 @@ class CyberQuoteService extends BaseQuoteService
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->filterBy('source')
             ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->when(request()->filled('api_issuance_status_id'), function ($q) {
                 $values = is_array(request('api_issuance_status_id'))
                     ? request('api_issuance_status_id')

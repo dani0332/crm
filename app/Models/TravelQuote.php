@@ -441,4 +441,9 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
     }
+
+    public function leadGenerator()
+    {
+        return $this->belongsTo(User::class, 'lead_generator_id')->select(['id', 'email', 'name']);
+    }
 }

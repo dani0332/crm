@@ -122,6 +122,7 @@ class LifeQuoteService extends BaseService
             'paymentStatus',
             'payments',
             'subSource:id,text',
+            'leadGenerator:id,name',
             'lifeQuote' => function ($q) {
                 $q->with([
                     'insuranceTenure',
@@ -222,6 +223,7 @@ class LifeQuoteService extends BaseService
             )
             ->filterBySegment(request()->input('segment_filter'), QuoteTypeId::Life)
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 
         $this->adjustQueryByInsurerInvoiceFilters($query);

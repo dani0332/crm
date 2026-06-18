@@ -67,6 +67,7 @@ class DeviceQuoteService extends BaseQuoteService
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->filterBy('source')
             ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->filterByAdvisorAssignedDates('quoteDetail', ['advisor_assigned_date_start', 'advisor_assigned_date_end'], verifyQuoteStatus: true)
             ->filterIn('renewal_batch_id')
             ->filterBy('assignment_type', ignoreAll: true)

@@ -168,6 +168,7 @@ class JetskiQuoteRepository extends BaseRepository
                 $q->where('customer_insured.quote_type_id', QuoteTypes::JETSKI->id());
             },
             'customer',
+            'leadGenerator:id,name',
         ])->when(auth()->user() && auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->id());
         })
@@ -182,6 +183,8 @@ class JetskiQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->select([
                 '*',
                 DB::raw('

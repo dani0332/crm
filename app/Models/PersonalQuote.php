@@ -65,6 +65,7 @@ class PersonalQuote extends Model implements AuditableContract
         'enquiry_count' => FilterTypes::EXACT,
         'is_renewal_tier_email_sent' => FilterTypes::EXACT,
         'is_early_renewal' => FilterTypes::EXACT,
+        'ea_model' => FilterTypes::EXACT,
     ];
     protected $appends = ['age', 'gender_label', 'pc_qualified_formatted', 'api_issuance_status', 'insurer_api_status'];
 

@@ -58,6 +58,7 @@ let availableFilters = {
   insurer_api_status_id: [],
   source: '',
   ea_model: '',
+  lead_generator: '',
   page: 1,
 };
 
@@ -96,8 +97,6 @@ const tableHeader = ref([
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'LEAD SOURCE', value: 'source', is_active: true },
-  { text: 'EA MODEL', value: 'ea_model', is_active: true },
-  { text: 'LEAD GENERATOR', value: 'lead_generator.name', is_active: true },
   { text: 'PLAN NAME', value: 'insurance_provider_plan.text', is_active: true },
   { text: 'COVERAGE UP TO', value: 'coverage_up_to', is_active: true },
   { text: 'TOTAL PRICE', value: 'premium', is_active: true },
@@ -132,7 +131,14 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
+  { text: 'EA MODEL', value: 'ea_model', is_active: true },
+  { text: 'LEAD GENERATOR', value: 'lead_generator.name', is_active: true },
 ]);
+
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborate' },
+];
 
 const quotesSelected = ref([]);
 const permissionAssignLeads = ref(false);
@@ -790,6 +796,23 @@ const insurerApiStatusOptions = computed(() => {
             </template>
           </x-select>
         </x-field>
+        <x-field label="EA Model">
+          <x-select
+            v-model="filters.ea_model"
+            placeholder="All Models"
+            :options="eaModelOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Lead Generator">
+          <x-input
+            v-model="filters.lead_generator"
+            type="search"
+            name="lead_generator"
+            class="w-full"
+            placeholder="Search by lead generator name"
+          />
+        </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -910,6 +933,12 @@ const insurerApiStatusOptions = computed(() => {
       </template>
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.text }}
+      </template>
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+      <template #item-lead_generator="item">
+        {{ item.lead_generator?.name }}
       </template>
     </DataTable>
 

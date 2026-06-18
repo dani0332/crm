@@ -65,6 +65,7 @@ class SavingsQuoteService extends BaseQuoteService
             'nationality',
             'subSource:id,text',
             'branch:id,name',
+            'leadGenerator:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -79,7 +80,9 @@ class SavingsQuoteService extends BaseQuoteService
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterByPaymentDueDates('payment_due_date')
-            ->filterByDateRange('booking_date', 'policy_booking_date');
+            ->filterByDateRange('booking_date', 'policy_booking_date')
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'));
 
         if (request()->has('debug') && request()->debug == 'true') {
             echo $query->toRawSql();

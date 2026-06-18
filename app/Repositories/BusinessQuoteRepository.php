@@ -68,6 +68,7 @@ class BusinessQuoteRepository extends BaseRepository
             'businessTypeOfInsurance',
             'subSource',
             'branch:id,name',
+            'leadGenerator:id,name',
         ];
         if ($quoteType == quoteTypeCode::GroupMedical) {
             $with[] = 'emirate';

@@ -59,6 +59,8 @@ class BusinessQuoteExport implements CsvExportableInterface
             'BOOKING DATE',
             'IMCRM SUB-SOURCE',
             'LEAD TYPE',
+            'EA MODEL',
+            'LEAD GENERATOR',
         ];
     }
 
@@ -94,6 +96,8 @@ class BusinessQuoteExport implements CsvExportableInterface
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             optional($quote->subSource)->text,
             $quote->lead_type ?? '',
+            $quote->ea_model ?? '',
+            $quote->leadGenerator?->name ?? '',
         ];
     }
 

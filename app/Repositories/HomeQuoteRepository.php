@@ -147,6 +147,8 @@ class HomeQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->filterByPrivateClient(request('private_client'))
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('personal_quotes.created_at', 'desc')
             ->when(
@@ -264,6 +266,7 @@ class HomeQuoteRepository extends BaseRepository
             'customer',
             'renewalBatchModel',
             'branch:id,name',
+            'leadGenerator:id,name',
         ];
     }
 

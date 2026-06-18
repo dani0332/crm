@@ -377,4 +377,9 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
     }
+
+    public function leadGenerator()
+    {
+        return $this->belongsTo(User::class, 'lead_generator_id')->select(['id', 'name']);
+    }
 }

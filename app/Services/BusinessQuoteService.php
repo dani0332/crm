@@ -153,6 +153,8 @@ class BusinessQuoteService extends BaseService
                 'b.name as lead_branch_name',
                 'b.id as lead_branch_id',
                 'bqr.is_branch_applicable',
+                'bqr.ea_model',
+                'lg.name as lead_generator_name',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -187,7 +189,8 @@ class BusinessQuoteService extends BaseService
                     ->where('ub.is_primary', '=', 1)
                     ->where('ub.status', '=', 1);
             })
-            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
+            ->leftJoin('users as lg', 'lg.id', '=', 'bqr.lead_generator_id');
     }
 
     private function applyUtmJoin(): void
@@ -549,6 +552,14 @@ class BusinessQuoteService extends BaseService
 
         if (! empty($request->lead_type) && is_array($request->lead_type)) {
             $this->query->whereIn('bqr.lead_type', $request->lead_type);
+        }
+
+        if (! empty($request->ea_model)) {
+            $this->query->where('bqr.ea_model', $request->ea_model);
+        }
+
+        if (! empty($request->lead_generator)) {
+            $this->query->where('lg.name', 'like', '%'.$request->lead_generator.'%');
         }
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');

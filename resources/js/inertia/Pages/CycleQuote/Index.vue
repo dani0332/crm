@@ -65,11 +65,14 @@ let availableFilters = {
   private_client: 'all',
   authorize_date: '',
   captured_date: '',
+  ea_model: '',
+  lead_generator: '',
 };
 
 const filters = reactive(availableFilters);
 const quotesSelected = ref([]);
 const canExport = ref(false);
+const eaModelOptions = [{ value: 'referral', label: 'Referral' }, { value: 'collaborate', label: 'Collaborate' }];
 
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
@@ -189,6 +192,8 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
+  { text: 'EA MODEL', value: 'ea_model', is_active: true },
+  { text: 'LEAD GENERATOR', value: 'lead_generator.name', is_active: true },
 ]);
 
 function onSubmit(isValid) {
@@ -847,6 +852,21 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           :single="true"
         />
+        <x-select
+          label="EA Model"
+          v-model="filters.ea_model"
+          placeholder="All Models"
+          :options="eaModelOptions"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.lead_generator"
+          type="search"
+          name="lead_generator"
+          label="Lead Generator"
+          class="w-full"
+          placeholder="Search by lead generator name"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -986,6 +1006,12 @@ const insurerAMLStatusOption = computed(() => {
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
+      </template>
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+      <template #item-lead_generator="item">
+        {{ item.lead_generator?.name }}
       </template>
     </DataTable>
 

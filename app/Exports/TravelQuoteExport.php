@@ -82,6 +82,8 @@ class TravelQuoteExport implements CsvExportableInterface
             'LEAD ASSIGNMENT TRIGGER',
             'PRIVATE CLIENT',
             'IMCRM SUB-SOURCE',
+            'EA MODEL',
+            'LEAD GENERATOR',
         ];
     }
 
@@ -135,6 +137,8 @@ class TravelQuoteExport implements CsvExportableInterface
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
             $quote->customer?->pcp_tag_formatted ?? '',
             $quote->subSource?->text ?? '',
+            $quote->ea_model ?? '',
+            $quote->leadGenerator?->name ?? '',
         ];
     }
 
