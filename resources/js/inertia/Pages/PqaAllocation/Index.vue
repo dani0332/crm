@@ -348,18 +348,18 @@ onMounted(() => {
         <h3>Available / UnAvailable</h3>
         <p>{{ filteredAvailableUsers }} / {{ filteredUnavailableUsers }}</p>
       </div>
-      <div class="labox border-yellow-500">
+      <!-- <div class="labox border-yellow-500">
         <h3>Total Advisors</h3>
         <p>{{ filteredData.length }}</p>
-      </div>
+      </div> -->
       <div class="labox border-red-500">
         <h3>Unassigned Leads Count (today)</h3>
         <p>{{ props.todayTotalUnAssignedLeadCount }}</p>
       </div>
-      <div class="labox border-slate-300 col-span-2">
+      <!-- <div class="labox border-slate-300 col-span-2">
         <h3>Leads today (total)</h3>
         <p>{{ props.todayTotalLeadCount }}</p>
-      </div>
+      </div> -->
 
       <TransitionGroup name="fade">
         <div v-if="isCapChanged" class="col-span-2">
