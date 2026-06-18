@@ -7,7 +7,7 @@ namespace App\Services\GroupMedical;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\GroupMedicalCategory;
-use App\Models\GroupMedicalNetwork;
+use App\Models\HealthNetwork;
 use App\Models\HealthPlanType;
 use App\Models\HealthThirdPartyAdministrator;
 use App\Models\QuoteType;
@@ -119,7 +119,7 @@ final class GroupMedicalAmtFormDropdownService
      */
     public function groupMedicalNetworks(?int $tpaId = null): Collection
     {
-        $query = GroupMedicalNetwork::query()
+        $query = HealthNetwork::query()
             ->active()
             ->select('id', 'text')
             ->orderBy('text');
@@ -155,8 +155,8 @@ final class GroupMedicalAmtFormDropdownService
 
             $categoryId = $row['group_medical_category_id'] ?? null;
             $providerId = $row['insurance_provider_id'] ?? null;
-            $tpaId = $row['group_medical_third_party_administrator_id'] ?? null;
-            $networkId = $row['group_medical_network_id'] ?? null;
+            $tpaId = $row['health_third_party_administrator_id'] ?? null;
+            $networkId = $row['health_network_id'] ?? null;
             $renewalDate = $row['renewal_date'] ?? null;
 
             $rows[] = [
