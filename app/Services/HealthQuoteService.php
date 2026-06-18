@@ -46,6 +46,7 @@ use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Services\PqaAllocation\PqaLeadAllocationService;
 use App\Services\SLA\SLAService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
@@ -2067,5 +2068,71 @@ class HealthQuoteService extends BaseService
         }
 
         $quote->save();
+    }
+
+    /**
+     * Manually assign or reassign Pre‑Qualification Advisor on Corpline business quotes (IMCRM list).
+     *
+     * @param  array<int, string|int>  $leadIds
+     */
+    public function assignPreQualificationAdvisor(array $leadIds, int $preQualificationAdvisorUserId, string $modelType): ?string
+    {
+
+        $pqaService = app(PqaLeadAllocationService::class);
+        $quoteTypeId = (int) QuoteTypes::HEALTH->id();
+
+        if (! $pqaService->userIsEligiblePreQualificationAdvisor($preQualificationAdvisorUserId, $quoteTypeId)) {
+
+            LoggerService::warning(self::class.'::assignPreQualificationAdvisor: ineligible PQA user '.$preQualificationAdvisorUserId);
+
+            return null;
+        }
+
+        $parsedIds = [];
+        foreach ($leadIds as $rawId) {
+            $id = (int) explode('|', (string) $rawId)[0];
+            if ($id > 0) {
+                $parsedIds[] = $id;
+            }
+        }
+
+        if ($parsedIds === []) {
+            return null;
+        }
+
+        $updatedLeadIds = [];
+
+        DB::transaction(function () use ($parsedIds, $preQualificationAdvisorUserId, $pqaService, $quoteTypeId, &$updatedLeadIds) {
+            foreach ($parsedIds as $id) {
+                $quote = $this->getEntityPlain($id);
+                if ($quote === null) {
+                    continue;
+                }
+
+                if ((int) $quote->pq_advisor_id === $preQualificationAdvisorUserId) {
+                    continue;
+                }
+
+                $previousId = $quote->pq_advisor_id !== null ? (int) $quote->pq_advisor_id : null;
+
+                $quote->pq_advisor_id = $preQualificationAdvisorUserId;
+                $quote->pq_assigned_at = now();
+                $quote->save();
+
+                $pqaService->recordManualPqaAssignment($preQualificationAdvisorUserId, $quoteTypeId, $previousId);
+
+                $updatedLeadIds[] = $id;
+            }
+        });
+
+        if ($updatedLeadIds === []) {
+            $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
+
+            return 'Selected leads already have '.$assigneeName.' as Pre‑Qualification Advisor.';
+        }
+
+        $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
+
+        return $modelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
     }
 }

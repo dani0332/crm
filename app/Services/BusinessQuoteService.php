@@ -957,7 +957,8 @@ class BusinessQuoteService extends BaseService
         DB::transaction(function () use ($parsedIds, $preQualificationAdvisorUserId, $pqaService, $quoteTypeId, &$updatedLeadIds) {
             foreach ($parsedIds as $id) {
                 $quote = $this->getEntityPlain($id);
-                if ($quote === null || (int) $quote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                // if ($quote === null || (int) $quote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                if ($quote === null) {
                     continue;
                 }
 

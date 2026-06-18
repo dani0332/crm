@@ -1809,7 +1809,7 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-
+        $modelType = ($modelType == 'group_medical') ? 'business' : $modelType;
         $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER, quoteTypeCode::Device];
         if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Savings';
@@ -2655,12 +2655,20 @@ class CRUDController extends Controller
         $leadIds = array_filter(explode(',', $request->assigned_lead_id));
         $preQualificationAdvisorUserId = (int) $request->pq_advisor_id;
         $modelType = $request->modelType;
+        if ($modelType == 'health') {
+            $successMessage = $this->healthQuoteService->assignPreQualificationAdvisor(
+                $leadIds,
+                $preQualificationAdvisorUserId,
+                $modelType
+            );
+        } else {
 
-        $successMessage = $this->businessQuoteService->assignPreQualificationAdvisor(
-            $leadIds,
-            $preQualificationAdvisorUserId,
-            $modelType
-        );
+            $successMessage = $this->businessQuoteService->assignPreQualificationAdvisor(
+                $leadIds,
+                $preQualificationAdvisorUserId,
+                $modelType
+            );
+        }
 
         if ($successMessage !== null) {
             return Redirect::back()->with('success', $successMessage);

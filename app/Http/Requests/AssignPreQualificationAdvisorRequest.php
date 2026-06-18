@@ -43,7 +43,7 @@ class AssignPreQualificationAdvisorRequest extends FormRequest
         return [
             'pq_advisor_id' => 'required|integer|exists:users,id',
             'assigned_lead_id' => 'required|string',
-            'modelType' => 'required|string|in:business',
+            'modelType' => 'required|string|in:business,health,group_medical',
         ];
     }
 
