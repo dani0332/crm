@@ -249,6 +249,11 @@ return [
     'MISREPORT_DATE_FORMAT' => env('MISREPORT_DATE_FORMAT', 'd F Y (H:i)'),
     'MISREPORT_FILENAME_DATE_FORMAT' => env('MISREPORT_FILENAME_DATE_FORMAT', 'Ymd'),
 
+    /* DIC Travel (Dubai Insurance Company / EnsuredIT) — policy issuance API; paths relative to DIC_TRAVEL_API_BASE_URL */
+    'DIC_API_BASE_URL' => env('DIC_API_BASE_URL', ''),
+    'DIC_API_TIMEOUT' => env('DIC_API_TIMEOUT', 90),
+    'DIC_API_USERNAME' => env('DIC_API_USERNAME', ''),
+    'DIC_API_PASSWORD' => env('DIC_API_PASSWORD', ''),
     // MACRM API KEY & SECRET CONSTANTS
     'MACRM_API_KEY' => env('MACRM_API_KEY'),
     'MACRM_API_SECRET' => env('MACRM_API_SECRET'),

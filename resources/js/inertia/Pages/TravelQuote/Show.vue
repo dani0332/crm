@@ -67,6 +67,7 @@ defineProps({
   access: Object,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  isDicProvider: Boolean,
   isQatarProvider: Boolean,
   customerAddressData: Object,
 });
@@ -3827,7 +3828,7 @@ const fullAddress = computed(() => {
     />
 
     <PolicyIssuanceApiLogs
-      v-if="isQatarProvider"
+      v-if="isQatarProvider || isDicProvider"
       :type="modelClass"
       :quoteTypeId="$page.props.quoteTypeId"
       :id="$page.props.quote.id"
