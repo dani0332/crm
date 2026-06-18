@@ -125,7 +125,7 @@ final class GroupMedicalAmtFormDropdownService
             ->orderBy('text');
 
         if ($tpaId !== null) {
-            $query->where('group_medical_third_party_administrator_id', $tpaId);
+            $query->where('health_third_party_administrator_id', $tpaId);
         }
 
         return $query->get();
