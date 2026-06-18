@@ -191,7 +191,7 @@ class CarQuoteExport implements CsvExportableInterface
             $quote->subSource?->text ?? '',
             $quote->plan?->repair_type ?? '',
             $quote->carQuoteRequestDetail?->engagement_level ?? '',
-            $quote->ea_model ?? '',
+            $quote->ea_model?->value ?? '',
             $quote->leadGenerator?->name ?? '',
         ];
     }

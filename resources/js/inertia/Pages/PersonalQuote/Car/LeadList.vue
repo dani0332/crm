@@ -120,6 +120,11 @@ const tableHeader = [
   { text: 'LEAD GENERATOR', value: 'lead_generator' },
 ];
 
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborate' },
+];
+
 const ecommerceOptions = [
   { value: '', label: 'Please select is ecommerce' },
   { value: 1, label: 'Yes' },
@@ -334,6 +339,8 @@ const filters = reactive({
   api_issuance_status_id: [],
   insurer_api_status_id: [],
   nationality_id: [],
+  ea_model: '',
+  lead_generator: '',
 });
 
 const teamUsers =
@@ -1371,6 +1378,23 @@ const onConfirmPUAExport = () => {
             />
           </template>
         </x-select>
+
+        <x-select
+          label="EA Model"
+          v-model="filters.ea_model"
+          placeholder="All Models"
+          :options="eaModelOptions"
+          class="w-full"
+        />
+
+        <x-input
+          v-model="filters.lead_generator"
+          type="search"
+          name="lead_generator"
+          label="Lead Generator"
+          class="w-full"
+          placeholder="Search by lead generator name"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div>
