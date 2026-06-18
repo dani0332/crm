@@ -158,12 +158,12 @@ const businessHeaders = [
   { text: 'Customer Level PC Tag', value: 'customer_pcp_tag' },
 ];
 
-const cqfProductIds = [1, 2, 6, 7, 9, 10];
+const cqfProductIds = new Set([1, 2, 6, 7, 9, 10]);
 
 const activeHeaders = computed(() => {
   const product = Number(filters.product);
   if (product === 5) return businessHeaders;
-  if (cqfProductIds.includes(product)) return tableHeader2;
+  if (cqfProductIds.has(product)) return tableHeader2;
   return tableHeader;
 });
 

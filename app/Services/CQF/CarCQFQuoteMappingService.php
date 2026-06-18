@@ -137,11 +137,6 @@ class CarCQFQuoteMappingService
         // Normalize fields for case-insensitive comparison
         $fields = array_filter(array_map('strtolower', $fields));
 
-        // Early return if no fields to check
-        if (empty($fields)) {
-            return null;
-        }
-
         // Check for partial match against enum values
         // Maps enum values to their car_type_insurance codes (TPL is stored as "Third Party Only")
         $typeInsuranceCodes = [
