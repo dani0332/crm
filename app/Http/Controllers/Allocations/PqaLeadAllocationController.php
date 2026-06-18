@@ -146,6 +146,20 @@ class PqaLeadAllocationController extends Controller
                 ->leftJoin('quote_type as qt', 'qt.id', '=', 'la.quote_type_id')
                 ->where('mhr.model_type', User::class)
                 ->where('r.name', RolesEnum::PreQualificationAdvisor)
+                ->whereExists(function ($sub) use ($productType, $corplineName, $groupMedicalName, $businessQuoteTypeId) {
+                    $sub->selectRaw('1')
+                        ->from('user_products as up_m')
+                        ->join('teams as t_m', 't_m.id', '=', 'up_m.product_id')
+                        ->whereColumn('up_m.user_id', 'users.id')
+                        ->where('t_m.type', $productType)
+                        ->whereRaw("(
+                            (UPPER(t_m.name) IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}')) AND la.quote_type_id = {$businessQuoteTypeId})
+                            OR
+                            (UPPER(t_m.name) NOT IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}')) AND la.quote_type_id = (
+                                SELECT qt_m.id FROM quote_type qt_m WHERE UPPER(qt_m.code) = UPPER(t_m.name) LIMIT 1
+                            ))
+                        )");
+                })
                 ->groupBy(
                     'users.name',
                     'users.id',
