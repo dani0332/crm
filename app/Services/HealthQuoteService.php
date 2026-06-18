@@ -460,7 +460,7 @@ class HealthQuoteService extends BaseService
 
         if (Auth::check() && Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
             $query->where('health_quote_request.pq_advisor_id', Auth::id());
-            $query->whereNull('health_quote_request.health_plan_type');
+            $query->whereNull('health_quote_request.health_plan_type_id');
         } elseif (Auth::check() && Auth::user()->hasRole(RolesEnum::PreQualificationLead)) {
 
         } else {
