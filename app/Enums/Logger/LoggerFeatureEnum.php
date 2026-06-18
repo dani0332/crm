@@ -92,6 +92,7 @@ enum LoggerFeatureEnum: string
     case CLAIM_DOCUMENT_UPLOAD_UTILITY = 'claim-document-upload-utility';
     case CLAIM_SUB_STATUS_CUSTOMER_UPDATE_EMAIL = 'claim-sub-status-customer-update-email';
     case UPDATE_QUOTE_POLICY = 'update-quote-policy';
+    case PARTNER_POLICY_DOCUMENT = 'partner-policy-document';
     case CSV_EXPORT = 'csv-export';
     case CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT = 'conversion-optimization-scheduled-export';
 
@@ -100,4 +101,7 @@ enum LoggerFeatureEnum: string
     case SQS_INBOUND_QUEUE = 'sqs-inbound-queue';
 
     case HEALTH_QUOTE_REVAMP = 'health-quote-revamp';
+
+    // Home Revival
+    case HOME_REVIVAL = 'home-revival';
 }

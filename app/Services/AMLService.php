@@ -72,6 +72,7 @@ use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
 use App\Services\AML\AMLInsurerService;
 use App\Services\AML\AMLLookupsService;
+use App\Services\Cars24\Cars24Service;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -1030,6 +1031,23 @@ class AMLService
         $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteDetails->id)->first();
         $vehicleDriverDetail = $quoteDetails->vehicleDriverDetail;
         $nationality = Nationality::where('code', $vehicleDriverDetail?->driver_home_country_license_issuance)->first();
+        $mappingValues = [];
+        $originalCodes = [];
+
+        if ($quoteDetails->source == LeadSourceEnum::CARS24) {
+            $originalCodes = [
+                'rta_transaction_type' => $vehicleDriverDetail?->rta_transaction_type,
+                'rta_plate_category' => $vehicleDriverDetail?->rta_plate_category,
+                'vehicle_color' => $vehicleDriverDetail?->vehicle_color,
+                'vehicle_plate_color' => $vehicleDriverDetail?->vehicle_plate_color,
+                'bank_name' => $vehicleDriverDetail?->bank_name,
+            ];
+
+            $result = app(Cars24Service::class)->mapCars24LookupsToProviderCodes($vehicleDriverDetail, $paymentDetails);
+            $vehicleDriverDetail = $result['vehicleDriverDetail'];
+            $mappingValues = $result['mappingValues'];
+        }
+
         $lookupsConfigs = [
             [
                 'key' => LookupsEnum::RTA_TRANSACTION_TYPE,
@@ -1043,7 +1061,7 @@ class AMLService
             ],
             [
                 'key' => LookupsEnum::VEHICLE_COLOR,
-                'codes' => array_filter([$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color]),
+                'codes' => [$vehicleDriverDetail?->vehicle_color, $vehicleDriverDetail?->vehicle_plate_color],
                 'requires_provider' => true,
             ],
             [
@@ -1089,24 +1107,24 @@ class AMLService
             'chassisNumber' => $carQuoteRequestDetails?->chassis_number ?? '',
             'rtaTransactionType' => [
                 'code' => $vehicleDriverDetail?->rta_transaction_type ?? null,
-                'value' => $rtaTransactionType?->text ?? null,
+                'value' => $rtaTransactionType?->text ?? $mappingValues['rta-transaction-type-'.($originalCodes['rta_transaction_type'] ?? '')] ?? null,
                 'authority' => 'RTA',
             ],
             'trafficCodeNumber' => $vehicleDriverDetail?->traffic_code_number ?? null,
             'engineNumber' => $vehicleDriverDetail?->vehicle_engine_number ?? null,
-            'rtaPlateCategory' => $rtaPlateCategory?->text ?? null,
+            'rtaPlateCategory' => $rtaPlateCategory?->text ?? $mappingValues['rta-plate-category-'.($originalCodes['rta_plate_category'] ?? '')] ?? null,
             'vehicleColor' => [
                 'code' => $vehicleDriverDetail?->vehicle_color ?? null,
-                'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_color] ?? null,
+                'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_color] ?? $mappingValues['vehicle-color-'.($originalCodes['vehicle_color'] ?? '')] ?? null,
             ],
             'plateColor' => [
                 'code' => $vehicleDriverDetail?->vehicle_plate_color ?? null,
-                'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_plate_color] ?? null,
+                'value' => $vehicleColor[$vehicleDriverDetail?->vehicle_plate_color] ?? $mappingValues['vehicle-color-'.($originalCodes['vehicle_plate_color'] ?? '')] ?? null,
             ],
             'bankLoan' => $vehicleDriverDetail?->bank_loan !== null ? (bool) $vehicleDriverDetail?->bank_loan : null,
             'bankName' => [
                 'code' => $vehicleDriverDetail?->bank_name ?? null,
-                'value' => $bankName?->text ?? null,
+                'value' => $bankName?->text ?? $mappingValues['bank-name-'.($originalCodes['bank_name'] ?? '')] ?? null,
             ],
             'firstRegistrationDate' => $vehicleDriverDetail?->first_registration_date ?? null,
             'policyEffectiveDate' => $quoteDetails->policy_start_date ?? null,
@@ -1271,7 +1289,7 @@ class AMLService
 
                 AutomationFailedJob::dispatch(
                     $quoteDetails->id,
-                    QuoteTypeId::Car,
+                    $quoteTypeId,
                     $actionRequired,
                     $statusAPIFailed,
                     PolicyIssuanceEnum::PROCESS_INVOLVED_QUOTE_FINALIZATION,
@@ -2528,13 +2546,13 @@ class AMLService
         return true;
     }
 
-    public function isAdditionalVehicleAndDriverDetailsEnabled($quoteTypeCode, $insuranceProviderId, $vehicleRegistrationType, $detailPage = false)
+    public function isAdditionalVehicleAndDriverDetailsEnabled($quoteTypeCode, $insuranceProviderId, $vehicleRegistrationType, $detailPage = false, $source = '')
     {
-        if (! ($quoteTypeCode == quoteTypeCode::Car && $vehicleRegistrationType == CarRegistrationType::PERSONAL)) {
+        if (! ($quoteTypeCode == quoteTypeCode::Car && strtolower($vehicleRegistrationType) == CarRegistrationType::PERSONAL)) {
             return false;
         }
 
-        if ($detailPage) {
+        if ($detailPage || $source == LeadSourceEnum::CARS24) {
             return true;
         }
 
@@ -2548,42 +2566,41 @@ class AMLService
 
     public function getAdditionaVehicleDriverLookups($quoteTypeCode, $insuranceProviderId, $leadSource)
     {
+        $requireLookups = [
+            LookupsEnum::RTA_TRANSACTION_TYPE,
+            LookupsEnum::RTA_PLATE_CATEGORY,
+            LookupsEnum::VEHICLE_COLOR,
+            LookupsEnum::BANK_NAME,
+            LookupsEnum::PLATE_CODE,
+        ];
+
+        if ($leadSource == LeadSourceEnum::CARS24) {
+            return app(Cars24Service::class)->getLookups($requireLookups, $leadSource);
+        }
+
         if ($quoteTypeCode != quoteTypeCode::Car || is_null($insuranceProviderId)) {
             return [];
         }
 
-        if (is_numeric($insuranceProviderId)) {
-            $insuranceProviderCode = InsuranceProvider::find($insuranceProviderId)?->code;
-        } else {
-            $insuranceProviderCode = $insuranceProviderId;
-        }
+        $insuranceProviderCode = is_numeric($insuranceProviderId)
+            ? InsuranceProvider::find($insuranceProviderId)?->code
+            : $insuranceProviderId;
 
-        // for LIVA
+        return is_null($insuranceProviderCode)
+            ? []
+            : $this->getProviderLookups($insuranceProviderCode, $insuranceProviderId, $requireLookups, $leadSource);
+    }
+
+    protected function getProviderLookups(string $insuranceProviderCode, mixed $insuranceProviderId, array $requireLookups, string $leadSource): array
+    {
         if ($insuranceProviderCode == InsuranceProvidersEnum::RSA) {
             return app(LivaInsuranceService::class)->getLIVALookups($leadSource);
         }
 
-        // for GIG and other insurers
-        if (in_array($insuranceProviderCode, [
-            InsuranceProvidersEnum::AXA,
-            InsuranceProvidersEnum::QIC,
-            InsuranceProvidersEnum::OIC,
-            InsuranceProvidersEnum::TM,
-            InsuranceProvidersEnum::RAK,
-            InsuranceProvidersEnum::DNIRC,
-            InsuranceProvidersEnum::AMJ,
-            InsuranceProvidersEnum::FID,
-            InsuranceProvidersEnum::NT,
-            InsuranceProvidersEnum::AFNIC,
-            InsuranceProvidersEnum::AWNI,
-        ])) {
-            return app(AMLLookupsService::class)->getAMLLookups($insuranceProviderId, [
-                LookupsEnum::RTA_TRANSACTION_TYPE,
-                LookupsEnum::RTA_PLATE_CATEGORY,
-                LookupsEnum::VEHICLE_COLOR,
-                LookupsEnum::BANK_NAME,
-                LookupsEnum::PLATE_CODE,
-            ])->toArray();
+        $provider = InsuranceProvider::where('code', $insuranceProviderCode)->first();
+
+        if ($provider?->aml_lookups_enabled) {
+            return app(AMLLookupsService::class)->getAMLLookups($insuranceProviderId, $requireLookups)->toArray();
         }
 
         return [];

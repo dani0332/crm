@@ -163,7 +163,7 @@ class HealthQuoteObserver
         $introEmailEligibleStatuses = [QuoteStatusEnum::NewLead, QuoteStatusEnum::Qualified, QuoteStatusEnum::Quoted];
         if (isset($dirty['advisor_id']) && in_array($healthQuote->quote_status_id, $introEmailEligibleStatuses)) {
             info("Quote status changed to {$healthQuote->quote_status_id} | Ref-ID: {$healthQuote->uuid} | Time: ".now());
-            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $healthQuote->uuid, 'send-rm-intro-email', null, false);
+            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $healthQuote->uuid, 'send-rm-intro-email', null, false)->delay(Carbon::now()->addSeconds(15));
         }
         if (
             isset($dirty['quote_status_id']) &&

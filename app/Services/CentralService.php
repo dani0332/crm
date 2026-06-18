@@ -1738,6 +1738,11 @@ class CentralService extends BaseService
                 $emailData->companyName = $quote->company_name ?? '';
             }
 
+            if ($quote->source == LeadSourceEnum::CARS24) {
+                $cc = getAppStorageValueByKey(ApplicationStorageEnums::CARS24_SEND_POLICY_CC_EMAILS);
+                $emailData->cc_emails = $cc ? array_map('trim', explode(',', $cc)) : [];
+            }
+
             if ($emailData->advisorEmail) {
                 $emailData->cc_emails[] = $emailData->advisorEmail;
             }
@@ -1838,15 +1843,7 @@ class CentralService extends BaseService
             $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
             if (! empty($handBookDocuments)) {
                 $latestDocument = $quoteTypeId == QuoteTypeId::Health ? collect($handBookDocuments)->first() : collect($handBookDocuments)->last();
-                $url = $latestDocument['url'] ?? null;
-
-                if ($url) {
-                    if (str_contains($url, 'http')) {
-                        $emailData->handBookDocuments = $url;
-                    } else {
-                        $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($url, 'azureIMPrivate') ?? '';
-                    }
-                }
+                $emailData->handBookDocuments = $latestDocument['url'] ?? null;
             } else {
                 $policyHandBook = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH, DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_HANDBOOK]);
@@ -2535,7 +2532,7 @@ class CentralService extends BaseService
 
             AutomationFailedJob::dispatch(
                 $quote->id,
-                QuoteTypeId::Car,
+                $quoteTypeId,
                 $actionRequired,
                 $statusAPIFailed,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
@@ -2589,7 +2586,7 @@ class CentralService extends BaseService
 
                     AutomationFailedJob::dispatch(
                         $quote->id,
-                        QuoteTypeId::Car,
+                        $quoteTypeId,
                         $actionRequired,
                         $statusAPIFailed,
                         PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,

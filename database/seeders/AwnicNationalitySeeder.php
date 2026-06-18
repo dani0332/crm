@@ -320,10 +320,12 @@ class AwnicNationalitySeeder extends Seeder
             ['code' => 'ESH', 'awni_country_code_number' => null],
         ];
 
-        foreach ($nationalities as $entry) {
-            DB::table('nationality')
-                ->where('code', $entry['code'])
-                ->update(['awni_country_code_number' => $entry['awni_country_code_number']]);
-        }
+        DB::transaction(function () use ($nationalities): void {
+            foreach ($nationalities as $entry) {
+                DB::table('nationality')
+                    ->where('code', $entry['code'])
+                    ->update(['awni_country_code_number' => $entry['awni_country_code_number']]);
+            }
+        }, 5);
     }
 }

@@ -466,12 +466,21 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR = 'ENABLE_PAYMENT_NOTIFICATION_EMAIL_TO_ADVISOR';
     public const BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL = 'BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL';
 
+    /**
+     * Bird workflow URL for notifying compliance when a quote AML risk score is in the High Risk band (>= 35).
+     * Shape of POST body is defined by the Bird flow; see {@see NotifyHighRiskScoreBirdJob}.
+     */
+    public const BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL = 'BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL';
+
     // Health Team Routing
     public const HEALTH_TEAM_ROUTING_ENABLED = 'HEALTH_TEAM_ROUTING_ENABLED';
     public const ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS = 'ADVISOR_AUTHORISED_PAYMENT_NOTIFICATION_DAYS';
 
     // Instant Alfred Export Workflow
     public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
+    public const BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL = 'BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL';
+    public const AXA_POLICY_MANDATORY_DOCUMENTS = 'AXA_POLICY_MANDATORY_DOCUMENTS';
+    public const CARS24_SEND_POLICY_CC_EMAILS = 'CARS24_SEND_POLICY_CC_EMAILS';
 
     // Claims Module Toggle
     public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
@@ -492,4 +501,7 @@ final class ApplicationStorageEnums extends Enum
      * Empty row seeded by {@see ApplicationStorageSeeder}; set `value` before enabling the job.
      */
     public const CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS = 'CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS';
+
+    // Home Revivals
+    public const DTT_HOME_ENABLED = 'DTT_HOME_ENABLED';
 }

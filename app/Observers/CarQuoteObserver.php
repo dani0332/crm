@@ -28,6 +28,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
+use App\Services\PartnerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusLogService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -154,6 +155,14 @@ class CarQuoteObserver
             }
 
             RetargetEpReminderJob::dispatch($lead->uuid, QuoteTypeId::Car);
+
+            try {
+                app(PartnerService::class)->sendPolicyDocumentsToPartner($lead->uuid, QuoteTypes::CAR);
+            } catch (Exception $e) {
+                LoggerService::error('CarQuoteObserver - send partner policy documents failed', [
+                    'uuid' => $lead->uuid,
+                ], exception: $e);
+            }
 
             try {
                 app(BranchAssignmentService::class)->saveBranchOverride($lead, QuoteTypeId::Car);

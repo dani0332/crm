@@ -9,6 +9,7 @@ enum SageEmbeddedProductEnum: string
     case BOOKING_FAILED = 'Booking Failed';
     case BOOKING_COMPLETED = 'Booked';
     case BOOKING_CANCELLED = 'Cancelled';
+    case BOOKING_REVERSAL_FAILED = 'Booking Reversal Failed';
 
     public function id()
     {
@@ -22,6 +23,7 @@ enum SageEmbeddedProductEnum: string
             SageEmbeddedProductEnum::BOOKING_FAILED => 2,
             SageEmbeddedProductEnum::BOOKING_COMPLETED => 3,
             SageEmbeddedProductEnum::BOOKING_CANCELLED => 4,
+            SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED => 5,
             default => null,
         };
     }
@@ -32,6 +34,7 @@ enum SageEmbeddedProductEnum: string
             2 => SageEmbeddedProductEnum::BOOKING_FAILED,
             3 => SageEmbeddedProductEnum::BOOKING_COMPLETED,
             4 => SageEmbeddedProductEnum::BOOKING_CANCELLED,
+            5 => SageEmbeddedProductEnum::BOOKING_REVERSAL_FAILED,
         ];
 
         return isset($types[$value]) ? $types[$value] : null;
