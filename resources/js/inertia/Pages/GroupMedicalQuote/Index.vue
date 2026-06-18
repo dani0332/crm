@@ -20,7 +20,7 @@ defineProps({
     type: Array,
     default: () => [],
   },
-    canAssignPreQualificationAdvisor: {
+  canAssignPreQualificationAdvisor: {
     type: Boolean,
     default: false,
   },
@@ -134,7 +134,6 @@ const pqaAdvisorOptions = computed(() => {
   return options;
 });
 
-
 const supportUserOptions = computed(() => {
   return page.props.supportUsers.map(advisor => ({
     value: advisor.id,
@@ -170,7 +169,10 @@ const tableHeader = [
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
-  { text: 'PRE-QUALIFICATION ADVISOR', value: 'pre_qualification_advisor_name' },
+  {
+    text: 'PRE-QUALIFICATION ADVISOR',
+    value: 'pre_qualification_advisor_name',
+  },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
