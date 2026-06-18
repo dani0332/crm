@@ -1100,6 +1100,28 @@ const onLeadTypeUpdate = () => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LEAD TYPE</dt>
+                <dd>
+                  <div class="flex items-center gap-2">
+                    <x-select
+                      v-model="leadTypeForm.lead_type"
+                      :options="leadTypeOptions"
+                      class="w-full"
+                      placeholder="Select Lead Type"
+                    />
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      :loading="leadTypeForm.processing"
+                      @click.prevent="onLeadTypeUpdate"
+                      v-if="readOnlyMode.isDisable === true"
+                    >
+                      Save
+                    </x-button>
+                  </div>
+                </dd>
+              </div>
               <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">UTM SOURCE</dt>
