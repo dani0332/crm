@@ -191,6 +191,9 @@ class OtherNonMotorRenewalsUploadService
         LoggerService::info('Advisor found: '.$advisor->id.' for email: '.$advisorEmail);
         LoggerService::info('Quote found: '.$quote->id.' for ref ID: '.$refId);
 
+        $this->assignAdvisor($quote, $advisor->id);
+        LoggerService::info('Advisor assigned: '.$advisor->id.' to quote: '.$quote->id);
+
         $process->update([
             'quote_type' => self::QUOTE_TYPE,
             'quote_id' => $quote->id,
@@ -200,8 +203,6 @@ class OtherNonMotorRenewalsUploadService
             'validation_errors' => [],
         ]);
 
-        $this->assignAdvisor($quote, $advisor->id);
-        LoggerService::info('Advisor assigned: '.$advisor->id.' to quote: '.$quote->id);
         $renewalsUploadLead->increment('good');
     }
 
