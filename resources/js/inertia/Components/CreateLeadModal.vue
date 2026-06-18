@@ -30,7 +30,6 @@ const page = usePage();
 const authRoles = computed(() => page.props.auth?.roles ?? []);
 const authPermissions = computed(() => page.props.auth?.permissions ?? []);
 
-const isEAManager = computed(() => authRoles.value.includes('EA_MANAGER'));
 const isAnyManager = computed(() =>
   authRoles.value.some(role => role.toLowerCase().includes('manager')),
 );
@@ -112,15 +111,30 @@ const hasCollaborateEligibleLob = computed(
 const isCorpline = computed(() => leadForm.quote_type_id == 101);
 const isHealthLob = computed(() => leadForm.quote_type_id == 3);
 
+const hasEAReferralRole = computed(
+  () =>
+    authRoles.value.includes('EA_REFERRAL') ||
+    authRoles.value.includes('EA_MANAGER') ||
+    authRoles.value.includes('ADMIN') ||
+    authRoles.value.includes('ENGINEERING'),
+);
+
 const eaModelOptions = computed(() => {
-  const options = [{ value: 'referral', label: 'Referral' }];
-  if (
-    canCollaborate.value &&
-    !isAnyManager.value &&
-    hasCollaborateEligibleLob.value
-  ) {
+  // FRD A.9: any manager role → Referral only, regardless of other permissions.
+  if (isAnyManager.value) {
+    return [{ value: 'referral', label: 'Referral' }];
+  }
+
+  const options = [];
+
+  if (hasEAReferralRole.value) {
+    options.push({ value: 'referral', label: 'Referral' });
+  }
+
+  if (canCollaborate.value && hasCollaborateEligibleLob.value) {
     options.push({ value: 'collaborate', label: 'Collaborate' });
   }
+
   return options;
 });
 
