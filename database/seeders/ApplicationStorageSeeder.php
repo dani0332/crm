@@ -1934,7 +1934,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_FAILED_RENEWAL_WORKFLOW],
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_FAILED_RENEWAL_BREVO_TEMPLATE],
             [
                 'value' => 918,
                 'created_at' => now(),
