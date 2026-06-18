@@ -357,15 +357,10 @@ class AuditableController extends Controller
             // First, get logs without 'pricing-lookup'
             $logs = HealthPricingLog::with('member')
                 ->where('health_quote_request_id', $request->quote_request_id)
-                // ->where('stage', '!=', 'pricing-lookup')
                 ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'customer_member_id', 'created_at')
                 ->orderByDesc('customer_member_id')
                 ->orderBy('id')
                 ->get()
-                ->filter(function ($log) {
-                    // Exclude if related member is null (i.e., deleted)
-                    return $log->member !== null;
-                })
                 ->values();
 
             return response()->json([
