@@ -269,13 +269,13 @@ class RateCoverageUploadService
                     $minAge = $rowAssoc['min_age'] ?? null;
                     $maxAge = $rowAssoc['max_age'] ?? null;
                     $premium = $rowAssoc['premium'] ?? null;
-                    $copaymentCode = $rowAssoc['copayment_code'] ?? null;
+                    $copaymentCode = trim($rowAssoc['copayment_code'] ?? '') ?: null;
                     $emirateType = $rowAssoc['emirate_type'] ?? null;
-                    $gender = $plan->gender_enabled ? $rowAssoc['gender'] ?? null : null;
+                    $gender = $plan->gender_enabled ? (trim($rowAssoc['gender'] ?? '') ?: null) : null;
                     $maritalStatus = $plan->marital_status_enabled
                         && ! empty($gender)
-                        && strtolower($gender) == strtolower(GenderEnum::FEMALE->value) ? $rowAssoc['marital_status'] ?? null : null;
-                    $cohort = $plan->cohort_enabled ? $rowAssoc['cohort'] ?? null : null;
+                        && strtolower($gender) == strtolower(GenderEnum::FEMALE->value) ? (trim($rowAssoc['marital_status'] ?? '') ?: null) : null;
+                    $cohort = $plan->cohort_enabled ? (trim($rowAssoc['cohort'] ?? '') ?: null) : null;
 
                     // Throw error if any required value is empty
                     if (
@@ -322,7 +322,7 @@ class RateCoverageUploadService
 
                         $allowedGenders = ['male', 'female'];
                         if (! in_array(strtolower($gender), $allowedGenders, true)) {
-                            throw new \Exception('Gender value must be either "male" or "female".');
+                            throw new \Exception('Gender ('.$gender.') value must be either "male" or "female" at row '.($i + 1));
                         }
                     }
 
