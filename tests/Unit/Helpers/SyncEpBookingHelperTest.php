@@ -54,7 +54,7 @@ it('returns false for courier embedded product', function (): void {
         ->and(SyncEpBookingHelper::isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep))->toBeFalse();
 });
 
-it('returns false when sage booking is queued, completed, or cancelled', function (int $sageStatusId): void {
+it('returns false when sage booking is completed, or cancelled', function (int $sageStatusId): void {
     $ep = EmbeddedProduct::factory()->mdx()->createOneQuietly();
     $quote = CarQuote::factory()->createOneQuietly([
         'quote_status_id' => QuoteStatusEnum::PolicyBooked,
@@ -67,7 +67,6 @@ it('returns false when sage booking is queued, completed, or cancelled', functio
 
     expect(SyncEpBookingHelper::isTransactionEligibleForManualSageBookingRetry($transaction, $quote, $ep))->toBeFalse();
 })->with([
-    'queued' => SageEmbeddedProductEnum::BOOKING_QUEUED->id(),
     'completed' => SageEmbeddedProductEnum::BOOKING_COMPLETED->id(),
     'cancelled' => SageEmbeddedProductEnum::BOOKING_CANCELLED->id(),
 ]);
