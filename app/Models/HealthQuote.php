@@ -18,6 +18,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\TeamNameEnum;
 use App\Events\QuoteEmailUpdated;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
@@ -358,12 +359,12 @@ class HealthQuote extends Model implements AuditableContract
 
     public function isValueLead()
     {
-        return $this->health_team_type === HealthTeamType::RM_SPEED;
+        return $this->health_team_type === HealthTeamType::RM_SPEED || $this->notional_team === TeamNameEnum::RM_SPEED;
     }
 
     public function isVolumeLead()
     {
-        return $this->health_team_type === HealthTeamType::EBP;
+        return $this->health_team_type === HealthTeamType::EBP || $this->notional_team === TeamNameEnum::EBP;
     }
 
     public function previousAdvisor()
