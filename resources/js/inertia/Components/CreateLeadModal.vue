@@ -138,51 +138,24 @@ const eaModelOptions = computed(() => {
   return options;
 });
 
-const collaborateRouteMap = {
-  1: 'car.create',
-  2: 'home-quotes-create',
-  3: 'health.create',
-  4: 'life-quotes-create',
-  5: 'business.create',
-  6: 'bike-quotes-create',
-  7: 'yacht-quotes-create',
-  8: 'travel.create',
-  9: 'pet-quotes-create',
-  10: 'cycle-quotes-create',
-  11: 'jetski-quotes-create',
-  18: 'savings-quotes-create',
-  101: 'business.create',
-  102: 'amt.create',
+const collaborateShowRouteMap = {
+  2: 'home-quotes-show',
+  4: 'life-quotes-show',
+  5: 'business.show',
+  6: 'bike-quotes-show',
+  7: 'yacht-quotes-show',
+  9: 'pet-quotes-show',
+  10: 'cycle-quotes-show',
+  11: 'jetski-quotes-show',
+  18: 'savings-quotes-show',
+  101: 'business.show',
 };
 
 const onConfirmCreateLead = async isValid => {
   if (!isValid) return;
 
   if (leadForm.type === 'expert_advisor_model') {
-    if (leadForm.ea_model === 'collaborate') {
-      const collaborateData = {
-        type: 'expert_advisor_model',
-        ea_model: leadForm.ea_model,
-        quote_type_id: leadForm.quote_type_id,
-        first_name: leadForm.first_name,
-        last_name: leadForm.last_name,
-        email: leadForm.email,
-        mobile_no: leadForm.mobile_no,
-        ...(leadForm.business_type_of_insurance_id && {
-          business_type_of_insurance_id: leadForm.business_type_of_insurance_id,
-        }),
-        ...(leadForm.health_plan_type_id && {
-          health_plan_type_id: leadForm.health_plan_type_id,
-        }),
-      };
-      const collaborateRoute =
-        collaborateRouteMap[Number(leadForm.quote_type_id)] ?? props.routeName;
-      router.get(route(collaborateRoute), collaborateData);
-      isModalOpen.value = false;
-      resetForm();
-    } else {
-      await submitEALead();
-    }
+    await submitEALead();
     return;
   }
 
@@ -222,9 +195,19 @@ const submitEALead = async () => {
       position: 'top',
     });
 
+    const isCollaborate = leadForm.ea_model === 'collaborate';
+    const quoteTypeId = leadForm.quote_type_id;
+
     emit('confirmed', { type: 'expert_advisor_model' });
     isModalOpen.value = false;
     resetForm();
+
+    if (isCollaborate) {
+      const showRouteName = collaborateShowRouteMap[Number(quoteTypeId)];
+      if (showRouteName && response?.data?.uuid) {
+        router.visit(route(showRouteName, response.data.uuid));
+      }
+    }
   } catch (err) {
     const data = err?.response?.data;
     if (data?.duplicate) {

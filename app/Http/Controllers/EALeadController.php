@@ -84,6 +84,8 @@ class EALeadController extends Controller
         return response()->json([
             'success' => true,
             'code' => $quote->code,
+            'uuid' => $quote->uuid,
+            'quote_type_id' => $quoteTypeId,
             'message' => 'EA lead created successfully.',
         ]);
     }
