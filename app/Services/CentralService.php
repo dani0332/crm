@@ -1793,7 +1793,7 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emailData->tpa = $quote?->plan?->healthNetwork?->text ?? '-';
-            $activeMembers = $quote->activeMembers ?? collect();
+            $activeMembers = $quote->activeMembers?->where('is_policy_holder', true) ?? collect();
             $emailData->numberOfMembersCovered = (string) $activeMembers->count();
             $emailData->policyHolderName = $activeMembers->isEmpty()
                 ? ''
