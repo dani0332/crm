@@ -208,7 +208,11 @@ function onSubmit(isValid) {
       return;
     }
 
-    if (!isEdit.value && new URLSearchParams(window.location.search).get('ea_model') === 'collaborate') {
+    if (
+      !isEdit.value &&
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
+    ) {
       action += '?ea_model=collaborate';
     }
 

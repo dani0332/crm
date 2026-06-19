@@ -155,7 +155,11 @@ function onSubmit(isValid) {
       ? route('savings-quotes-update', props.quote.uuid)
       : route('savings-quotes-store');
 
-    if (!editMode.value && new URLSearchParams(window.location.search).get('ea_model') === 'collaborate') {
+    if (
+      !editMode.value &&
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
+    ) {
       url += '?ea_model=collaborate';
     }
 
