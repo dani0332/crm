@@ -193,6 +193,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  leadTypeOptions: {
+    type: Array,
+    required: true,
+  },
 });
 
 const page = usePage();
@@ -680,6 +684,13 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  if (!props.quote.lead_type) {
+    notification.error({
+      title: 'Please select a Lead Type before adding a plan.',
+      position: 'top',
+    });
+  }
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -702,6 +713,36 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
   createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
+
+const leadTypeForm = useForm({
+  lead_type: props.quote.lead_type ?? null,
+});
+
+const onLeadTypeUpdate = () => {
+  if (!leadTypeForm.lead_type) {
+    notification.error({
+      title: 'Please select a lead type before saving.',
+      position: 'top',
+    });
+    return;
+  }
+
+  leadTypeForm.patch(route('business.updateLeadType', props.quote.uuid), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Lead type updated successfully.',
+        position: 'top',
+      });
+    },
+    onError: () => {
+      notification.error({
+        title: 'Failed to update lead type.',
+        position: 'top',
+      });
+    },
+  });
+};
 </script>
 
 <template>
@@ -1059,6 +1100,28 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LEAD TYPE</dt>
+                <dd>
+                  <div class="flex items-center gap-2">
+                    <x-select
+                      v-model="leadTypeForm.lead_type"
+                      :options="leadTypeOptions"
+                      class="w-full"
+                      placeholder="Select Lead Type"
+                    />
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      :loading="leadTypeForm.processing"
+                      @click.prevent="onLeadTypeUpdate"
+                      v-if="readOnlyMode.isDisable === true"
+                    >
+                      Save
+                    </x-button>
+                  </div>
+                </dd>
+              </div>
               <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">UTM SOURCE</dt>
@@ -1081,6 +1144,28 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   <dd>{{ quote.utm_term }}</dd>
                 </div>
               </template>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LEAD TYPE</dt>
+                <dd>
+                  <div class="flex items-center gap-2">
+                    <x-select
+                      v-model="leadTypeForm.lead_type"
+                      :options="leadTypeOptions"
+                      class="w-full"
+                      placeholder="Select Lead Type"
+                    />
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      :loading="leadTypeForm.processing"
+                      @click.prevent="onLeadTypeUpdate"
+                      v-if="readOnlyMode.isDisable === true"
+                    >
+                      Save
+                    </x-button>
+                  </div>
+                </dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1563,6 +1648,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quoteType="page.props.quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
+      :isSaveDisabled="!quote.lead_type"
     />
 
     <!-- Payments -->

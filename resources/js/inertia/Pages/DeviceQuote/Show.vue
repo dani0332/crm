@@ -68,6 +68,7 @@ const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\PersonalQuote';
 const modelClassDevice = 'App\\Models\\DeviceQuote';
+const permissionEnum = page.props.permissionsEnum;
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
