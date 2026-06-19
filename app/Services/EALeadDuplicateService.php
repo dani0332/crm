@@ -4,27 +4,23 @@ namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
 use Illuminate\Database\Eloquent\Model;
 
 class EALeadDuplicateService
 {
-    /**
-     * Check for a duplicate lead within a 60-day window.
-     *
-     * Returns the existing lead (with advisor loaded) if a duplicate is found, null otherwise.
-     */
-    public function findDuplicate(string $email, string $mobileNo, int $quoteTypeId): ?Model
+    public function findDuplicate(string $email, int $quoteTypeId): ?Model
     {
         $cutoff = now()->subDays(60);
 
         if ($quoteTypeId === QuoteTypeId::Car) {
             return CarQuote::with('advisor')
-                ->where(function ($q) use ($email, $mobileNo) {
-                    $q->where('email', $email)->orWhere('mobile_no', $mobileNo);
-                })
+                ->where('email', $email)
                 ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
                 ->where('created_at', '>=', $cutoff)
                 ->whereNull('deleted_at')
@@ -34,56 +30,84 @@ class EALeadDuplicateService
 
         if ($quoteTypeId === QuoteTypeId::Health) {
             return HealthQuote::with('advisor')
-                ->where(function ($q) use ($email, $mobileNo) {
-                    $q->where('email', $email)->orWhere('mobile_no', $mobileNo);
-                })
+                ->where('email', $email)
                 ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
                 ->where('created_at', '>=', $cutoff)
                 ->latest()
                 ->first();
         }
 
-        return PersonalQuote::with('advisor')
-            ->where(function ($q) use ($email, $mobileNo) {
-                $q->where('email', $email)->orWhere('mobile_no', $mobileNo);
-            })
-            ->where('quote_type_id', $quoteTypeId)
-            ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
-            ->where('created_at', '>=', $cutoff)
-            ->latest()
-            ->first();
+        if ($quoteTypeId === QuoteTypeId::Travel) {
+            return TravelQuote::with('advisor')
+                ->where('email', $email)
+                ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
+                ->where('created_at', '>=', $cutoff)
+                ->latest()
+                ->first();
+        }
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
+            return BusinessQuote::with('advisor')
+                ->where('email', $email)
+                ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
+                ->where('created_at', '>=', $cutoff)
+                ->latest()
+                ->first();
+        }
+
+        $quoteTypeEnum = QuoteTypes::getName($quoteTypeId);
+        if ($quoteTypeEnum && checkPersonalQuotes($quoteTypeEnum->value)) {
+            return PersonalQuote::with('advisor')
+                ->where('email', $email)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
+                ->where('created_at', '>=', $cutoff)
+                ->latest()
+                ->first();
+        }
+
+        return null;
     }
 
-    /**
-     * Check whether a renewal-upload lead is still within its policy expiry period.
-     * If so, skip creation.
-     */
-    public function isBlockedByRenewalExpiry(string $email, string $mobileNo, int $quoteTypeId): bool
+    public function isBlockedByRenewalExpiry(string $email, int $quoteTypeId): bool
     {
         if ($quoteTypeId === QuoteTypeId::Car) {
-            return CarQuote::where(function ($q) use ($email, $mobileNo) {
-                $q->where('email', $email)->orWhere('mobile_no', $mobileNo);
-            })
+            return CarQuote::where('email', $email)
                 ->where('source', 'Renewal_upload')
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
         }
 
         if ($quoteTypeId === QuoteTypeId::Health) {
-            return HealthQuote::where(function ($q) use ($email, $mobileNo) {
-                $q->where('email', $email)->orWhere('mobile_no', $mobileNo);
-            })
+            return HealthQuote::where('email', $email)
                 ->where('source', 'Renewal_upload')
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
         }
 
-        return PersonalQuote::where(function ($q) use ($email, $mobileNo) {
-            $q->where('email', $email)->orWhere('mobile_no', $mobileNo);
-        })
-            ->where('quote_type_id', $quoteTypeId)
-            ->where('source', 'Renewal_upload')
-            ->where('policy_expiry_date', '>=', now())
-            ->exists();
+        if ($quoteTypeId === QuoteTypeId::Travel) {
+            return TravelQuote::where('email', $email)
+                ->where('source', 'Renewal_upload')
+                ->where('policy_expiry_date', '>=', now())
+                ->exists();
+        }
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
+            return BusinessQuote::where('email', $email)
+                ->where('source', 'Renewal_upload')
+                ->where('policy_expiry_date', '>=', now())
+                ->exists();
+        }
+
+        $quoteTypeEnum = QuoteTypes::getName($quoteTypeId);
+        if ($quoteTypeEnum && checkPersonalQuotes($quoteTypeEnum->value)) {
+            return PersonalQuote::where('email', $email)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('source', 'Renewal_upload')
+                ->where('policy_expiry_date', '>=', now())
+                ->exists();
+        }
+
+        return false;
     }
 }

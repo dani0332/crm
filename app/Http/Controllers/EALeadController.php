@@ -21,18 +21,15 @@ class EALeadController extends Controller
     {
         $quoteTypeId = (int) $request->quote_type_id;
         $email = $request->email;
-        $mobileNo = $request->mobile_no;
 
-        // Block if an active renewal-upload lead still covers this client
-        if ($this->duplicateService->isBlockedByRenewalExpiry($email, $mobileNo, $quoteTypeId)) {
+        if ($this->duplicateService->isBlockedByRenewalExpiry($email, $quoteTypeId)) {
             return response()->json([
                 'duplicate' => true,
                 'message' => 'A renewal-upload lead exists for this client and has not yet expired.',
             ], 422);
         }
 
-        // Duplicate detection within 60-day window
-        $existing = $this->duplicateService->findDuplicate($email, $mobileNo, $quoteTypeId);
+        $existing = $this->duplicateService->findDuplicate($email, $quoteTypeId);
         if ($existing) {
             return response()->json([
                 'duplicate' => true,
@@ -72,8 +69,6 @@ class EALeadController extends Controller
             ], 422);
         }
 
-        // Dispatch ILA: collaborate leads use a modified allocation that respects the
-        // assigned-expert-advisor permission (see EACollaborateILAJob / modified pipe).
         if ($quoteTypeEnum) {
             dispatch(fn () => $quoteTypeEnum->allocate($capiResponse->quoteUID));
         }
