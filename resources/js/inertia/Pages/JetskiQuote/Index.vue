@@ -60,7 +60,10 @@ let availableFilters = {
 
 const filters = reactive(availableFilters);
 const canExport = ref(false);
-const eaModelOptions = [{ value: 'referral', label: 'Referral' }, { value: 'collaborate', label: 'Collaborate' }];
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborate' },
+];
 
 const quotesSelected = ref([]);
 const permissionAssignLeads = ref(false);

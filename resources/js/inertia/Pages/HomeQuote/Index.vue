@@ -151,7 +151,10 @@ const filters = reactive({
   lead_generator: '',
 });
 
-const eaModelOptions = [{ value: 'referral', label: 'Referral' }, { value: 'collaborate', label: 'Collaborate' }];
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborate' },
+];
 
 // PUA Export Modal state
 const puaExportModal = reactive({

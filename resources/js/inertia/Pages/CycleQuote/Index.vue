@@ -72,7 +72,10 @@ let availableFilters = {
 const filters = reactive(availableFilters);
 const quotesSelected = ref([]);
 const canExport = ref(false);
-const eaModelOptions = [{ value: 'referral', label: 'Referral' }, { value: 'collaborate', label: 'Collaborate' }];
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborate' },
+];
 
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
