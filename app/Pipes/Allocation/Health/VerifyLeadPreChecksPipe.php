@@ -50,7 +50,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             })
             ->where(function ($query) {
                 // Second condition: applies if the first condition is false
-                $query->whereIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED])
+                $query->whereIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::EA_IMCRM])
                     ->orWhereNotNull('health_quote_request.price_starting_from');
             })
             ->first();
