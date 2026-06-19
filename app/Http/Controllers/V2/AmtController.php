@@ -751,8 +751,6 @@ class AmtController extends Controller
             'company_name' => 'required|max:150',
             'number_of_employees' => 'required|numeric|min:1|max:2147483645',
             'brief_details' => 'required',
-            'group_medical_type_id' => 'required',
-            'premium' => 'required',
         ], $this->groupMedicalAmtIntakeValidationRules()));
         app(CRUDService::class)->updateModelByType('business', $request, $id);
 

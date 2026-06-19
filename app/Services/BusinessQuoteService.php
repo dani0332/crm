@@ -666,10 +666,10 @@ class BusinessQuoteService extends BaseService
     protected function syncGroupMedicalLeadIntakeFields(BusinessQuote $businessQuote, Request $request): void
     {
         if ($request->has('nature_of_company_activity_id')) {
-            $businessQuote->nature_of_company_activity_id = $request->input('nature_of_company_activity_id');
+            $businessQuote->business_activity_id = $request->input('nature_of_company_activity_id');
         }
         if ($request->has('has_existing_group_health_insurance')) {
-            $businessQuote->has_existing_group_health_insurance = $request->boolean('has_existing_group_health_insurance');
+            $businessQuote->has_existing_group_policy = $request->boolean('has_existing_group_health_insurance');
         }
         if ($request->has('health_plan_type_id')) {
             $businessQuote->health_plan_type_id = $request->input('health_plan_type_id');

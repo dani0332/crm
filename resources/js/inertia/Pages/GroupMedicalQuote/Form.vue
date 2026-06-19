@@ -66,8 +66,6 @@ function getGmCategoryRowMax() {
  * Builds initial intake rows: prefers saved JSON; otherwise one empty row (appender).
  */
 function buildInitialCategoryRows(quote) {
-  console.log('------------------------');
-  console.log(quote?.group_medical_categories);
   const rowMax = getGmCategoryRowMax();
   const intake = quote?.group_medical_categories;
 
@@ -194,10 +192,10 @@ const quoteForm = useForm({
     nature_of_company_activity_id:
     props.quote?.business_activity_id ?? null,
   has_existing_group_health_insurance:
-    props.quote?.has_existing_group_health_insurance === undefined ||
-    props.quote?.has_existing_group_health_insurance === null
+    props.quote?.has_existing_group_policy === undefined ||
+    props.quote?.has_existing_group_policy === null
       ? null
-      : props.quote.has_existing_group_health_insurance
+      : props.quote.has_existing_group_policy
         ? 1
         : 0,
   health_plan_type_id: props.quote?.health_plan_type_id ?? null,
@@ -493,12 +491,24 @@ function onSubmit(isValid) {
       quoteForm.setError(errors);
       const firstError = Object.values(errors)[0];
       if (firstError) {
-        notification.error(firstError);
+        notification.error({ title: firstError, position: 'top' });
       }
     },
   };
 
-  quoteForm.submit(method, url, options);
+  quoteForm
+    .transform(data => ({
+      ...data,
+      categories: data.categories.map(row => ({
+        groupMedicalCategoryId: row.group_medical_category_id ?? row.groupMedicalCategoryId ?? null,
+        insuranceProviderId: row.insurance_provider_id ?? row.insuranceProviderId ?? null,
+        healthTpaId: row.health_third_party_administrator_id ?? row.healthTpaId ?? null,
+        groupMedicalNetworkId: row.group_medical_network_id ?? row.groupMedicalNetworkId ?? null,
+        renewalDate: row.renewal_date ?? row.renewalDate ?? null,
+        numberOfPeople: row.no_of_people ?? row.number_of_people ?? row.numberOfPeople ?? null,
+      })),
+    }))
+    .submit(method, url, options);
 }
 </script>
 
@@ -968,11 +978,9 @@ function onSubmit(isValid) {
               label: item.text,
             }))
           "
-          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.group_medical_type_id"
           label="Group Medical Type"
-          required
         />
       </div>
       <x-divider class="my-4" />
