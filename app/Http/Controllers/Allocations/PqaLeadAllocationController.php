@@ -41,25 +41,22 @@ class PqaLeadAllocationController extends Controller
         $canMutate = $user->hasAnyPermission([PermissionsEnum::PQA_LEAD_ALLOCATION_EDIT])
             || $user->hasAnyRole([RolesEnum::Admin, RolesEnum::LeadPool, RolesEnum::Engineering]);
 
-        $totalAssignedLeadCount = 0;
         $availableUsers = 0;
         $unAvailableUsers = 0;
 
-        $todayTotalLeadCount = $this->getTodaysLeadMetricPlaceholder();
-        $todayTotalUnAssignedLeadCount = $this->getTodaysUnassignedLeadMetricPlaceholder();
-
         $advisors = $this->getPreQualificationAdvisors();
         foreach ($advisors as $value) {
-            $totalAssignedLeadCount += $value->allocationCount;
             $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
         }
 
+        $assignedCountsByLob = $this->getAssignedCountsByLob();
+        $unassignedCountsByLob = $this->getUnassignedCountsByLob();
+
         return inertia('PqaAllocation/Index', [
-            'totalAssignedLeadCount' => $totalAssignedLeadCount,
+            'assignedCountsByLob' => $assignedCountsByLob,
+            'unassignedCountsByLob' => $unassignedCountsByLob,
             'availableUsers' => $availableUsers,
             'unAvailableUsers' => $unAvailableUsers,
-            'todayTotalLeadCount' => $todayTotalLeadCount,
-            'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
             'data' => $advisors,
             'lobSpecificLeadAllocation' => null,
             'canMutatePqaAllocation' => $canMutate,
@@ -67,16 +64,82 @@ class PqaLeadAllocationController extends Controller
     }
 
     /**
-     * When PQA pipeline assigns quotes to advisors, replace these with real counts from the relevant quote tables.
+     * Count assigned leads per LOB for today (leads with a PQA advisor assigned today).
+     *
+     * @return array{Health: int, CorpLine: int, Group Medical: int, total: int}
      */
-    private function getTodaysLeadMetricPlaceholder(): int
+    private function getAssignedCountsByLob(): array
     {
-        return 0;
+        $healthNewLeadStatus = QuoteStatusEnum::NewLead;
+        $corplineQualPendingStatus = QuoteStatusEnum::QualificationPending;
+        $groupMedicalTypeId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+        $today = now()->toDateString();
+
+        $healthCount = DB::table('health_quote_request')
+            ->whereNotNull('pq_advisor_id')
+            ->where('quote_status_id', $healthNewLeadStatus)
+            ->whereDate('pq_assigned_at', $today)
+            ->count();
+
+        $corplineCount = DB::table('business_quote_request')
+            ->whereNotNull('pq_advisor_id')
+            ->where('quote_status_id', $corplineQualPendingStatus)
+            ->where('business_type_of_insurance_id', '!=', $groupMedicalTypeId)
+            ->whereDate('pq_assigned_at', $today)
+            ->count();
+
+        $groupMedicalCount = DB::table('business_quote_request')
+            ->whereNotNull('pq_advisor_id')
+            ->where('business_type_of_insurance_id', $groupMedicalTypeId)
+            ->whereDate('pq_assigned_at', $today)
+            ->count();
+
+        return [
+            QuoteTypes::HEALTH->value => $healthCount,
+            QuoteTypes::CORPLINE->value => $corplineCount,
+            QuoteTypes::GROUP_MEDICAL->value => $groupMedicalCount,
+            'total' => $healthCount + $corplineCount + $groupMedicalCount,
+        ];
     }
 
-    private function getTodaysUnassignedLeadMetricPlaceholder(): int
+    /**
+     * Count unassigned leads per LOB (leads in PQA-eligible statuses with no PQA advisor assigned).
+     *
+     * @return array{Health: int, CorpLine: int, Group Medical: int, total: int}
+     */
+    private function getUnassignedCountsByLob(): array
     {
-        return 0;
+        $healthNewLeadStatus = QuoteStatusEnum::NewLead;
+        $corplineQualPendingStatus = QuoteStatusEnum::QualificationPending;
+        $groupMedicalTypeId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+
+        $today = now()->toDateString();
+
+        $healthCount = DB::table('health_quote_request')
+            ->whereNull('pq_advisor_id')
+            ->where('quote_status_id', $healthNewLeadStatus)
+            ->whereDate('pq_assigned_at', $today)
+            ->count();
+
+        $corplineCount = DB::table('business_quote_request')
+            ->whereNull('pq_advisor_id')
+            ->where('quote_status_id', $corplineQualPendingStatus)
+            ->where('business_type_of_insurance_id', '!=', $groupMedicalTypeId)
+            ->whereDate('pq_assigned_at', $today)
+            ->count();
+
+        $groupMedicalCount = DB::table('business_quote_request')
+            ->whereNull('pq_advisor_id')
+            ->where('business_type_of_insurance_id', $groupMedicalTypeId)
+            ->whereDate('pq_assigned_at', $today)
+            ->count();
+
+        return [
+            QuoteTypes::HEALTH->value => $healthCount,
+            QuoteTypes::CORPLINE->value => $corplineCount,
+            QuoteTypes::GROUP_MEDICAL->value => $groupMedicalCount,
+            'total' => $healthCount + $corplineCount + $groupMedicalCount,
+        ];
     }
 
     /**
@@ -126,15 +189,12 @@ class PqaLeadAllocationController extends Controller
                     'la.reset_cap',
                     DB::raw("COALESCE(
                         CASE
-                            WHEN la.quote_type_id = {$businessQuoteTypeId} THEN (
-                                SELECT t.name
-                                FROM user_products up2
-                                JOIN teams t ON t.id = up2.product_id
-                                    AND t.type = {$productType}
-                                    AND t.name IN ('{$corplineName}', '{$groupMedicalName}')
-                                WHERE up2.user_id = users.id
-                                LIMIT 1
-                            )
+                            WHEN la.quote_type_id = {$businessQuoteTypeId} THEN
+                                CASE
+                                    WHEN UPPER(t_lob.name) = UPPER('{$groupMedicalName}') THEN '{$groupMedicalName}'
+                                    WHEN UPPER(t_lob.name) = UPPER('{$corplineName}') THEN '{$corplineName}'
+                                    ELSE qt.code
+                                END
                             ELSE qt.code
                         END,
                         la.quote_type
@@ -144,8 +204,24 @@ class PqaLeadAllocationController extends Controller
                 ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
                 ->join('roles as r', 'r.id', '=', 'mhr.role_id')
                 ->leftJoin('quote_type as qt', 'qt.id', '=', 'la.quote_type_id')
+                ->leftJoin('user_products as up_lob', function ($join) use ($businessQuoteTypeId) {
+                    $join->on('up_lob.user_id', '=', 'users.id')
+                        ->whereRaw("la.quote_type_id = {$businessQuoteTypeId}");
+                })
+                ->leftJoin('teams as t_lob', function ($join) use ($productType, $corplineName, $groupMedicalName) {
+                    $join->on('t_lob.id', '=', 'up_lob.product_id')
+                        ->where('t_lob.type', $productType)
+                        ->whereRaw("(
+                             UPPER(t_lob.name) IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}'))
+                             OR UPPER(t_lob.name) = UPPER(qt.code)
+                         )");
+                })
                 ->where('mhr.model_type', User::class)
                 ->where('r.name', RolesEnum::PreQualificationAdvisor)
+                ->where(function ($q) use ($businessQuoteTypeId) {
+                    $q->where('la.quote_type_id', '!=', $businessQuoteTypeId)
+                        ->orWhereNotNull('t_lob.id');
+                })
                 ->whereExists(function ($sub) use ($productType, $corplineName, $groupMedicalName, $businessQuoteTypeId) {
                     $sub->selectRaw('1')
                         ->from('user_products as up_m')
@@ -171,6 +247,7 @@ class PqaLeadAllocationController extends Controller
                     'la.max_capacity',
                     'la.reset_cap',
                     'qt.code',
+                    't_lob.name',
                 )
                 ->get();
 

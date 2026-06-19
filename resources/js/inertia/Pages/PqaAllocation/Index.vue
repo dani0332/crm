@@ -8,9 +8,9 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  totalAssignedLeadCount: {
-    type: Number,
-    default: 0,
+  assignedCountsByLob: {
+    type: Object,
+    default: () => ({}),
   },
   availableUsers: {
     type: Number,
@@ -20,13 +20,9 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  todayTotalLeadCount: {
-    type: Number,
-    default: 0,
-  },
-  todayTotalUnAssignedLeadCount: {
-    type: Number,
-    default: 0,
+  unassignedCountsByLob: {
+    type: Object,
+    default: () => ({}),
   },
   canMutatePqaAllocation: {
     type: Boolean,
@@ -44,11 +40,13 @@ const statusModal = getStatusModal();
 
 const selectedLob = ref('');
 
+const displayLobName = code => (code === 'CorpLine' ? 'Business' : code);
+
 const lobFilterOptions = computed(() => {
   const codes = [...new Set(props.data.map(item => item.quoteTypeCode))].sort();
   return [
     { value: '', label: 'All' },
-    ...codes.map(code => ({ value: code, label: code })),
+    ...codes.map(code => ({ value: code, label: displayLobName(code) })),
   ];
 });
 
@@ -57,12 +55,10 @@ const filteredData = computed(() => {
   return props.data.filter(item => item.quoteTypeCode === selectedLob.value);
 });
 
-const filteredTotalAssigned = computed(() =>
-  filteredData.value.reduce(
-    (sum, item) => sum + (item.allocationCount || 0),
-    0,
-  ),
-);
+const filteredAssignedCount = computed(() => {
+  if (!selectedLob.value) return props.assignedCountsByLob?.total ?? 0;
+  return props.assignedCountsByLob?.[selectedLob.value] ?? 0;
+});
 
 const filteredAvailableUsers = computed(
   () => filteredData.value.filter(item => item.isAvailable == 1).length,
@@ -71,6 +67,11 @@ const filteredAvailableUsers = computed(
 const filteredUnavailableUsers = computed(
   () => filteredData.value.filter(item => item.isAvailable != 1).length,
 );
+
+const filteredUnassignedCount = computed(() => {
+  if (!selectedLob.value) return props.unassignedCountsByLob?.total ?? 0;
+  return props.unassignedCountsByLob?.[selectedLob.value] ?? 0;
+});
 
 const loaders = reactive({
   submit: false,
@@ -341,8 +342,8 @@ onMounted(() => {
         <p>Pre Qualification</p>
       </div>
       <div class="labox border-primary-500">
-        <h3>Assigned Lead Count</h3>
-        <p>{{ filteredTotalAssigned }}</p>
+        <h3>Assigned Lead Count (today)</h3>
+        <p>{{ filteredAssignedCount }}</p>
       </div>
       <div class="labox border-purple-500">
         <h3>Available / UnAvailable</h3>
@@ -354,7 +355,7 @@ onMounted(() => {
       </div> -->
       <div class="labox border-red-500">
         <h3>Unassigned Leads Count (today)</h3>
-        <p>{{ props.todayTotalUnAssignedLeadCount }}</p>
+        <p>{{ filteredUnassignedCount }}</p>
       </div>
       <!-- <div class="labox border-slate-300 col-span-2">
         <h3>Leads today (total)</h3>
@@ -389,6 +390,10 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
+      <template #item-quoteTypeCode="{ quoteTypeCode }">
+        {{ displayLobName(quoteTypeCode) }}
+      </template>
+
       <template #item-maxCapacity="{ maxCapacity, id }">
         <div v-if="!currentRow(id)" @click="editCap(id)">
           {{ maxCapacity }}
