@@ -113,7 +113,11 @@ function onSubmit(isValid) {
       ? route('yacht-quotes-update', props.quote.uuid)
       : route('yacht-quotes-store');
 
-    if (!editMode.value && new URLSearchParams(window.location.search).get('ea_model') === 'collaborate') {
+    if (
+      !editMode.value &&
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
+    ) {
       url += '?ea_model=collaborate';
     }
 

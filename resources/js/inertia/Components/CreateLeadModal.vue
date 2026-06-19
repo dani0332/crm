@@ -149,12 +149,15 @@ const onConfirmCreateLead = async isValid => {
 
   if (leadForm.type === 'expert_advisor_model') {
     if (leadForm.ea_model === 'collaborate') {
-      const createRouteName = collaborateRouteMap[Number(leadForm.quote_type_id)];
+      const createRouteName =
+        collaborateRouteMap[Number(leadForm.quote_type_id)];
       if (createRouteName) {
         emit('confirmed', { type: 'expert_advisor_model' });
         isModalOpen.value = false;
         resetForm();
-        router.visit(route(createRouteName), { data: { ea_model: 'collaborate' } });
+        router.visit(route(createRouteName), {
+          data: { ea_model: 'collaborate' },
+        });
       }
       return;
     }
@@ -437,7 +440,9 @@ watch(
           />
 
           <!-- Generic lead fields: referral only -->
-          <template v-if="leadForm.quote_type_id && leadForm.ea_model !== 'collaborate'">
+          <template
+            v-if="leadForm.quote_type_id && leadForm.ea_model !== 'collaborate'"
+          >
             <div class="grid grid-cols-2 gap-4">
               <x-input
                 v-model="leadForm.first_name"

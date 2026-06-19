@@ -217,7 +217,11 @@ function onSubmit(isValid) {
       ? route('bike-quotes-update', props.quote.uuid)
       : route('bike-quotes-store');
 
-    if (!editMode.value && new URLSearchParams(window.location.search).get('ea_model') === 'collaborate') {
+    if (
+      !editMode.value &&
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
+    ) {
       url += '?ea_model=collaborate';
     }
 
