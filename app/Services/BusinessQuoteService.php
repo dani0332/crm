@@ -1072,6 +1072,8 @@ class BusinessQuoteService extends BaseService
 
         $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
 
-        return $modelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
+        $displayModelType = strtolower($modelType) === 'group_medical' ? 'Group Medical' : $modelType;
+
+        return $displayModelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
     }
 }
