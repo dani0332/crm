@@ -9,22 +9,20 @@ class SplitHealthRatesGenderMaritalStatusSeeder extends Seeder
 {
     public function run(): void
     {
-        /*DB::statement("
-         UPDATE health_rates
-         SET
-             gender = CASE
-                 WHEN gender = 'M' THEN 'Male'
-                 WHEN gender IN ('FS', 'FM') THEN 'Female'
-                 ELSE NULL
-             END,
-
-             marital_status = CASE
-                 WHEN gender = 'FS' THEN 'Single'
-                 WHEN gender = 'FM' THEN 'Married'
-                 ELSE NULL
-             END
-
-         WHERE gender IN ('M', 'FS', 'FM')
-     ");*/
+        DB::statement("
+        UPDATE health_rates
+        SET
+            marital_status = CASE
+                WHEN gender = 'FS' THEN 'SINGLE'
+                WHEN gender = 'FM' THEN 'MARRIED'
+                ELSE NULL
+            END,
+            gender = CASE
+                WHEN gender = 'M' THEN 'MALE'
+                WHEN gender IN ('FS', 'FM') THEN 'FEMALE'
+                ELSE NULL
+            END
+        WHERE gender IN ('M', 'FS', 'FM')
+     ");
     }
 }
