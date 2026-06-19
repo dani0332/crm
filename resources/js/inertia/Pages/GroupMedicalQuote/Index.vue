@@ -985,7 +985,7 @@ const insurerAMLStatusOption = computed(() => {
             :canAssignLeadAdvisor="canAssignLeadAdvisor"
             :pqaAdvisors="pqaAdvisorOptions"
             :canAssignPqa="$page.props.canAssignPreQualificationAdvisor"
-            quoteType="group_medical"
+            quoteType="business"
             @success="manualAssignmentSuccess"
           />
         </div>
