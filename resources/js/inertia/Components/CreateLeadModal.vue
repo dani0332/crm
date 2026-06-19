@@ -45,7 +45,7 @@ const hasEAReferralAccess = computed(
     canCollaborate.value,
 );
 
-const hasLifeAdvisor = computed(() => authRoles.value.includes('LIFE_ADVISOR'));
+const hasRMAdvisor = computed(() => authRoles.value.includes('RM_ADVISOR'));
 
 const leadForm = useForm({
   type: '',
@@ -83,11 +83,9 @@ const businessTypeOfInsuranceOptions = computed(() =>
   })),
 );
 
-// Car (1), Travel (8), Health (3), and GroupMedical (102) are always excluded from collaborate (referral only).
-// Life (4) requires a specific advisor role to use collaborate.
 const collaborateExcludedLobs = computed(() => {
-  const excluded = [1, 8, 3, 102];
-  if (!hasLifeAdvisor.value) excluded.push(4);
+  const excluded = [1, 8];
+  if (!hasRMAdvisor.value) excluded.push(3);
   return excluded;
 });
 

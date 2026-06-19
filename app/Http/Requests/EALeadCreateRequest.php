@@ -89,7 +89,6 @@ class EALeadCreateRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // Any manager role can only create Referral model leads (FRD A.9)
         $isAnyManager = $this->user()->roles->contains(
             fn ($role) => str_contains(strtolower($role->name), 'manager')
         );
@@ -110,14 +109,6 @@ class EALeadCreateRequest extends FormRequest
 
         if (! $this->user()->hasRole(RolesEnum::RMAdvisor)) {
             $this->collaborateForbiddenLobs[] = QuoteTypeId::Health;
-        }
-
-        if (! $this->user()->hasRole(RolesEnum::GMAdvisor)) {
-            $this->collaborateForbiddenLobs[] = QuoteTypeId::GroupMedical;
-        }
-
-        if (! $this->user()->hasRole(RolesEnum::LifeAdvisor)) {
-            $this->collaborateForbiddenLobs[] = QuoteTypeId::Life;
         }
     }
 
