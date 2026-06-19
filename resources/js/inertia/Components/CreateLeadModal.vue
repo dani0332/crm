@@ -120,14 +120,9 @@ const hasEAReferralRole = computed(
 );
 
 const eaModelOptions = computed(() => {
-  // FRD A.9: any manager role → Referral only, regardless of other permissions.
-  if (isAnyManager.value) {
-    return [{ value: 'referral', label: 'Referral' }];
-  }
-
   const options = [];
 
-  if (hasEAReferralRole.value) {
+  if (isAnyManager.value || hasEAReferralRole.value) {
     options.push({ value: 'referral', label: 'Referral' });
   }
 

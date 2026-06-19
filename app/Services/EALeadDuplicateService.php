@@ -14,13 +14,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class EALeadDuplicateService
 {
-    public function findDuplicate(string $email, int $quoteTypeId): ?Model
+    public function findDuplicate(string $email, string $mobileNo, int $quoteTypeId): ?Model
     {
         $cutoff = now()->subDays(60);
 
         if ($quoteTypeId === QuoteTypeId::Car) {
             return CarQuote::with('advisor')
-                ->where('email', $email)
+                ->where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
                 ->where('created_at', '>=', $cutoff)
                 ->whereNull('deleted_at')
@@ -30,7 +30,7 @@ class EALeadDuplicateService
 
         if ($quoteTypeId === QuoteTypeId::Health) {
             return HealthQuote::with('advisor')
-                ->where('email', $email)
+                ->where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
                 ->where('created_at', '>=', $cutoff)
                 ->latest()
@@ -39,7 +39,7 @@ class EALeadDuplicateService
 
         if ($quoteTypeId === QuoteTypeId::Travel) {
             return TravelQuote::with('advisor')
-                ->where('email', $email)
+                ->where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
                 ->where('created_at', '>=', $cutoff)
                 ->latest()
@@ -48,7 +48,7 @@ class EALeadDuplicateService
 
         if (in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
             return BusinessQuote::with('advisor')
-                ->where('email', $email)
+                ->where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
                 ->where('created_at', '>=', $cutoff)
                 ->latest()
@@ -58,7 +58,7 @@ class EALeadDuplicateService
         $quoteTypeEnum = QuoteTypes::getName($quoteTypeId);
         if ($quoteTypeEnum && checkPersonalQuotes($quoteTypeEnum->value)) {
             return PersonalQuote::with('advisor')
-                ->where('email', $email)
+                ->where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('quote_type_id', $quoteTypeId)
                 ->where('quote_status_id', '!=', QuoteStatusEnum::PolicyBooked)
                 ->where('created_at', '>=', $cutoff)
@@ -69,31 +69,31 @@ class EALeadDuplicateService
         return null;
     }
 
-    public function isBlockedByRenewalExpiry(string $email, int $quoteTypeId): bool
+    public function isBlockedByRenewalExpiry(string $email, string $mobileNo, int $quoteTypeId): bool
     {
         if ($quoteTypeId === QuoteTypeId::Car) {
-            return CarQuote::where('email', $email)
+            return CarQuote::where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('source', 'Renewal_upload')
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
         }
 
         if ($quoteTypeId === QuoteTypeId::Health) {
-            return HealthQuote::where('email', $email)
+            return HealthQuote::where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('source', 'Renewal_upload')
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
         }
 
         if ($quoteTypeId === QuoteTypeId::Travel) {
-            return TravelQuote::where('email', $email)
+            return TravelQuote::where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('source', 'Renewal_upload')
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
         }
 
         if (in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
-            return BusinessQuote::where('email', $email)
+            return BusinessQuote::where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('source', 'Renewal_upload')
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
@@ -101,7 +101,7 @@ class EALeadDuplicateService
 
         $quoteTypeEnum = QuoteTypes::getName($quoteTypeId);
         if ($quoteTypeEnum && checkPersonalQuotes($quoteTypeEnum->value)) {
-            return PersonalQuote::where('email', $email)
+            return PersonalQuote::where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('quote_type_id', $quoteTypeId)
                 ->where('source', 'Renewal_upload')
                 ->where('policy_expiry_date', '>=', now())

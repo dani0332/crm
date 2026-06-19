@@ -21,15 +21,16 @@ class EALeadController extends Controller
     {
         $quoteTypeId = (int) $request->quote_type_id;
         $email = $request->email;
+        $mobileNo = $request->mobile_no;
 
-        if ($this->duplicateService->isBlockedByRenewalExpiry($email, $quoteTypeId)) {
+        if ($this->duplicateService->isBlockedByRenewalExpiry($email, $mobileNo, $quoteTypeId)) {
             return response()->json([
                 'duplicate' => true,
                 'message' => 'A renewal-upload lead exists for this client and has not yet expired.',
             ], 422);
         }
 
-        $existing = $this->duplicateService->findDuplicate($email, $quoteTypeId);
+        $existing = $this->duplicateService->findDuplicate($email, $mobileNo, $quoteTypeId);
         if ($existing) {
             return response()->json([
                 'duplicate' => true,
