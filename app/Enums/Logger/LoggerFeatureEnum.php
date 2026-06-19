@@ -58,6 +58,7 @@ enum LoggerFeatureEnum: string
     case SEND_AND_BOOK_POLICY_FAILED_BULK_EMAIL_JOB = 'send-and-book-policy-failed-bulk-email-job';
     case NGI_SMARTPHONE_POLICY_AUTOMATION = 'ngi-smartphone-policy-automation';
     case ADNIC_HEALTH_POLICY_AUTOMATION = 'adnic-health-policy-automation';
+    case DIC_TRAVEL_POLICY_AUTOMATION = 'dic-travel-policy-automation';
     case INSURER_AML_SCREENING_WITH_KYC_DOCUMENT = 'insurer-aml-screening-with-kyc-document';
     case LEAD_OCR_DATA_COMPARISON = 'lead-ocr-data-comparison';
     case WATERMARK_DOCUMENT = 'watermark-document';
