@@ -24,6 +24,7 @@ use App\Models\PersonalQuote;
 use App\Models\RiderOption;
 use App\Models\SavingsQuote;
 use App\Services\BranchAssignmentService;
+use App\Services\EACollaborateHelper;
 use App\Services\HttpRequestService;
 use App\Services\KenService;
 use App\Services\Logger\LoggerService;
@@ -155,6 +156,8 @@ class SavingsQuoteService extends BaseQuoteService
             'subSourceId' => $data['sub_source_id'] ?? null,
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
         ];
+
+        EACollaborateHelper::applyEAIMCRMSource($data);
 
         // Make API request to save the savings quote
         $response = Capi::request('/api/v1-save-savings-quote', 'post', $data);

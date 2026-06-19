@@ -15,6 +15,7 @@ use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Services\BranchAssignmentService;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -74,6 +75,8 @@ class PetQuoteRepository extends BaseRepository
             'subSourceOptionsId' => $request['sub_source_options_id'] ?? null,
             'additionalNotes' => $request['notes'] ?? null,
         ];
+
+        EACollaborateHelper::applyEAIMCRMSource($dataArr);
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
 

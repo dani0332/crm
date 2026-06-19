@@ -11,6 +11,7 @@ use App\Facades\Capi;
 use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
 use App\Services\BranchAssignmentService;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -70,6 +71,8 @@ class CycleQuoteRepository extends BaseRepository
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
             'additionalNotes' => $data['notes'] ?? null,
         ];
+
+        EACollaborateHelper::applyEAIMCRMSource($quoteData);
 
         LoggerService::info('cycleQuote:'.json_encode($quoteData));
 

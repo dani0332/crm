@@ -139,6 +139,10 @@ function onSubmit(isValid) {
       ? route('cycle-quotes-update', props.quote.uuid)
       : route('cycle-quotes-store');
 
+    if (!editMode.value && new URLSearchParams(window.location.search).get('ea_model') === 'collaborate') {
+      url += '?ea_model=collaborate';
+    }
+
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));

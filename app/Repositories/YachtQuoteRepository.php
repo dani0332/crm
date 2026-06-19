@@ -11,6 +11,7 @@ use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
 use App\Services\BranchAssignmentService;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -70,6 +71,8 @@ class YachtQuoteRepository extends BaseRepository
             'gender' => $data['gender'],
             'nationalityId' => $data['nationality_id'],
         ];
+
+        EACollaborateHelper::applyEAIMCRMSource($quoteData);
 
         info('YachtQuote create data : '.json_encode($quoteData));
 

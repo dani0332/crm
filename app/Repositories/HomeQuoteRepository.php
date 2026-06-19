@@ -34,6 +34,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\EACollaborateHelper;
 use App\Services\EmailStatusService;
 use App\Services\HomeQuoteService;
 use App\Services\HomeRevivalService;
@@ -341,6 +342,8 @@ class HomeQuoteRepository extends BaseRepository
         }
 
         $quoteData = $baseQuoteData;
+
+        EACollaborateHelper::applyEAIMCRMSource($quoteData);
 
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
 

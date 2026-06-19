@@ -14,6 +14,7 @@ use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Services\BranchAssignmentService;
 use App\Services\DropdownSourceService;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -82,6 +83,8 @@ class BikeQuoteRepository extends BaseRepository
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
             'additionalNotes' => $data['notes'] ?? null,
         ];
+
+        EACollaborateHelper::applyEAIMCRMSource($quoteData);
 
         return Capi::request('/api/v1-save-bike-quote', 'post', $quoteData);
     }

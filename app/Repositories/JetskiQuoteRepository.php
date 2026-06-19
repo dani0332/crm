@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -65,6 +66,8 @@ class JetskiQuoteRepository extends BaseRepository
             'createdById' => auth()->user()->id,
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
+
+        EACollaborateHelper::applyEAIMCRMSource($quoteData);
 
         info('JetSki Quote Create :'.json_encode($quoteData));
 

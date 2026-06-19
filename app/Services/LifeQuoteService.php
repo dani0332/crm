@@ -12,6 +12,7 @@ use App\Enums\QuoteTypes;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\QuoteBatches;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -156,6 +157,8 @@ class LifeQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
+
+        EACollaborateHelper::applyEAIMCRMSource($dataArr);
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
 

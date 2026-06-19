@@ -131,23 +131,33 @@ const eaModelOptions = computed(() => {
   return options;
 });
 
-const collaborateShowRouteMap = {
-  2: 'home-quotes-show',
-  4: 'life-quotes-show',
-  5: 'business.show',
-  6: 'bike-quotes-show',
-  7: 'yacht-quotes-show',
-  9: 'pet-quotes-show',
-  10: 'cycle-quotes-show',
-  11: 'jetski-quotes-show',
-  18: 'savings-quotes-show',
-  101: 'business.show',
+const collaborateRouteMap = {
+  2: 'home-quotes-create',
+  4: 'life-quotes-create',
+  5: 'business.create',
+  6: 'bike-quotes-create',
+  7: 'yacht-quotes-create',
+  9: 'pet-quotes-create',
+  10: 'cycle-quotes-create',
+  11: 'jetski-quotes-create',
+  18: 'savings-quotes-create',
+  101: 'business.create',
 };
 
 const onConfirmCreateLead = async isValid => {
   if (!isValid) return;
 
   if (leadForm.type === 'expert_advisor_model') {
+    if (leadForm.ea_model === 'collaborate') {
+      const createRouteName = collaborateRouteMap[Number(leadForm.quote_type_id)];
+      if (createRouteName) {
+        emit('confirmed', { type: 'expert_advisor_model' });
+        isModalOpen.value = false;
+        resetForm();
+        router.visit(route(createRouteName), { data: { ea_model: 'collaborate' } });
+      }
+      return;
+    }
     await submitEALead();
     return;
   }
@@ -188,19 +198,9 @@ const submitEALead = async () => {
       position: 'top',
     });
 
-    const isCollaborate = leadForm.ea_model === 'collaborate';
-    const quoteTypeId = leadForm.quote_type_id;
-
     emit('confirmed', { type: 'expert_advisor_model' });
     isModalOpen.value = false;
     resetForm();
-
-    if (isCollaborate) {
-      const showRouteName = collaborateShowRouteMap[Number(quoteTypeId)];
-      if (showRouteName && response?.data?.uuid) {
-        router.visit(route(showRouteName, response.data.uuid));
-      }
-    }
   } catch (err) {
     const data = err?.response?.data;
     if (data?.duplicate) {
@@ -436,8 +436,8 @@ watch(
             :required="true"
           />
 
-          <!-- Generic lead fields -->
-          <template v-if="leadForm.quote_type_id">
+          <!-- Generic lead fields: referral only -->
+          <template v-if="leadForm.quote_type_id && leadForm.ea_model !== 'collaborate'">
             <div class="grid grid-cols-2 gap-4">
               <x-input
                 v-model="leadForm.first_name"
