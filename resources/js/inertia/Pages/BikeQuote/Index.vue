@@ -67,7 +67,10 @@ let availableFilters = {
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
 const filters = reactive(availableFilters);
-const eaModelOptions = [{ value: 'referral', label: 'Referral' }, { value: 'collaborate', label: 'Collaborate' }];
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborate' },
+];
 const hasRole = role => useHasRole(role);
 
 const advisorOptions = computed(() => {
