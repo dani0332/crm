@@ -16,9 +16,11 @@ use App\Enums\WorkflowTypeEnum;
 use App\Jobs\AutomationFailedJob;
 use App\Jobs\PolicyIssuanceJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Jobs\SendTravelQatarFailedAllocationEmailJob;
 use App\Models\PolicyIssuance;
 use App\Models\PolicyIssuanceLog;
 use App\Models\QuoteDocument;
+use App\Models\TravelQuote;
 use App\Services\HealthEmailService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\GIGInsuranceService;
@@ -26,6 +28,7 @@ use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Cyber\AwnicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Health\Adnic\AdnicInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicInsuranceService;
 use App\Services\PolicyIssuanceAutomation\Travel\QatarInsuranceService;
 use App\Services\Quotes\DeviceQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -49,6 +52,7 @@ class PolicyIssuanceService
     {
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
+                InsuranceProviderEnum::DIC->value => app(DicInsuranceService::class),
                 InsuranceProviderEnum::QIC->value => new QatarInsuranceService,
                 default => null,
             },
@@ -527,34 +531,19 @@ class PolicyIssuanceService
             }
         }
 
-        if (
-            in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value]) &&
-            (! empty($statusAPIFailed) && ! empty($processInvolved)) &&
-            ! $isPolicyBooked
-        ) {
-            $actionRequired = 'Please coordinate with the IT Department to address and rectify the issue.';
-            [$jobQuoteTypeId, $workflowType, $recipientUser] = $this->resolveAutomationFailureRouting($quoteType, $processInvolved);
+        $hasFailureContext = ! empty($statusAPIFailed) && ! empty($processInvolved);
+        $isCarOrCyber = in_array($quoteType, [QuoteTypes::CAR->value, QuoteTypes::CYBER->value, QuoteTypes::DEVICE->value], true);
+        // Other LOBs (e.g. Home policy issuance): add `$quoteType === QuoteTypes::HOME->value` and extend `resolveAutomationFailureRouting`.
+        // Travel failures use insurer-specific paths (e.g. {@see applyTravelDicAutomationResult}, Alliance allocateLead); they do not populate `$statusAPIFailed` here.
 
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Going to dispatch AutomationFailedJob', extra: [
-                'actionRequired' => $actionRequired,
-                'statusAPIFailed' => $statusAPIFailed,
-                'processInvolved' => $processInvolved,
-                'jobQuoteTypeId' => $jobQuoteTypeId,
-                'workflowType' => $workflowType,
-                'recipientUser' => $recipientUser,
-            ]);
-
-            AutomationFailedJob::dispatch(
+        if ($hasFailureContext && $isCarOrCyber && ! $isPolicyBooked) {
+            $this->dispatchAutomationFailedJob(
                 $quote->id,
-                $jobQuoteTypeId,
-                $actionRequired,
+                $quoteType,
                 $statusAPIFailed,
                 $processInvolved,
-                $workflowType,
-                $recipientUser
-            )->onQueue('policy-issuance-automation');
-
-            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - AutomationFailedJob Dispatched');
+                __FUNCTION__,
+            );
         } elseif ($quoteType === QuoteTypes::HEALTH->value && ! empty($statusAPIFailed) && ! empty($processInvolved)) {
             app(HealthEmailService::class)->sendSTPAdvisorNotification($quote, true, $processInvolved);
         }
@@ -575,6 +564,41 @@ class PolicyIssuanceService
                 SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
             }
         }
+    }
+
+    /**
+     * Shared AutomationFailedJob dispatch (only from {@see allocateLead}).
+     */
+    private function dispatchAutomationFailedJob(
+        int $quoteId,
+        string $quoteType,
+        string $statusAPIFailed,
+        string $processInvolved,
+        string $logContextFunction,
+    ): void {
+        $actionRequired = 'Please coordinate with the IT Department to address and rectify the issue.';
+        [$jobQuoteTypeId, $workflowType, $recipientUser] = $this->resolveAutomationFailureRouting($quoteType, $processInvolved);
+
+        LoggerService::info('automation:'.$this->className.' fn:'.$logContextFunction.' - Going to dispatch AutomationFailedJob', extra: [
+            'actionRequired' => $actionRequired,
+            'statusAPIFailed' => $statusAPIFailed,
+            'processInvolved' => $processInvolved,
+            'jobQuoteTypeId' => $jobQuoteTypeId,
+            'workflowType' => $workflowType,
+            'recipientUser' => $recipientUser,
+        ]);
+
+        AutomationFailedJob::dispatch(
+            $quoteId,
+            $jobQuoteTypeId,
+            $actionRequired,
+            $statusAPIFailed,
+            $processInvolved,
+            $workflowType,
+            $recipientUser
+        )->onQueue('policy-issuance-automation');
+
+        LoggerService::info('automation:'.$this->className.' fn:'.$logContextFunction.' - AutomationFailedJob Dispatched');
     }
 
     private function resolveAutomationFailureRouting(string $quoteType, string $processInvolved): array
@@ -764,6 +788,85 @@ class PolicyIssuanceService
             'advisorId' => $advisorId,
             'allocation_response' => $response,
         ]);
+    }
+
+    /**
+     * Travel DIC: apply automation result on the quote. On failure, allocates the lead and
+     * notifies via {@see SendTravelQatarFailedAllocationEmailJob} (Bird {@see WorkflowTypeEnum::TRAVEL_QATAR_FAILED_ALLOCATION}),
+     * matching {@see QatarInsuranceService::allocateLead} instead of {@see AutomationFailedJob}.
+     */
+    public function applyTravelDicAutomationResult(
+        TravelQuote $quote,
+        bool $success,
+        ?int $insurerApiStatusId = null,
+        ?string $processInvolved = null,
+        ?int $apiIssuanceStatusId = null,
+    ): void {
+        $isInsurerApiStatusAlreadyFailed = $quote->isBookingFailed() || $quote->isPolicyIssuanceFailed();
+
+        LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' - Travel DIC result handling', extra: [
+            'quote_code' => $quote->code,
+            'success' => $success,
+            'insurer_api_status_id' => $insurerApiStatusId,
+            'process_involved' => $processInvolved,
+        ]);
+
+        $apiIssuanceStatusId ??= $success
+            ? PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID
+            : PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID;
+
+        $updateData = ['api_issuance_status_id' => $apiIssuanceStatusId];
+        if (! $success && $insurerApiStatusId !== null) {
+            $updateData['insurer_api_status_id'] = $insurerApiStatusId;
+        } elseif ($success) {
+            // Clear any prior failure status so a future failure correctly triggers the Bird notification email.
+            $updateData['insurer_api_status_id'] = null;
+        }
+
+        $quote->update($updateData);
+
+        if (! $success) {
+            $quote->refresh();
+            $this->allocateTravelDicFailedLeadForBirdNotification($quote, $isInsurerApiStatusAlreadyFailed);
+        }
+    }
+
+    /**
+     * Post–DIC failure: same allocation + Bird email path as {@see AllianceInsuranceService::allocateLead},
+     * without {@see AutomationFailedJob}. Called by {@see applyTravelDicAutomationResult} on failure.
+     */
+    private function allocateTravelDicFailedLeadForBirdNotification(TravelQuote $quote, bool $isInsurerApiStatusAlreadyFailed): void
+    {
+        $uuid = $quote->uuid;
+        LoggerService::info('automation:'.$this->className.' fn:allocateTravelDicFailedLeadForBirdNotification - Going to allocate lead (DIC) ................ Ref-ID: '.$uuid);
+
+        $advisorId = $quote->advisor_id;
+
+        if (! $advisorId) {
+            $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+            $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
+            if ($response && $response['advisorId']) {
+                $advisorId = $response['advisorId'];
+            }
+            LoggerService::info('automation:'.$this->className.' fn:allocateTravelDicFailedLeadForBirdNotification - Quote Code : '.$quote->code.' -  Assigned Advisor through Allocation', extra: [
+                'advisorId' => $advisorId,
+                'allocation_response' => $response ?? null,
+            ]);
+            $quote->refresh();
+        }
+
+        LoggerService::info('automation:'.$this->className.' fn:allocateTravelDicFailedLeadForBirdNotification - Quote Code : '.$quote->code.' -  Assigned Advisor', extra: [
+            'advisorId' => $advisorId,
+        ]);
+
+        if (! $advisorId) {
+            return;
+        }
+
+        LoggerService::info('automation:'.$this->className.' fn:allocateTravelDicFailedLeadForBirdNotification - Going to dispatch SendTravelQatarFailedAllocationEmailJob ................ Ref-ID: '.$uuid);
+        if (! $isInsurerApiStatusAlreadyFailed && $quote->insurer_api_status != null) {
+            SendTravelQatarFailedAllocationEmailJob::dispatch($uuid)->delay(now()->addSeconds(30));
+        }
     }
 
     /**
