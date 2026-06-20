@@ -331,6 +331,8 @@ class BusinessQuoteService extends BaseService
             'additionalNotes' => $request->additional_notes ?? null,
             'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
         ];
+        EACollaborateHelper::applyEAIMCRMSource($dataArr);
+
         if (! Auth::user()->hasRole('ADMIN')) {
 
             if (Auth::user()->hasRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {

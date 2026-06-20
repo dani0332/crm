@@ -147,6 +147,7 @@ const collaborateRouteMap = {
   11: 'jetski-quotes-create',
   18: 'savings-quotes-create',
   101: 'business.create',
+  102: 'amt.create',
 };
 
 const onConfirmCreateLead = async isValid => {

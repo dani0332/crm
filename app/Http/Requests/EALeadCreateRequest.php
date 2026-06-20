@@ -98,9 +98,7 @@ class EALeadCreateRequest extends FormRequest
         }
 
         $user = $this->user();
-        $hasCollaboratePermission = $user->roles()->with('permissions')->get()
-            ->flatMap(fn ($role) => $role->permissions)
-            ->contains('name', PermissionsEnum::EaCollaborate);
+        $hasCollaboratePermission = $user->hasPermissionTo(PermissionsEnum::EaCollaborate);
 
         if ($this->getEaModel() === EaModelEnum::Collaborate && ! $hasCollaboratePermission) {
             $this->merge(['ea_model' => 'referral']);

@@ -152,9 +152,16 @@ const isEmptyField = ref(false);
 function onSubmit(isValid) {
   if (!isValid) return;
   const method = isEdit.value ? 'put' : 'post';
-  const url = isEdit.value
+  let url = isEdit.value
     ? route('amt.update', props.quote.uuid)
     : route('amt.store');
+
+  if (
+    !isEdit.value &&
+    new URLSearchParams(window.location.search).get('ea_model') === 'collaborate'
+  ) {
+    url += '?ea_model=collaborate';
+  }
 
   const options = {
     onError: errors => {

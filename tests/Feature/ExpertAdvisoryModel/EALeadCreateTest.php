@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\EaModelEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -28,6 +29,10 @@ use Tests\Helpers\TestSchemaCreator;
 beforeEach(function () {
     TestSchemaCreator::createEaSchema();
     $this->withoutMiddleware(PreventRequestForgery::class);
+
+    // Seed the ea-collaborate permission so hasPermissionTo() doesn't throw when the
+    // permission exists in the schema but has not been assigned to any user under test.
+    TestDataSeeder::seedRolePermissions('_ea_permission_seed', [PermissionsEnum::EaCollaborate]);
 
     DB::connection('sqlite')->table('quote_type')->insertOrIgnore([
         ['id' => QuoteTypeId::Car, 'code' => 'Car', 'short_code' => 'CAR', 'text' => 'Car Insurance', 'is_active' => 1, 'created_at' => now(), 'updated_at' => now()],
