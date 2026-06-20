@@ -40,7 +40,7 @@ const collaborateExcludedLobs = computed(() => {
   // Life (4) and Group Medical (102) excluded unless user has RM_ADVISOR (FRD D2).
   const excluded = [1, 8, 3];
   if (!authRoles.value.includes('RM_ADVISOR')) {
-    excluded.push(4);   // Life
+    excluded.push(4); // Life
     excluded.push(102); // Group Medical
   }
   return excluded;
