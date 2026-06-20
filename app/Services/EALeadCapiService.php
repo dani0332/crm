@@ -66,6 +66,10 @@ class EALeadCapiService
             $payload['advisorId'] = auth()->id();
         }
 
+        if ($quoteTypeId === QuoteTypeId::Car && ! $isCollaborate) {
+            $payload['isCampaignLead'] = true;
+        }
+
         if ($quoteTypeId === QuoteTypeId::Corpline && $request->business_type_of_insurance_id) {
             $payload['businessTypeOfInsuranceId'] = $request->business_type_of_insurance_id;
         }
