@@ -30,10 +30,6 @@ beforeEach(function () {
 
 // ─── Datasets ────────────────────────────────────────────────────────────────
 
-/**
- * All personal-quote LOB model_type values → each resolves to PersonalQuote via getQuoteObject().
- * Format: [model_type, quote_type_id]
- */
 dataset('personal_quote_lobs', [
     'Bike' => ['Bike',    QuoteTypeId::Bike],
     'Cycle' => ['Cycle',   QuoteTypeId::Cycle],
@@ -47,7 +43,6 @@ dataset('personal_quote_lobs', [
     'Cyber' => ['Cyber',   QuoteTypeId::Cyber],
 ]);
 
-/** Non-personal LOB model_type strings — each has its own DB table. */
 dataset('non_personal_lob_types', ['Car', 'Health', 'Travel', 'Business']);
 
 // ─── Local helpers ────────────────────────────────────────────────────────────
@@ -118,9 +113,6 @@ function makeEaBusinessQuote(array $attrs = []): BusinessQuote
     ], $attrs));
 }
 
-/**
- * Creates a quote for any non-personal LOB by model_type string.
- */
 function makeEaNonPersonalQuote(string $lob, array $attrs = []): mixed
 {
     return match ($lob) {
@@ -133,7 +125,6 @@ function makeEaNonPersonalQuote(string $lob, array $attrs = []): mixed
 
 // ─── EA state helpers ─────────────────────────────────────────────────────────
 
-/** All keys read by isEAQuoteStatusUpdateAllowed, with no approvals set. */
 function eaCollaborateBlocked(): array
 {
     return [
@@ -167,8 +158,7 @@ function eaCollaborateBothAdvisorsApproved(): array
     ];
 }
 
-// ─── Section 1: isEAQuoteStatusUpdateAllowed helper (no DB) ──────────────────
-// All objects carry every key the function reads so tests are self-documenting.
+// ─── Section 1: isEAQuoteStatusUpdateAllowed helper ──────────────────────────
 
 it('allows quote with non-EA source', function () {
     $quote = (object) [
@@ -247,7 +237,6 @@ it('blocks EA_IMCRM collaborate quote when only assigned advisor has approved', 
 });
 
 // ─── Section 2: sendBookingPolicy — manual path (HTTP) ───────────────────────
-// Covers every personal-quote LOB via dataset, then every non-personal LOB.
 
 it('sendBookingPolicy blocks PolicySentToCustomer for blocked PersonalQuote EA lead', function (string $modelType, int $quoteTypeId) {
     $user = TestDataSeeder::createAdminUser();
@@ -370,7 +359,6 @@ it('postBookPolicyToSage allows manager-approved PersonalQuote EA lead past EA g
     $quote = makeEaPersonalQuote(array_merge(eaCollaborateManagerApproved(), ['quote_type_id' => $quoteTypeId]));
     $result = (new SageApiService)->postBookPolicyToSage((object) [], $quote);
 
-    // Passes EA gate — fails further in for an unrelated reason (Sage not configured in test env)
     expect($result['message'])->not->toBe(EaQuoteStatusEligibleEnum::NotEligible->value);
 })->with('personal_quote_lobs');
 
@@ -411,8 +399,6 @@ it('blocked EA PersonalQuote status stays at PolicyIssued — observer never rec
 it('allowed EA PersonalQuote status update triggers observer CourtesyEmailJob dispatch', function () {
     Queue::fake();
 
-    // quoteType relationship must resolve so PersonalQuoteObservable::handleQuoteStatusChange
-    // enters the checkPersonalQuotes() branch and dispatches CourtesyEmailJob
     QuoteType::forceCreate([
         'id' => QuoteTypes::CYBER->id(),
         'code' => QuoteTypes::CYBER->value,

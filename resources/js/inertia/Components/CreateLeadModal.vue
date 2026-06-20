@@ -84,8 +84,13 @@ const businessTypeOfInsuranceOptions = computed(() =>
 );
 
 const collaborateExcludedLobs = computed(() => {
-  const excluded = [1, 8];
-  if (!hasRMAdvisor.value) excluded.push(3);
+  // Car (1), Travel (8), Health (3) are always excluded from Collaborative (FRD D4).
+  // Life (4) and Group Medical (102) are excluded unless the user has RM_ADVISOR (FRD D2).
+  const excluded = [1, 8, 3];
+  if (!hasRMAdvisor.value) {
+    excluded.push(4);   // Life
+    excluded.push(102); // Group Medical
+  }
   return excluded;
 });
 

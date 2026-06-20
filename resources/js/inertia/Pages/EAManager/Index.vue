@@ -84,6 +84,7 @@ const filterForm = reactive({
   ref_id: props.filters.ref_id ?? '',
   lob: props.filters.lob ?? null,
   ea_model: props.filters.ea_model ?? null,
+  status: props.filters.status ?? null,
   date_from: props.filters.date_from ?? '',
   date_to: props.filters.date_to ?? '',
   lead_generator: props.filters.lead_generator ?? '',
@@ -104,6 +105,7 @@ const onReset = () => {
     ref_id: '',
     lob: null,
     ea_model: null,
+    status: null,
     date_from: '',
     date_to: '',
     lead_generator: '',
@@ -221,6 +223,13 @@ const updateRow = async lead => {
         label="EA Model"
         placeholder="All Models"
         :options="eaModelOptions"
+      />
+
+      <x-select
+        v-model="filterForm.status"
+        label="Status"
+        placeholder="All Statuses"
+        :options="eaStatusOptions"
       />
 
       <x-input

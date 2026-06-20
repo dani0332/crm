@@ -25,7 +25,7 @@ class EAManagerController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['ref_id', 'lob', 'ea_model', 'date_from', 'date_to', 'lead_generator']);
+        $filters = $request->only(['ref_id', 'lob', 'ea_model', 'status', 'date_from', 'date_to', 'lead_generator']);
 
         return inertia('EAManager/Index', [
             'leads' => $this->service->getPendingRejections($filters),
@@ -58,11 +58,10 @@ class EAManagerController extends Controller
             $quote->ea_expert_advisor_rejected_at = null;
             $quote->save();
 
+            // FRD F3: email both advisors only when EA Manager approves.
             SendEAManagerDecisionEmailJob::dispatch($quote, $quoteType, 'Approved');
         } else {
             $this->demoteToReferral($quote);
-
-            SendEAManagerDecisionEmailJob::dispatch($quote, $quoteType, 'Rejected');
         }
 
         return response()->json(['success' => true]);
@@ -80,8 +79,6 @@ class EAManagerController extends Controller
         }
 
         $this->demoteToReferral($quote);
-
-        SendEAManagerDecisionEmailJob::dispatch($quote, $quoteType, 'Model Changed to Referral');
 
         return response()->json(['success' => true]);
     }

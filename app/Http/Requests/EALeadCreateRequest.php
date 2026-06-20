@@ -69,6 +69,7 @@ class EALeadCreateRequest extends FormRequest
                 'exists:business_type_of_insurance,id',
             ],
             'health_plan_type_id' => [
+                Rule::requiredIf($quoteTypeId === QuoteTypeId::Health && ! $isCollaborate),
                 'nullable',
                 'integer',
                 'exists:health_plan_type,id',
@@ -105,10 +106,13 @@ class EALeadCreateRequest extends FormRequest
             $this->merge(['ea_model' => 'referral']);
         }
 
-        $this->collaborateForbiddenLobs = [QuoteTypeId::Car, QuoteTypeId::Travel];
+        // Health, Car, Travel are always excluded from Collaborative (FRD D4).
+        // Life and GM are excluded unless the user has RM_ADVISOR (FRD D2).
+        $this->collaborateForbiddenLobs = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health];
 
         if (! $this->user()->hasRole(RolesEnum::RMAdvisor)) {
-            $this->collaborateForbiddenLobs[] = QuoteTypeId::Health;
+            $this->collaborateForbiddenLobs[] = QuoteTypeId::Life;
+            $this->collaborateForbiddenLobs[] = QuoteTypeId::GroupMedical;
         }
     }
 
