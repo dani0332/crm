@@ -64,6 +64,9 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
         if ($lead->source === LeadSourceEnum::EA_IMCRM && $lead->ea_model === EaModelEnum::Collaborate && empty($lead->expert_advisor_id)) {
             LoggerService::info(self::class.' - EA collaborate lead without expert advisor, proceeding with expert advisor allocation');
             $continueAssignment = true;
+        } elseif ($lead->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - EA IMCRM referral lead, bypassing SIC check and proceeding with ILA allocation');
+            $continueAssignment = true;
         } elseif (! $this->allocationRequest->isOverrideAdvisorRequest() && ! empty($lead->advisor_id)) {
             LoggerService::info(self::class.' - Lead is already assigned to advisor with ID: '.$lead->advisor_id.', skipping assignment');
         } elseif ($lead->isFakeOrDuplicate()) {
