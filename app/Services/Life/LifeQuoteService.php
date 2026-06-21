@@ -408,6 +408,7 @@ class LifeQuoteService extends BaseService
                 'subSource',
                 'subSourceOption',
                 'branch:id,name',
+                'leadGenerator',
             ])
             ->select([
                 'personal_quotes.*',
