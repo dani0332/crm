@@ -94,8 +94,13 @@ const collaborateExcludedLobs = computed(() => {
   return excluded;
 });
 
+// HAW (Home Appliance Warranty, id=21) is not available for any EA model until further notice.
+const EA_EXCLUDED_LOBS = [21];
+
 const allLobOptions = computed(() =>
-  quoteTypes.value.map(qt => ({ value: qt.id, label: qt.name })),
+  quoteTypes.value
+    .filter(qt => !EA_EXCLUDED_LOBS.includes(Number(qt.id)))
+    .map(qt => ({ value: qt.id, label: qt.name })),
 );
 const collaborateEligibleLobOptions = computed(() =>
   allLobOptions.value.filter(

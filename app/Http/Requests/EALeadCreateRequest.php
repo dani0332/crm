@@ -39,6 +39,11 @@ class EALeadCreateRequest extends FormRequest
 
                         return;
                     }
+                    if ((int) $value === QuoteTypeId::HomeAppliance) {
+                        $fail('Home Appliance Warranty is not available for the Expert Advisor model.');
+
+                        return;
+                    }
                     if ($isCollaborate && in_array((int) $value, $collaborateForbiddenLobs)) {
                         $fail('The collaborate model is not available for the selected LOB.');
                     }
@@ -106,7 +111,8 @@ class EALeadCreateRequest extends FormRequest
 
         // Health, Car, Travel are always excluded from Collaborative (FRD D4).
         // Life and GM are excluded unless the user has RM_ADVISOR (FRD D2).
-        $this->collaborateForbiddenLobs = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health];
+        // HomeAppliance (HAW) is excluded from all EA models until further notice.
+        $this->collaborateForbiddenLobs = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::HomeAppliance];
 
         if (! $this->user()->hasRole(RolesEnum::RMAdvisor)) {
             $this->collaborateForbiddenLobs[] = QuoteTypeId::Life;

@@ -524,3 +524,32 @@ it('creates a collaborate lead with advisor_id set to the creating user', functi
     expect($lead->advisor_id)->toBe($user->id)
         ->and($lead->ea_model)->toBe(EaModelEnum::Collaborate);
 });
+
+// ─── HAW exclusion (UAT fix) ──────────────────────────────────────────────────
+
+it('rejects referral lead creation with Home Appliance LOB', function () {
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    $this->actingAs($user);
+
+    $this->postJson(route('ea-leads.store'), [
+        'ea_model' => 'referral',
+        'quote_type_id' => QuoteTypeId::HomeAppliance,
+        'first_name' => 'Test', 'last_name' => 'User',
+        'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0501234590',
+    ])->assertStatus(422)->assertJsonValidationErrorFor('quote_type_id');
+});
+
+it('rejects collaborate lead creation with Home Appliance LOB', function () {
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    TestDataSeeder::seedRolePermissions(RolesEnum::EAReferral, ['ea-collaborate']);
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+    $user->refresh();
+    $this->actingAs($user);
+
+    $this->postJson(route('ea-leads.store'), [
+        'ea_model' => 'collaborate',
+        'quote_type_id' => QuoteTypeId::HomeAppliance,
+        'first_name' => 'Test', 'last_name' => 'User',
+        'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0501234591',
+    ])->assertStatus(422)->assertJsonValidationErrorFor('quote_type_id');
+});
