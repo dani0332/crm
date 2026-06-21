@@ -237,7 +237,7 @@ class BikeQuoteController extends Controller
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
-        $quote->load(['carPlan.insuranceProvider', 'subSource', 'subSourceOption']);
+        $quote->load(['carPlan.insuranceProvider', 'subSource', 'subSourceOption', 'leadGenerator']);
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,

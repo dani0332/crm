@@ -323,6 +323,7 @@ class BusinessQuoteController extends Controller
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Business));
+        $record->load('leadGenerator');
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),

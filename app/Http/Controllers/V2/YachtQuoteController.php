@@ -164,7 +164,7 @@ class YachtQuoteController extends Controller
         /* End - Temporarily adding for correcting historic data */
 
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
-        $quote->load('subSource', 'subSourceOption');
+        $quote->load('subSource', 'subSourceOption', 'leadGenerator');
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::YACHT->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {

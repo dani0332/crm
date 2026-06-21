@@ -3102,6 +3102,12 @@ const getDisplayPriceInAED = item => {
       :expanded="sectionExpanded"
     />
 
+    <EALeadInfo
+      :source="quote.source"
+      :ea-model="quote.ea_model"
+      :lead-generator="quote.lead_generator"
+    />
+
     <lead-raw-data
       :modelType="'Life'"
       :uuid="$page.props.quote.uuid"

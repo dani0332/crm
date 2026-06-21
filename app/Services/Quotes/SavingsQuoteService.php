@@ -184,6 +184,7 @@ class SavingsQuoteService extends BaseQuoteService
             'branch:id,name',
             'customer',
             'passportVisaDetails',
+            'leadGenerator',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;

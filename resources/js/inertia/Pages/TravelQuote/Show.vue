@@ -3864,6 +3864,12 @@ const fullAddress = computed(() => {
       :expanded="sectionExpanded"
     />
 
+    <EALeadInfo
+      :source="quote.source"
+      :ea-model="quote.ea_model"
+      :lead-generator="quote.lead_generator"
+    />
+
     <lead-raw-data
       :modelType="'Travel'"
       :uuid="$page.props.quote.uuid"

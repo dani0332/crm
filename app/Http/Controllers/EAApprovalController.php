@@ -6,6 +6,7 @@ use App\Enums\EaModelEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\SendEACollaborateRejectedEmailJob;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
@@ -69,11 +70,12 @@ class EAApprovalController extends Controller
         return response()->json(['success' => true]);
     }
 
-    private function resolveQuote(string $quoteType, int $quoteId): CarQuote|HealthQuote|PersonalQuote
+    private function resolveQuote(string $quoteType, int $quoteId): CarQuote|HealthQuote|PersonalQuote|BusinessQuote
     {
         return match ($quoteType) {
             'car' => CarQuote::findOrFail($quoteId),
             'health' => HealthQuote::findOrFail($quoteId),
+            'business', 'groupmedical' => BusinessQuote::findOrFail($quoteId),
             default => PersonalQuote::findOrFail($quoteId),
         };
     }

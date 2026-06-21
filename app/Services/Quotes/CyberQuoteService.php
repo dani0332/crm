@@ -178,6 +178,7 @@ class CyberQuoteService extends BaseQuoteService
                     'documents' => function ($q) {
                         $q->with('createdBy')->orderBy('created_at', 'desc');
                     },
+                    'leadGenerator',
                 ]);
             })
             ->where('uuid', $uuid)->firstOrFail();
