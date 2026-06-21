@@ -136,7 +136,7 @@ class JetskiQuoteController extends Controller
         /* End - Temporarily adding for correcting historic data */
 
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
-        $quote->load('subSource', 'subSourceOption', 'leadGenerator');
+        $quote->load('subSource', 'subSourceOption', 'leadGenerator', 'expertAdvisor');
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();

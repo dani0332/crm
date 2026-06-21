@@ -12,6 +12,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  expertAdvisor: {
+    type: Object,
+    default: null,
+  },
 });
 
 const isVisible = computed(() => props.source === 'EA_IMCRM');
@@ -34,6 +38,10 @@ const isVisible = computed(() => props.source === 'EA_IMCRM');
         <div class="grid">
           <dt class="font-medium">LEAD GENERATOR</dt>
           <dd class="mt-1">{{ leadGenerator?.name ?? '—' }}</dd>
+        </div>
+        <div v-if="eaModel === 'collaborate'" class="grid">
+          <dt class="font-medium">EXPERT ADVISOR</dt>
+          <dd class="mt-1">{{ expertAdvisor?.name ?? '—' }}</dd>
         </div>
       </dl>
     </div>

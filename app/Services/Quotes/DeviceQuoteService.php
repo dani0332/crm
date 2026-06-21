@@ -50,6 +50,7 @@ class DeviceQuoteService extends BaseQuoteService
             'insuranceProviderPlan',
             'branch:id,name',
             'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -191,6 +192,7 @@ class DeviceQuoteService extends BaseQuoteService
                             $q->with('createdBy')->orderBy('created_at', 'desc');
                         },
                         'leadGenerator',
+                        'expertAdvisor',
                     ])->select([
                         'personal_quotes.*',
                     ])->selectRaw("

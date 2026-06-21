@@ -4360,6 +4360,7 @@ const isCars24 = computed(() => {
       :source="record.source"
       :ea-model="record.ea_model"
       :lead-generator="record.lead_generator"
+      :expert-advisor="record.expert_advisor"
     />
 
     <EAApprovalActions

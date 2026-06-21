@@ -172,6 +172,7 @@ class JetskiQuoteRepository extends BaseRepository
             },
             'customer',
             'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])->when(auth()->user() && auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->id());
         })

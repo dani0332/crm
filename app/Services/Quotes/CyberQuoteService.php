@@ -52,6 +52,7 @@ class CyberQuoteService extends BaseQuoteService
             'cyberQuote.coverage',
             'branch:id,name',
             'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -179,6 +180,7 @@ class CyberQuoteService extends BaseQuoteService
                         $q->with('createdBy')->orderBy('created_at', 'desc');
                     },
                     'leadGenerator',
+                    'expertAdvisor',
                 ]);
             })
             ->where('uuid', $uuid)->firstOrFail();

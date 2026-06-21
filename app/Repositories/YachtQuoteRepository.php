@@ -219,6 +219,7 @@ class YachtQuoteRepository extends BaseRepository
             'subSource',
             'branch:id,name',
             'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());

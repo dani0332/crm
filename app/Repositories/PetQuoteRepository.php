@@ -154,6 +154,7 @@ class PetQuoteRepository extends BaseRepository
             'customer',
             'branch:id,name',
             'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());

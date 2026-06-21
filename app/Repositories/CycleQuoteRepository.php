@@ -108,6 +108,7 @@ class CycleQuoteRepository extends BaseRepository
             'customer',
             'branch:id,name',
             'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());

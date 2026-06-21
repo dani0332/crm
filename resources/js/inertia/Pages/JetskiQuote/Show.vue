@@ -498,6 +498,7 @@ const record = computed(() => page.props.quote);
       :source="quote.source"
       :ea-model="quote.ea_model"
       :lead-generator="quote.lead_generator"
+      :expert-advisor="quote.expert_advisor"
     />
 
     <EAApprovalActions

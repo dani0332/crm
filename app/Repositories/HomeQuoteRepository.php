@@ -268,6 +268,7 @@ class HomeQuoteRepository extends BaseRepository
             'renewalBatchModel',
             'branch:id,name',
             'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ];
     }
 

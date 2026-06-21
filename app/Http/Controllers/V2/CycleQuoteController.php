@@ -187,7 +187,7 @@ class CycleQuoteController extends Controller
                 return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             })->values();
         }
-        $quote->load(['documents.createdBy:id,name,email', 'subSource', 'subSourceOption', 'leadGenerator']);
+        $quote->load(['documents.createdBy:id,name,email', 'subSource', 'subSourceOption', 'leadGenerator', 'expertAdvisor']);
 
         @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Cycle);
 

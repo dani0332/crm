@@ -61,7 +61,8 @@ watch(
 );
 
 // HAW (Home Appliance Warranty, id=21) is not available for any EA model until further notice.
-const EA_EXCLUDED_LOBS = [21];
+// Business (id=5) is excluded because CorpLine (id=101) covers that use case in the EA model.
+const EA_EXCLUDED_LOBS = [21, 5];
 
 const allLobOptions = computed(() =>
   props.quoteTypes

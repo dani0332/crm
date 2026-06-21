@@ -67,6 +67,7 @@ class SavingsQuoteService extends BaseQuoteService
             'subSource:id,text',
             'branch:id,name',
             'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -185,6 +186,7 @@ class SavingsQuoteService extends BaseQuoteService
             'customer',
             'passportVisaDetails',
             'leadGenerator',
+            'expertAdvisor',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
