@@ -13,7 +13,7 @@ use App\Models\ApplicationStorage;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\PersonalQuote;
-use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
+use App\Services\AML\AMLAutomationService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Schema;
@@ -300,7 +300,7 @@ test('returns 422 when aml automation row blocks re-dispatch', function (string 
 ]);
 
 test('aml automatable lob registry allows savings only from API', function () {
-    expect(in_array(QuoteTypes::SAVINGS, AmlAutomatableLobRegistry::allowedLobsFromAPI()))->toBeTrue();
-    expect(in_array(QuoteTypes::DEVICE, AmlAutomatableLobRegistry::allowedLobsFromAPI()))->toBeFalse();
-    expect(in_array(QuoteTypes::CAR, AmlAutomatableLobRegistry::allowedLobsFromAPI()))->toBeFalse();
+    expect(in_array(QuoteTypes::SAVINGS, AMLAutomationService::allowedLobsFromAPI()))->toBeTrue();
+    expect(in_array(QuoteTypes::DEVICE, AMLAutomationService::allowedLobsFromAPI()))->toBeFalse();
+    expect(in_array(QuoteTypes::CAR, AMLAutomationService::allowedLobsFromAPI()))->toBeFalse();
 });

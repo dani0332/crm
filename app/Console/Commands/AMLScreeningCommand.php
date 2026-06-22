@@ -10,9 +10,9 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\AmlScreeningAutomationJob;
 use App\Models\AmlAutomation;
+use App\Services\AML\AMLAutomationService;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
-use App\Support\AmlQuoteAutomation\AmlAutomationEligibilityService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
 
@@ -37,7 +37,7 @@ class AMLScreeningCommand extends Command
     protected $description = 'Run AML Screening Automation for Travel, Cyber, and Device Quotes';
 
     public function __construct(
-        private readonly AmlAutomationEligibilityService $eligibilityService,
+        private readonly AMLAutomationService $eligibilityService,
     ) {
         parent::__construct();
     }

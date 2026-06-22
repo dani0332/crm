@@ -11,14 +11,13 @@ use App\Events\AmlAutomationScreeningSucceeded;
 use App\Models\AmlAutomation;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
+use App\Services\AML\AMLAutomationService;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
 use App\Services\Quotes\PersonalQuoteAmlAutomationCustomerService;
 use App\Services\TravelQuoteService;
-use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
-use App\Support\AmlQuoteAutomation\AmlAutomationEligibilityService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,7 +32,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Executes AML screening automation for a single quote.
  *
  * This job trusts that the caller (command or IMCRM API) already validated eligibility
- * via {@see AmlAutomationEligibilityService} and set the
+ * via {@see AMLAutomationService} and set the
  * {@see AmlAutomation} record to Queue status before dispatching.
  *
  * The only pre-condition re-checked here is:
@@ -244,7 +243,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     private function dispatchScreeningSucceededEventIfApplicable(): void
     {
 
-        if (! AmlAutomatableLobRegistry::isLobAllowedForAmlAutomationScreeningSucceededEvent($this->quoteType)) {
+        if (! AMLAutomationService::isLobAllowedForAmlAutomationScreeningSucceededEvent($this->quoteType)) {
             return;
         }
 

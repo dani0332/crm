@@ -69,14 +69,13 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
+use App\Services\AML\AMLAutomationService;
 use App\Services\AML\AMLInsurerService;
 use App\Services\AML\AMLLookupsService;
 use App\Services\Cars24\Cars24Service;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
-use App\Support\AmlQuoteAutomation\AmlAutomationEligibilityService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -94,7 +93,7 @@ class AMLService
     use GenericQueriesAllLobs;
 
     public function __construct(
-        private readonly AmlAutomationEligibilityService $eligibilityService,
+        private readonly AMLAutomationService $eligibilityService,
     ) {}
 
     public static function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = ''): bool
@@ -2229,7 +2228,7 @@ class AMLService
 
         if ($amlStatus == AMLStatusCode::AMLScreeningCleared) {
             $quoteType = QuoteTypes::getName($quoteObject->quote_type_id);
-            if ($quoteType !== null && AmlAutomatableLobRegistry::isLobAllowedForAmlAutomationScreeningSucceededEvent($quoteType)) {
+            if ($quoteType !== null && AMLAutomationService::isLobAllowedForAmlAutomationScreeningSucceededEvent($quoteType)) {
                 event(new AmlAutomationScreeningSucceeded(
                     (int) $quoteObject->id,
                     (string) $quoteObject->uuid,
@@ -2657,7 +2656,7 @@ class AMLService
      * IMCRM API entry point: validate eligibility then synchronously run AML automation
      * for a single quote identified by UUID and explicit LOB.
      *
-     * All eligibility checks are delegated to {@see AmlAutomationEligibilityService} so
+     * All eligibility checks are delegated to {@see AMLAutomationService} so
      * they are shared with the Artisan command path and never duplicated.
      *
      * The LOB-match guard (quote's stored type vs. the requested type) is the only check

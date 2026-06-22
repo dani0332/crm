@@ -7,9 +7,9 @@ namespace App\Listeners;
 use App\Enums\QuoteTypes;
 use App\Events\AmlAutomationScreeningSucceeded;
 use App\Mail\Aml\AmlAutomationOutcomeMail;
+use App\Services\AML\AMLAutomationService;
 use App\Services\KenService;
 use App\Services\Logger\LoggerService;
-use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,7 +19,7 @@ class SendAmlAutomationOutcomeNotifications
 
     public function handle(AmlAutomationScreeningSucceeded $event): void
     {
-        if (! AmlAutomatableLobRegistry::isLobAllowedForAmlAutomationScreeningSucceededEvent($event->quoteType)) {
+        if (! AMLAutomationService::isLobAllowedForAmlAutomationScreeningSucceededEvent($event->quoteType)) {
             return;
         }
 
