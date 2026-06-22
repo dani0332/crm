@@ -20,40 +20,6 @@ use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Immutable result from {@see AMLAutomationService::check()}.
- */
-final class AMLAutomationEligibilityResult
-{
-    private function __construct(
-        public readonly bool $eligible,
-        /** Human-readable explanation returned to the caller (e.g. API response message). */
-        public readonly string $reason,
-        /** Machine-readable short code for logging and test assertions. */
-        public readonly string $reasonCode,
-        /** Suggested HTTP status for API callers; 200 when eligible. */
-        public readonly int $httpStatus,
-    ) {}
-
-    public static function pass(): self
-    {
-        return new self(true, '', '', Response::HTTP_OK);
-    }
-
-    /**
-     * @param  int  $httpStatus  Defaults to 422 (Unprocessable Entity).
-     */
-    public static function block(string $reason, string $reasonCode, int $httpStatus = 422): self
-    {
-        return new self(false, $reason, $reasonCode, $httpStatus);
-    }
-
-    public function isEligible(): bool
-    {
-        return $this->eligible;
-    }
-}
-
-/**
  * Single entry point for all pre-dispatch eligibility checks for AML screening automation,
  * and single source of truth for LOBs that may receive API-triggered AML automation.
  *
@@ -68,12 +34,33 @@ final class AMLAutomationEligibilityResult
  *   4. Automation row must not already be Complete / Processing / Queue
  *   5. Customer insured data completeness
  *
+ * After calling {@see self::check()}, inspect the result via {@see self::isEligible()},
+ * {@see self::$reason}, {@see self::$reasonCode}, and {@see self::$httpStatus}.
+ *
  * Callers must load the `insuranceProvider` relation on `$quote` before calling
  * {@see self::check()} so that LOB/provider-specific rules can read it without
  * triggering an extra query inside this service.
  */
-final class AMLAutomationService
+class AMLAutomationService
 {
+    // -------------------------------------------------------------------------
+    // Result state — populated by check(); read by callers after check() returns
+    // -------------------------------------------------------------------------
+
+    /** Whether the quote passed all eligibility checks. */
+    public bool $eligible = false;
+
+    /** Human-readable explanation returned to the caller (e.g. API response message). */
+    public string $reason = '';
+
+    /** Machine-readable short code for logging and test assertions. */
+    public string $reasonCode = '';
+
+    /** Suggested HTTP status for API callers; 200 when eligible. */
+    public int $httpStatus = Response::HTTP_UNPROCESSABLE_ENTITY;
+
+    // -------------------------------------------------------------------------
+
     public function __construct(
         private readonly ApplicationStorageService $applicationStorageService,
         private readonly PersonalQuoteAmlAutomationCustomerService $personalQuoteCustomerService,
@@ -86,48 +73,80 @@ final class AMLAutomationService
     /**
      * Run all eligibility checks for the given quote.
      *
+     * Returns $this so callers can read result state immediately:
+     *   $result = $service->check($type, $quote);
+     *   if (! $result->isEligible()) { ... $result->reason ... }
+     *
      * @param  QuoteTypes  $quoteType  The resolved LOB enum.
      * @param  Model  $quote  Quote model with `insuranceProvider` already loaded.
      */
-    public function check(QuoteTypes $quoteType, Model $quote): AMLAutomationEligibilityResult
+    public function check(QuoteTypes $quoteType, Model $quote): self
     {
         // 1. Global: AML automation feature flag (CMS)
         if (! $this->applicationStorageService->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED)) {
-            return AMLAutomationEligibilityResult::block('AML automation is not enabled', 'aml_automation_disabled');
+            return $this->block('AML automation is not enabled', 'aml_automation_disabled');
         }
 
         // 2. Global: policy issuance API status must be YES (unless the LOB/provider skips it)
         $skipsApiIssuanceCheck = self::skipsApiIssuanceStatusCheckForAutomatedAml($quoteType, $quote);
         if (! $skipsApiIssuanceCheck && (int) $quote->api_issuance_status_id !== (int) PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID) {
-            return AMLAutomationEligibilityResult::block(
-                'Policy issuance API status must be confirmed',
-                'api_issuance_status_not_yes'
-            );
+            return $this->block('Policy issuance API status must be confirmed', 'api_issuance_status_not_yes');
         }
 
         // 3. Global: AML status must be null (never screened) or explicitly Pending
         $isAmlPending = empty($quote->aml_status) || $quote->aml_status === AMLStatusCode::AMLPending;
         if (! $isAmlPending) {
-            return AMLAutomationEligibilityResult::block(
-                'AML status must be pending or empty',
-                'aml_status_not_pending'
-            );
+            return $this->block('AML status must be pending or empty', 'aml_status_not_pending');
         }
 
         // 4. Global: existing automation row must not be in a non-retriable state
-        $automationRowBlock = $this->checkAutomationRowState((string) $quote->code);
-        if ($automationRowBlock !== null) {
-            return $automationRowBlock;
+        if ($this->checkAutomationRowState((string) $quote->code)) {
+            return $this;
         }
 
         // 5. Customer insured data must exist and be complete for screening
-        $customerBlock = $this->checkCustomerDataCompleteness($quoteType, $quote);
-        if ($customerBlock !== null) {
-            return $customerBlock;
+        if ($this->checkCustomerDataCompleteness($quoteType, $quote)) {
+            return $this;
         }
 
-        return AMLAutomationEligibilityResult::pass();
+        return $this->pass();
     }
+
+    public function isEligible(): bool
+    {
+        return $this->eligible;
+    }
+
+    // -------------------------------------------------------------------------
+    // Internal result helpers
+    // -------------------------------------------------------------------------
+
+    private function pass(): self
+    {
+        $this->eligible = true;
+        $this->reason = '';
+        $this->reasonCode = '';
+        $this->httpStatus = Response::HTTP_OK;
+
+        return $this;
+    }
+
+    /**
+     * @param  int  $httpStatus  Defaults to 422 (Unprocessable Entity).
+     */
+    private function block(string $reason, string $reasonCode, int $httpStatus = Response::HTTP_UNPROCESSABLE_ENTITY): self
+    {
+        $this->eligible = false;
+        $this->reason = $reason;
+        $this->reasonCode = $reasonCode;
+        $this->httpStatus = $httpStatus;
+
+        return $this;
+    }
+
+    // -------------------------------------------------------------------------
+    // Private check helpers
+    // -------------------------------------------------------------------------
 
     /**
      * Check whether an existing AmlAutomation row blocks re-dispatch.
@@ -135,48 +154,45 @@ final class AMLAutomationService
      * Complete and Processing states are terminal/in-flight and must not be re-triggered.
      * Queue means the job is already waiting — also blocked.
      * Failed and null are retriable.
+     *
+     * Returns true when a block was set (caller should return $this immediately).
      */
-    private function checkAutomationRowState(string $quoteCode): ?AMLAutomationEligibilityResult
+    private function checkAutomationRowState(string $quoteCode): bool
     {
         $automation = AmlAutomation::where('code', $quoteCode)->first();
         if ($automation === null) {
-            return null;
+            return false;
         }
 
         $automationStatus = AmlAutomationStatus::tryFrom((string) $automation->status);
 
         if ($automationStatus === AmlAutomationStatus::Complete) {
-            return AMLAutomationEligibilityResult::block(
-                'AML automation already completed.',
-                'automation_completed'
-            );
+            $this->block('AML automation already completed.', 'automation_completed');
+
+            return true;
         }
 
         if ($automationStatus === AmlAutomationStatus::Processing) {
-            return AMLAutomationEligibilityResult::block(
-                'AML automation already in progress',
-                'automation_processing'
-            );
+            $this->block('AML automation already in progress', 'automation_processing');
+
+            return true;
         }
 
         if ($automationStatus === AmlAutomationStatus::Queue) {
-            return AMLAutomationEligibilityResult::block(
-                'AML automation already queued',
-                'automation_already_queued'
-            );
+            $this->block('AML automation already queued', 'automation_already_queued');
+
+            return true;
         }
 
-        return null;
+        return false;
     }
 
     /**
      * Resolve customer info for the LOB and verify required AML fields are present.
      *
-     * Each LOB delegates to its own customer-info service (Travel, Cyber, or the shared
-     * PersonalQuote service for Savings and Device). Unknown LOBs pass through — the
-     * job itself will catch missing data at execution time.
+     * Returns true when a block was set (caller should return $this immediately).
      */
-    private function checkCustomerDataCompleteness(QuoteTypes $quoteType, Model $quote): ?AMLAutomationEligibilityResult
+    private function checkCustomerDataCompleteness(QuoteTypes $quoteType, Model $quote): bool
     {
         [$customerRecord, $checkResult] = match ($quoteType) {
             QuoteTypes::TRAVEL => $this->resolveTravelCustomerData((int) $quote->id, $quoteType->value),
@@ -186,20 +202,21 @@ final class AMLAutomationService
         };
 
         if ($customerRecord === false || (is_object($customerRecord) && empty($customerRecord->id))) {
-            return AMLAutomationEligibilityResult::block(
-                'Customer insured data not found for AML',
-                'customer_insured_not_found'
-            );
+            $this->block('Customer insured data not found for AML', 'customer_insured_not_found');
+
+            return true;
         }
 
         if (! $checkResult['status']) {
-            return AMLAutomationEligibilityResult::block(
+            $this->block(
                 $checkResult['message'] ?: 'Incomplete customer data for AML',
                 'customer_insured_incomplete'
             );
+
+            return true;
         }
 
-        return null;
+        return false;
     }
 
     /**
