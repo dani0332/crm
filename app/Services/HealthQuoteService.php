@@ -1106,9 +1106,9 @@ class HealthQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-                LoggerService::warning('Cannot assign WCU as lead is in Transaction Approved state, lead id: '.$leadId);
-                array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
+            if (in_array($lead->quote_status_id, QuoteStatusEnum::postTransactionStatuses()) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
+                LoggerService::warning('Cannot assign WCU as lead is in a post-transaction state, lead id: '.$leadId);
+                array_push($result, ['leadId' => $lead->code, 'msg' => 'One of the selected leads is in a post-transaction state. Please unselect the lead and try again.']);
 
                 continue;
             } elseif ($lead) {
@@ -1127,8 +1127,8 @@ class HealthQuoteService extends BaseService
 
     public function assignHealthTeam($request, $lead): bool
     {
-        if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-            LoggerService::warning('Cannot assign Health Team as lead is in Transaction Approved state');
+        if (in_array($lead->quote_status_id, QuoteStatusEnum::postTransactionStatuses()) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
+            LoggerService::warning('Cannot assign Health Team as lead is in a post-transaction state');
 
             return false;
         }
