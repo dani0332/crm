@@ -1041,12 +1041,19 @@ class BusinessQuoteService extends BaseService
         }
 
         $updatedLeadIds = [];
+        $messageModel = ucfirst($modelType);
 
-        DB::transaction(function () use ($parsedIds, $preQualificationAdvisorUserId, $pqaService, $quoteTypeId, &$updatedLeadIds) {
+        DB::transaction(function () use ($parsedIds, $preQualificationAdvisorUserId, $pqaService, $quoteTypeId, &$updatedLeadIds, &$messageModel) {
             foreach ($parsedIds as $id) {
                 $quote = $this->getEntityPlain($id);
                 if ($quote === null) {
                     continue;
+                }
+                if ($quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                    $messageModel = 'Group Medical';
+                } else {
+                    $messageModel = 'Corpline';
+
                 }
 
                 if ((int) $quote->pq_advisor_id === $preQualificationAdvisorUserId) {
@@ -1072,8 +1079,9 @@ class BusinessQuoteService extends BaseService
 
         $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
 
-        $displayModelType = strtolower($modelType) === 'group_medical' ? 'Group Medical' : $modelType;
+        // $displayModelType = strtolower($modelType) === 'group_medical' ? 'Group Medical' : $modelType;
 
-        return $displayModelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
+        // return $displayModelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
+        return $messageModel.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
     }
 }

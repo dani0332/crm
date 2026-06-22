@@ -923,7 +923,8 @@ function onSubmit(isValid) {
                       v-model="row.health_third_party_administrator_id"
                       :options="tpaOptionsForRow(idx)"
                       class="w-full min-w-[10rem]"
-                      placeholder="Select TPA"
+                      :placeholder="row.insurance_provider_id ? 'Select TPA' : 'Select insurer first'"
+                      :disabled="!row.insurance_provider_id"
                       filterable
                       :error="
                         quoteForm.errors[

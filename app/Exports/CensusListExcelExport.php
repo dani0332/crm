@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Exports;
 
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -47,7 +48,7 @@ class CensusListExcelExport implements FromCollection, ShouldAutoSize, WithHeadi
 
         return [
             (string) ($row['full_name'] ?? ''),
-            (string) ($row['date_of_birth'] ?? ''),
+            $row['date_of_birth'] ? Carbon::parse($row['date_of_birth'])->format('d-m-Y') : '',
             (string) ($row['gender'] ?? ''),
             (string) ($row['marital_status'] ?? ''),
             (string) ($row['relation'] ?? ''),
