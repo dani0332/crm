@@ -1793,7 +1793,7 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emailData->tpa = $quote?->plan?->healthNetwork?->text ?? '-';
-            $activeMembers = $quote->activeMembers ?? collect();
+            $activeMembers = $quote->activeMembers?->where('is_policy_holder', true) ?? collect();
             $emailData->numberOfMembersCovered = (string) $activeMembers->count();
             $emailData->policyHolderName = $activeMembers->isEmpty()
                 ? ''
@@ -1887,7 +1887,7 @@ class CentralService extends BaseService
                 if (empty($emailData->policyCertificate)) {
                     LoggerService::info('Policy Certificate not found.');
                 } else {
-                    $certificatePath = ! empty(data_get($emailData->policyCertificate, 'watermarked_doc_url')) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicyCertificate(), true)
+                    $certificatePath = ! empty(data_get($emailData->policyCertificate, 'watermarked_doc_url'))
                         ? (data_get($emailData->policyCertificate, 'watermarked_doc_url') ?? '')
                         : (data_get($emailData->policyCertificate, 'doc_url') ?? '');
                     $emailData->policyCertificate = app(QuoteDocumentService::class)->getDocumentUrl($certificatePath, 'azureIMPrivate') ?? '';
@@ -1990,7 +1990,7 @@ class CentralService extends BaseService
                 return in_array($document['document_type_code'], $scheduleDocumentTypeCodes);
             })->first() ?? null;
 
-            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicySchedule(), true)
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url)
                 ? ($emailData->policySchedule->watermarked_doc_url ?? '')
                 : ($emailData?->policySchedule?->doc_url ?? '');
 
