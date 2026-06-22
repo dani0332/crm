@@ -79,7 +79,9 @@ const isAdvisor = computed(
     props.expertAdvisorId === currentUserId,
 );
 
-const isVisible = computed(() => isEaCollaborateLead.value && (isAdvisor.value || isEaManager));
+const isVisible = computed(
+  () => isEaCollaborateLead.value && (isAdvisor.value || isEaManager),
+);
 
 const isAssignedAdvisor = computed(() => props.advisorId === currentUserId);
 
@@ -191,26 +193,22 @@ const takeManagerAction = async action => {
       <div class="mb-3 space-y-1 text-sm text-gray-600">
         <p>
           <span class="font-medium">Assigned Advisor: </span>
-          <span
-            v-if="eaAssignedAdvisorApprovedAt"
-            class="text-green-600"
-          >✓ Approved</span>
-          <span
-            v-else-if="eaAssignedAdvisorRejectedAt"
-            class="text-red-600"
-          >✗ Rejected</span>
+          <span v-if="eaAssignedAdvisorApprovedAt" class="text-green-600"
+            >✓ Approved</span
+          >
+          <span v-else-if="eaAssignedAdvisorRejectedAt" class="text-red-600"
+            >✗ Rejected</span
+          >
           <span v-else class="text-gray-400">Pending</span>
         </p>
         <p>
           <span class="font-medium">Expert Advisor: </span>
-          <span
-            v-if="eaExpertAdvisorApprovedAt"
-            class="text-green-600"
-          >✓ Approved</span>
-          <span
-            v-else-if="eaExpertAdvisorRejectedAt"
-            class="text-red-600"
-          >✗ Rejected</span>
+          <span v-if="eaExpertAdvisorApprovedAt" class="text-green-600"
+            >✓ Approved</span
+          >
+          <span v-else-if="eaExpertAdvisorRejectedAt" class="text-red-600"
+            >✗ Rejected</span
+          >
           <span v-else class="text-gray-400">Pending</span>
         </p>
       </div>
