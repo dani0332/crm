@@ -4781,4 +4781,5 @@ const isCars24 = computed(() => {
     :isLoadingVerificationDataUpdate="isLoadingVerificationDataUpdate"
     @ocr-webform-updated="refreshComponent"
   />
+  </div>
 </template>
