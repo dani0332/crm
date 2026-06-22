@@ -54,6 +54,7 @@ class DatabaseSeeder extends Seeder
             CarAdditionalDetailsForSukoonSeeder::class,
             QICTokioLookupSeeder::class,
             DeviceQuoteSeeder::class,
+            ActivateTravelDicDocumentTypesSeeder::class,
             DocRequiredForPolicySendSeeder::class,
             SendUpdateSeederForCyber::class,
             BranchSeeder::class,
