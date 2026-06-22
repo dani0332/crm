@@ -2231,6 +2231,8 @@ const getDisplayPriceInAED = item => {
       :ea-expert-advisor-approved-at="quote.ea_expert_advisor_approved_at"
       :ea-assigned-advisor-rejected-at="quote.ea_assigned_advisor_rejected_at"
       :ea-expert-advisor-rejected-at="quote.ea_expert_advisor_rejected_at"
+      :ea-manager-approved-at="quote.ea_manager_approved_at"
+      :ea-manager-rejected-at="quote.ea_manager_rejected_at"
       @updated="$inertia.reload({ only: ['quote'] })"
     />
 

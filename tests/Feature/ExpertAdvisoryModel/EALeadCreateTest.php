@@ -14,7 +14,6 @@ use App\Jobs\SendEALeadSubmittedEmailJob;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
-use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\EALeadCapiService;
@@ -78,7 +77,7 @@ beforeEach(function () {
                 match ($quoteTypeId) {
                     QuoteTypeId::Car => CarQuote::create($base),
                     QuoteTypeId::Health => HealthQuote::create(array_merge($base, ['health_plan_type_id' => $request->health_plan_type_id])),
-                    QuoteTypeId::Life => LifeQuote::create(array_merge($base, ['quote_type_id' => $quoteTypeId])),
+                    QuoteTypeId::Life => PersonalQuote::create(array_merge($base, ['quote_type_id' => $quoteTypeId])),
                     QuoteTypeId::Corpline,
                     QuoteTypeId::GroupMedical => BusinessQuote::create(array_merge($base, ['business_type_of_insurance_id' => $request->business_type_of_insurance_id])),
                     default => PersonalQuote::create(array_merge($base, ['quote_type_id' => $quoteTypeId])),

@@ -112,21 +112,21 @@ it('expert advisor can approve and approval timestamp is recorded', function () 
         ->and($lead->ea_assigned_advisor_approved_at)->toBeNull();
 });
 
-it('lead advances to PolicyBooked when both advisors approve', function () {
+it('both advisors approving records both timestamps but does not auto-advance status', function () {
     $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
     $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
     $lead = makeCollaborateLead($advisor->id, $expert->id);
 
     $this->actingAs($advisor);
-    $this->postJson(route('ea-leads.approve', ['quoteType' => 'personal', 'quoteId' => $lead->id]));
+    $this->postJson(route('ea-leads.approve', ['quoteType' => 'personal', 'quoteId' => $lead->id]))->assertOk();
 
     $this->actingAs($expert);
-    $this->postJson(route('ea-leads.approve', ['quoteType' => 'personal', 'quoteId' => $lead->id]));
+    $this->postJson(route('ea-leads.approve', ['quoteType' => 'personal', 'quoteId' => $lead->id]))->assertOk();
 
     $lead->refresh();
-    expect($lead->quote_status_id)->toBe(QuoteStatusEnum::PolicyBooked)
-        ->and($lead->ea_assigned_advisor_approved_at)->not->toBeNull()
-        ->and($lead->ea_expert_advisor_approved_at)->not->toBeNull();
+    expect($lead->ea_assigned_advisor_approved_at)->not->toBeNull()
+        ->and($lead->ea_expert_advisor_approved_at)->not->toBeNull()
+        ->and($lead->quote_status_id)->toBe(QuoteStatusEnum::PolicyIssued);
 });
 
 it('unrelated user cannot approve and gets 403', function () {
@@ -174,4 +174,21 @@ it('expert advisor rejection records its own timestamp', function () {
     expect($lead->ea_expert_advisor_rejected_at)->not->toBeNull()
         ->and($lead->ea_assigned_advisor_rejected_at)->toBeNull();
     Queue::assertPushed(SendEACollaborateRejectedEmailJob::class);
+});
+
+// ─── EA Manager cannot use the advisor endpoint ───────────────────────────────
+
+it('EA Manager is blocked from the advisor approve endpoint and must use ea-manager.decision', function () {
+    $manager = TestDataSeeder::createUserWithRole(RolesEnum::EAManager, ['email' => fake()->unique()->safeEmail()]);
+    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    $lead = makeCollaborateLead($advisor->id, $expert->id);
+
+    $this->actingAs($manager);
+    $this->postJson(route('ea-leads.approve', ['quoteType' => 'personal', 'quoteId' => $lead->id]))
+        ->assertStatus(403);
+
+    $lead->refresh();
+    expect($lead->ea_assigned_advisor_approved_at)->toBeNull()
+        ->and($lead->ea_expert_advisor_approved_at)->toBeNull();
 });

@@ -6,6 +6,7 @@ use App\Enums\EaModelEnum;
 use App\Enums\RolesEnum;
 use App\Exports\EAManagerExport;
 use App\Jobs\SendEAManagerDecisionEmailJob;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
@@ -83,7 +84,7 @@ class EAManagerController extends Controller
         return response()->json(['success' => true]);
     }
 
-    private function demoteToReferral(CarQuote|HealthQuote|PersonalQuote $quote): void
+    private function demoteToReferral(CarQuote|HealthQuote|PersonalQuote|BusinessQuote $quote): void
     {
         $quote->lead_generator_id = $quote->advisor_id;
         $quote->advisor_id = $quote->expert_advisor_id;
@@ -99,11 +100,12 @@ class EAManagerController extends Controller
         $quote->save();
     }
 
-    private function resolveQuote(string $quoteType, int $quoteId): CarQuote|HealthQuote|PersonalQuote
+    private function resolveQuote(string $quoteType, int $quoteId): CarQuote|HealthQuote|PersonalQuote|BusinessQuote
     {
         return match ($quoteType) {
             'car' => CarQuote::findOrFail($quoteId),
             'health' => HealthQuote::findOrFail($quoteId),
+            'business', 'groupmedical' => BusinessQuote::findOrFail($quoteId),
             default => PersonalQuote::findOrFail($quoteId),
         };
     }
