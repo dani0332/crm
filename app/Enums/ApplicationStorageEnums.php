@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand;
+use App\Models\PolicyIssuanceLog;
 use App\Services\Reports\ConversionOptimizationReportService;
 use BenSampo\Enum\Enum;
 use Database\Seeders\ApplicationStorageSeeder;
@@ -202,6 +203,23 @@ final class ApplicationStorageEnums extends Enum
     public const CHIEF_DEPUTY_OFFICER_EMAIL_ID = 'CHIEF_DEPUTY_OFFICER_EMAIL_ID';
 
     /* Policy Issuance Automation */
+    public const ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE = 'ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE';
+    public const ENABLE_DIC_TRAVEL_POLICY_ISSUANCE = 'ENABLE_DIC_TRAVEL_POLICY_ISSUANCE';
+
+    /**
+     * Max total API attempts per async DIC Travel step (including the first). One row is written to
+     * {@see PolicyIssuanceLog} per attempt; when attempt count reaches this value, the lead fails.
+     */
+    public const DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP = 'DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP';
+
+    /** Seconds to wait before retrying the same DIC API step after a failed attempt. */
+    public const DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS = 'DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS';
+
+    /** When enabled, automation batch includes {@see PolicyIssuanceEnum::TIMEOUT_STATUS} records for DIC Travel. */
+    public const ENABLE_RETRY_TIMEOUT_DIC_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_DIC_TRAVEL_POLICY_ISSUANCE';
+
+    public const DIC_COMMISSION_PERCENTAGE = 'DIC_COMMISSION_PERCENTAGE';
+    public const ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE';
     public const ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE = 'ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE';
     public const ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE';
     public const TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL = 'TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL';
@@ -465,6 +483,9 @@ final class ApplicationStorageEnums extends Enum
 
     // Instant Alfred Export Workflow
     public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
+    public const BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL = 'BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL';
+    public const AXA_POLICY_MANDATORY_DOCUMENTS = 'AXA_POLICY_MANDATORY_DOCUMENTS';
+    public const CARS24_SEND_POLICY_CC_EMAILS = 'CARS24_SEND_POLICY_CC_EMAILS';
 
     // Claims Module Toggle
     public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';

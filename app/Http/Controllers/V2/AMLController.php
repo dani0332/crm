@@ -93,9 +93,12 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId, AMLQuoteDetailsService $amlQuoteDetailsService)
     {
+        $resolvedId = $amlQuoteDetailsService->resolveQuoteRequestId($quoteTypeId, $quoteRequestId);
+        abort_if($resolvedId === 0, 404);
+
         $data = $amlQuoteDetailsService->prepareQuoteDetailsData(
-            $quoteTypeId,
-            $quoteRequestId
+            (int) $quoteTypeId,
+            $resolvedId
         );
 
         return inertia('Aml/DetailPage', $data);
@@ -183,7 +186,7 @@ class AMLController extends Controller
                     auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)
                 ) {
-                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
+                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteObject->id, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
                     if (! empty(request()->complianceComponent)) {
                         app(AMLService::class)->saveKYCComplianceQuestions(request()->complianceComponent);
                     }

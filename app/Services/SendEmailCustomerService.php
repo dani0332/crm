@@ -525,14 +525,15 @@ class SendEmailCustomerService extends BaseService
             LoggerService::info('sendMyAlfredWelcomeEmail  , emailTemplateId: '.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
+            $customerName = ! empty($emailData->customerFirstName) && ! empty($emailData->customerLastName) ? $emailData->customerFirstName.' '.$emailData->customerLastName : 'Customer';
             $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
-                    'name' => $emailData->customerFirstName.' '.$emailData->customerLastName,
+                    'name' => $customerName,
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
-                    'customerName' => $emailData->customerFirstName.' '.$emailData->customerLastName,
+                    'customerName' => $customerName,
                     'customerEmail' => $emailData->customerEmail,
                     'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                     'email' => $emailData->customerEmail,
