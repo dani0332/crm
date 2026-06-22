@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Jobs\EP;
 
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
+use App\Models\PersonalQuote;
 use App\Services\EmbeddedTransactionService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
@@ -41,7 +43,11 @@ class RetargetEpReminderJob implements ShouldQueue
             return;
         }
 
-        $lead = CarQuote::where('uuid', $this->quoteUuid)->first();
+        $lead = match ($this->quoteTypeId) {
+            QuoteTypeId::Car => CarQuote::where('uuid', $this->quoteUuid)->first(),
+            QuoteTypeId::Bike => PersonalQuote::where('uuid', $this->quoteUuid)->first(),
+            default => null,
+        };
         if (! $lead) {
             LoggerService::info('RetargetEpReminderJob - quote not found', ['uuid' => $this->quoteUuid]);
 

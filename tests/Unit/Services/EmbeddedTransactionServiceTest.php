@@ -16,6 +16,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\BirdService;
 use App\Services\EmbeddedTransactionService;
+use App\Services\SendEmailCustomerService;
 use Illuminate\Http\Response;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
@@ -408,6 +409,77 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
     });
 });
 
+describe('sendBikeEpRetargetingEmail (via Reflection)', function () {
+    function invokeSendBikeEpRetargetingEmail(object $service, array $emailData, int $templateId): object
+    {
+        $ref = new ReflectionClass(EmbeddedTransactionService::class);
+        $method = $ref->getMethod('sendBikeEpRetargetingEmail');
+        $method->setAccessible(true);
+
+        return $method->invoke($service, $emailData, $templateId);
+    }
+
+    $emailData = fn () => [
+        'quoteId' => 3,
+        'quoteTypeId' => QuoteTypeId::Bike,
+        'refId' => 'BIK-RETARGET003',
+        'uuid' => 'RETARGET003',
+        'embeddedTransactionCode' => 'MDX-BIK-RETARGET003',
+        'customerEmail' => 'customer@example.com',
+        'customerName' => 'John Doe',
+    ];
+
+    test('returns 200 when Brevo responds with 201', function () use ($emailData) {
+        $sendEmailMock = Mockery::mock(SendEmailCustomerService::class);
+        $sendEmailMock->shouldReceive('sendBikeEpRetargetingEmail')
+            ->once()
+            ->with(999, Mockery::on(function ($data) {
+                return $data['customerEmail'] === 'customer@example.com'
+                    && $data['refId'] === 'BIK-RETARGET003';
+            }), 'bike-ep-retargeting')
+            ->andReturn(Response::HTTP_CREATED);
+
+        $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class), $sendEmailMock);
+
+        $result = invokeSendBikeEpRetargetingEmail($service, $emailData(), 999);
+
+        expect($result->status_code)->toBe(Response::HTTP_OK);
+        expect($result->message)->toBe('Bike EP retargeting email sent');
+    });
+
+    test('returns 500 when Brevo responds with non-201', function () use ($emailData) {
+        $sendEmailMock = Mockery::mock(SendEmailCustomerService::class);
+        $sendEmailMock->shouldReceive('sendBikeEpRetargetingEmail')
+            ->once()
+            ->andReturn(Response::HTTP_INTERNAL_SERVER_ERROR);
+
+        $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class), $sendEmailMock);
+
+        $result = invokeSendBikeEpRetargetingEmail($service, $emailData(), 999);
+
+        expect($result->status_code)->toBe(Response::HTTP_INTERNAL_SERVER_ERROR);
+        expect($result->message)->toBe('Failed to send bike EP retargeting email');
+    });
+});
+
+describe('handleTriggerEpRetargetingEmail', function () {
+    test('returns criteria not met when eligibility check fails', function () {
+        $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
+        $repoMock->shouldReceive('fetchFindEmbededTransactionWithDetails')
+            ->once()
+            ->andReturn(null);
+
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
+        $result = $service->handleTriggerEpRetargetingEmail($this->quoteId, $this->quoteTypeId, $this->embeddedTransactionCode);
+
+        expect($result)->toBeObject();
+        expect($result->status_code)->toBe(Response::HTTP_OK);
+        expect($result->message)->toBe('Criteria not met for triggering the email.');
+    });
+});
+
 describe('isRetargetingEpReminderEnabled', function () {
     test('return a boolean', function () {
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
@@ -428,10 +500,12 @@ class EmbeddedTransactionServiceTestDouble extends EmbeddedTransactionService
     public function __construct(
         EmbeddedTransactionRepository $repo,
         EmbeddedProductRepository $embeddedProductRepo,
-        BirdService $birdService
+        BirdService $birdService,
+        ?SendEmailCustomerService $sendEmailCustomerService = null,
     ) {
         $this->embeddedTransactionRepo = $repo;
         $this->embeddedProductRepo = $embeddedProductRepo;
         $this->birdService = $birdService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService ?? app(SendEmailCustomerService::class);
     }
 }
