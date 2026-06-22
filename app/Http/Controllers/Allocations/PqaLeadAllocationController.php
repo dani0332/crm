@@ -77,21 +77,24 @@ class PqaLeadAllocationController extends Controller
 
         $healthCount = DB::table('health_quote_request')
             ->whereNotNull('pq_advisor_id')
-            ->where('quote_status_id', $healthNewLeadStatus)
+            // ->where('quote_status_id', $healthNewLeadStatus)
             ->whereDate('pq_assigned_at', $today)
+            ->whereDate('created_at', $today)
             ->count();
 
         $corplineCount = DB::table('business_quote_request')
             ->whereNotNull('pq_advisor_id')
-            ->where('quote_status_id', $corplineQualPendingStatus)
+            // ->where('quote_status_id', $corplineQualPendingStatus)
             ->where('business_type_of_insurance_id', '!=', $groupMedicalTypeId)
             ->whereDate('pq_assigned_at', $today)
+            ->whereDate('created_at', $today)
             ->count();
 
         $groupMedicalCount = DB::table('business_quote_request')
             ->whereNotNull('pq_advisor_id')
             ->where('business_type_of_insurance_id', $groupMedicalTypeId)
             ->whereDate('pq_assigned_at', $today)
+            ->whereDate('created_at', $today)
             ->count();
 
         return [
@@ -117,21 +120,24 @@ class PqaLeadAllocationController extends Controller
 
         $healthCount = DB::table('health_quote_request')
             ->whereNull('pq_advisor_id')
-            ->where('quote_status_id', $healthNewLeadStatus)
+            // ->where('quote_status_id', $healthNewLeadStatus)
             ->whereDate('pq_assigned_at', $today)
+            ->whereDate('created_at', $today)
             ->count();
 
         $corplineCount = DB::table('business_quote_request')
             ->whereNull('pq_advisor_id')
-            ->where('quote_status_id', $corplineQualPendingStatus)
+            // ->where('quote_status_id', $corplineQualPendingStatus)
             ->where('business_type_of_insurance_id', '!=', $groupMedicalTypeId)
             ->whereDate('pq_assigned_at', $today)
+            ->whereDate('created_at', $today)
             ->count();
 
         $groupMedicalCount = DB::table('business_quote_request')
             ->whereNull('pq_advisor_id')
             ->where('business_type_of_insurance_id', $groupMedicalTypeId)
             ->whereDate('pq_assigned_at', $today)
+            ->whereDate('created_at', $today)
             ->count();
 
         return [
@@ -149,7 +155,6 @@ class PqaLeadAllocationController extends Controller
     {
         try {
             $healthTypeId = QuoteTypes::HEALTH->id();
-            $corplineTypeId = QuoteTypes::CORPLINE->id();
             $healthNewLeadStatus = QuoteStatusEnum::NewLead;
             $corplineQualPendingStatus = QuoteStatusEnum::QualificationPending;
             $groupMedicalTypeId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
@@ -168,14 +173,21 @@ class PqaLeadAllocationController extends Controller
                                 SELECT COUNT(*)
                                 FROM health_quote_request hqr
                                 WHERE hqr.pq_advisor_id = users.id
-                                  AND hqr.quote_status_id = {$healthNewLeadStatus}
+                                  AND DATE(hqr.created_at) = CURDATE()
                             )
-                            WHEN la.quote_type_id = {$corplineTypeId} THEN (
+                            WHEN la.quote_type_id = {$businessQuoteTypeId} AND UPPER(t_lob.name) = UPPER('{$groupMedicalName}') THEN (
                                 SELECT COUNT(*)
                                 FROM business_quote_request bqr
                                 WHERE bqr.pq_advisor_id = users.id
-                                  AND bqr.quote_status_id = {$corplineQualPendingStatus}
+                                  AND bqr.business_type_of_insurance_id = {$groupMedicalTypeId}
+                                  AND DATE(bqr.created_at) = CURDATE()
+                            )
+                            WHEN la.quote_type_id = {$businessQuoteTypeId} AND UPPER(t_lob.name) = UPPER('{$corplineName}') THEN (
+                                SELECT COUNT(*)
+                                FROM business_quote_request bqr
+                                WHERE bqr.pq_advisor_id = users.id
                                   AND bqr.business_type_of_insurance_id != {$groupMedicalTypeId}
+                                  AND DATE(bqr.created_at) = CURDATE()
                             )
                             ELSE 0
                         END
