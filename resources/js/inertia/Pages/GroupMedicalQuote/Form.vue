@@ -221,7 +221,7 @@ const isHealthPlanTypeSelectDisabled = computed(
 
 const totalPeopleToBeInsured = computed(() =>
   quoteForm.categories.reduce((sum, row) => {
-    const n = parseInt(row.numberOfPeople) || 0;
+    const n = parseInt(row.number_of_people ?? row.numberOfPeople) || 0;
     return sum + n;
   }, 0),
 );
@@ -946,13 +946,14 @@ function onSubmit(isValid) {
                       type="number"
                       class="w-full min-w-[7.5rem]"
                       size="sm"
-                      :rules="[isRequired, isNumber, maxValidation(2147483645)]"
+                      :rules="[isRequired, isNumber, v => Number.isInteger(Number(v)) || 'Must be a whole number.', maxValidation(2147483645)]"
                       :error="
                         quoteForm.errors[
                           `categories.${idx}.numberOfPeople`
                         ]
                       "
                       :min="1"
+                      step="1"
                     />
                   </td>
                 </tr>
