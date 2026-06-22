@@ -294,7 +294,7 @@ class RateCoverageUploadService
                     if ($i > 1) {
                         $prevRowAssoc = array_combine($headers, $rows[$i - 1]);
                         if ($planCode !== $prevRowAssoc['plan_code']) {
-                            throw new \Exception('All plan codes must be the same.');
+                            throw new \Exception('All plan codes must be the same. Please check plan code at row '.($i + 1));
                         }
                     }
 
