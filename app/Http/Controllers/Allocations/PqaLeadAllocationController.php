@@ -162,6 +162,7 @@ class PqaLeadAllocationController extends Controller
             $productType = TeamTypeEnum::PRODUCT;
             $corplineName = QuoteTypes::CORPLINE->value;
             $groupMedicalName = QuoteTypes::GROUP_MEDICAL->value;
+            $today = now()->toDateString();
 
             $rows = User::activeUser()
                 ->select(
@@ -173,21 +174,21 @@ class PqaLeadAllocationController extends Controller
                                 SELECT COUNT(*)
                                 FROM health_quote_request hqr
                                 WHERE hqr.pq_advisor_id = users.id
-                                  AND DATE(hqr.created_at) = CURDATE()
+                                  AND DATE(hqr.created_at) = '{$today}'
                             )
                             WHEN la.quote_type_id = {$businessQuoteTypeId} AND UPPER(t_lob.name) = UPPER('{$groupMedicalName}') THEN (
                                 SELECT COUNT(*)
                                 FROM business_quote_request bqr
                                 WHERE bqr.pq_advisor_id = users.id
                                   AND bqr.business_type_of_insurance_id = {$groupMedicalTypeId}
-                                  AND DATE(bqr.created_at) = CURDATE()
+                                  AND DATE(bqr.created_at) = '{$today}'
                             )
                             WHEN la.quote_type_id = {$businessQuoteTypeId} AND UPPER(t_lob.name) = UPPER('{$corplineName}') THEN (
                                 SELECT COUNT(*)
                                 FROM business_quote_request bqr
                                 WHERE bqr.pq_advisor_id = users.id
                                   AND bqr.business_type_of_insurance_id != {$groupMedicalTypeId}
-                                  AND DATE(bqr.created_at) = CURDATE()
+                                  AND DATE(bqr.created_at) = '{$today}'
                             )
                             ELSE 0
                         END
