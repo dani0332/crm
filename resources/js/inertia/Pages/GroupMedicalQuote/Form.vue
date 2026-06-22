@@ -514,7 +514,7 @@ function onSubmit(isValid) {
         groupMedicalCategoryId: row.group_medical_category_id ?? row.groupMedicalCategoryId ?? null,
         insuranceProviderId: row.insurance_provider_id ?? row.insuranceProviderId ?? null,
         healthTpaId: row.health_third_party_administrator_id ?? row.healthTpaId ?? null,
-        groupMedicalNetworkId: row.group_medical_network_id ?? row.groupMedicalNetworkId ?? null,
+        healthNetworkId: row.health_network_id ?? row.group_medical_network_id ?? row.groupMedicalNetworkId ?? null,
         renewalDate: row.renewal_date ?? row.renewalDate ?? null,
         numberOfPeople: row.no_of_people ?? row.number_of_people ?? row.numberOfPeople ?? null,
       })),
@@ -949,7 +949,7 @@ function onSubmit(isValid) {
                       filterable
                       :error="
                         quoteForm.errors[
-                          `categories.${idx}.groupMedicalNetworkId`
+                          `categories.${idx}.healthNetworkId`
                         ]
                       "
                     />
