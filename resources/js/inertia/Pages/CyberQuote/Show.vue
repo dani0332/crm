@@ -1204,7 +1204,6 @@ const formatDob = dob => {
       @updated="$inertia.reload({ only: ['quote'] })"
     />
 
-
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="quote.is_ecommerce">
       <Collapsible :expanded="sectionExpanded">
         <template #header>

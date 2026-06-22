@@ -1527,7 +1527,6 @@ function handleOcrNotification(event) {
       :ea-manager-rejected-at="quote.ea_manager_rejected_at"
       @updated="$inertia.reload({ only: ['quote'] })"
     />
-
     </div>
     <PlanDetails
       :insuranceProviders="insuranceProviders"

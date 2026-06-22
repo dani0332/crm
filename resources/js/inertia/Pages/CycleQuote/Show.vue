@@ -1095,7 +1095,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
       @updated="$inertia.reload({ only: ['quote'] })"
     />
 
-
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"

@@ -1139,7 +1139,6 @@ const handlePlanSelected = plan => {
       @updated="$inertia.reload({ only: ['quote'] })"
     />
 
-
     <AvailablePlans
       :quote="quote"
       :payments="payments"

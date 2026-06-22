@@ -1211,7 +1211,6 @@ function capitalizeString(str) {
       @updated="$inertia.reload({ only: ['quote'] })"
     />
 
-
     <UBODetails
       v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"

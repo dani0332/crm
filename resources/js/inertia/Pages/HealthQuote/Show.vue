@@ -3258,7 +3258,6 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       :ea-manager-rejected-at="quote.ea_manager_rejected_at"
       @updated="$inertia.reload({ only: ['quote'] })"
     />
-
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">

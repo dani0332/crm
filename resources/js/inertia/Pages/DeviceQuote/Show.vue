@@ -1311,7 +1311,6 @@ const formatToDateTime = dateString => {
       @updated="$inertia.reload({ only: ['quote'] })"
     />
 
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
