@@ -19,21 +19,25 @@ doppler run -- php artisan tinker --execute '<your PHP here>'
 ### Examples
 
 **Fetch latest record from a table:**
+
 ```bash
 doppler run -- php artisan tinker --execute 'echo json_encode(DB::table("car_quote_request")->latest("created_at")->first(), JSON_PRETTY_PRINT);'
 ```
 
 **Count rows with a condition:**
+
 ```bash
 doppler run -- php artisan tinker --execute 'echo DB::table("car_quote_request")->where("source", "EA_IMCRM")->count();'
 ```
 
 **Use an Eloquent model:**
+
 ```bash
 doppler run -- php artisan tinker --execute 'echo json_encode(\App\Models\CarQuote::where("source", "EA_IMCRM")->latest()->first(), JSON_PRETTY_PRINT);'
 ```
 
 **Run a raw SELECT:**
+
 ```bash
 doppler run -- php artisan tinker --execute 'print_r(DB::select("SELECT id, code, source FROM car_quote_request ORDER BY created_at DESC LIMIT 5"));'
 ```

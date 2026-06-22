@@ -434,7 +434,6 @@ const record = computed(() => page.props.quote);
       @updated="$inertia.reload({ only: ['quote'] })"
     />
 
-
     <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"

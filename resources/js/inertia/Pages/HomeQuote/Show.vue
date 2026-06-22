@@ -2101,7 +2101,6 @@ function handleOcrNotification(event) {
       @updated="$inertia.reload({ only: ['quote'] })"
     />
 
-
     <PlanDetails
       v-if="shouldShowPlanDetailsSection"
       :insuranceProviders="insuranceProviders"

@@ -3358,28 +3358,31 @@ const isCars24 = computed(() => {
         </template>
       </Collapsible>
 
-    <EALeadInfo
-      :source="record.source"
-      :ea-model="record.ea_model"
-      :lead-generator="record.lead_generator"
-      :expert-advisor="record.expert_advisor"
-    />
+      <EALeadInfo
+        :source="record.source"
+        :ea-model="record.ea_model"
+        :lead-generator="record.lead_generator"
+        :expert-advisor="record.expert_advisor"
+      />
 
-    <EAApprovalActions
-      quote-type="car"
-      :quote-id="record.id"
-      :source="record.source"
-      :ea-model="record.ea_model"
-      :quote-status-id="record.quote_status_id"
-      :advisor-id="record.advisor_id"
-      :expert-advisor-id="record.expert_advisor_id"
-      :ea-assigned-advisor-approved-at="record.ea_assigned_advisor_approved_at"
-      :ea-expert-advisor-approved-at="record.ea_expert_advisor_approved_at"
-      :ea-assigned-advisor-rejected-at="record.ea_assigned_advisor_rejected_at"
-      :ea-expert-advisor-rejected-at="record.ea_expert_advisor_rejected_at"
-      @updated="$inertia.reload({ only: ['record'] })"
-    />
-
+      <EAApprovalActions
+        quote-type="car"
+        :quote-id="record.id"
+        :source="record.source"
+        :ea-model="record.ea_model"
+        :quote-status-id="record.quote_status_id"
+        :advisor-id="record.advisor_id"
+        :expert-advisor-id="record.expert_advisor_id"
+        :ea-assigned-advisor-approved-at="
+          record.ea_assigned_advisor_approved_at
+        "
+        :ea-expert-advisor-approved-at="record.ea_expert_advisor_approved_at"
+        :ea-assigned-advisor-rejected-at="
+          record.ea_assigned_advisor_rejected_at
+        "
+        :ea-expert-advisor-rejected-at="record.ea_expert_advisor_rejected_at"
+        @updated="$inertia.reload({ only: ['record'] })"
+      />
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">

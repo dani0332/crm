@@ -2234,7 +2234,6 @@ const getDisplayPriceInAED = item => {
       @updated="$inertia.reload({ only: ['quote'] })"
     />
 
-
     <PlanDetails
       v-if="shouldShowPlanDetailsSection"
       :insuranceProviders="insuranceProviders"
