@@ -155,6 +155,11 @@ const initialMobile = parseMobileNoForInitial(
   isEdit.value ? props.quote?.mobile_no : null,
 );
 
+const noLeadingZero = v => {
+  if (v == null || v === '') return true;
+  return String(v)[0] !== '0' || 'Phone number must not start with 0';
+};
+
 const isMobileNationalPartLength = v => {
   if (v == null || v === '') {
     return true;
@@ -1069,7 +1074,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                     v-model="quoteForm.mobile_national_no"
                     type="text"
                     maxLength="10"
-                    :rules="[isRequired, isNumber, isMobileNationalPartLength]"
+                    :rules="[isRequired, isNumber, noLeadingZero, isMobileNationalPartLength]"
                     class="flex-1 min-w-0"
                     :disabled="isEdit"
                     :error="quoteForm.errors.mobile_national_no"
