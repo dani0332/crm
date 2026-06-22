@@ -1,7 +1,12 @@
 <?php
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
 use App\Http\Middleware\BasicAuth;
+use App\Models\ApplicationStorage;
+use App\Models\EmbeddedTransaction;
+use App\Models\PersonalQuote;
+use App\Services\EmbeddedTransactionService;
 use Illuminate\Http\Response;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
@@ -13,6 +18,88 @@ beforeEach(function () {
 
 afterEach(function () {
     Mockery::close();
+});
+
+describe('POST /api/imcrm/trigger-ep-retargeting-email', function () {
+    describe('returns 422 Validation', function () {
+        test('missing required fields', function () {
+            $response = $this->postJson(route('trigger.ep-retargeting-email'), []);
+
+            $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+            $response->assertJsonValidationErrors([
+                'params.quoteId',
+                'params.quoteTypeId',
+                'params.embeddedTransactionCode',
+            ]);
+        });
+
+        test('quoteId is not an integer', function () {
+            $response = $this->postJson(route('trigger.ep-retargeting-email'), [
+                'attributes' => ['data' => [
+                    'quoteId' => 'not-an-int',
+                    'quoteTypeId' => QuoteTypeId::Bike,
+                    'embeddedTransactionCode' => 'RDX-BIK-TEST',
+                ]],
+            ]);
+
+            $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+            $response->assertJsonValidationErrors(['params.quoteId']);
+        });
+    });
+
+    describe('returns 200 criteria not met', function () {
+        test('when service returns criteria not met', function () {
+            $quote = PersonalQuote::forceCreate(['uuid' => 'BIKE-TEST-01', 'quote_type_id' => QuoteTypeId::Bike]);
+            $transaction = EmbeddedTransaction::forceCreate(['code' => 'RDX-BIK-CRIT01', 'quote_type_id' => QuoteTypeId::Bike]);
+
+            $this->mock(EmbeddedTransactionService::class, function ($mock) {
+                $mock->shouldReceive('handleTriggerEpRetargetingEmail')
+                    ->once()
+                    ->andReturn((object) ['status_code' => Response::HTTP_OK, 'message' => 'Criteria not met for triggering the email.']);
+            });
+
+            $response = $this->postJson(route('trigger.ep-retargeting-email'), [
+                'params' => [
+                    'quoteId' => $quote->id,
+                    'quoteTypeId' => QuoteTypeId::Bike,
+                    'embeddedTransactionCode' => $transaction->code,
+                ],
+            ]);
+
+            $response->assertStatus(Response::HTTP_OK);
+            $response->assertJson(['message' => 'Criteria not met for triggering the email.']);
+        });
+    });
+
+    describe('returns 200 success', function () {
+        test('when email is triggered successfully', function () {
+            $quote = PersonalQuote::forceCreate(['uuid' => 'BIKE-TEST-02', 'quote_type_id' => QuoteTypeId::Bike]);
+            $transaction = EmbeddedTransaction::forceCreate(['code' => 'RDX-BIK-SUCC01', 'quote_type_id' => QuoteTypeId::Bike]);
+
+            ApplicationStorage::updateOrInsert(
+                ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE],
+                ['value' => '999', 'created_at' => now(), 'updated_at' => now()]
+            );
+
+            $this->mock(EmbeddedTransactionService::class, function ($mock) {
+                $mock->shouldReceive('handleTriggerEpRetargetingEmail')
+                    ->once()
+                    ->andReturn((object) ['status_code' => Response::HTTP_OK, 'message' => 'Bike EP retargeting email sent']);
+            });
+
+            $response = $this->postJson(route('trigger.ep-retargeting-email'), [
+                'params' => [
+                    'quoteId' => $quote->id,
+                    'quoteTypeId' => QuoteTypeId::Bike,
+                    'embeddedTransactionCode' => $transaction->code,
+                ],
+            ]);
+
+            $response->assertStatus(Response::HTTP_OK);
+            $response->assertJson(['message' => 'Bike EP retargeting email sent']);
+
+        });
+    });
 });
 
 describe('GET /api/get-ep-workflow-data', function () {
