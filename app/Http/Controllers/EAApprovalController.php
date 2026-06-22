@@ -36,12 +36,6 @@ class EAApprovalController extends Controller
 
         $quote->save();
 
-        // Both advisors approved — allow status progression
-        if ($quote->ea_assigned_advisor_approved_at && $quote->ea_expert_advisor_approved_at) {
-            $quote->quote_status_id = QuoteStatusEnum::PolicyBooked;
-            $quote->save();
-        }
-
         return response()->json(['success' => true]);
     }
 
