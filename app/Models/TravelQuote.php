@@ -446,4 +446,9 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(User::class, 'lead_generator_id')->select(['id', 'email', 'name']);
     }
+
+    public function expertAdvisor()
+    {
+        return $this->belongsTo(User::class, 'expert_advisor_id')->select(['id', 'name']);
+    }
 }
