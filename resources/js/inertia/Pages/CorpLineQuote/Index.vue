@@ -1,6 +1,7 @@
 <script setup>
 import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import { setQueryStringFilters as setQueryStringFiltersUtil } from '../../Composables/utilities.js';
 defineProps({
   quotes: Object,
   dropdownSource: Object,
@@ -459,25 +460,9 @@ const onDataExport = (exportType = 'download') => {
     });
 };
 
-function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (/date/i.test(key) && params[key]) {
-      filters[key] = useDateFormat(params[key], 'YYYY-MM-DD').value;
-    } else if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key].map(value =>
-        isNaN(parseInt(value)) ? value : parseInt(value),
-      );
-    } else {
-      filters[key] = isNaN(parseInt(params[key]))
-        ? params[key]
-        : parseInt(params[key]);
-    }
-  }
-}
-
 onMounted(() => {
   params = getSavedQueryParams() || params;
-  setQueryStringFilters();
+  setQueryStringFiltersUtil(params, filters);
 
   let filtersCleaned = cleanObj(filters);
 
