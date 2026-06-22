@@ -103,10 +103,11 @@ export function useAllocationForm(props, errorHandling) {
     }
   };
 
-  const fetchPlanTypes = async () => {
+  const fetchPlanTypes = async (quoteType) => {
     planTypeOptions.value = [];
+
     try {
-      const response = await axios.get('/api/plan-types');
+      const response = await axios.get(`/api/plan-types/${quoteType.code}`);
 
       if (
         response.data.success &&
@@ -248,7 +249,7 @@ export function useAllocationForm(props, errorHandling) {
 
       // Fetch plan types for Group Medical
       if (quoteType.code === props.quoteTypeCodeEnum.GroupMedical) {
-        fetchTasks.push(fetchPlanTypes());
+        fetchTasks.push(fetchPlanTypes(quoteType));
         fetchTasks.push(fetchDepartments());
       }
 

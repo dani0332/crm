@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Services\GroupMedical;
 
 use App\Enums\QuoteTypeId;
-use App\Models\CompanyActivityType;
+use App\Enums\QuoteTypes;
 use App\Models\GroupMedicalCategory;
-use App\Models\GroupMedicalNetwork;
+use App\Models\HealthNetwork;
 use App\Models\HealthPlanType;
 use App\Models\HealthThirdPartyAdministrator;
+use App\Models\QuoteType;
 use App\Repositories\InsuranceProviderRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -40,10 +41,11 @@ final class GroupMedicalAmtFormDropdownService
             return collect();
         }
 
-        return CompanyActivityType::query()
+        return QuoteType::find(QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL))
+            ->businessActivities()
             ->active()
-            ->select('id', 'text')
-            ->orderBy('text')
+            ->select('business_activities.id', 'business_activities.name as text')
+            ->orderBy('sort_order')
             ->get();
     }
 
@@ -117,13 +119,13 @@ final class GroupMedicalAmtFormDropdownService
      */
     public function groupMedicalNetworks(?int $tpaId = null): Collection
     {
-        $query = GroupMedicalNetwork::query()
+        $query = HealthNetwork::query()
             ->active()
-            ->select('id', 'text')
-            ->orderBy('text');
+            ->select('id', 'level as text')
+            ->orderByDesc('id');
 
         if ($tpaId !== null) {
-            $query->where('group_medical_third_party_administrator_id', $tpaId);
+            $query->where('health_third_party_administrator_id', $tpaId);
         }
 
         return $query->get();
@@ -153,8 +155,8 @@ final class GroupMedicalAmtFormDropdownService
 
             $categoryId = $row['group_medical_category_id'] ?? null;
             $providerId = $row['insurance_provider_id'] ?? null;
-            $tpaId = $row['group_medical_third_party_administrator_id'] ?? null;
-            $networkId = $row['group_medical_network_id'] ?? null;
+            $tpaId = $row['health_third_party_administrator_id'] ?? null;
+            $networkId = $row['health_network_id'] ?? null;
             $renewalDate = $row['renewal_date'] ?? null;
 
             $rows[] = [

@@ -307,6 +307,7 @@ class BusinessQuoteService extends BaseService
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
             'additionalNotes' => $request->additional_notes ?? null,
             'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
+            'businessActivityId' => $request->nature_of_company_activity_id,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
 
@@ -665,10 +666,10 @@ class BusinessQuoteService extends BaseService
     protected function syncGroupMedicalLeadIntakeFields(BusinessQuote $businessQuote, Request $request): void
     {
         if ($request->has('nature_of_company_activity_id')) {
-            $businessQuote->nature_of_company_activity_id = $request->input('nature_of_company_activity_id');
+            $businessQuote->business_activity_id = $request->input('nature_of_company_activity_id');
         }
         if ($request->has('has_existing_group_health_insurance')) {
-            $businessQuote->has_existing_group_health_insurance = $request->boolean('has_existing_group_health_insurance');
+            $businessQuote->has_existing_group_policy = $request->boolean('has_existing_group_health_insurance');
         }
         if ($request->has('health_plan_type_id')) {
             $businessQuote->health_plan_type_id = $request->input('health_plan_type_id');
@@ -1071,6 +1072,8 @@ class BusinessQuoteService extends BaseService
 
         $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
 
-        return $modelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
+        $displayModelType = strtolower($modelType) === 'group_medical' ? 'Group Medical' : $modelType;
+
+        return $displayModelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
     }
 }

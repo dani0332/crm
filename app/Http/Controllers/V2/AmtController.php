@@ -47,6 +47,7 @@ use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\GroupMedical\GroupMedicalAmtFormDropdownService;
 use App\Services\GroupMedicalEcommerceJourneyLinkService;
+use App\Services\GroupMedicalQuoteCategoryService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -180,6 +181,16 @@ class AmtController extends Controller
             ->whereIn('r.name', ['GM_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
 
+        // Fetch PQA
+        $pqas = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->where('r.name', RolesEnum::PreQualificationAdvisor)
+            ->select('u.id', 'u.name')
+            ->orderBy('u.name')
+            ->distinct()
+            ->get();
+
         // Get support users (OE role with Group Medical product access)
         $supportUsers = app(UserService::class)->getSupportUsers([
             'product_filter' => QuoteTypes::GROUP_MEDICAL,
@@ -274,6 +285,9 @@ class AmtController extends Controller
             } else {
                 $data->whereIn('bqr.advisor_id', $request->advisor_id);
             }
+        }
+        if (isset($request->pq_advisor_id) && is_array($request->pq_advisor_id)) {
+            $data->whereIn('bqr.pq_advisor_id', $request->pq_advisor_id);
         }
 
         if (isset($request->support_user_id) && is_array($request->support_user_id) && count($request->support_user_id) > 0) {
@@ -381,7 +395,7 @@ class AmtController extends Controller
         $emirates = Emirate::getActiveEmirates();
         $assignmentTypes = AssignmentTypeEnum::withLabels();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'preQualificationAdvisors', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'canAssignPreQualificationAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'pqas', 'supportUsers', 'preQualificationAdvisors', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'canAssignPreQualificationAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes'));
     }
 
     /**
@@ -486,6 +500,7 @@ class AmtController extends Controller
             'groupMedicalType:id,text,description',
             'natureOfCompanyActivity:id,text',
             'groupMedicalCategories',
+            'businessActivity:id,name',
         ]);
         abort_if(! $record, 404);
         /* Start - Temporarily adding for correcting historic data */
@@ -684,7 +699,7 @@ class AmtController extends Controller
     public function edit($id)
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
-        $record = BusinessQuote::with('quoteRequestEntityMapping.entity')
+        $record = BusinessQuote::with(['quoteRequestEntityMapping.entity', 'groupMedicalCategories.category'])
             ->where([['uuid', $id], ['business_type_of_insurance_id', 5]])
             ->first();
 
@@ -718,6 +733,7 @@ class AmtController extends Controller
             'emirates' => $emirates,
             'isEmirateDisabled' => true,
             'leadSourceParams' => [],
+            'categoryCount' => app(GroupMedicalQuoteCategoryService::class)->getCategoryCountByQuoteId($record->id),
             ...app(GroupMedicalAmtFormDropdownService::class)->formDropdownProps(),
         ]);
     }
@@ -741,8 +757,6 @@ class AmtController extends Controller
             'company_name' => 'required|max:150',
             'number_of_employees' => 'required|numeric|min:1|max:2147483645',
             'brief_details' => 'required',
-            'group_medical_type_id' => 'required',
-            'premium' => 'required',
         ], $this->groupMedicalAmtIntakeValidationRules()));
         app(CRUDService::class)->updateModelByType('business', $request, $id);
 
@@ -799,7 +813,7 @@ class AmtController extends Controller
     protected function groupMedicalAmtIntakeValidationRules(): array
     {
         return [
-            'nature_of_company_activity_id' => ['required', 'exists:company_activity_type,id'],
+            'nature_of_company_activity_id' => ['required', 'exists:business_activities,id'],
             'has_existing_group_health_insurance' => ['required', 'boolean'],
             'health_plan_type_id' => ['required', 'exists:health_plan_type,id'],
             'categories' => [
@@ -818,7 +832,7 @@ class AmtController extends Controller
                     }
                 },
             ],
-            'categories.*.groupMedicalCategoryId' => ['required', 'integer', 'exists:group_medical_category,id'],
+            // 'categories.*.groupMedicalCategoryId' => ['required', 'integer', 'exists:group_medical_category,id'],
             'categories.*.insuranceProviderId' => ['nullable', 'exists:insurance_provider,id'],
             'categories.*.healthTpaId' => ['nullable', 'exists:group_medical_third_party_administrator,id'],
             'categories.*.groupMedicalNetworkId' => ['nullable', 'exists:group_medical_networks,id'],
