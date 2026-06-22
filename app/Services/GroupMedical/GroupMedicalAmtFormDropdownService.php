@@ -121,8 +121,8 @@ final class GroupMedicalAmtFormDropdownService
     {
         $query = HealthNetwork::query()
             ->active()
-            ->select('id', 'text')
-            ->orderBy('text');
+            ->select('id', 'level as text')
+            ->orderByDesc('id');
 
         if ($tpaId !== null) {
             $query->where('health_third_party_administrator_id', $tpaId);
