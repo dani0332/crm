@@ -58,6 +58,7 @@ class DatabaseSeeder extends Seeder
             UpdateTooltipCarDocuments::class,
             CarAdditionalDetailsForSukoonSeeder::class,
             QICTokioLookupSeeder::class,
+            DeviceQuoteSeeder::class,
             DocRequiredForPolicySendSeeder::class,
             SendUpdateSeederForCyber::class,
             BranchSeeder::class,
@@ -73,6 +74,11 @@ class DatabaseSeeder extends Seeder
             InsuranceProviderTransitionsSeeder::class,
             BackfillBusinessQuoteEmirateFromInsuredSeeder::class,
             ConverILAGroupMedicalConfigurationBranchWise::class,
+            HealthCoverForSeeder::class,
+            MemberCategorySeeder::class,
+            VisaCategorySeeder::class,
+            SalaryBandSeeder::class,
+            MaritalStatusSeeder::class,
         ]);
     }
 }

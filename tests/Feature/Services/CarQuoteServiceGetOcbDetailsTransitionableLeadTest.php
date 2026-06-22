@@ -2,11 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\FetchPlansStatuses;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\QuoteTypeShortCode;
-use App\Enums\RenewalProcessStatuses;
-use App\Enums\RenewalsUploadType;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceProviderTransition;
 use App\Models\RenewalQuoteProcess;
@@ -84,34 +80,19 @@ if (! function_exists('createGetOcbDetailsCarQuote')) {
 }
 
 test('getOcbDetails returns isTransitionableLead=false when stored transition is stale (provider_name mutated post-validation)', function () {
-    $source = InsuranceProvider::create(['code' => InsuranceProvidersEnum::RSA, 'text' => 'RSA']);
-    $target = InsuranceProvider::create(['code' => InsuranceProvidersEnum::AXA, 'text' => 'GIG AXA']);
+    $source = InsuranceProvider::factory()->rsa()->create();
+    $target = InsuranceProvider::factory()->axa()->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $source->id,
-        'target_insurance_provider_id' => $target->id,
-        'is_active' => true,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($source->id, $target->id)->create();
 
-    $uploadLead = RenewalsUploadLeads::create([
-        'file_name' => 'test.xlsx',
-        'file_path' => 'test/path.xlsx',
-        'quote_type' => QuoteTypeShortCode::CAR,
-        'status' => 'IN_PROGRESS',
-        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
-        'is_sic' => 0,
-    ]);
+    $uploadLead = RenewalsUploadLeads::factory()->create();
 
     $uuid = (string) Str::uuid();
     $quoteId = createGetOcbDetailsCarQuote($uuid);
 
-    RenewalQuoteProcess::create([
+    RenewalQuoteProcess::factory()->create([
         'renewals_upload_lead_id' => $uploadLead->id,
         'quote_id' => $quoteId,
-        'quote_type' => QuoteTypeShortCode::CAR,
-        'status' => RenewalProcessStatuses::PLANS_FETCHED,
-        'type' => RenewalsUploadType::UPDATE_LEADS,
-        'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         'email_sent' => true,
         'insurance_provider_transition_id' => $transition->id,
         'data' => [
@@ -131,39 +112,24 @@ test('getOcbDetails returns isTransitionableLead=false when stored transition is
 });
 
 test('getOcbDetails returns isTransitionableLead=true when stored transition matches current lead data', function () {
-    $source = InsuranceProvider::create(['code' => InsuranceProvidersEnum::RSA, 'text' => 'RSA']);
-    $target = InsuranceProvider::create(['code' => InsuranceProvidersEnum::AXA, 'text' => 'GIG AXA']);
+    $source = InsuranceProvider::factory()->rsa()->create();
+    $target = InsuranceProvider::factory()->axa()->create();
 
-    $transition = InsuranceProviderTransition::create([
-        'source_insurance_provider_id' => $source->id,
-        'target_insurance_provider_id' => $target->id,
-        'is_active' => true,
-    ]);
+    $transition = InsuranceProviderTransition::factory()->between($source->id, $target->id)->create();
 
-    $uploadLead = RenewalsUploadLeads::create([
-        'file_name' => 'test.xlsx',
-        'file_path' => 'test/path.xlsx',
-        'quote_type' => QuoteTypeShortCode::CAR,
-        'status' => 'IN_PROGRESS',
-        'renewal_import_type' => RenewalsUploadType::UPDATE_LEADS,
-        'is_sic' => 0,
-    ]);
+    $uploadLead = RenewalsUploadLeads::factory()->create();
 
     $uuid = (string) Str::uuid();
     $quoteId = createGetOcbDetailsCarQuote($uuid);
 
-    RenewalQuoteProcess::create([
+    RenewalQuoteProcess::factory()->create([
         'renewals_upload_lead_id' => $uploadLead->id,
         'quote_id' => $quoteId,
-        'quote_type' => QuoteTypeShortCode::CAR,
-        'status' => RenewalProcessStatuses::PLANS_FETCHED,
-        'type' => RenewalsUploadType::UPDATE_LEADS,
-        'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         'email_sent' => true,
         'insurance_provider_transition_id' => $transition->id,
         'data' => [
             'insurer' => InsuranceProvidersEnum::RSA,
-            'provider_name' => 'GIG AXA',
+            'provider_name' => $target->text,
         ],
     ]);
 

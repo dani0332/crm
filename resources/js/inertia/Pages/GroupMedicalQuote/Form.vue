@@ -70,7 +70,9 @@ function buildInitialCategoryRows(quote) {
   const intake = quote?.group_medical_categories;
 
   if (Array.isArray(intake) && intake.length > 0) {
-    return intake.slice(0, rowMax).map(row => ({ ...emptyCategoryRow(), ...row }));
+    return intake
+      .slice(0, rowMax)
+      .map(row => ({ ...emptyCategoryRow(), ...row }));
   }
   const savedN = parseInt(quote?.number_of_categories, 10);
   const n = Math.min(rowMax, Math.max(1, savedN || 1));
@@ -134,8 +136,13 @@ async function fetchNetworksForTpa(tpaId) {
   if (!tpaId || networksCache.value[tpaId] !== undefined) return;
   networksFetching.value[tpaId] = true;
   try {
-    const { data } = await axios.get(route('amt.networks'), { params: { tpa_id: tpaId } });
-    networksCache.value[tpaId] = data.map(n => ({ value: n.id, label: n.text }));
+    const { data } = await axios.get(route('amt.networks'), {
+      params: { tpa_id: tpaId },
+    });
+    networksCache.value[tpaId] = data.map(n => ({
+      value: n.id,
+      label: n.text,
+    }));
   } catch {
     networksCache.value[tpaId] = [];
   } finally {
@@ -226,9 +233,13 @@ const totalPeopleToBeInsured = computed(() =>
   }, 0),
 );
 
-watch(totalPeopleToBeInsured, val => {
-  quoteForm.number_of_employees = val > 0 ? val : null;
-}, { immediate: true });
+watch(
+  totalPeopleToBeInsured,
+  val => {
+    quoteForm.number_of_employees = val > 0 ? val : null;
+  },
+  { immediate: true },
+);
 
 /**
  * Group medical category options for one row; disables categories already picked elsewhere.
@@ -770,6 +781,24 @@ function onSubmit(isValid) {
                     : 'category rows'
                 }}
               </span>
+              <x-tooltip placement="left">
+                <x-button
+                  type="button"
+                  size="sm"
+                  color="primary"
+                  class="whitespace-nowrap"
+                  :disabled="quoteForm.categories.length >= gmCategoryRowMax"
+                  @click.prevent="addCategoryRow"
+                >
+                  + Add row
+                </x-button>
+                <template #tooltip>
+                  <span
+                    >Add another category row (up to
+                    {{ gmCategoryRowMax }}).</span
+                  >
+                </template>
+              </x-tooltip>
             </div>
           </div>
 
@@ -931,11 +960,7 @@ function onSubmit(isValid) {
                       type="date"
                       class="w-full min-w-[9.5rem]"
                       size="sm"
-                      :error="
-                        quoteForm.errors[
-                          `categories.${idx}.renewalDate`
-                        ]
-                      "
+                      :error="quoteForm.errors[`categories.${idx}.renewalDate`]"
                     />
                   </td>
                   <td
@@ -948,9 +973,7 @@ function onSubmit(isValid) {
                       size="sm"
                       :rules="[isRequired, isNumber, v => Number.isInteger(Number(v)) || 'Must be a whole number.', maxValidation(2147483645)]"
                       :error="
-                        quoteForm.errors[
-                          `categories.${idx}.numberOfPeople`
-                        ]
+                        quoteForm.errors[`categories.${idx}.numberOfPeople`]
                       "
                       :min="1"
                       step="1"
@@ -964,9 +987,7 @@ function onSubmit(isValid) {
             v-if="duplicateCategoryMessage || quoteForm.errors.categories"
             class="mt-3 text-sm text-error"
           >
-            {{
-              duplicateCategoryMessage || quoteForm.errors.categories
-            }}
+            {{ duplicateCategoryMessage || quoteForm.errors.categories }}
           </p>
         </div>
 

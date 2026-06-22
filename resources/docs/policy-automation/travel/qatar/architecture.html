@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qatar Travel - System Architecture Documentation</title>
+    <link rel="stylesheet" href="/docs/styles/styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 25px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .breadcrumb a {
+        color: #fff;
+        text-decoration: none;
+        opacity: 0.8;
+        transition: opacity 0.3s;
+      }
+
+      .breadcrumb a:hover {
+        opacity: 1;
+      }
+
+      .breadcrumb span {
+        color: #fff;
+        margin: 0 10px;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .header h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .section h2 {
+        color: #2c3e50;
+        font-size: 2em;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #4299e1;
+      }
+
+      .section h3 {
+        color: #4299e1;
+        font-size: 1.5em;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .section h4 {
+        color: #34495e;
+        font-size: 1.2em;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .section p {
+        color: #555;
+        margin-bottom: 15px;
+        line-height: 1.8;
+      }
+
+      .section ul,
+      .section ol {
+        margin-left: 30px;
+        margin-bottom: 20px;
+        color: #555;
+      }
+
+      .section li {
+        margin-bottom: 10px;
+        line-height: 1.7;
+      }
+
+      .code-block {
+        background: #2c3e50;
+        color: #ecf0f1;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.6;
+      }
+
+      .code-block code {
+        color: #ecf0f1;
+      }
+
+      .code-inline {
+        background: #e3f2fd;
+        color: #4299e1;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+      }
+
+      .service-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-left: 4px solid #4299e1;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .service-card:hover {
+        transform: translateX(5px);
+      }
+
+      .service-card h4 {
+        color: #4299e1;
+        margin-top: 0;
+        font-size: 1.3em;
+      }
+
+      .service-card .responsibility {
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .service-card .responsibility strong {
+        color: #2c3e50;
+      }
+
+      .pattern-badge {
+        display: inline-block;
+        background: #4299e1;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        margin: 5px 5px 5px 0;
+        font-weight: 600;
+      }
+
+      .architecture-diagram {
+        background: #f8f9fa;
+        border: 2px solid #4299e1;
+        border-radius: 10px;
+        padding: 25px;
+        margin: 25px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.8;
+        overflow-x: auto;
+      }
+
+      .info-box {
+        background: #e3f2fd;
+        border-left: 4px solid #4299e1;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+
+      .info-box strong {
+        color: #4299e1;
+      }
+
+      .nav-links {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-links h3 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+      }
+
+      .nav-links a {
+        display: inline-block;
+        background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        margin: 5px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .nav-links a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        color: white;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      table th {
+        background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+      }
+
+      table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      table tr:hover {
+        background: #f8f9fa;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .section {
+          padding: 25px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/docs/policy-automation/index.html">🤖 Policy Automation</a>
+        <span>></span>
+        <a href="/docs/policy-automation/travel/index.html">✈️ Travel</a>
+        <span>></span>
+        <a href="/docs/policy-automation/travel/qatar/index.html">Qatar</a>
+        <span>></span>
+        <span>Architecture</span>
+      </div>
+
+      <div class="header">
+        <h1>🏗️ System Architecture</h1>
+        <p>
+          Complete Technical Architecture Documentation for Qatar Travel Policy
+          Issuance Automation
+        </p>
+      </div>
+
+      <div class="nav-links">
+        <h3>📚 Navigation</h3>
+        <a href="/docs/policy-automation/travel/qatar/index.html"
+          >← Back to Overview</a
+        >
+        <a href="/docs/policy-automation/travel/qatar/automation-flow.html"
+          >Automation Flow →</a
+        >
+        <a href="/docs/policy-automation/travel/qatar/api-integration.html"
+          >API Integration →</a
+        >
+        <a href="/docs/policy-automation/travel/qatar/configuration.html"
+          >Configuration →</a
+        >
+      </div>
+
+      <!-- Overview Section -->
+      <div class="section">
+        <h2>📋 Overview</h2>
+        <p>
+          The Qatar Travel Policy Issuance Automation system is a comprehensive,
+          modular architecture designed to automate the complete policy issuance
+          workflow with Qatar Insurance Company. It provides a standardized
+          interface for integrating with Qatar's travel insurance APIs across
+          different travel types (Inbound and Outbound).
+        </p>
+
+        <h3>Core Purpose</h3>
+        <ul>
+          <li>
+            Automate the entire travel policy issuance lifecycle from quote
+            finalization to booked policy
+          </li>
+          <li>
+            Provide consistent error handling, logging, and retry mechanisms
+          </li>
+          <li>
+            Enable seamless integration with Qatar Insurance through a common
+            interface
+          </li>
+          <li>
+            Maintain data integrity and audit trails throughout the automation
+            process
+          </li>
+          <li>
+            Support both Inbound and Outbound travel policies with appropriate
+            handling
+          </li>
+        </ul>
+
+        <h3>Key Features</h3>
+        <div class="info-box">
+          <strong>Multi-step automation:</strong> Sequential step execution with
+          state management
+        </div>
+        <div class="info-box">
+          <strong>Provider-agnostic design:</strong> Common interface for all
+          insurance providers
+        </div>
+        <div class="info-box">
+          <strong>Comprehensive logging:</strong> Detailed audit trails using
+          LoggerService
+        </div>
+        <div class="info-box">
+          <strong>Retry mechanisms:</strong> Handles document generation delays
+          with configurable retries
+        </div>
+        <div class="info-box">
+          <strong>Document management:</strong> Automated document download,
+          upload, and storage
+        </div>
+        <div class="info-box">
+          <strong>Status tracking:</strong> Real-time tracking of automation
+          progress
+        </div>
+      </div>
+
+      <!-- Architecture Layers -->
+      <div class="section">
+        <h2>🏛️ Architecture Layers</h2>
+
+        <h3>1. Interface Layer</h3>
+        <div class="architecture-diagram">
+          PolicyIssuanceInterface ├── executeSteps($process) └──
+          createPolicyIssuanceSchedule($quote, $insurer)
+        </div>
+        <p>
+          <strong>Purpose:</strong> Defines the contract that all insurance
+          provider services must implement.
+        </p>
+        <p>
+          <strong>Implementation:</strong> QatarInsuranceService implements this
+          interface for Travel LOB.
+        </p>
+
+        <h3>2. Service Layer Architecture</h3>
+        <div class="architecture-diagram">
+          PolicyIssuanceAutomation/ ├── PolicyIssuanceService # Core
+          orchestration service └── Travel/ └── Qatar/ └── QatarInsuranceService
+          # Main orchestrator (implements Interface) ├──
+          issuePolicyAndFillPolicyDetails() ├── policyPurchase() ├──
+          fetchAndUploadDocument() ├──
+          uploadBuyerTaxInvoiceAndFillBookingDetails() ├──
+          triggerBookPolicyProcess() ├── qatarHttpCall() ├──
+          uploadAndAttachToQuoteDocuments() └── getNextStep()
+        </div>
+      </div>
+
+      <!-- Core Components -->
+      <div class="section">
+        <h2>🔧 Core Components</h2>
+
+        <!-- Service: QatarInsuranceService -->
+        <div class="service-card">
+          <h4>
+            QatarInsuranceService
+            <span class="pattern-badge">Main Orchestrator</span>
+          </h4>
+          <div class="responsibility">
+            <strong>Responsibility:</strong>
+            <ul>
+              <li>
+                Implements
+                <code class="code-inline">PolicyIssuanceInterface</code>
+              </li>
+              <li>Manages the overall automation flow</li>
+              <li>Coordinates between different steps</li>
+              <li>Tracks step progression</li>
+              <li>Handles automation enablement checks</li>
+              <li>Manages travel type determination (Inbound/Outbound)</li>
+            </ul>
+          </div>
+          <h4>Key Methods:</h4>
+          <ul>
+            <li>
+              <code class="code-inline">createPolicyIssuanceSchedule()</code> -
+              Initiates automation schedule
+            </li>
+            <li>
+              <code class="code-inline">executeSteps()</code> - Main entry point
+              for step execution
+            </li>
+            <li>
+              <code class="code-inline">issuePolicyAndFillPolicyDetails()</code>
+              - Step 1: Finalize policy
+            </li>
+            <li>
+              <code class="code-inline">policyPurchase()</code> - Step 2:
+              Purchase policy
+            </li>
+            <li>
+              <code class="code-inline">fetchAndUploadDocument()</code> - Step
+              3: Retrieve and upload documents
+            </li>
+            <li>
+              <code class="code-inline"
+                >uploadBuyerTaxInvoiceAndFillBookingDetails()</code
+              >
+              - Step 4: Fill booking details
+            </li>
+            <li>
+              <code class="code-inline">triggerBookPolicyProcess()</code> - Step
+              5: Trigger Sage booking
+            </li>
+            <li>
+              <code class="code-inline">getNextStep()</code> - Determines next
+              step based on completed steps
+            </li>
+            <li>
+              <code class="code-inline"
+                >isPolicyIssuanceAutomationEnabled()</code
+              >
+              - Feature toggle check
+            </li>
+            <li>
+              <code class="code-inline">getStepsLockingStatus()</code> - UI
+              locking status for manual intervention
+            </li>
+          </ul>
+          <p>
+            <strong>Pattern:</strong>
+            <span class="pattern-badge">Strategy Pattern</span>
+            <span class="pattern-badge">Sequential Execution</span>
+          </p>
+        </div>
+
+        <!-- HTTP Client -->
+        <div class="service-card">
+          <h4>
+            HTTP Client Integration
+            <span class="pattern-badge">API Communication</span>
+          </h4>
+          <div class="responsibility">
+            <strong>Responsibility:</strong>
+            <ul>
+              <li>Manages HTTP communication with Qatar API</li>
+              <li>Configures authentication via agency_id and agency_code</li>
+              <li>Provides consistent error handling for HTTP errors</li>
+              <li>Centralizes API configuration</li>
+            </ul>
+          </div>
+          <h4>Configuration:</h4>
+          <ul>
+            <li>
+              Base URL from config:
+              <code class="code-inline">ALLIANCE_API_BASE_URL</code>
+            </li>
+            <li>
+              Authentication parameters:
+              <code class="code-inline">agency_id</code> and
+              <code class="code-inline">agency_code</code>
+            </li>
+            <li>Timeout: 20 seconds (configurable)</li>
+            <li>
+              Standard headers:
+              <code class="code-inline">Content-Type: application/json</code>
+            </li>
+          </ul>
+          <h4>Method:</h4>
+          <div class="code-block">
+            <code
+              >private function qatarHttpCall($endPoint, $param) { $headers =
+              ['Content-Type' => 'application/json']; $payload =
+              array_merge($this->authParam, $param); $url = $this->baseUrl .
+              $endPoint; return
+              Http::timeout(20)->withHeaders($headers)->post($url, $payload);
+              }</code
+            >
+          </div>
+        </div>
+
+        <!-- Document Management -->
+        <div class="service-card">
+          <h4>
+            Document Management
+            <span class="pattern-badge">Document Operations</span>
+          </h4>
+          <div class="responsibility">
+            <strong>Responsibility:</strong>
+            <ul>
+              <li>Downloads documents from Qatar API</li>
+              <li>Uploads documents to Azure Storage</li>
+              <li>Maps Qatar document names to IMCRM document codes</li>
+              <li>Handles MIME type detection</li>
+              <li>Triggers watermarking jobs</li>
+            </ul>
+          </div>
+          <h4>Key Methods:</h4>
+          <ul>
+            <li>
+              <code class="code-inline">uploadAndAttachToQuoteDocuments()</code>
+              - Download, upload, and attach documents
+            </li>
+            <li>
+              <code class="code-inline">getMimeTypeAndFileName()</code> -
+              Extract MIME type and filename from URL
+            </li>
+            <li>
+              <code class="code-inline">getTravelDocumentMapping()</code> - Map
+              Qatar document names to IMCRM codes
+            </li>
+          </ul>
+          <h4>Document Mapping:</h4>
+          <ul>
+            <li>
+              <code class="code-inline">Policy Tax Invoice</code> →
+              <code class="code-inline">TRAVEL_TAX_INVOICE</code>
+            </li>
+            <li>
+              <code class="code-inline">Certificate of Insurance</code> →
+              <code class="code-inline">TRAVEL_POLICY_SCHEDULE</code>
+            </li>
+            <li>
+              <code class="code-inline">Buyer Tax Invoice</code> →
+              <code class="code-inline">TRAVEL_TAX_INVOICE_RAISE_BY_BUYER</code>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Payment & Commission -->
+        <div class="service-card">
+          <h4>
+            Payment & Commission Management
+            <span class="pattern-badge">Financial Operations</span>
+          </h4>
+          <div class="responsibility">
+            <strong>Responsibility:</strong>
+            <ul>
+              <li>Payment is PRE-CAPTURED before automation starts</li>
+              <li>
+                Transaction ID extracted from
+                <code
+                  >$payment->paymentSplits->first()?->paymentCharges?->transaction_id</code
+                >
+              </li>
+              <li>
+                Transaction ID used as <code>agency_reference</code> in
+                PurchasePolicy step
+              </li>
+              <li>
+                Updates payment records with commission details from buyer tax
+                invoice
+              </li>
+              <li>Calculates VAT and commission percentages</li>
+              <li>Updates commission schedules via SplitPaymentService</li>
+              <li>Manages insurer tax invoice numbers</li>
+            </ul>
+          </div>
+          <h4>Payment Flow:</h4>
+          <ul>
+            <li>Payment already authorized/captured before automation</li>
+            <li>
+              Transaction ID used for reference only in PurchasePolicy API call
+            </li>
+          </ul>
+          <h4>Commission Updates:</h4>
+          <ul>
+            <li>Commission details fetched from buyer tax invoice API</li>
+            <li>Commission amount (including/excluding VAT)</li>
+            <li>Commission percentage calculation</li>
+            <li>Insurer tax invoice number</li>
+            <li>Invoice date and description</li>
+            <li>
+              Commission schedule updated via
+              <code>SplitPaymentService->updateCommissionSchedule()</code>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Travel Type Handling -->
+        <div class="service-card">
+          <h4>
+            Travel Type Management
+            <span class="pattern-badge">Travel-Specific Logic</span>
+          </h4>
+          <div class="responsibility">
+            <strong>Responsibility:</strong>
+            <ul>
+              <li>Determines travel type (Inbound/Outbound) from quote</li>
+              <li>Calculates policy expiry dates based on travel type</li>
+              <li>Handles multi-trip coverage with special rules</li>
+              <li>Manages cover days calculation</li>
+            </ul>
+          </div>
+          <h4>Travel Types:</h4>
+          <ul>
+            <li><strong>Inbound:</strong> Travelers coming to UAE</li>
+            <li><strong>Outbound:</strong> UAE residents traveling abroad</li>
+          </ul>
+          <h4>Special Handling:</h4>
+          <ul>
+            <li>
+              Multi-trip Inbound policies: Fixed 180 days cover (maximum,
+              regardless of <code class="code-inline">days_cover_for</code>)
+            </li>
+            <li>
+              Other travel types: Cover days based on
+              <code class="code-inline">days_cover_for</code> field
+            </li>
+            <li>
+              Policy expiry date calculation: Last cover day = expiry date
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Design Patterns -->
+      <div class="section">
+        <h2>🎨 Design Patterns & Principles</h2>
+
+        <h3>1. Strategy Pattern</h3>
+        <p>
+          QatarInsuranceService implements PolicyIssuanceInterface with
+          provider-specific strategy for Travel insurance.
+        </p>
+
+        <h3>2. Sequential Execution Pattern</h3>
+        <p>
+          Steps execute in strict order, each dependent on the previous step's
+          success:
+        </p>
+        <div class="architecture-diagram">
+          IssuePolicy → PurchasePolicy → UploadPolicyDocuments →
+          FillBookingDetails → BookPolicy
+        </div>
+
+        <h3>3. Retry Pattern</h3>
+        <p>Document generation retry mechanism with configurable delays:</p>
+        <div class="code-block">
+          <code
+            >$maxRetries = 5; $retryDelay = 10; // seconds $retryCount = 0; do {
+            sleep($retryDelay); // 10 seconds $policyDocuments =
+            $this->qatarHttpCall($endPoint, $payload); if
+            ($policyDocuments->failed() && str_contains($response->errors[0],
+            'Policy documents are still generating')) { $retryCount++; } else {
+            break; } } while ($retryCount < $maxRetries); // Max 5 retries</code
+          >
+        </div>
+
+        <h3>4. Dependency Injection</h3>
+        <p>
+          Services use Laravel's service container for dependency resolution:
+        </p>
+        <div class="code-block">
+          <code
+            >public function __construct() { $this->vat =
+            app(ApplicationStorageService::class)
+            ->getValueByKey(ApplicationStorageEnums::VAT_VALUE); $this->baseUrl
+            = config('constants.ALLIANCE_API_BASE_URL') . '/api';
+            $this->authParam = [ 'agency_id' =>
+            config('constants.ALLIANCE_AGENCY_ID'), 'agency_code' =>
+            config('constants.ALLIANCE_AGENCY_CODE'), ]; }</code
+          >
+        </div>
+      </div>
+
+      <!-- Integration Points -->
+      <div class="section">
+        <h2>🔌 Integration Points</h2>
+
+        <h3>1. Queue System</h3>
+        <p><strong>Job Dispatch:</strong></p>
+        <div class="code-block">
+          <code
+            >PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)
+            ->onQueue('policy-issuance-automation');</code
+          >
+        </div>
+
+        <h3>2. PolicyIssuanceService</h3>
+        <p><strong>Core service that manages all automation:</strong></p>
+        <ul>
+          <li>
+            <code class="code-inline">schedulePolicyIssuance()</code> - Create
+            automation schedule
+          </li>
+          <li>
+            <code class="code-inline">init()</code> - Factory method for
+            provider services
+          </li>
+          <li>
+            <code class="code-inline"
+              >executePolicyIssuanceAutomationSteps()</code
+            >
+            - Command handler
+          </li>
+          <li>
+            <code class="code-inline">storePolicyIssuanceLog()</code> - Audit
+            trail storage
+          </li>
+        </ul>
+
+        <h3>3. External Services Integration</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SageApiService</td>
+              <td>Final booking process integration</td>
+            </tr>
+            <tr>
+              <td>SplitPaymentService</td>
+              <td>Commission schedule updates</td>
+            </tr>
+            <tr>
+              <td>PaymentRepository</td>
+              <td>Payment data access and invoice description generation</td>
+            </tr>
+            <tr>
+              <td>ApplicationStorageService</td>
+              <td>Feature toggles and configuration</td>
+            </tr>
+            <tr>
+              <td>LoggerService</td>
+              <td>Centralized logging</td>
+            </tr>
+            <tr>
+              <td>Storage (Azure)</td>
+              <td>Document storage and retrieval</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>4. Queue Jobs</h3>
+        <ul>
+          <li>
+            <code class="code-inline">WatermarkDocumentsJob</code> - Document
+            watermarking
+          </li>
+          <li>
+            <code class="code-inline">SendBookPolicyDocumentsJob</code> - Policy
+            document email dispatch
+          </li>
+          <li>
+            <code class="code-inline"
+              >SendTravelQatarFailedAllocationEmailJob</code
+            >
+            - Failure notification emails
+          </li>
+        </ul>
+      </div>
+
+      <!-- State Management -->
+      <div class="section">
+        <h2>🔄 State Management</h2>
+
+        <h3>Process States</h3>
+        <p>
+          States tracked in
+          <code class="code-inline">PolicyIssuance</code> model:
+        </p>
+        <ul>
+          <li>
+            <code class="code-inline">PENDING_STATUS</code> - Waiting to be
+            processed
+          </li>
+          <li>
+            <code class="code-inline">PROCESSING_STATUS</code> - Currently being
+            processed
+          </li>
+          <li>
+            <code class="code-inline">FAILED_STATUS</code> - Failed, manual
+            intervention required
+          </li>
+          <li>
+            <code class="code-inline">COMPLETED_STATUS</code> - All steps
+            completed successfully
+          </li>
+        </ul>
+
+        <h3>Completed Steps</h3>
+        <p>
+          Steps tracked in
+          <code class="code-inline">completed_step</code> field:
+        </p>
+        <ul>
+          <li><code class="code-inline">null</code> - No steps completed</li>
+          <li>
+            <code class="code-inline">QATAR_TRAVEL_ISSUE_POLICY</code> - Step 1
+            completed
+          </li>
+          <li>
+            <code class="code-inline">QATAR_TRAVEL_PURCHASE_POLICY</code> - Step
+            2 completed
+          </li>
+          <li>
+            <code class="code-inline"
+              >QATAR_TRAVEL_UPLOAD_POLICY_DOCUMENTS</code
+            >
+            - Step 3 completed
+          </li>
+          <li>
+            <code class="code-inline"
+              >QATAR_TRAVEL_FILL_POLICY_BOOKING_DETAILS</code
+            >
+            - Step 4 completed
+          </li>
+          <li>
+            <code class="code-inline">QATAR_TRAVEL_BOOK_POLICY</code> - Step 5
+            completed
+          </li>
+        </ul>
+
+        <h3>Step Progression Logic</h3>
+        <div class="code-block">
+          <code
+            >public function getNextStep($completedStep = null): ?string {
+            $allSteps = PolicyIssuanceEnum::getPolicyIssuanceSteps(
+            InsuranceProviderEnum::QIC->value, self::TYPE ); if
+            (!$completedStep) { return $allSteps[0]; // First step }
+            $completedStepIndex = array_search($completedStep, $allSteps); if
+            ($completedStepIndex === false || $completedStepIndex ===
+            count($allSteps) - 1) { return null; // No next step } return
+            $allSteps[$completedStepIndex + 1]; }</code
+          >
+        </div>
+      </div>
+
+      <!-- Best Practices -->
+      <div class="section">
+        <h2>✅ Best Practices Summary</h2>
+
+        <h3>DO:</h3>
+        <div class="info-box">
+          <ul>
+            <li>✅ Always log comprehensively at every step</li>
+            <li>✅ Store API logs for audit trails</li>
+            <li>✅ Update step progression after each success</li>
+            <li>✅ Handle exceptions gracefully</li>
+            <li>✅ Use feature toggles for runtime control</li>
+            <li>✅ Implement retry mechanisms for transient failures</li>
+            <li>✅ Validate data before API calls</li>
+            <li>✅ Map documents correctly between systems</li>
+          </ul>
+        </div>
+
+        <h3>DON'T:</h3>
+        <div
+          class="info-box"
+          style="background: #fff3cd; border-left-color: #ffc107"
+        >
+          <ul>
+            <li>❌ Skip logging steps</li>
+            <li>❌ Hardcode configuration values</li>
+            <li>❌ Ignore error responses</li>
+            <li>❌ Update status without validation</li>
+            <li>❌ Skip retry mechanisms for document generation</li>
+            <li>❌ Log sensitive customer data</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong
+            >Qatar Travel Insurance Automation - System Architecture
+            Documentation</strong
+          >
+        </p>
+        <p>Part of the Policy Issuance Automation System</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8">
+          Architecture Version 1.0 | Last Updated: February 2026 | Production
+          Ready
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

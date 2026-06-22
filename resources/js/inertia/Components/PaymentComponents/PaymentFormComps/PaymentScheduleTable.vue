@@ -100,6 +100,12 @@ const handlePaymentOptions = count => {
 
 const { formatDate, formatAmount, formatString } = usePayment();
 
+const minSelectableDate = computed(() => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+});
+
 const getPaymentTypeLabel = code => {
   const paymentType = props.paymentTypes.find(item => item.value === code);
   if (paymentType) {
@@ -845,9 +851,10 @@ const isPolicySendUpdateBooked = option => {
               <DatePicker
                 v-model="dueDateModels[count]"
                 class="w-full"
-                :rules="[rules.isRequired]"
+                :rules="[rules.isRequired, rules.dateOnOrAfterToday]"
                 placeholder="dd-mm-yyyy"
                 :disabled="isPaymentLocked"
+                :min-date="minSelectableDate"
               />
             </template>
           </div>

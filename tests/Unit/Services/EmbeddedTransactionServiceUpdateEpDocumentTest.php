@@ -179,7 +179,7 @@ test('updateEpDocument soft-deletes the old row, persists the new document, and 
     $user = TestDataSeeder::createAdminUser();
     Auth::login($user);
 
-    DocumentType::factory()->createOneQuietly([
+    $documentType = DocumentType::factory()->createOneQuietly([
         'code' => QuoteDocumentsEnum::EP,
         'quote_type_id' => QuoteTypeId::Car,
         'text' => 'EP Document',
@@ -228,7 +228,8 @@ test('updateEpDocument soft-deletes the old row, persists the new document, and 
         ->sole();
 
     expect((bool) $replacement->is_manual_override)->toBeTrue()
-        ->and($replacement->override_remarks)->toBe('Replacement upload');
+        ->and($replacement->override_remarks)->toBe('Replacement upload')
+        ->and($replacement->document_type_id)->toBe($documentType->id);
 
     Queue::assertPushed(WatermarkDocumentsJob::class);
 });

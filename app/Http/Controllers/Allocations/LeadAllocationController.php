@@ -74,6 +74,11 @@ class LeadAllocationController extends Controller
                 PermissionsEnum::CYBER_LEAD_ALLOCATION_VIEW_ONLY,
                 PermissionsEnum::CYBER_LEAD_ALLOCATION_EDIT,
             ],
+            QuoteTypes::DEVICE => [
+                PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD,
+                PermissionsEnum::DEVICE_LEAD_ALLOCATION_VIEW_ONLY,
+                PermissionsEnum::DEVICE_LEAD_ALLOCATION_EDIT,
+            ],
         };
 
         $this->middleware('permission:'.implode('|', $permissions), ['only' => ['index']]);
@@ -158,6 +163,10 @@ class LeadAllocationController extends Controller
             QuoteTypes::CYBER => [
                 PermissionsEnum::CYBER_LEADPOOL,
                 PermissionsEnum::CYBER_LEAD_ALLOCATION_EDIT,
+            ],
+            QuoteTypes::DEVICE => [
+                PermissionsEnum::DEVICE_LEADPOOL,
+                PermissionsEnum::DEVICE_LEAD_ALLOCATION_EDIT,
             ],
         };
 

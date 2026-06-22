@@ -42,12 +42,27 @@ class PersonalQuoteFactory extends Factory
         ];
     }
 
+    public function createForSqlite(array $attributes = []): PersonalQuote
+    {
+        return PersonalQuote::query()->create(array_merge([
+            'uuid' => 'PQ-'.Str::upper(Str::random(8)),
+            'code' => 'CAR-'.Str::upper(Str::random(8)),
+            'quote_type_id' => QuoteTypeId::Car,
+            'customer_id' => Customer::factory()->create()->id,
+            'first_name' => $this->faker->firstName(),
+            'last_name' => $this->faker->lastName(),
+            'email' => $this->faker->safeEmail(),
+            'mobile_no' => $this->faker->numerify('05########'),
+            'advisor_id' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ], $attributes));
+    }
+
     /**
      * Define the model's cyber quote state.
-     *
-     * @return array
      */
-    public function cyberQuote()
+    public function cyberQuote(): static
     {
         return $this->state(fn (array $attributes) => [
             'code' => 'CYB-'.$attributes['uuid'],

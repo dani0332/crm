@@ -128,4 +128,6 @@ final class RolesEnum extends Enum
     /* Cyber Roles */
     public const CyberAdvisor = 'CYBER_ADVISOR';
     public const CyberManager = 'CYBER_MANAGER';
+    public const SmartPhoneManager = 'SMART_PHONE_MANAGER';
+    public const SmartPhoneAdvisor = 'SMART_PHONE_ADVISOR';
 }

@@ -170,7 +170,10 @@ const tableHeader = [
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'PRE‑QUALIFICATION ADVISOR', value: 'pre_qualification_advisor_name' },
+  {
+    text: 'PRE‑QUALIFICATION ADVISOR',
+    value: 'pre_qualification_advisor_name',
+  },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },

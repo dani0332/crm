@@ -3,6 +3,9 @@
 namespace App\Builders;
 
 use App\Enums\DefaultAdvisorEnum;
+use App\Enums\GenericRequestEnum;
+use App\Enums\HealthQuoteDigitalSignatory;
+use App\Enums\HealthQuoteUaePassApiStatus;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
@@ -74,9 +77,14 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'gender',
             'emirate_of_your_visa_id',
             'pec_marked_at',
+            'digital_signatory',
+            'uae_pass_api_status',
             'branch_id',
             'is_branch_applicable',
             'health_plan_type_id',
+            'policy_holder_category_code',
+            'visa_category_id',
+            'cover_for_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -99,6 +107,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'quotePlan',
             'paymentStatus:id,text',
             'payments:id,paymentable_id,paymentable_type,authorized_at',
+            'activeMembers:id,quote_type,quote_id,dob,deleted_at',
             'insuranceProvider:id,text,code',
             'quoteStatus:id,text',
             'wcAdvisor:id,name',
@@ -106,6 +115,11 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'memberCategory:id,text',
             'plan:id,text',
             'subSource:id,text',
+            'visaCategory:id,text',
+            'policyHolderCategory:id,code,text',
+            'genderLookup:id,code,text',
+            'latestInsured',
+            'activeMembers',
         ]);
     }
 
@@ -139,6 +153,25 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByDate('next_followup_date_end', 'next_followup_date', false, requestParams: $requestParams)
             ->filterByAdvisors($this->getFilterValue('advisor_id', $requestParams) ?? $this->getFilterValue('advisors', $requestParams))
             ->filterBy('assignment_type', ignoreAll: true, requestParams: $requestParams)
+            ->when($this->hasFilterValue('unassigned', $requestParams) && strtolower((string) $this->getFilterValue('unassigned', $requestParams)) === 'yes', function ($query) {
+                $query->whereNull('advisor_id')
+                    ->whereNotNull('health_plan_type_id');
+            })
+            ->when($this->hasFilterValue('unassigned', $requestParams) && strtolower((string) $this->getFilterValue('unassigned', $requestParams)) === 'no', function ($query) {
+                $query->whereNotNull('advisor_id');
+            })
+            ->when($this->hasFilterValue('age_sixty_and_above', $requestParams) && strtolower((string) $this->getFilterValue('age_sixty_and_above', $requestParams)) === 'yes', function ($query) {
+                $query->whereHas('activeMembers', function ($membersQuery) {
+                    $membersQuery->whereNotNull('dob')
+                        ->whereDate('dob', '<=', now()->subYears(60)->toDateString());
+                });
+            })
+            ->when($this->hasFilterValue('age_sixty_and_above', $requestParams) && strtolower((string) $this->getFilterValue('age_sixty_and_above', $requestParams)) === 'no', function ($query) {
+                $query->whereDoesntHave('activeMembers', function ($membersQuery) {
+                    $membersQuery->whereNotNull('dob')
+                        ->whereDate('dob', '<=', now()->subYears(60)->toDateString());
+                });
+            })
             ->filterBy('sic_advisor_requested', ignoreAll: true, requestParams: $requestParams)
             ->filterBy('is_ecommerce', isBool: true, requestParams: $requestParams)
             ->filterIn('emirate_of_your_visa_id', requestParams: $requestParams)
@@ -254,6 +287,16 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
         if ($this->hasFilterValue('support_user_id', $requestParams) && is_array($this->getFilterValue('support_user_id', $requestParams))) {
             $ids = $this->getFilterValue('support_user_id', $requestParams);
             $query->whereIn('support_user_id', $ids);
+        }
+
+        $signatory = $this->getFilterValue('signatory', $requestParams);
+        if ($signatory && $signatory != GenericRequestEnum::ALL && HealthQuoteDigitalSignatory::isStoredValue($signatory)) {
+            $query->where('digital_signatory', $signatory);
+        }
+
+        $uaePassApiStatus = $this->getFilterValue('uae_pass_api_status', $requestParams);
+        if ($uaePassApiStatus && $uaePassApiStatus != GenericRequestEnum::ALL && HealthQuoteUaePassApiStatus::isStoredValue($uaePassApiStatus)) {
+            $query->where('uae_pass_api_status', $uaePassApiStatus);
         }
     }
 

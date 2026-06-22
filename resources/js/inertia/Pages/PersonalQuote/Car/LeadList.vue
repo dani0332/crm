@@ -331,6 +331,7 @@ const filters = reactive({
   captured_date: '',
   api_issuance_status_id: [],
   insurer_api_status_id: [],
+  nationality_id: [],
 });
 
 const teamUsers =
@@ -483,6 +484,7 @@ function setQueryStringFilters() {
     'page',
     'api_issuance_status_id',
     'insurer_api_status_id',
+    'nationality_id',
   ];
 
   // Group array parameters
@@ -1340,6 +1342,33 @@ const onConfirmPUAExport = () => {
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+        <x-select
+          v-model="filters.nationality_id"
+          label="Nationality"
+          name="nationality_id"
+          :options="
+            $page.props.nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          placeholder="Please select nationality"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.nationality_id = $page.props.nationalities.map(
+                  item => item.id,
+                )
+              "
+              @clear="filters.nationality_id = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div>
