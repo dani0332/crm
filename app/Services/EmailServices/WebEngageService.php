@@ -75,7 +75,7 @@ class WebEngageService
                 'headers' => [],
             ];
         }
-        $data = $this->createUser($eventData['customerId'], [
+        $this->createUser($eventData['customerId'], [
             'firstName' => $eventData['firstName'],
             'lastName' => $eventData['lastName'],
             'email' => $eventData['customerEmail'],
