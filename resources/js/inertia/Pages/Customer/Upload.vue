@@ -12,7 +12,11 @@ const channelName = `public.${page.props.appEnv}.customer.upload.${page.props.au
 const eventName = 'customer.upload.completed';
 
 const subscribeToUpload = () => {
-  console.log('[CustomerUpload] Subscribing to channel:', channelName, eventName);
+  console.log(
+    '[CustomerUpload] Subscribing to channel:',
+    channelName,
+    eventName,
+  );
 
   uploadWorker = new SharedWorker('/build/workers/pusher.worker.js');
 
@@ -36,7 +40,10 @@ const subscribeToUpload = () => {
         });
         uploadCustomer.reset();
       } else {
-        notification.error({ title: 'Upload failed. Please try again.', position: 'top' });
+        notification.error({
+          title: 'Upload failed. Please try again.',
+          position: 'top',
+        });
       }
     }
   });
@@ -58,7 +65,11 @@ const subscribeToUpload = () => {
 
 const unsubscribeFromUpload = () => {
   if (uploadWorker) {
-    uploadWorker.port.postMessage({ action: 'unsubscribe', channel: channelName, event: eventName });
+    uploadWorker.port.postMessage({
+      action: 'unsubscribe',
+      channel: channelName,
+      event: eventName,
+    });
     uploadWorker.port.close();
     uploadWorker = null;
   }

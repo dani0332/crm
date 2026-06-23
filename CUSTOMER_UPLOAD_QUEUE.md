@@ -6,13 +6,13 @@ Customer Excel uploads are processed in the background via `ProcessCustomerUploa
 
 ### Key files
 
-| File | Role |
-|---|---|
-| `app/Jobs/ProcessCustomerUploadJob.php` | Queue job — runs the import, dispatches SQS jobs, fires broadcast |
-| `app/Imports/CustomersImport.php` | Maatwebsite Excel import — processes rows via `OnEachRow` |
-| `app/Events/CustomerUploadCompleted.php` | `ShouldBroadcastNow` event — fires on job success or failure |
+| File                                             | Role                                                                    |
+| ------------------------------------------------ | ----------------------------------------------------------------------- |
+| `app/Jobs/ProcessCustomerUploadJob.php`          | Queue job — runs the import, dispatches SQS jobs, fires broadcast       |
+| `app/Imports/CustomersImport.php`                | Maatwebsite Excel import — processes rows via `OnEachRow`               |
+| `app/Events/CustomerUploadCompleted.php`         | `ShouldBroadcastNow` event — fires on job success or failure            |
 | `resources/js/inertia/Pages/Customer/Upload.vue` | Frontend — subscribes on `onMounted`, shows loader while `isProcessing` |
-| `resources/js/workers/pusher.worker.js` | SharedWorker — singleton Pusher connection shared across browser tabs |
+| `resources/js/workers/pusher.worker.js`          | SharedWorker — singleton Pusher connection shared across browser tabs   |
 
 ---
 
