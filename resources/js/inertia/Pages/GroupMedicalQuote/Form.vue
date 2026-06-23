@@ -516,7 +516,7 @@ function onSubmit(isValid) {
         healthTpaId: row.health_third_party_administrator_id ?? row.healthTpaId ?? null,
         healthNetworkId: row.health_network_id ?? row.group_medical_network_id ?? row.groupMedicalNetworkId ?? null,
         renewalDate: row.renewal_date ?? row.renewalDate ?? null,
-        numberOfPeople: row.no_of_people ?? row.number_of_people ?? row.numberOfPeople ?? null,
+        numberOfPeople: (() => { const v = row.no_of_people ?? row.number_of_people ?? row.numberOfPeople ?? null; return v !== null && v !== '' ? parseInt(v, 10) : null; })(),
       })),
     }))
     .submit(method, url, options);
@@ -781,7 +781,7 @@ function onSubmit(isValid) {
                     : 'category rows'
                 }}
               </span>
-              <x-tooltip placement="left">
+              <x-tooltip v-show="false" placement="left">
                 <x-button
                   type="button"
                   size="sm"
