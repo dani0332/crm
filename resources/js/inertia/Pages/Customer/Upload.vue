@@ -1,9 +1,83 @@
 <script setup>
+const page = usePage();
 const loader = reactive({
   table: false,
   export: false,
 });
 const notification = useToast();
+const isProcessing = ref(false);
+let uploadWorker = null;
+
+const channelName = `public.${page.props.appEnv}.customer.upload.${page.props.auth.user.id}`;
+const eventName = 'customer.upload.completed';
+
+const subscribeToUpload = () => {
+  console.log(
+    '[CustomerUpload] Subscribing to channel:',
+    channelName,
+    eventName,
+  );
+
+  uploadWorker = new SharedWorker('/build/workers/pusher.worker.js');
+
+  uploadWorker.port.addEventListener('message', e => {
+    console.log('[CustomerUpload] Broadcast received:', {
+      event: e.data,
+      currentUserId: page.props.auth.user.id,
+      matches: e.data.userId === page.props.auth.user.id,
+    });
+
+    if (!isProcessing.value) {
+      return;
+    }
+
+    if (e.data.userId === page.props.auth.user.id) {
+      isProcessing.value = false;
+      if (e.data.status === 'success') {
+        notification.success({
+          title: `Upload complete. ${e.data.uploadedCount} records processed.`,
+          position: 'top',
+        });
+        uploadCustomer.reset();
+      } else {
+        notification.error({
+          title: 'Upload failed. Please try again.',
+          position: 'top',
+        });
+      }
+    }
+  });
+
+  uploadWorker.onerror = error => {
+    console.error('[CustomerUpload] Worker error:', error.message);
+    uploadWorker.port.close();
+  };
+
+  uploadWorker.port.start();
+  uploadWorker.port.postMessage({
+    action: 'subscribe',
+    channel: channelName,
+    event: eventName,
+    pusherKey: page.props.pusherKey,
+    pusherCluster: page.props.pusherCluster,
+  });
+};
+
+const unsubscribeFromUpload = () => {
+  if (uploadWorker) {
+    uploadWorker.port.postMessage({
+      action: 'unsubscribe',
+      channel: channelName,
+      event: eventName,
+    });
+    uploadWorker.port.close();
+    uploadWorker = null;
+  }
+};
+
+onMounted(() => subscribeToUpload());
+onUnmounted(() => unsubscribeFromUpload());
+
 const tableHeader = [
   { text: 'SR NO.', value: 'iterator' },
   { text: 'FIELD NAME', value: 'field_name' },
@@ -33,19 +107,22 @@ const uploadCustomer = useForm({
   file_name: '',
   cdb_id: '',
   myalfred_expiry_date: '',
-  inviatation_email: '',
+  invitation_email: '',
 });
 
 function onSubmit() {
+  if (uploadCustomer.processing || isProcessing.value) {
+    return;
+  }
+
   uploadCustomer.post('/customer-process', {
-    onError: errors => {
-      console.log(uploadCustomer.setError(errors));
+    preserveState: true,
+    onBefore: () => {
+      isProcessing.value = true;
     },
-    onSuccess: () => {
-      notification.success({
-        title: 'Upload customers records has been stored',
-        position: 'top',
-      });
+    onError: errors => {
+      isProcessing.value = false;
+      console.log(uploadCustomer.setError(errors));
     },
   });
 }
@@ -89,7 +166,7 @@ function onSubmit() {
       />
       <div class="grid grid-cols-2 gap-2">
         <x-checkbox
-          v-model="uploadCustomer.inviatation_email"
+          v-model="uploadCustomer.invitation_email"
           label="Send Invitation Email"
           color="primary"
         />
@@ -113,7 +190,8 @@ function onSubmit() {
           size="md"
           color="emerald"
           type="submit"
-          :loading="uploadCustomer.processing"
+          :loading="uploadCustomer.processing || isProcessing"
+          :disabled="uploadCustomer.processing || isProcessing"
         >
           Create
         </x-button>
