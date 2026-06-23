@@ -121,7 +121,6 @@ class PqaLeadAllocationController extends Controller
         $healthCount = DB::table('health_quote_request')
             ->whereNull('pq_advisor_id')
             // ->where('quote_status_id', $healthNewLeadStatus)
-            ->whereDate('pq_assigned_at', $today)
             ->whereDate('created_at', $today)
             ->count();
 
@@ -129,14 +128,12 @@ class PqaLeadAllocationController extends Controller
             ->whereNull('pq_advisor_id')
             // ->where('quote_status_id', $corplineQualPendingStatus)
             ->where('business_type_of_insurance_id', '!=', $groupMedicalTypeId)
-            ->whereDate('pq_assigned_at', $today)
             ->whereDate('created_at', $today)
             ->count();
 
         $groupMedicalCount = DB::table('business_quote_request')
             ->whereNull('pq_advisor_id')
             ->where('business_type_of_insurance_id', $groupMedicalTypeId)
-            ->whereDate('pq_assigned_at', $today)
             ->whereDate('created_at', $today)
             ->count();
 
