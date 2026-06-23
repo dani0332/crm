@@ -698,7 +698,111 @@ class ManagementReport
         return $routeName;
     }
 
-    protected function getPaymentMappingCTE(): string
+    protected function resolveLobIds($request): array
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return [];
+        }
+
+        $lobs = collect($request['lob'] ?? []);
+        if ($lobs->isEmpty()) {
+            $lobs = $this->getUserProducts($user->id)->pluck('name');
+        }
+
+        return $lobs->map(fn ($item) => quoteTypeCode::getQuoteTypeCodeFromProductName($item))
+            ->map(fn ($item) => in_array($item, [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])
+                ? QuoteTypeId::Business
+                : QuoteTypes::getIdFromValue($item))
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    protected function resolvePqDateFilter($request): ?array
+    {
+        $category = $request['reportCategory'] ?? null;
+        $type = $request['reportType'] ?? null;
+
+        $dateField = null;
+        $requestKey = null;
+
+        if (in_array($category, [
+            ManagementReportCategoriesEnum::SALE_SUMMARY,
+            ManagementReportCategoriesEnum::SALE_DETAIL,
+            ManagementReportCategoriesEnum::TRANSACTION,
+        ]) && $type === ManagementReportTypeEnum::BOOKED_POLICIES) {
+            $dateField = 'policy_booking_date';
+            $requestKey = 'policyBookDate';
+        } elseif ($category === ManagementReportCategoriesEnum::ENDING_POLICIES
+            && $type === ManagementReportTypeEnum::EXPIRING_POLICIES) {
+            $dateField = 'policy_expiry_date';
+            $requestKey = 'policyExpiredDate';
+        }
+
+        if (! $dateField || ! $requestKey || empty($request[$requestKey])) {
+            return null;
+        }
+
+        $dateRange = $request[$requestKey];
+        if (is_array($dateRange)) {
+            $from = isset($dateRange[0]) && isValidDate($dateRange[0])
+                ? Carbon::parse($dateRange[0])->startOfDay()->format('Y-m-d H:i:s')
+                : today()->startOfDay()->format('Y-m-d H:i:s');
+            $to = isset($dateRange[1]) && isValidDate($dateRange[1])
+                ? Carbon::parse($dateRange[1])->endOfDay()->format('Y-m-d H:i:s')
+                : today()->endOfDay()->format('Y-m-d H:i:s');
+        } else {
+            if (isValidDate($dateRange)) {
+                $from = Carbon::parse($dateRange)->startOfDay()->format('Y-m-d H:i:s');
+                $to = Carbon::parse($dateRange)->endOfDay()->format('Y-m-d H:i:s');
+            } else {
+                return null;
+            }
+        }
+
+        return compact('dateField', 'from', 'to');
+    }
+
+    protected function buildCteWhereClause($request): string
+    {
+        $conditions = [];
+
+        $lobIds = $this->resolveLobIds($request);
+        if (! empty($lobIds)) {
+            $ids = implode(',', array_map('intval', $lobIds));
+            $conditions[] = "pq.quote_type_id IN ({$ids})";
+        }
+
+        $dateFilter = $this->resolvePqDateFilter($request);
+        if ($dateFilter) {
+            $field = $dateFilter['dateField'];
+            $from = $dateFilter['from'];
+            $to = $dateFilter['to'];
+
+            if ($field === 'policy_booking_date') {
+                $includeFailedBookings = ApplicationStorageService::getValueByKeyName(
+                    ApplicationStorageEnums::MR_INCLUDE_FAILED_BOOKINGS
+                );
+                if ($includeFailedBookings) {
+                    $conditions[] = "(pq.policy_booking_date BETWEEN '{$from}' AND '{$to}' OR pq.quote_status_date BETWEEN '{$from}' AND '{$to}')";
+                } else {
+                    $conditions[] = "pq.policy_booking_date BETWEEN '{$from}' AND '{$to}'";
+                }
+            } else {
+                $conditions[] = "pq.{$field} BETWEEN '{$from}' AND '{$to}'";
+            }
+        }
+
+        if (empty($conditions)) {
+            return '';
+        }
+
+        return 'WHERE '.implode(' AND ', $conditions);
+    }
+
+    protected function getPaymentMappingCTE(string $cteWhereClause = ''): string
     {
         $quoteTypesUsingQuoteId = [
             QuoteTypeId::Car,
@@ -725,12 +829,14 @@ class ManagementReport
                     ELSE 'App\\\\Models\\\\PersonalQuote'
                 END AS payment_join_type
             FROM personal_quotes pq
+            {$cteWhereClause}
         ";
     }
 
-    public function paymentJoin($query, $additionalConditions = null, $alias = 'p', $joinType = 'join', $cteJoin = 'join')
+    public function paymentJoin($query, $additionalConditions = null, $alias = 'p', $joinType = 'join', $cteJoin = 'join', $request = null)
     {
-        $cte = $this->getPaymentMappingCTE();
+        $cteWhereClause = $request ? $this->buildCteWhereClause($request) : '';
+        $cte = $this->getPaymentMappingCTE($cteWhereClause);
         $query->withExpression('personal_quotes_mapped', $cte);
 
         // Join the CTE to create the mapping based on the CTE join type
@@ -749,7 +855,7 @@ class ManagementReport
         });
     }
 
-    protected function getBranchMappingCTE(): string
+    protected function getBranchMappingCTE(string $cteWhereClause = ''): string
     {
         $now = now()->format('Y-m-d H:i:s');
         $healthQuoteType = QuoteTypeId::Health;
@@ -793,12 +899,14 @@ class ManagementReport
             LEFT JOIN business_quote_request bqr ON bqr.id = pq.quote_id
                 AND pq.quote_type_id = {$businessQuoteType}
                 AND pq.branch_id IS NULL
+            {$cteWhereClause}
         ";
     }
 
-    protected function branchJoin($query): void
+    protected function branchJoin($query, $request = null): void
     {
-        $branchMappingCte = $this->getBranchMappingCTE();
+        $cteWhereClause = $request ? $this->buildCteWhereClause($request) : '';
+        $branchMappingCte = $this->getBranchMappingCTE($cteWhereClause);
         $query->withExpression('branch_mapped', $branchMappingCte);
 
         $query->leftJoin('branch_mapped as bm', 'bm.id', '=', 'personal_quotes.id')
