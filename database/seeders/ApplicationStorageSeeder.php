@@ -185,6 +185,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedMotorRevivalWorkflow();
         $this->seedHighRiskScoreBirdNotificationWorkflowUrl();
         $this->seedAmlAutomationOutcomeWorkflowUrl();
+        $this->seedTravelAmlRetrigger();
         $this->seedDttLifeEnabled();
         $this->seedOcrPlanValidation();
         $this->seedDttHomeEnabled();
@@ -708,6 +709,19 @@ class ApplicationStorageSeeder extends Seeder
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedTravelAmlRetrigger()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_AML_RETRIGGER_ENABLED],
             [
                 'value' => 0,
                 'created_at' => now(),

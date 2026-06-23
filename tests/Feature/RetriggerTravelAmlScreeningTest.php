@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\AmlScreeningAutomationJob;
 use App\Models\AmlAutomation;
+use App\Models\ApplicationStorage;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
@@ -27,6 +29,8 @@ beforeEach(function (): void {
         $table->text('result')->nullable();
         $table->timestamps();
     });
+
+    ApplicationStorage::factory()->travelAmlRetriggerEnabled()->create();
 });
 
 afterEach(function (): void {
@@ -194,10 +198,7 @@ it('upserts existing aml_automation record to queue status before dispatching', 
     ]);
     Carbon::setTestNow(null);
 
-    AmlAutomation::create([
-        'code' => $quote->code,
-        'status' => AmlAutomationStatus::Failed->value,
-    ]);
+    AmlAutomation::factory()->failed()->create(['code' => $quote->code]);
 
     $this->postJson(RETRIGGER_TRAVEL_AML_ENDPOINT, [
         'start_date' => '2026-01-01',
@@ -210,6 +211,17 @@ it('upserts existing aml_automation record to queue status before dispatching', 
 
     expect(AmlAutomation::where('code', $quote->code)->value('status'))
         ->toBe(AmlAutomationStatus::Queue->value);
+});
+
+it('returns 403 when travel AML retrigger feature flag is disabled', function (): void {
+    ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_AML_RETRIGGER_ENABLED)
+        ->update(['value' => 0]);
+
+    $this->postJson(RETRIGGER_TRAVEL_AML_ENDPOINT, [
+        'start_date' => '2026-01-01',
+        'end_date' => '2026-01-31',
+    ])
+        ->assertForbidden();
 });
 
 it('includes quotes created on the boundary dates', function (): void {

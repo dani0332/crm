@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -882,6 +883,8 @@ class AMLController extends Controller
      */
     public function retriggerTravelAmlScreening(RetriggerTravelAmlScreeningRequest $request): JsonResponse
     {
+        getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_AML_RETRIGGER_ENABLED) || abort(403, 'Retriggering AML screening is disabled.');
+
         $validated = $request->validated();
 
         $startDate = Carbon::parse($validated['start_date'])->startOfDay();
