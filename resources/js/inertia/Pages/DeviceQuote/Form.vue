@@ -104,7 +104,8 @@ function onSubmit(isValid) {
 
     if (
       !editMode.value &&
-      new URLSearchParams(window.location.search).get('ea_model') === 'collaborate'
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
     ) {
       url += '?ea_model=collaborate';
     }

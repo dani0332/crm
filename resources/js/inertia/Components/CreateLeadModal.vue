@@ -103,7 +103,10 @@ const LOB_DISPLAY_NAMES = { 20: 'Smartphone' };
 const allLobOptions = computed(() =>
   quoteTypes.value
     .filter(qt => !EA_EXCLUDED_LOBS.includes(Number(qt.id)))
-    .map(qt => ({ value: qt.id, label: LOB_DISPLAY_NAMES[Number(qt.id)] ?? qt.name })),
+    .map(qt => ({
+      value: qt.id,
+      label: LOB_DISPLAY_NAMES[Number(qt.id)] ?? qt.name,
+    })),
 );
 const collaborateEligibleLobOptions = computed(() =>
   allLobOptions.value.filter(
