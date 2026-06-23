@@ -154,7 +154,11 @@ class BusinessQuoteService extends BaseService
                 'b.id as lead_branch_id',
                 'bqr.is_branch_applicable',
                 'bqr.ea_model',
+                'bqr.lead_generator_id',
                 'lg.name as lead_generator_name',
+                'lg.email as lead_generator_email',
+                'bqr.expert_advisor_id',
+                'ea.name as expert_advisor_name',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -190,7 +194,8 @@ class BusinessQuoteService extends BaseService
                     ->where('ub.status', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
-            ->leftJoin('users as lg', 'lg.id', '=', 'bqr.lead_generator_id');
+            ->leftJoin('users as lg', 'lg.id', '=', 'bqr.lead_generator_id')
+            ->leftJoin('users as ea', 'ea.id', '=', 'bqr.expert_advisor_id');
     }
 
     private function applyUtmJoin(): void

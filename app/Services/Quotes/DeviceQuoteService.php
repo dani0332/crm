@@ -17,6 +17,7 @@ use App\Jobs\PolicyIssuanceJob;
 use App\Models\DeviceMake;
 use App\Models\PolicyIssuance;
 use App\Services\BranchAssignmentService;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
@@ -360,6 +361,8 @@ class DeviceQuoteService extends BaseQuoteService
             'whatsappConsent' => false,
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
         ];
+
+        EACollaborateHelper::applyEAIMCRMSource($data);
 
         // Make API request to save the device quote
         $response = Capi::request('/api/v1/device/create', 'post', $data);

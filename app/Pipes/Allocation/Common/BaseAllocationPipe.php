@@ -130,12 +130,28 @@ abstract class BaseAllocationPipe extends AllocationService
         }
 
         LoggerService::info(self::class.'::logLeadData', $data);
+
+        if ($lead->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.'::logLeadData - EA_IMCRM lead detected', extra: [
+                'uuid' => $lead->uuid,
+                'ea_model' => $lead->ea_model?->value,
+                'source' => $lead->source,
+            ]);
+        }
     }
 
     protected function getLeadBaseQuery()
     {
         $isEACollaborate = $this->lead?->source === LeadSourceEnum::EA_IMCRM
             && $this->lead?->ea_model === EaModelEnum::Collaborate;
+
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - getLeadBaseQuery: EA_IMCRM lead detected', extra: [
+                'uuid' => $this->lead->uuid,
+                'ea_model' => $this->lead->ea_model?->value,
+                'routing_by' => $isEACollaborate ? 'expert_advisor_id' : 'advisor_id',
+            ]);
+        }
 
         return $this->allocationRequest->model()
             ->where('uuid', $this->lead->uuid)
@@ -168,6 +184,16 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function getAdvisorBaseQuery($onlineStatus, $teamId, $roles, bool $isBuyLead = false, bool $isCATA = false)
     {
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - getAdvisorBaseQuery: EA_IMCRM lead, filtering advisor pool by permission', extra: [
+                'uuid' => $this->lead->uuid,
+                'ea_model' => $this->lead->ea_model?->value,
+                'permission' => $this->lead->ea_model === EaModelEnum::Collaborate
+                    ? PermissionsEnum::AssignedExpertAdvisor
+                    : PermissionsEnum::AssignedReferralAdvisor,
+            ]);
+        }
+
         return User::select('users.id as user_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
@@ -217,6 +243,10 @@ abstract class BaseAllocationPipe extends AllocationService
             ->when(
                 $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === EaModelEnum::Collaborate,
                 fn ($q) => $q->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedExpertAdvisor))
+            )
+            ->when(
+                $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === EaModelEnum::Referral,
+                fn ($q) => $q->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedReferralAdvisor))
             );
     }
 
@@ -304,6 +334,15 @@ abstract class BaseAllocationPipe extends AllocationService
 
         $isEACollaborate = $this->lead->source === LeadSourceEnum::EA_IMCRM
             && $this->lead->ea_model === EaModelEnum::Collaborate;
+
+        if ($this->lead->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - assignToAdvisor: EA_IMCRM lead assignment', extra: [
+                'uuid' => $this->lead->uuid,
+                'ea_model' => $this->lead->ea_model?->value,
+                'assigning_to' => $isEACollaborate ? 'expert_advisor_id' : 'advisor_id',
+                'advisor_id' => $advisor->id,
+            ]);
+        }
 
         if ($isEACollaborate) {
             $this->lead->expert_advisor_id = $advisor->id;

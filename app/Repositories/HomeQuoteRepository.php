@@ -889,6 +889,8 @@ class HomeQuoteRepository extends BaseRepository
                 'subSource',
                 'subSourceOption',
                 'branch:id,name',
+                'leadGenerator:id,name,email',
+                'expertAdvisor:id,name',
             ])
             ->select([
                 $this->getTable().'.*',

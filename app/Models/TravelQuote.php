@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EaModelCast;
 use App\Enums\FilterTypes;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -27,6 +28,9 @@ class TravelQuote extends Model implements AuditableContract
 
     protected $table = 'travel_quote_request';
     protected $guarded = [];
+    protected $casts = [
+        'ea_model' => EaModelCast::class,
+    ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::FREE,

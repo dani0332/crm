@@ -2,6 +2,7 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\LeadSourceEnum;
 use App\Facades\AllocationConfigurer;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
@@ -10,6 +11,13 @@ class YachtAllocation extends BaseAllocation
 {
     protected function fetchAdvisor(int $onlineStatus)
     {
+        // EA_IMCRM: bypass email-based routing — permission gate in getAdvisorBaseQuery handles filtering
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.'::fetchAdvisor - EA_IMCRM lead detected, bypassing email-based routing and using permission gate');
+
+            return $this->getAdvisorsByEmailsOrIds($onlineStatus, $this->quoteType->advisorRoles());
+        }
+
         $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);
 
         if (count($emails) > 0) {

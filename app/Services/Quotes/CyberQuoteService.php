@@ -20,6 +20,7 @@ use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\BranchAssignmentService;
 use App\Services\CustomerInsuredService;
+use App\Services\EACollaborateHelper;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
 use Illuminate\Http\Client\ConnectionException;
@@ -324,6 +325,8 @@ class CyberQuoteService extends BaseQuoteService
             'referenceUrl' => $appUrl,
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
         ];
+
+        EACollaborateHelper::applyEAIMCRMSource($data);
 
         // Make API request to save the savings quote
         $response = Capi::request('/api/cyber/create', 'post', $data);

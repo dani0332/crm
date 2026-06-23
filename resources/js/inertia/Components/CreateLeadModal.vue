@@ -98,10 +98,12 @@ const collaborateExcludedLobs = computed(() => {
 // Business (id=5) is excluded because CorpLine (id=101) covers that use case in the EA model.
 const EA_EXCLUDED_LOBS = [21, 5];
 
+const LOB_DISPLAY_NAMES = { 20: 'Smartphone' };
+
 const allLobOptions = computed(() =>
   quoteTypes.value
     .filter(qt => !EA_EXCLUDED_LOBS.includes(Number(qt.id)))
-    .map(qt => ({ value: qt.id, label: qt.name })),
+    .map(qt => ({ value: qt.id, label: LOB_DISPLAY_NAMES[Number(qt.id)] ?? qt.name })),
 );
 const collaborateEligibleLobOptions = computed(() =>
   allLobOptions.value.filter(
@@ -152,6 +154,8 @@ const collaborateRouteMap = {
   10: 'cycle-quotes-create',
   11: 'jetski-quotes-create',
   18: 'savings-quotes-create',
+  19: 'cyber-quotes-create',
+  20: 'device-quotes-create',
   101: 'business.create',
   102: 'amt.create',
 };

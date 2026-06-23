@@ -3,6 +3,7 @@
 namespace App\Pipes\Allocation\Cyber;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\RolesEnum;
 use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
@@ -81,6 +82,18 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             return User::select('users.id as user_id')
                 ->where('users.email', $happinessUserEmail)
                 ->first();
+        }
+
+        // EA_IMCRM: bypass hardcoded email routing — permission gate in getAdvisorBaseQuery handles filtering
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - EA_IMCRM lead detected, bypassing hardcoded email routing and using permission gate');
+
+            return $this->getAdvisorBaseQuery(
+                onlineStatus: $onlineStatus,
+                teamId: null,
+                roles: [RolesEnum::CyberAdvisor],
+                isBuyLead: false
+            )->first();
         }
 
         return $this->getAdvisorByHardcodedEmails($onlineStatus);

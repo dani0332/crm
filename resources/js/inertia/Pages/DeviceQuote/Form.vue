@@ -98,9 +98,16 @@ function onSubmit(isValid) {
   if (isValid) {
     quoteForm.clearErrors();
     let method = editMode.value ? 'put' : 'post';
-    const url = editMode.value
+    let url = editMode.value
       ? route('device-quotes-update', props.quote.uuid)
       : route('device-quotes-store');
+
+    if (
+      !editMode.value &&
+      new URLSearchParams(window.location.search).get('ea_model') === 'collaborate'
+    ) {
+      url += '?ea_model=collaborate';
+    }
 
     quoteForm.submit(method, url, {
       onError: errors => {

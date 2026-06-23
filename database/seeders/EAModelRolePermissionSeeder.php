@@ -34,6 +34,7 @@ class EAModelRolePermissionSeeder extends Seeder
         $permissions = [
             PermissionsEnum::EaCollaborate,
             PermissionsEnum::AssignedExpertAdvisor,
+            PermissionsEnum::AssignedReferralAdvisor,
         ];
 
         foreach ($permissions as $permissionName) {

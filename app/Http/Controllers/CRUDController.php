@@ -857,13 +857,16 @@ class CRUDController extends Controller
                 $paymentEntityModel->load(['plan.insuranceProvider']);
 
                 if ($record->source === LeadSourceEnum::EA_IMCRM) {
-                    $paymentEntityModel->loadMissing('leadGenerator');
+                    $paymentEntityModel->loadMissing(['leadGenerator', 'expertAdvisor']);
                     $record->ea_model = $paymentEntityModel->ea_model?->value;
                     $record->lead_generator_id = $paymentEntityModel->lead_generator_id;
                     $record->lead_generator = $paymentEntityModel->leadGenerator
                         ? $paymentEntityModel->leadGenerator->only(['id', 'name', 'email'])
                         : null;
                     $record->expert_advisor_id = $paymentEntityModel->expert_advisor_id;
+                    $record->expert_advisor = $paymentEntityModel->expertAdvisor
+                        ? $paymentEntityModel->expertAdvisor->only(['id', 'name'])
+                        : null;
                     $record->ea_assigned_advisor_approved_at = $paymentEntityModel->ea_assigned_advisor_approved_at;
                     $record->ea_expert_advisor_approved_at = $paymentEntityModel->ea_expert_advisor_approved_at;
                     $record->ea_assigned_advisor_rejected_at = $paymentEntityModel->ea_assigned_advisor_rejected_at;
@@ -1293,13 +1296,16 @@ class CRUDController extends Controller
                 $hasPecTag = $lead->has_pec_tag;
 
                 if ($record->source === LeadSourceEnum::EA_IMCRM) {
-                    $lead->loadMissing('leadGenerator');
+                    $lead->loadMissing(['leadGenerator', 'expertAdvisor']);
                     $record->ea_model = $lead->ea_model?->value;
                     $record->lead_generator_id = $lead->lead_generator_id;
                     $record->lead_generator = $lead->leadGenerator
                         ? $lead->leadGenerator->only(['id', 'name', 'email'])
                         : null;
                     $record->expert_advisor_id = $lead->expert_advisor_id;
+                    $record->expert_advisor = $lead->expertAdvisor
+                        ? $lead->expertAdvisor->only(['id', 'name'])
+                        : null;
                     $record->ea_assigned_advisor_approved_at = $lead->ea_assigned_advisor_approved_at;
                     $record->ea_expert_advisor_approved_at = $lead->ea_expert_advisor_approved_at;
                     $record->ea_assigned_advisor_rejected_at = $lead->ea_assigned_advisor_rejected_at;
