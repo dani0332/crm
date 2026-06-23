@@ -119,9 +119,10 @@ final class GroupMedicalAmtFormDropdownService
      */
     public function groupMedicalNetworks(?int $tpaId = null): Collection
     {
-        $query = HealthNetwork::query()
-            ->active()
+        $query = HealthNetwork::active()
+            ->join('health_network_quote_type as hqt', 'hqt.health_network_id', 'health_networks.id')
             ->select('id', 'level as text')
+            ->where('hqt.quote_type_id', QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL))
             ->orderByDesc('id');
 
         if ($tpaId !== null) {

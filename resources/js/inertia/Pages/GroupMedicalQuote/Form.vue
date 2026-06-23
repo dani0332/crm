@@ -393,7 +393,7 @@ watch(selectedEmirateId, (newEmirate, oldEmirate) => {
 });
 
 watch(
-  () => quoteForm.categories.map(row => row.healthTpaId),
+  () => quoteForm.categories.map(row => row.health_third_party_administrator_id ?? row.healthTpaId),
   (newTpaIds, oldTpaIds) => {
     newTpaIds.forEach((tpaId, idx) => {
       const oldTpaId = oldTpaIds?.[idx];
@@ -930,7 +930,6 @@ function onSubmit(isValid) {
                           `categories.${idx}.healthTpaId`
                         ]
                       "
-                      @update:modelValue="value => fetchNetworksForTpa(value)"
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
