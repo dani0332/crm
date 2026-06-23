@@ -166,25 +166,19 @@ class AMLAutomationService
 
         $automationStatus = AmlAutomationStatus::tryFrom((string) $automation->status);
 
-        if ($automationStatus === AmlAutomationStatus::Complete) {
-            $this->block('AML automation already completed.', 'automation_completed');
+        /** @var array{0: string, 1: string}|null $blocked */
+        $blocked = match ($automationStatus) {
+            AmlAutomationStatus::Complete => ['AML automation already completed.', 'automation_completed'],
+            AmlAutomationStatus::Processing => ['AML automation already in progress', 'automation_processing'],
+            AmlAutomationStatus::Queue => ['AML automation already queued', 'automation_already_queued'],
+            default => null,
+        };
 
-            return true;
+        if ($blocked !== null) {
+            $this->block(...$blocked);
         }
 
-        if ($automationStatus === AmlAutomationStatus::Processing) {
-            $this->block('AML automation already in progress', 'automation_processing');
-
-            return true;
-        }
-
-        if ($automationStatus === AmlAutomationStatus::Queue) {
-            $this->block('AML automation already queued', 'automation_already_queued');
-
-            return true;
-        }
-
-        return false;
+        return $blocked !== null;
     }
 
     /**
