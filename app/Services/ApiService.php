@@ -36,6 +36,7 @@ use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\ClaimAllocation\ClaimAllocationService;
 use App\Services\EmailServices\DeviceEmailService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
@@ -486,7 +487,7 @@ class ApiService
                     return apiResponse(null, Response::HTTP_NOT_FOUND, self::LEAD_NOT_FOUND);
                 }
                 if (getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid)) {
-                    if (! app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)) {
+                    if (! app(WebEngageService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)) {
                         SendHealthSICWAFollowupJob::dispatch($lead->uuid)->delay(now()->addSeconds(50));
                     } else {
                         LoggerService::info('SIC Health Followups WA already executed');

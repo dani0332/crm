@@ -13,6 +13,7 @@ use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\QuoteFlowDetails;
 use App\Models\User;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use App\Services\Pusher\PusherNotificationService;
 use Carbon\Carbon;
@@ -374,7 +375,7 @@ class HealthEmailService extends BaseService
             });
 
         try {
-            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
+            $isFollowupExecuted = app(WebEngageService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
             if ($isFollowupExecuted) {
                 LoggerService::info('SIC Health Followups WA already executed');
 
@@ -384,11 +385,10 @@ class HealthEmailService extends BaseService
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA);
             $emailData->planTypes = $planTypes;
-            $workflowURL = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowURL, $emailData);
-            if (! empty($response->headers['Run-Id']) && in_array($response->status_code, [200, 201])) {
-                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
-                app(BirdService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA, QuoteTypeId::Health);
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA, (array) $emailData);
+            if (in_array($response->status_code, [200, 201, 202])) {
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
+                app(WebEngageService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA, QuoteTypeId::Health);
 
                 LoggerService::info('SIC Health Followups WA executed');
             }
