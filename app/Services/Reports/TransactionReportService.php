@@ -113,7 +113,7 @@ class TransactionReportService extends ManagementReport
                 DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
                 DB::raw('IFNULL(COALESCE(pqa_user.name, health_pqa_user.name), "N/A") as pqa'),
             );
-        $this->paymentJoin($query);
+        $this->paymentJoin($query, request: $request);
         $query->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
@@ -153,7 +153,7 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('users as pqa_user', 'pqa_user.id', '=', 'bqr.pq_advisor_id')
             ->leftJoin('users as health_pqa_user', 'health_pqa_user.id', '=', 'hqr.pq_advisor_id');
 
-        $this->branchJoin($query);
+        $this->branchJoin($query, $request);
         $this->applyFilters($query, $request, isSSR: true);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);

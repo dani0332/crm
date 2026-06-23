@@ -104,7 +104,7 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw('IFNULL(COALESCE(pqa_user.name, health_pqa_user.name), "N/A") as pqa'),
                 'bqr.lead_type',
             );
-        $this->paymentJoin($query);
+        $this->paymentJoin($query, request: $request);
         $query->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
@@ -144,7 +144,7 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('users as pqa_user', 'pqa_user.id', '=', 'bqr.pq_advisor_id')
             ->leftJoin('users as health_pqa_user', 'health_pqa_user.id', '=', 'hqr.pq_advisor_id');
 
-        $this->branchJoin($query);
+        $this->branchJoin($query, $request);
         $this->applyFilters($query, $request);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);

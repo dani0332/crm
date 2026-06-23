@@ -62,7 +62,7 @@ class SaleSummaryReportService extends ManagementReport
             ->selectRaw('DISTINCT(code), due_date');
 
         $query = PersonalQuote::query();
-        $this->paymentJoin($query);
+        $this->paymentJoin($query, request: $request);
         $query->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
             ->leftJoin('users as support_user', 'personal_quotes.support_user_id', '=', 'support_user.id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
@@ -163,7 +163,7 @@ class SaleSummaryReportService extends ManagementReport
                 $join->on('p.code', '=', 'ps.code');
             });
         }
-        $this->branchJoin($query);
+        $this->branchJoin($query, $request);
         $this->applyFilters($query, $request, false, true);
 
         LoggerService::sql(self::class.' - Sale Summary Report Query', $query);
