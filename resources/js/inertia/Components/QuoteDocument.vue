@@ -492,7 +492,15 @@ const openDocumentInNewTab = async item => {
             >
               <div class="flex flex-col gap-1">
                 <h5 class="text-sm font-semibold">
-                  {{ documentType.text }}
+                  <x-tooltip v-if="documentType.description" placement="right">
+                    <span
+                      class="cursor-help underline decoration-dotted decoration-primary-700"
+                    >
+                      {{ documentType.text }}
+                    </span>
+                    <template #tooltip>{{ documentType.description }}</template>
+                  </x-tooltip>
+                  <template v-else>{{ documentType.text }}</template>
                   <span class="text-red-500">
                     {{ documentType.is_required ? '*' : '' }}</span
                   >
