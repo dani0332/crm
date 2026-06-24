@@ -63,7 +63,6 @@ const { auth } = usePage().props;
 const currentUserId = auth.user.id;
 const isEaManager = useHasRole('EA_MANAGER');
 
-
 // PolicyIssued = 33
 const POLICY_ISSUED = 33;
 
@@ -123,7 +122,6 @@ const takeAdvisorAction = async action => {
     isLoading.value = false;
   }
 };
-
 </script>
 
 <template>
