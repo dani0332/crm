@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
@@ -29,6 +30,14 @@ class PqaAllocationBackupJob implements ShouldQueue
             ->whereNull('pq_advisor_id')
             ->where('quote_status_id', $eligibleStatus)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->whereNotIn('source', [
+                LeadSourceEnum::EA_IMCRM,
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+                LeadSourceEnum::REVIVAL_SHORT,
+                LeadSourceEnum::REVIVAL_ANNUAL,
+            ])
             ->limit(self::BATCH_LIMIT)
             ->get();
 

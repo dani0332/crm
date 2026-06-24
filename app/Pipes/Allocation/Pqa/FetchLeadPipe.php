@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Pipes\Allocation\Pqa;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
@@ -24,6 +25,14 @@ class FetchLeadPipe extends BasePqaAllocationPipe
                 QuoteStatusEnum::Fake,
                 QuoteStatusEnum::Duplicate,
                 QuoteStatusEnum::Lost,
+            ])
+            ->whereNotIn('source', [
+                LeadSourceEnum::EA_IMCRM,
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+                LeadSourceEnum::REVIVAL_SHORT,
+                LeadSourceEnum::REVIVAL_ANNUAL,
             ])
             ->when(
                 ! $this->allocationRequest->isOverrideAdvisorRequest(),

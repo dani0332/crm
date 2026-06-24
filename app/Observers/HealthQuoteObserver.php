@@ -227,7 +227,15 @@ class HealthQuoteObserver
         if (
             isset($dirty['quote_status_id']) &&
             $healthQuote->quote_status_id === QuoteStatusEnum::NewLead &&
-            $healthQuote->pq_advisor_id === null
+            $healthQuote->pq_advisor_id === null &&
+            ! in_array($healthQuote->source, [
+                LeadSourceEnum::EA_IMCRM,
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+                LeadSourceEnum::REVIVAL_SHORT,
+                LeadSourceEnum::REVIVAL_ANNUAL,
+            ])
         ) {
             try {
                 DispatchPqaAllocationJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH);
