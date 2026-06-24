@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Pipes\Allocation\Pqa;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
 use App\Models\User;
@@ -56,6 +59,11 @@ abstract class BasePqaAllocationPipe extends AllocationService
      */
     protected function getPreQualificationAdvisorBaseQuery(int $onlineStatus)
     {
+        $productType = TeamTypeEnum::PRODUCT;
+        $corplineName = QuoteTypes::CORPLINE->value;
+        $groupMedicalName = QuoteTypes::GROUP_MEDICAL->value;
+        $businessQuoteTypeId = (int) QuoteTypes::BUSINESS->id();
+
         return User::query()
             ->select('users.id as user_id')
             ->join('pqa_lead_allocation_config as pqa', 'pqa.user_id', '=', 'users.id')
@@ -69,6 +77,39 @@ abstract class BasePqaAllocationPipe extends AllocationService
             })
             ->where('r.name', RolesEnum::PreQualificationAdvisor)
             ->where('pqa.quote_type_id', $this->getPqaQuoteTypeId())
+            ->when(
+                $this->getPqaQuoteTypeId() === $businessQuoteTypeId && $this->lead !== null,
+                function ($query) use ($productType, $corplineName, $groupMedicalName) {
+                    $productName = $this->lead->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+                        ? $groupMedicalName
+                        : $corplineName;
+
+                    $query->whereExists(function ($sub) use ($productType, $productName) {
+                        $sub->selectRaw('1')
+                            ->from('user_products as up_m')
+                            ->join('teams as t_m', 't_m.id', '=', 'up_m.product_id')
+                            ->whereColumn('up_m.user_id', 'users.id')
+                            ->where('t_m.type', $productType)
+                            ->whereRaw("UPPER(t_m.name) = UPPER('{$productName}')");
+                    });
+                },
+                function ($query) use ($productType, $corplineName, $groupMedicalName, $businessQuoteTypeId) {
+                    $query->whereExists(function ($sub) use ($productType, $corplineName, $groupMedicalName, $businessQuoteTypeId) {
+                        $sub->selectRaw('1')
+                            ->from('user_products as up_m')
+                            ->join('teams as t_m', 't_m.id', '=', 'up_m.product_id')
+                            ->whereColumn('up_m.user_id', 'users.id')
+                            ->where('t_m.type', $productType)
+                            ->whereRaw("(
+                                (UPPER(t_m.name) IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}')) AND pqa.quote_type_id = {$businessQuoteTypeId})
+                                OR
+                                (UPPER(t_m.name) NOT IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}')) AND pqa.quote_type_id = (
+                                    SELECT qt_m.id FROM quote_type qt_m WHERE UPPER(qt_m.code) = UPPER(t_m.name) LIMIT 1
+                                ))
+                            )");
+                    });
+                }
+            )
             ->orderByRaw('pqa.last_allocated IS NULL, pqa.last_allocated ASC')
             ->orderBy('pqa.id', 'asc');
     }
@@ -96,7 +137,11 @@ abstract class BasePqaAllocationPipe extends AllocationService
         foreach ($this->getOnlineStatusesInOrder() as $status) {
             LoggerService::info(self::class.' - searching PQA with status '.$status);
 
-            $record = $this->getPreQualificationAdvisorBaseQuery($status)->first();
+            $query = $this->getPreQualificationAdvisorBaseQuery($status);
+
+            LoggerService::info(self::class.' - PQA query: '.$query->toRawSql());
+
+            $record = $query->first();
 
             if ($record) {
                 return User::query()->find($record->user_id);
