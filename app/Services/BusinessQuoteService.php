@@ -699,7 +699,7 @@ class BusinessQuoteService extends BaseService
                 'emirateOfRegistrationId' => $request->emirate_of_registration_id,
                 'businessActivityId' => $request->nature_of_company_activity_id,
                 'briefDetails' => $request->brief_details,
-                'premium' => $request->premium,
+                'premium' => $request->premium ?? 0,
             ],
             $this->buildGroupMedicalCapiPayload($request),
         );
