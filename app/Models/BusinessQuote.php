@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EaModelCast;
 use App\Enums\FilterTypes;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -26,6 +27,14 @@ class BusinessQuote extends Model implements AuditableContract
 
     protected $table = 'business_quote_request';
     protected $guarded = [];
+
+    protected function casts(): array
+    {
+        return [
+            'ea_model' => EaModelCast::class,
+        ];
+    }
+
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
