@@ -162,6 +162,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->rtaPortalLink();
         $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
+        $this->seedRdxRetargetingEmailConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
         $this->seedEnableMetLife();
@@ -1420,6 +1421,56 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedRdxRetargetingEmailConfigurations()
+    {
+        $isProd = app()->environment() === EnvEnum::PRODUCTION;
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BREVO_BIKE_EP_RETARGETING_EVENT_NAME],
+            [
+                'value' => 'ep_rdx_retargeting_enable',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => $isProd ? 0 : 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_FROM_EMAIL],
+            [
+                'value' => $isProd ? 'alfred@notify.insurancemarket.ae' : 'alfred@testnotify.alfred.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_BCC_EMAIL],
+            [
+                'value' => $isProd ? 'embeddedproducts@insurancemarket.ae' : 'embeddedproducts@yopmail.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_EMAIL_SUBJECT],
+            [
+                'value' => 'Add Rider Medical Cover to Your Bike Policy in Just Seconds (REF-ID)',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE],
+            [
+                'value' => 892,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => $isProd ? 0 : 1,
+            ],
+        );
+    }
+
     private function seedEnableMetLife()
     {
         ApplicationStorage::firstOrCreate(
@@ -1966,6 +2017,16 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_DIC_TRAVEL_POLICY_ISSUANCE],
             [
                 'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DIC_COMMISSION_PERCENTAGE],
+            [
+                'value' => 0.56,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
