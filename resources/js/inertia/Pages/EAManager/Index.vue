@@ -154,24 +154,16 @@ const updateRow = async lead => {
   try {
     const params = { quoteType: lead.quote_type, quoteId: lead.id };
 
+    if (state.model === 'referral') {
+      await axios.patch(route('ea-manager.change-model', params), {
+        ea_model: 'referral',
+      });
+    }
+
     if (state.action) {
       await axios.post(route('ea-manager.decision', params), {
         action: state.action,
       });
-    } else if (
-      lead.has_rejection &&
-      lead.ea_model === 'collaborate' &&
-      state.model
-    ) {
-      if (state.model === 'referral') {
-        await axios.patch(route('ea-manager.change-model', params), {
-          ea_model: 'referral',
-        });
-      } else if (state.model === 'collaborate') {
-        await axios.post(route('ea-manager.decision', params), {
-          action: 'approve',
-        });
-      }
     }
 
     router.reload({

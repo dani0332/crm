@@ -62,7 +62,14 @@ class EAManagerController extends Controller
             // FRD F3: email both advisors only when EA Manager approves.
             SendEAManagerDecisionEmailJob::dispatch($quote, $quoteType, 'Approved');
         } else {
-            $this->demoteToReferral($quote);
+            $quote->ea_manager_id = auth()->id();
+            $quote->ea_manager_rejected_at = now();
+            $quote->ea_manager_approved_at = null;
+            $quote->ea_assigned_advisor_approved_at = null;
+            $quote->ea_expert_advisor_approved_at = null;
+            $quote->ea_assigned_advisor_rejected_at = null;
+            $quote->ea_expert_advisor_rejected_at = null;
+            $quote->save();
         }
 
         return response()->json(['success' => true]);
