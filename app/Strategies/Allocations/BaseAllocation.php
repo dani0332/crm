@@ -76,7 +76,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 ]);
             }
 
-            if ($this->lead && $this->shouldHandleDuplicateLead()) {
+            if ($this->lead && $this->shouldHandleDuplicateLead() && $this->lead->source !== LeadSourceEnum::EA_IMCRM) {
                 $this->resolveDuplicateLeadInfo();
             }
 
