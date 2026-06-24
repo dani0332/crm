@@ -63,6 +63,7 @@ const { auth } = usePage().props;
 const currentUserId = auth.user.id;
 const isEaManager = useHasRole('EA_MANAGER');
 
+
 // PolicyIssued = 33
 const POLICY_ISSUED = 33;
 
@@ -80,7 +81,7 @@ const isAdvisor = computed(
 );
 
 const isVisible = computed(
-  () => isEaCollaborateLead.value && (isAdvisor.value || isEaManager),
+  () => isEaCollaborateLead.value && isAdvisor.value && !isEaManager,
 );
 
 const isAssignedAdvisor = computed(() => props.advisorId === currentUserId);
@@ -99,10 +100,6 @@ const myRejectedAt = computed(() =>
 
 const advisorAlreadyActed = computed(
   () => !!myApprovedAt.value || !!myRejectedAt.value,
-);
-
-const managerAlreadyActed = computed(
-  () => !!props.eaManagerApprovedAt || !!props.eaManagerRejectedAt,
 );
 
 const isLoading = ref(false);
@@ -127,25 +124,6 @@ const takeAdvisorAction = async action => {
   }
 };
 
-const takeManagerAction = async action => {
-  isLoading.value = true;
-  actionError.value = null;
-
-  try {
-    await axios.post(
-      route('ea-manager.decision', {
-        quoteType: props.quoteType,
-        quoteId: props.quoteId,
-      }),
-      { action },
-    );
-    emit('updated');
-  } catch (err) {
-    actionError.value = err?.response?.data?.message ?? 'An error occurred.';
-  } finally {
-    isLoading.value = false;
-  }
-};
 </script>
 
 <template>
@@ -157,90 +135,33 @@ const takeManagerAction = async action => {
       EA Collaborate Approval
     </h3>
 
-    <!-- Advisor view -->
-    <template v-if="isAdvisor && !isEaManager">
-      <p v-if="advisorAlreadyActed" class="text-sm text-gray-600">
-        <span v-if="myApprovedAt" class="text-green-600 font-medium"
-          >✓ You have approved this lead.</span
-        >
-        <span v-if="myRejectedAt" class="text-red-600 font-medium"
-          >✗ You have rejected this lead.</span
-        >
-      </p>
+    <p v-if="advisorAlreadyActed" class="text-sm text-gray-600">
+      <span v-if="myApprovedAt" class="text-green-600 font-medium"
+        >✓ You have approved this lead.</span
+      >
+      <span v-if="myRejectedAt" class="text-red-600 font-medium"
+        >✗ You have rejected this lead.</span
+      >
+    </p>
 
-      <div v-else class="flex gap-3">
-        <x-button
-          size="sm"
-          color="emerald"
-          :loading="isLoading"
-          @click="takeAdvisorAction('approve')"
-        >
-          Approve
-        </x-button>
-        <x-button
-          size="sm"
-          color="red"
-          :loading="isLoading"
-          @click="takeAdvisorAction('reject')"
-        >
-          Reject
-        </x-button>
-      </div>
-    </template>
-
-    <!-- EA Manager view -->
-    <template v-if="isEaManager">
-      <div class="mb-3 space-y-1 text-sm text-gray-600">
-        <p>
-          <span class="font-medium">Assigned Advisor: </span>
-          <span v-if="eaAssignedAdvisorApprovedAt" class="text-green-600"
-            >✓ Approved</span
-          >
-          <span v-else-if="eaAssignedAdvisorRejectedAt" class="text-red-600"
-            >✗ Rejected</span
-          >
-          <span v-else class="text-gray-400">Pending</span>
-        </p>
-        <p>
-          <span class="font-medium">Expert Advisor: </span>
-          <span v-if="eaExpertAdvisorApprovedAt" class="text-green-600"
-            >✓ Approved</span
-          >
-          <span v-else-if="eaExpertAdvisorRejectedAt" class="text-red-600"
-            >✗ Rejected</span
-          >
-          <span v-else class="text-gray-400">Pending</span>
-        </p>
-      </div>
-
-      <p v-if="managerAlreadyActed" class="text-sm text-gray-600">
-        <span v-if="eaManagerApprovedAt" class="text-green-600 font-medium"
-          >✓ You have approved this lead as EA Manager.</span
-        >
-        <span v-if="eaManagerRejectedAt" class="text-red-600 font-medium"
-          >✗ You have rejected this lead as EA Manager.</span
-        >
-      </p>
-
-      <div v-else class="flex gap-3">
-        <x-button
-          size="sm"
-          color="emerald"
-          :loading="isLoading"
-          @click="takeManagerAction('approve')"
-        >
-          Approve
-        </x-button>
-        <x-button
-          size="sm"
-          color="red"
-          :loading="isLoading"
-          @click="takeManagerAction('reject')"
-        >
-          Reject
-        </x-button>
-      </div>
-    </template>
+    <div v-else class="flex gap-3">
+      <x-button
+        size="sm"
+        color="emerald"
+        :loading="isLoading"
+        @click="takeAdvisorAction('approve')"
+      >
+        Approve
+      </x-button>
+      <x-button
+        size="sm"
+        color="red"
+        :loading="isLoading"
+        @click="takeAdvisorAction('reject')"
+      >
+        Reject
+      </x-button>
+    </div>
 
     <p v-if="actionError" class="mt-2 text-sm text-red-600">
       {{ actionError }}

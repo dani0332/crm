@@ -19,8 +19,11 @@ const props = defineProps({
 
 const page = usePage();
 
+const BUSINESS_QUOTE_TYPE_ID = 5;
 const quoteTypes = computed(() =>
-  (page.props.quoteTypes ?? []).map(qt => ({ value: qt.id, label: qt.name })),
+  (page.props.quoteTypes ?? [])
+    .filter(qt => qt.id !== BUSINESS_QUOTE_TYPE_ID)
+    .map(qt => ({ value: qt.id, label: qt.name })),
 );
 
 const eaStatusOptions = [
@@ -297,7 +300,7 @@ const updateRow = async lead => {
             'text-green-600': item.ea_status === 'approved',
             'text-red-600': item.ea_status === 'rejected',
           }"
-          >{{ item.ea_status }}</span
+          >{{ item.ea_status ?? '—' }}</span
         >
         <x-select
           v-model="rowState[rowKey(item)].action"

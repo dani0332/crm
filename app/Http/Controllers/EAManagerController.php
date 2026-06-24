@@ -105,7 +105,7 @@ class EAManagerController extends Controller
         return match ($quoteType) {
             'car' => CarQuote::findOrFail($quoteId),
             'health' => HealthQuote::findOrFail($quoteId),
-            'business', 'groupmedical' => BusinessQuote::findOrFail($quoteId),
+            'business', 'groupmedical', 'corpline' => BusinessQuote::findOrFail($quoteId),
             default => PersonalQuote::findOrFail($quoteId),
         };
     }

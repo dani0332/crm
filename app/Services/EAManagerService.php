@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\EaModelEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
@@ -32,11 +34,15 @@ class EAManagerService
             ? $this->queryModel(HealthQuote::class, $filters, 'health')
             : collect();
 
-        $personalLeads = ($lob === null || ! in_array($lob, [QuoteTypeId::Car, QuoteTypeId::Health], true))
+        $businessLeads = ($lob === null || in_array($lob, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical], true))
+            ? $this->queryModel(BusinessQuote::class, $filters, 'business')
+            : collect();
+
+        $personalLeads = ($lob === null || ! in_array($lob, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical], true))
             ? $this->queryPersonalLeads($filters)
             : collect();
 
-        return $carLeads->concat($healthLeads)->concat($personalLeads)
+        return $carLeads->concat($healthLeads)->concat($businessLeads)->concat($personalLeads)
             ->sortByDesc('created_at')
             ->values();
     }
@@ -73,7 +79,7 @@ class EAManagerService
             ->map(fn ($lead) => $this->formatLead($lead, QuoteTypes::getName($lead->quote_type_id)?->value ?? 'personal'));
     }
 
-    private function computeEaStatus(CarQuote|HealthQuote|PersonalQuote $lead): string
+    private function computeEaStatus(CarQuote|HealthQuote|PersonalQuote|BusinessQuote $lead): ?string
     {
         if ($lead->ea_manager_approved_at) {
             return 'approved';
@@ -88,7 +94,7 @@ class EAManagerService
             return 'rejected';
         }
 
-        return 'rejected';
+        return null;
     }
 
     private function applyEaStatusFilter(Builder $query, string $status): void
@@ -114,7 +120,9 @@ class EAManagerService
         return [
             'id' => $lead->id,
             'code' => $lead->code,
-            'quote_type' => $quoteType,
+            'quote_type' => $quoteType === 'business'
+                ? ($lead->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL ? 'groupmedical' : 'corpline')
+                : $quoteType,
             'ea_model' => EaModelEnum::tryFrom($lead->getRawOriginal('ea_model'))?->value,
             'quote_status_id' => $lead->quote_status_id,
             'created_at' => $lead->created_at,
@@ -144,6 +152,7 @@ class EAManagerService
 
         return CarQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count()
             + HealthQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count()
+            + BusinessQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count()
             + PersonalQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count();
     }
 }
