@@ -129,8 +129,8 @@ watchEffect(() => {
       tooltip: 'The department of the advisor assigned to this lead',
     },
     pqa: {
-      text: 'PQA',
-      tooltip: 'The PQA advisor assigned to the policy.',
+      text: 'Pre-Qualification Advisor',
+      tooltip: 'The Pre-Qualification Advisor assigned to the policy.',
     },
     branch_name: {
       text: 'Branch',
