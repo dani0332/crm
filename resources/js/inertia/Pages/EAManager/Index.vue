@@ -26,15 +26,9 @@ const quoteTypes = computed(() =>
     .map(qt => ({ value: qt.id, label: qt.name })),
 );
 
-const eaStatusOptions = [
-  { value: 'approved', label: 'Approved' },
-  { value: 'rejected', label: 'Rejected' },
-];
+const eaStatusOptions = [{ value: 'approved', label: 'Approved' }];
 
-const eaActionOptions = [
-  { value: 'approve', label: 'Approve' },
-  { value: 'reject', label: 'Reject' },
-];
+const eaActionOptions = [{ value: 'approve', label: 'Approve' }];
 
 const eaModelOptions = [
   { value: 'referral', label: 'Referral' },
@@ -140,11 +134,8 @@ const updateRow = async lead => {
   const key = rowKey(lead);
   const state = rowState[key];
 
-  if (
-    !state.action &&
-    !(lead.has_rejection && lead.ea_model === 'collaborate' && state.model)
-  ) {
-    state.error = 'Please select an action.';
+  if (!state.action && !state.model) {
+    state.error = 'Please select an action or model.';
     return;
   }
 
@@ -160,11 +151,9 @@ const updateRow = async lead => {
       });
     }
 
-    if (state.action) {
-      await axios.post(route('ea-manager.decision', params), {
-        action: state.action,
-      });
-    }
+    await axios.post(route('ea-manager.decision', params), {
+      action: state.action ?? null,
+    });
 
     router.reload({
       only: ['leads', 'pendingRejectionsCount', 'eaPendingRejectionsCount'],

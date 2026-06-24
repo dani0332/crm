@@ -27,8 +27,14 @@ class EAApprovalController extends Controller
         $userId = auth()->id();
 
         if ((int) $quote->advisor_id === $userId) {
+            if ($quote->ea_assigned_advisor_approved_at || $quote->ea_assigned_advisor_rejected_at) {
+                return response()->json(['message' => 'You have already acted on this lead.'], 422);
+            }
             $quote->ea_assigned_advisor_approved_at = now();
         } elseif ((int) $quote->expert_advisor_id === $userId) {
+            if ($quote->ea_expert_advisor_approved_at || $quote->ea_expert_advisor_rejected_at) {
+                return response()->json(['message' => 'You have already acted on this lead.'], 422);
+            }
             $quote->ea_expert_advisor_approved_at = now();
         } else {
             return response()->json(['message' => 'You are not an advisor on this lead.'], 403);
@@ -50,8 +56,14 @@ class EAApprovalController extends Controller
         $userId = auth()->id();
 
         if ((int) $quote->advisor_id === $userId) {
+            if ($quote->ea_assigned_advisor_approved_at || $quote->ea_assigned_advisor_rejected_at) {
+                return response()->json(['message' => 'You have already acted on this lead.'], 422);
+            }
             $quote->ea_assigned_advisor_rejected_at = now();
         } elseif ((int) $quote->expert_advisor_id === $userId) {
+            if ($quote->ea_expert_advisor_approved_at || $quote->ea_expert_advisor_rejected_at) {
+                return response()->json(['message' => 'You have already acted on this lead.'], 422);
+            }
             $quote->ea_expert_advisor_rejected_at = now();
         } else {
             return response()->json(['message' => 'You are not an advisor on this lead.'], 403);
