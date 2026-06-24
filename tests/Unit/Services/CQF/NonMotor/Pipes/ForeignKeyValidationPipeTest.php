@@ -74,8 +74,8 @@ it('passes when PersonalQuote has all required FKs existing', function () {
         quoteType: QuoteTypes::PET,
         renewalDaysThreshold: 120,
         validator: app(PetCQFValidationService::class),
-        mapper: app(PetCQFQuoteMappingService::class),
-        storage: app(PetCQFQuoteStorageService::class)
+        mapper: (new ReflectionClass(PetCQFQuoteMappingService::class))->newInstanceWithoutConstructor(),
+        storage: (new ReflectionClass(PetCQFQuoteStorageService::class))->newInstanceWithoutConstructor()
     );
 
     $result = $this->pipe->handle($context, fn ($c) => $c);

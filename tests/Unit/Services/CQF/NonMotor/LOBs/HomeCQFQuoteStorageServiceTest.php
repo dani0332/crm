@@ -19,7 +19,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createRenewalsSchema();
-    $this->service = app(HomeCQFQuoteStorageService::class);
+    $this->service = (new ReflectionClass(HomeCQFQuoteStorageService::class))->newInstanceWithoutConstructor();
 });
 
 it('stores copied HomeQuote with renewal source and new lead status from PersonalQuote', function () {

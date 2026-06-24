@@ -10,7 +10,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    $this->service = app(YachtCQFQuoteMappingService::class);
+    $this->service = (new ReflectionClass(YachtCQFQuoteMappingService::class))->newInstanceWithoutConstructor();
 });
 
 it('maps previous_quote_policy_premium from price_with_vat instead of premium', function () {

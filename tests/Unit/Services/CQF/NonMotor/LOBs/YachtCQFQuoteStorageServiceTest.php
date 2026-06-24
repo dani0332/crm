@@ -14,7 +14,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createRenewalsSchema();
-    $this->service = app(YachtCQFQuoteStorageService::class);
+    $this->service = (new ReflectionClass(YachtCQFQuoteStorageService::class))->newInstanceWithoutConstructor();
 });
 
 it('stores copied YachtQuote with renewal source and new lead status from PersonalQuote', function () {

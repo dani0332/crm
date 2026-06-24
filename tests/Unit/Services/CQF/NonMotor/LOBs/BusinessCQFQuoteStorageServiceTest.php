@@ -20,7 +20,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createRenewalsSchema();
-    $this->service = app(BusinessCQFQuoteStorageService::class);
+    $this->service = (new ReflectionClass(BusinessCQFQuoteStorageService::class))->newInstanceWithoutConstructor();
 });
 
 it('stores renewal quote with correct source, status, and no advisor on BusinessQuote', function () {

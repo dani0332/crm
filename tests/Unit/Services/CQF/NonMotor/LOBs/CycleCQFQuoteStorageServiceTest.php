@@ -13,7 +13,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createRenewalsSchema();
-    $this->service = app(CycleCQFQuoteStorageService::class);
+    $this->service = (new ReflectionClass(CycleCQFQuoteStorageService::class))->newInstanceWithoutConstructor();
 });
 
 it('creates CycleQuote linked to new PersonalQuote on copy', function () {

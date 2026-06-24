@@ -14,13 +14,16 @@ use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\PersonalQuote;
 use App\Models\UAELicenseHeldFor;
+use App\Services\CQF\CarCQFQuoteMappingService;
 use App\Services\CQF\NonMotor\LOBs\BikeCQFQuoteStorageService;
 use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createRenewalsSchema();
-    $this->service = app(BikeCQFQuoteStorageService::class);
+    $this->service = (new ReflectionClass(BikeCQFQuoteStorageService::class))->newInstanceWithoutConstructor();
+    $prop = new ReflectionProperty(BikeCQFQuoteStorageService::class, 'carCQFQuoteMappingService');
+    $prop->setValue($this->service, (new ReflectionClass(CarCQFQuoteMappingService::class))->newInstanceWithoutConstructor());
 });
 
 it('increments uae_license_held_for_id to the next active entry', function () {

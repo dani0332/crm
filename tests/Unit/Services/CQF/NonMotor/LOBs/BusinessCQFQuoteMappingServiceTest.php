@@ -8,7 +8,7 @@ use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
-    $this->service = app(BusinessCQFQuoteMappingService::class);
+    $this->service = (new ReflectionClass(BusinessCQFQuoteMappingService::class))->newInstanceWithoutConstructor();
 });
 
 it('includes product_type from businessTypeOfInsurance text in failed quote data', function () {

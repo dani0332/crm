@@ -7,9 +7,38 @@ use App\Models\PersonalQuote;
 use App\Services\CQF\Contracts\CQFQuoteMappingInterface;
 use App\Services\CQF\Contracts\CQFQuoteStorageInterface;
 use App\Services\CQF\Contracts\CQFValidationInterface;
+use App\Services\CQF\NonMotor\LOBs\BikeCQFQuoteMappingService;
+use App\Services\CQF\NonMotor\LOBs\BikeCQFQuoteStorageService;
+use App\Services\CQF\NonMotor\LOBs\BusinessCQFQuoteMappingService;
+use App\Services\CQF\NonMotor\LOBs\BusinessCQFQuoteStorageService;
+use App\Services\CQF\NonMotor\LOBs\CycleCQFQuoteMappingService;
+use App\Services\CQF\NonMotor\LOBs\CycleCQFQuoteStorageService;
+use App\Services\CQF\NonMotor\LOBs\HomeCQFQuoteMappingService;
+use App\Services\CQF\NonMotor\LOBs\HomeCQFQuoteStorageService;
+use App\Services\CQF\NonMotor\LOBs\PetCQFQuoteMappingService;
+use App\Services\CQF\NonMotor\LOBs\PetCQFQuoteStorageService;
+use App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteMappingService;
+use App\Services\CQF\NonMotor\LOBs\YachtCQFQuoteStorageService;
 use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
 
 beforeEach(function () {
+    foreach ([
+        BikeCQFQuoteMappingService::class,
+        YachtCQFQuoteMappingService::class,
+        CycleCQFQuoteMappingService::class,
+        PetCQFQuoteMappingService::class,
+        HomeCQFQuoteMappingService::class,
+        BusinessCQFQuoteMappingService::class,
+        BikeCQFQuoteStorageService::class,
+        YachtCQFQuoteStorageService::class,
+        CycleCQFQuoteStorageService::class,
+        PetCQFQuoteStorageService::class,
+        HomeCQFQuoteStorageService::class,
+        BusinessCQFQuoteStorageService::class,
+    ] as $class) {
+        $this->app->bind($class, fn () => (new ReflectionClass($class))->newInstanceWithoutConstructor());
+    }
+
     $this->registry = app(NonMotorCQFRegistry::class);
 });
 
