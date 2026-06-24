@@ -40,7 +40,7 @@ const statusModal = getStatusModal();
 
 const selectedLob = ref('');
 
-const displayLobName = code => (code === 'CorpLine' ? 'Business' : code);
+const displayLobName = code => (code === 'CorpLine' ? 'CorpLine' : code);
 
 const lobFilterOptions = computed(() => {
   const codes = [...new Set(props.data.map(item => item.quoteTypeCode))].sort();
