@@ -1074,7 +1074,12 @@ watch(categoryChangeConfirmOpen, isOpen => {
                     v-model="quoteForm.mobile_national_no"
                     type="text"
                     maxLength="10"
-                    :rules="[isRequired, isNumber, noLeadingZero, isMobileNationalPartLength]"
+                    :rules="[
+                      isRequired,
+                      isNumber,
+                      noLeadingZero,
+                      isMobileNationalPartLength,
+                    ]"
                     class="flex-1 min-w-0"
                     :disabled="isEdit"
                     :error="quoteForm.errors.mobile_national_no"
