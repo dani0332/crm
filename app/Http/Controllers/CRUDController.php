@@ -47,6 +47,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Events\LeadsCount;
+use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\AssignPreQualificationAdvisorRequest;
 use App\Http\Requests\AssignSupportUserRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
@@ -57,6 +58,7 @@ use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
+use App\Models\BusinessQuote;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
@@ -93,6 +95,7 @@ use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
 use App\Services\AllocationService;
 use App\Services\AMLService;
+use App\Services\ApiService;
 use App\Services\ApplicationStorageService;
 use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
@@ -2049,6 +2052,22 @@ class CRUDController extends Controller
                 if (isset($request->leadId)) {
                     CarRenewalEmailJob::dispatch($lead);
                 }
+            }
+        }
+
+        if (in_array($request->leadStatus, [QuoteStatusEnum::QualificationPending, QuoteStatusEnum::Qualified]) && strtolower($request->modelType) == strtolower(quoteTypeCode::Business)) {
+            $apiService = app(ApiService::class);
+            $lead = BusinessQuote::where('uuid', $request->quote_uuid)->first();
+
+            if ($lead) {
+
+                $assignRequest = new AssignLeadRequest;
+                $assignRequest->merge([
+                    'quoteUUID' => $request->quote_uuid,
+                    'quoteTypeId' => $lead->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL ? QuoteTypeId::GroupMedical : QuoteTypeId::Corpline,
+                ]);
+
+                $apiService->processAssignLead($assignRequest);
             }
         }
 
