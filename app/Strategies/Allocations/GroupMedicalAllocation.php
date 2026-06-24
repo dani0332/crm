@@ -6,6 +6,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Facades\AllocationConfigurer;
+use App\Models\BusinessQuote;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
 
@@ -14,8 +15,10 @@ class GroupMedicalAllocation extends BaseAllocation
     protected function resolveLead(): void
     {
         $this->lead = $this->getLeadBaseQuery()
-            ->whereNotNull('health_plan_type_id')
-            ->whereNotNull('number_of_employees')
+            ->when($this->uuid && ! $this->isEAIMCRMLead(), function ($q) {
+                $q->whereNotNull('health_plan_type_id')
+                    ->whereNotNull('number_of_employees');
+            })
             ->logRawSql()
             ->first();
     }
@@ -61,5 +64,12 @@ class GroupMedicalAllocation extends BaseAllocation
             ->whereIn('users.id', $advisorIds)
             ->logRawSql()
             ->first();
+    }
+
+    private function isEAIMCRMLead(): bool
+    {
+        return BusinessQuote::where('uuid', $this->uuid)
+            ->where('source', LeadSourceEnum::EA_IMCRM)
+            ->exists();
     }
 }

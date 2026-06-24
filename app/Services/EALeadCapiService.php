@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -189,6 +190,10 @@ class EALeadCapiService
 
         if ($quoteTypeId === QuoteTypeId::Corpline && $request->business_type_of_insurance_id) {
             $payload['businessTypeOfInsuranceId'] = $request->business_type_of_insurance_id;
+        }
+
+        if ($quoteTypeId === QuoteTypeId::GroupMedical) {
+            $payload['businessTypeOfInsuranceId'] = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
         }
 
         if ($quoteTypeId === QuoteTypeId::Health && $request->health_plan_type_id) {
