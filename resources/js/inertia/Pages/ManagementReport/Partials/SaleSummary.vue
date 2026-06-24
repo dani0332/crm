@@ -128,6 +128,10 @@ watchEffect(() => {
       text: 'Department',
       tooltip: 'The department of the advisor assigned to this lead',
     },
+    pqa: {
+      text: 'PQA',
+      tooltip: 'The PQA advisor assigned to the policy.',
+    },
     branch_name: {
       text: 'Branch',
       tooltip: 'The branch of the lead',
@@ -144,6 +148,7 @@ watchEffect(() => {
     line_of_business: ['line_of_business'],
     department: ['department'],
     branch_name: ['branch_name'],
+    pqa: ['pqa'],
   };
 
   // Remove all columns in tableHeader that match any key in the columns object
