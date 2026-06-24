@@ -27,6 +27,7 @@ class ProcessCustomerUploadJob implements ShouldQueue
     public int $timeout = 600;
     public int $backoff = 60;
     public int $retryAfter = 660;
+    public string $queue = 'process-customer-upload';
 
     public function __construct(
         private readonly string $filePath,
@@ -38,6 +39,16 @@ class ProcessCustomerUploadJob implements ShouldQueue
 
     public function handle(SendEmailCustomerService $sendEmailCustomerService, BerlinService $berlinService): void
     {
+        if (! Storage::exists($this->filePath)) {
+            Log::error('ProcessCustomerUploadJob: upload file missing, cannot import', [
+                'path' => $this->filePath,
+                'userId' => $this->userId,
+            ]);
+            event(new CustomerUploadCompleted($this->userId, 'failed', 0, $this->cdbId));
+
+            return;
+        }
+
         $import = new CustomersImport(
             $this->myalfredExpiryDate,
             $this->cdbId,
@@ -50,14 +61,21 @@ class ProcessCustomerUploadJob implements ShouldQueue
         collect($import->customersToExtend)
             ->chunk(50)
             ->each(function ($chunk, int $chunkIndex) {
-                $delay = $chunkIndex * 10;
+                $delay = $chunkIndex * 1; // Stagger the dispatch of jobs by 1 second per chunk to avoid overwhelming the queue
                 $chunk->each(fn ($customer) => ExtendCustomerSubscriptionViaSQS::dispatch($customer, self::SUBSCRIPTION_TYPE, self::SUBSCRIPTION_QUEUE)
                     ->delay($delay));
             });
 
         Storage::delete($this->filePath);
 
-        event(new CustomerUploadCompleted($this->userId, 'success', $import->rowCount, $this->cdbId));
+        try {
+            event(new CustomerUploadCompleted($this->userId, 'success', $import->rowCount, $this->cdbId));
+        } catch (Throwable $e) {
+            Log::error('ProcessCustomerUploadJob: failed to broadcast completion event', [
+                'userId' => $this->userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function failed(Throwable $e): void
