@@ -263,7 +263,7 @@ class PqaLeadAllocationController extends Controller
 
             return $rows->map(function ($row) {
                 $row->lastAllocation = ! empty($row->lastAllocatedTs)
-                    ? Carbon::createFromTimestamp((int) $row->lastAllocatedTs)->format('d-m-Y H:i:s')
+                    ? Carbon::createFromTimestamp((int) $row->lastAllocatedTs, 'Asia/Dubai')->format('d-m-Y H:i:s')
                     : null;
                 unset($row->lastAllocatedTs);
 
