@@ -162,6 +162,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->rtaPortalLink();
         $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
+        $this->seedRdxRetargetingEmailConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
         $this->seedEnableMetLife();
@@ -1433,6 +1434,56 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedRdxRetargetingEmailConfigurations()
+    {
+        $isProd = app()->environment() === EnvEnum::PRODUCTION;
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BREVO_BIKE_EP_RETARGETING_EVENT_NAME],
+            [
+                'value' => 'ep_rdx_retargeting_enable',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => $isProd ? 0 : 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_FROM_EMAIL],
+            [
+                'value' => $isProd ? 'alfred@notify.insurancemarket.ae' : 'alfred@testnotify.alfred.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_BCC_EMAIL],
+            [
+                'value' => $isProd ? 'embeddedproducts@insurancemarket.ae' : 'embeddedproducts@yopmail.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_EMAIL_SUBJECT],
+            [
+                'value' => 'Add Rider Medical Cover to Your Bike Policy in Just Seconds (REF-ID)',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE],
+            [
+                'value' => 892,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => $isProd ? 0 : 1,
+            ],
+        );
+    }
+
     private function seedEnableMetLife()
     {
         ApplicationStorage::firstOrCreate(
@@ -1895,8 +1946,10 @@ class ApplicationStorageSeeder extends Seeder
     private function seedPartnerAutomation()
     {
         $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/092b76fa-f599-43a3-8927-edc7b7b4a9cd/invoke-sync';
+        $ccEmails = 'sureshbabu.rajendran@myalfred.com';
         if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
-            $birdWorkflowUrl = '';
+            $birdWorkflowUrl = 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/0432a5ce-fec0-45f9-8d23-15144644609a/invoke-sync';
+            $ccEmails = 'fni.uae@cars24.com, abhishek.pandey@insurancemarket.ae';
         }
 
         ApplicationStorage::firstOrCreate(
@@ -1922,7 +1975,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CARS24_SEND_POLICY_CC_EMAILS],
             [
-                'value' => 'fni.uae@cars24.com, abhishek.pandey@insurancemarket.ae',
+                'value' => $ccEmails,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => true,

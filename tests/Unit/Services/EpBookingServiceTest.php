@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\DocumentType;
+use App\Models\EmbeddedTransaction;
 use App\Models\QuoteDocument;
 use App\Services\EpBookingService;
 use Illuminate\Support\Facades\Storage;
@@ -55,6 +56,77 @@ test('watermark document rethrows transient existence failures so the job can re
 
     expect(fn () => $service->watermarkDocument($quoteDocument, $documentType))
         ->toThrow(RuntimeException::class, "Unable to check existence for: {$quoteDocument->doc_url}");
+});
+
+test('duplicate invoice handling writes adjusted tax_invoice_no to EP table', function () {
+    TestSchemaCreator::createMinimalSchema();
+
+    $transaction = EmbeddedTransaction::factory()->createOneQuietly([
+        'code' => 'ET-DUPTEST01',
+        'tax_invoice_no' => 'INV-001',
+        'tax_invoice_buyer_no' => 'INV-002',
+    ]);
+
+    $result = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($transaction, 'INV-001');
+
+    expect($result)->toBeTrue();
+
+    $transaction->refresh();
+    expect($transaction->tax_invoice_no)->toBe('INV-001/1');
+    expect($transaction->tax_invoice_buyer_no)->toBe('INV-002'); // unchanged
+});
+
+test('duplicate invoice handling writes adjusted tax_invoice_buyer_no to EP table', function () {
+    TestSchemaCreator::createMinimalSchema();
+
+    $transaction = EmbeddedTransaction::factory()->createOneQuietly([
+        'code' => 'ET-DUPTEST02',
+        'tax_invoice_no' => 'INV-001',
+        'tax_invoice_buyer_no' => 'INV-002',
+    ]);
+
+    $result = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($transaction, 'INV-002');
+
+    expect($result)->toBeTrue();
+
+    $transaction->refresh();
+    expect($transaction->tax_invoice_no)->toBe('INV-001'); // unchanged
+    expect($transaction->tax_invoice_buyer_no)->toBe('INV-002/1');
+});
+
+test('duplicate invoice handling returns false when no invoice number matches the duplicate', function () {
+    TestSchemaCreator::createMinimalSchema();
+
+    $transaction = EmbeddedTransaction::factory()->createOneQuietly([
+        'code' => 'ET-DUPTEST03',
+        'tax_invoice_no' => 'INV-001',
+        'tax_invoice_buyer_no' => 'INV-002',
+    ]);
+
+    $result = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($transaction, 'INV-999');
+
+    expect($result)->toBeFalse();
+
+    $transaction->refresh();
+    expect($transaction->tax_invoice_no)->toBe('INV-001');
+    expect($transaction->tax_invoice_buyer_no)->toBe('INV-002');
+});
+
+test('duplicate invoice handling returns false when invoice number already has postfix', function () {
+    TestSchemaCreator::createMinimalSchema();
+
+    $transaction = EmbeddedTransaction::factory()->createOneQuietly([
+        'code' => 'ET-DUPTEST04',
+        'tax_invoice_no' => 'INV-001/1',
+        'tax_invoice_buyer_no' => 'INV-002',
+    ]);
+
+    $result = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($transaction, 'INV-001/1');
+
+    expect($result)->toBeFalse();
+
+    $transaction->refresh();
+    expect($transaction->tax_invoice_no)->toBe('INV-001/1'); // unchanged
 });
 
 test('sage document number postfix increments between duplicate retries', function (mixed $documentNumber, mixed $expected): void {
