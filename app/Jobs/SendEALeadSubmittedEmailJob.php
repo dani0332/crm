@@ -77,11 +77,27 @@ class SendEALeadSubmittedEmailJob implements ShouldQueue
             'tags' => [$tag],
         ];
 
-        Http::withHeaders([
+        LoggerService::info('SendEALeadSubmittedEmailJob: Sending to Brevo', [
+            'ref_id' => $this->quote->code,
+            'uuid' => $this->quote->uuid,
+            'template_id' => $templateId,
+            'to' => $this->quote->advisor->email,
+            'cc' => array_column($ccEmails, 'email'),
+            'params' => $body['params'],
+            'tag' => $tag,
+        ]);
+
+        $response = Http::withHeaders([
             'Accept' => 'application/json',
             'api-key' => config('constants.SENDINBLUE_KEY'),
             'Content-Type' => 'application/json',
         ])->post(config('constants.SIB_URL'), $body);
+
+        LoggerService::info('SendEALeadSubmittedEmailJob: Brevo response', [
+            'ref_id' => $this->quote->code,
+            'status' => $response->status(),
+            'body' => $response->json(),
+        ]);
 
         LoggerService::info('SendEALeadSubmittedEmailJob: Sent via Brevo', ['ref_id' => $this->quote->code]);
     }

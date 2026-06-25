@@ -71,11 +71,26 @@ class SendEAManagerDecisionEmailJob implements ShouldQueue
             'tags' => [$tag],
         ];
 
-        Http::withHeaders([
+        LoggerService::info('SendEAManagerDecisionEmailJob: Sending to Brevo', [
+            'ref_id' => $this->quote->code,
+            'uuid' => $this->quote->uuid,
+            'template_id' => $templateId,
+            'to' => array_column($body['to'], 'email'),
+            'params' => $body['params'],
+            'tag' => $tag,
+        ]);
+
+        $response = Http::withHeaders([
             'Accept' => 'application/json',
             'api-key' => config('constants.SENDINBLUE_KEY'),
             'Content-Type' => 'application/json',
         ])->post(config('constants.SIB_URL'), $body);
+
+        LoggerService::info('SendEAManagerDecisionEmailJob: Brevo response', [
+            'ref_id' => $this->quote->code,
+            'status' => $response->status(),
+            'body' => $response->json(),
+        ]);
 
         LoggerService::info('SendEAManagerDecisionEmailJob: Sent via Brevo', [
             'ref_id' => $this->quote->code,
