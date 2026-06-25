@@ -40,15 +40,18 @@ class ProcessCustomerUploadJob implements ShouldQueue
 
     public function handle(SendEmailCustomerService $sendEmailCustomerService, BerlinService $berlinService): void
     {
+        $context = ['userId' => $this->userId, 'cdbId' => $this->cdbId, 'filePath' => $this->filePath, 'attempt' => $this->attempts()];
+
+        Log::info('ProcessCustomerUploadJob: started', $context);
+
         if (! Storage::disk('azureIMPrivate')->exists($this->filePath)) {
-            Log::error('ProcessCustomerUploadJob: upload file missing, cannot import', [
-                'path' => $this->filePath,
-                'userId' => $this->userId,
-            ]);
+            Log::error('ProcessCustomerUploadJob: upload file missing, cannot import', $context);
             event(new CustomerUploadCompleted($this->userId, 'failed', 0, $this->cdbId));
 
             return;
         }
+
+        Log::info('ProcessCustomerUploadJob: file found, starting import', $context);
 
         $import = new CustomersImport(
             $this->myalfredExpiryDate,
@@ -59,6 +62,8 @@ class ProcessCustomerUploadJob implements ShouldQueue
         );
         Excel::import($import, $this->filePath, 'azureIMPrivate');
 
+        Log::info('ProcessCustomerUploadJob: import complete', [...$context, 'rowCount' => $import->rowCount, 'customersToExtend' => \count($import->customersToExtend)]);
+
         collect($import->customersToExtend)
             ->chunk(50)
             ->each(function ($chunk, int $chunkIndex) {
@@ -67,25 +72,25 @@ class ProcessCustomerUploadJob implements ShouldQueue
                     ->delay($delay));
             });
 
+        Log::info('ProcessCustomerUploadJob: SQS extension jobs dispatched', $context);
+
         Storage::disk('azureIMPrivate')->delete($this->filePath);
+
+        Log::info('ProcessCustomerUploadJob: upload file deleted', $context);
 
         try {
             event(new CustomerUploadCompleted($this->userId, 'success', $import->rowCount, $this->cdbId));
+            Log::info('ProcessCustomerUploadJob: completion event fired', $context);
         } catch (Throwable $e) {
-            Log::error('ProcessCustomerUploadJob: failed to broadcast completion event', [
-                'userId' => $this->userId,
-                'error' => $e->getMessage(),
-            ]);
+            Log::error('ProcessCustomerUploadJob: failed to broadcast completion event', [...$context, 'error' => $e->getMessage()]);
         }
     }
 
     public function failed(Throwable $e): void
     {
-        Log::error('ProcessCustomerUploadJob failed', [
-            'userId' => $this->userId,
-            'cdbId' => $this->cdbId,
-            'error' => $e->getMessage(),
-        ]);
+        $context = ['userId' => $this->userId, 'cdbId' => $this->cdbId, 'filePath' => $this->filePath, 'error' => $e->getMessage()];
+
+        Log::error('ProcessCustomerUploadJob failed', $context);
 
         Storage::disk('azureIMPrivate')->delete($this->filePath);
 
