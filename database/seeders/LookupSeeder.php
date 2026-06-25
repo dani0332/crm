@@ -856,21 +856,15 @@ class LookupSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        Lookup::firstOrCreate([
-            'key' => LookupsEnum::RM_CATEGORY,
-            'code' => 'rgta',
-            'text' => 'RGTA',
-        ], [
-            'is_active' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        Lookup::where('key', LookupsEnum::RM_CATEGORY)
+            ->where('code', 'rgta')
+            ->update(['text' => 'BDMs / RGTA']);
 
         Lookup::firstOrCreate([
             'key' => LookupsEnum::RM_CATEGORY,
-            'code' => 'bdms-rgta',
-            'text' => 'BDMs / RGTA',
+            'code' => 'rgta',
         ], [
+            'text' => 'BDMs / RGTA',
             'is_active' => 1,
             'created_at' => now(),
             'updated_at' => now(),
