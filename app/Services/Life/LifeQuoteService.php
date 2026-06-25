@@ -41,6 +41,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\EACollaborateHelper;
 use App\Services\KenService;
 use App\Services\LifeRevivalService;
 use App\Services\Logger\LoggerService;
@@ -346,7 +347,36 @@ class LifeQuoteService extends BaseService
             'notes' => $data['notes'] ?? null,
         ]);
 
-        return CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
+        EACollaborateHelper::applyEAIMCRMSource($lifeQuote);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('LifeQuoteService: CAPI payload for EA lead', [
+                'ea_model' => $lifeQuote['eaModel'] ?? request()->input('ea_model'),
+                'source' => $lifeQuote['source'] ?? null,
+                'email' => $lifeQuote['email'] ?? null,
+                'lead_generator_id' => $lifeQuote['leadGeneratorId'] ?? null,
+                'advisor_id' => $lifeQuote['advisorId'] ?? null,
+            ]);
+        }
+
+        $response = CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('LifeQuoteService: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $eaQuote = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'life');
+                }
+            }
+        }
+
+        return $response;
     }
 
     public function getPlainQuoteBy($column, $value)
