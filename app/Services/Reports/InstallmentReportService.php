@@ -294,6 +294,7 @@ class InstallmentReportService extends ManagementReport
             'Commission Percentage',
             'Transaction Type',
             'Source',
+            'Pre-Qualification Advisor',
         ];
     }
 
@@ -335,6 +336,7 @@ class InstallmentReportService extends ManagementReport
             $quote->commmission_percentage ?? 'N/A',
             $quote->transaction_type ?? 'N/A',
             $quote->source ?? 'N/A',
+            $quote->pqa ?? 'N/A',
         ];
     }
 }
