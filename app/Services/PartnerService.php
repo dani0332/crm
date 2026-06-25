@@ -28,6 +28,13 @@ class PartnerService
             ->hasActiveProviderWithPlan($providerId, $quoteTypeId, $planId)
             ->first();
 
+        LoggerService::info('PartnerService - Checking if partner is active', extra: [
+            'partnerCode' => $partnerCode,
+            'quoteTypeId' => $quoteTypeId,
+            'providerId' => $providerId,
+            'planId' => $planId,
+        ]);
+
         return $partner ?? false;
     }
 
