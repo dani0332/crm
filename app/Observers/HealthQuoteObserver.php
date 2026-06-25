@@ -229,6 +229,7 @@ class HealthQuoteObserver
             $healthQuote->quote_status_id === QuoteStatusEnum::NewLead &&
             $healthQuote->pq_advisor_id === null &&
             ! in_array($healthQuote->source, [
+                LeadSourceEnum::IMCRM,
                 LeadSourceEnum::EA_IMCRM,
                 LeadSourceEnum::REVIVAL,
                 LeadSourceEnum::REVIVAL_REPLIED,

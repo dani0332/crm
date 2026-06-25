@@ -31,6 +31,7 @@ class PqaAllocationBackupJob implements ShouldQueue
             ->where('quote_status_id', $eligibleStatus)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [
+                LeadSourceEnum::IMCRM,
                 LeadSourceEnum::EA_IMCRM,
                 LeadSourceEnum::REVIVAL,
                 LeadSourceEnum::REVIVAL_REPLIED,

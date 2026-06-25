@@ -27,6 +27,7 @@ class FetchLeadPipe extends BasePqaAllocationPipe
                 QuoteStatusEnum::Lost,
             ])
             ->whereNotIn('source', [
+                LeadSourceEnum::IMCRM,
                 LeadSourceEnum::EA_IMCRM,
                 LeadSourceEnum::REVIVAL,
                 LeadSourceEnum::REVIVAL_REPLIED,
