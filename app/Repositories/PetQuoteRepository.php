@@ -78,10 +78,31 @@ class PetQuoteRepository extends BaseRepository
 
         EACollaborateHelper::applyEAIMCRMSource($dataArr);
 
+        if (request()->input('ea_model')) {
+            LoggerService::info('PetQuoteRepository: CAPI payload for EA lead', [
+                'ea_model' => $dataArr['eaModel'] ?? request()->input('ea_model'),
+                'source' => $dataArr['source'] ?? null,
+                'email' => $dataArr['email'] ?? null,
+                'lead_generator_id' => $dataArr['leadGeneratorId'] ?? null,
+                'advisor_id' => $dataArr['advisorId'] ?? null,
+                'quote_type_id' => $dataArr['quoteTypeId'] ?? null,
+            ]);
+        }
+
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('PetQuoteRepository: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+        }
 
         if (isset($response->quoteUID)) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $response->quoteUID)->firstOrFail();
+            EACollaborateHelper::dispatchLeadSubmittedEmail($quote, 'pet');
         }
 
         return $response;

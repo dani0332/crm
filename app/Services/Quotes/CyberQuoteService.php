@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Services\BranchAssignmentService;
 use App\Services\CustomerInsuredService;
 use App\Services\EACollaborateHelper;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
 use Illuminate\Http\Client\ConnectionException;
@@ -328,8 +329,34 @@ class CyberQuoteService extends BaseQuoteService
 
         EACollaborateHelper::applyEAIMCRMSource($data);
 
-        // Make API request to save the savings quote
+        if (request()->input('ea_model')) {
+            LoggerService::info('CyberQuoteService: CAPI payload for EA lead', [
+                'ea_model' => $data['eaModel'] ?? request()->input('ea_model'),
+                'source' => $data['source'] ?? null,
+                'email' => $data['email'] ?? null,
+                'lead_generator_id' => $data['leadGeneratorId'] ?? null,
+                'advisor_id' => $data['advisorId'] ?? null,
+                'quote_type_id' => $data['quoteTypeId'] ?? null,
+            ]);
+        }
+
         $response = Capi::request('/api/cyber/create', 'post', $data);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('CyberQuoteService: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $eaQuote = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'cyber');
+                }
+            }
+        }
 
         if (isset($response->quoteUID)) {
             $this->selfAssign(QuoteTypes::CYBER, $response->quoteUID, true);

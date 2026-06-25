@@ -160,8 +160,35 @@ class SavingsQuoteService extends BaseQuoteService
 
         EACollaborateHelper::applyEAIMCRMSource($data);
 
+        if (request()->input('ea_model')) {
+            LoggerService::info('SavingsQuoteService: CAPI payload for EA lead', [
+                'ea_model' => $data['eaModel'] ?? request()->input('ea_model'),
+                'source' => $data['source'] ?? null,
+                'email' => $data['email'] ?? null,
+                'lead_generator_id' => $data['leadGeneratorId'] ?? null,
+                'advisor_id' => $data['advisorId'] ?? null,
+                'quote_type_id' => $data['quoteTypeId'] ?? null,
+            ]);
+        }
+
         // Make API request to save the savings quote
         $response = Capi::request('/api/v1-save-savings-quote', 'post', $data);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('SavingsQuoteService: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $eaQuote = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'savings');
+                }
+            }
+        }
 
         if (isset($response->quoteUID)) {
             $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID, false);

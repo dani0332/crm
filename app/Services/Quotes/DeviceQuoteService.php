@@ -15,6 +15,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\DeviceMake;
+use App\Models\PersonalQuote;
 use App\Models\PolicyIssuance;
 use App\Services\BranchAssignmentService;
 use App\Services\EACollaborateHelper;
@@ -364,8 +365,37 @@ class DeviceQuoteService extends BaseQuoteService
 
         EACollaborateHelper::applyEAIMCRMSource($data);
 
+        if (request()->input('ea_model')) {
+            LoggerService::info('DeviceQuoteService: CAPI payload for EA lead', [
+                'ea_model' => $data['eaModel'] ?? request()->input('ea_model'),
+                'source' => $data['source'] ?? null,
+                'email' => $data['email'] ?? null,
+                'lead_generator_id' => $data['leadGeneratorId'] ?? null,
+                'advisor_id' => $data['advisorId'] ?? null,
+                'quote_type_id' => $data['quoteTypeId'] ?? null,
+            ]);
+        }
+
         // Make API request to save the device quote
         $response = Capi::request('/api/v1/device/create', 'post', $data);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('DeviceQuoteService: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->uuid ?? $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            $deviceQuoteUid = $response->uuid ?? $response->quoteUID ?? null;
+            if ($deviceQuoteUid) {
+                $eaQuote = PersonalQuote::where('uuid', $deviceQuoteUid)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'device');
+                }
+            }
+        }
+
         if (isset($response->code) && ! in_array($response->code, [200, 201], true) || isset($response->status) && ! in_array($response->status, [200, 201], true)) {
             return $response;
         }
