@@ -623,7 +623,7 @@ foreach ($quotePlan->addons as &$addon) {
             ],
             [
                 "code" => "heading",
-                "title" => "Additional Covers",
+                "title" => "Optional Covers",
                 "type" => ""
             ],
             [

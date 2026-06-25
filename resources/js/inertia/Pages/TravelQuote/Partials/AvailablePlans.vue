@@ -89,16 +89,14 @@ const planForm = useForm({
 
 const totalPremiumWithVat = computed(() => {
   let addonVat = 0;
-  const addons = planForm.addons ?? [];
-  addons.forEach(addon => {
-    (addon.addonOptions ?? []).forEach(option => {
+  props.plan.addons.forEach(addon => {
+    addon.addonOptions.forEach(option => {
       if (option.isSelected && option.price != 0) {
         addonVat += useRoundIt(option.price) + useRoundIt(option.vat);
       }
     });
   });
-  const baseVat = props.plan.vat ?? planForm.premium_vat ?? 0;
-  return useRoundIt(planForm.discounted_premium + addonVat + baseVat);
+  return useRoundIt(props.plan.discountPremium + addonVat + props.plan.vat);
 });
 
 const validateAddons = addons => {
