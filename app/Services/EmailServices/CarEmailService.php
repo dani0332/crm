@@ -424,21 +424,13 @@ class CarEmailService extends BaseService
             if (empty($lead->nb_flow_executed_at)) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
                 $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS);
-                $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
-                if ($birdMotorEventNB) {
-                    $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                    info("NBMotorWorkFlow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                    info("NBMotorWorkFlow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
-                    $lead->nb_flow_executed_at = now();
-                    info("NBMotorWorkFlow lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-                    $lead->save();
+                app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS, (array) $emailData);
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS, QuoteTypeId::Car);
+                info("NBMotorWorkFlow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                $lead->nb_flow_executed_at = now();
+                info("NBMotorWorkFlow lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+                $lead->save();
 
-                    if (! empty($response->headers['Run-Id'])) {
-                        $this->createQuoteFlowDetails($lead, $response, QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS->value);
-                    }
-                } else {
-                    info("NBMotorWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-                }
             } else {
                 info("NBMotorWorkFlow already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$lead->uuid} | Time: ".now());
             }
@@ -459,6 +451,9 @@ class CarEmailService extends BaseService
             'customerEmail' => $lead->email,
             'refID' => $lead->code,
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'customerId' => $lead->customer_id ?? '',
+            'firstName' => $lead->first_name ?? '',
+            'lastName' => $lead->last_name ?? '',
             'companyName' => $lead->company_name ?? '',
             'advisorId' => $advisor->id ?? null,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
@@ -511,15 +506,12 @@ class CarEmailService extends BaseService
             info('Sending NBEventFollowup followups email for lead: '.$lead->uuid.' | Time: '.now());
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::NEW_BUSINESS_MOTOR_EVENT_FOLLOWUPS, $templateType);
-            $birdMotorNBEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
-            if ($birdMotorNBEvent) {
-                $response = app(BirdService::class)->triggerWebHookRequest($birdMotorNBEvent->value, $emailData);
-                info("NBEventFollowup event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                info("NBEventFollowup response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
-                info("NBEventFollowup lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-            } else {
-                info("NBEventFollowup key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-            }
+
+            $webEngage = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::NEW_BUSINESS_MOTOR_EVENT_FOLLOWUPS, (array) $emailData);
+
+            info("NBEventFollowup event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+            info("NBEventFollowup lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+
         } catch (\Throwable $th) {
             $errorMessage = "NBEventFollowup-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             info($errorMessage);
@@ -796,21 +788,10 @@ class CarEmailService extends BaseService
             LoggerService::info(self::class.' - Sending Car Company Commercial OCB email');
             $advisor = User::where('id', $lead->advisor_id)->first();
             $pdfUrl = $this->attachCarOCBPDF($lead->uuid, $lead->code);
-            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::CAR_COMMERCIAL_OCB, pdfUrl: $pdfUrl);
+            $emailData = $this->buildEmailDataForWEFlow($lead, $advisor, WorkflowTypeEnum::CAR_COMMERCIAL_OCB, pdfUrl: $pdfUrl);
+            $webEngage = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::CAR_COMMERCIAL_OCB, (array) $emailData);
 
-            $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
-            if ($birdMotorEventNB) {
-                $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                LoggerService::info(self::class.' - sendCarCompanyCommercialOCB - Event triggered ', ['response_status_code' => $response->status_code, 'lead_status_id' => $lead->quote_status_id]);
-
-                if (! empty($response->headers['Run-Id'])) {
-                    $this->createQuoteFlowDetails($lead, $response);
-                }
-            } else {
-                LoggerService::info(self::class.' - sendCarCompanyCommercialOCB key not found ');
-            }
-
-            return $response ?? null;
+            return true;
         } catch (\Exception  $exception) {
             LoggerService::error(self::class.' - sendCarCompanyCommercialOCB - Error while sending quote workflow for lead ', exception: $exception);
         }
