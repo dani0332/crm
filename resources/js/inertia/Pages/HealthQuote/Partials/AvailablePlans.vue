@@ -448,13 +448,19 @@ const markMemberBasePriceRevise = (event, id) => {
   }
 };
 
+watch(
+  () => props.plan?.id,
+  () => {
+    selectedCopay.value = [];
+  },
+);
+
 onUpdated(() => {
   defaultCopayId.value = props.plan?.selectedCopayId;
   hidePlan.value = props.plan?.isHidden;
   loadingPrices.value = [];
   adjustingPrices.value = [];
   manualPlansMembersPremium.value = [];
-  selectedCopay.value = [];
   isManual.value = false;
   loadingPriceBeingUpdated.value = false;
   getDefaultVaues();

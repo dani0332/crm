@@ -44,6 +44,27 @@ class LookupSeeder extends Seeder
         $this->createRmCategories();
         $this->createReferralSources();
         $this->healthRevampLookups();
+        $this->createCorplineLeadTypes();
+    }
+
+    private function createCorplineLeadTypes(): void
+    {
+        $types = [
+            ['code' => 'renewal', 'text' => 'Renewal'],
+            ['code' => 'non-renewal', 'text' => 'Non-Renewal'],
+            ['code' => 'extendable', 'text' => 'Extendable'],
+        ];
+
+        foreach ($types as $type) {
+            Lookup::firstOrCreate([
+                'key' => LookupsEnum::CORPLINE_LEAD_TYPE->value,
+                'code' => $type['code'],
+            ], [
+                'text' => $type['text'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     private function sendUpdateCancelOptions(): void
@@ -839,6 +860,66 @@ class LookupSeeder extends Seeder
             'key' => LookupsEnum::RM_CATEGORY,
             'code' => 'rgta',
             'text' => 'RGTA',
+        ], [
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => LookupsEnum::RM_CATEGORY,
+            'code' => 'bdms-rgta',
+            'text' => 'BDMs / RGTA',
+        ], [
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => LookupsEnum::RM_CATEGORY,
+            'code' => 'corpline',
+            'text' => 'Corpline',
+        ], [
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => LookupsEnum::RM_CATEGORY,
+            'code' => 'pcp',
+            'text' => 'PCP',
+        ], [
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => LookupsEnum::RM_CATEGORY,
+            'code' => 'core-new-business',
+            'text' => 'Core - New Business',
+        ], [
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => LookupsEnum::RM_CATEGORY,
+            'code' => 'core-renewals',
+            'text' => 'Core - Renewals',
+        ], [
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Lookup::firstOrCreate([
+            'key' => LookupsEnum::RM_CATEGORY,
+            'code' => 'enabling-function',
+            'text' => 'Enabling Function',
         ], [
             'is_active' => 1,
             'created_at' => now(),

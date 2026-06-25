@@ -67,6 +67,7 @@ const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\PersonalQuote';
 const modelClassDevice = 'App\\Models\\DeviceQuote';
+const permissionEnum = page.props.permissionsEnum;
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
@@ -790,6 +791,28 @@ const formatToDateTime = dateString => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ quote.quote_detail?.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ quote.quote_detail?.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ quote.quote_detail?.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ quote.quote_detail?.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ quote.quote_detail?.utm_term }}</dd>
+                </div>
+              </template>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF INSURANCE</dt>

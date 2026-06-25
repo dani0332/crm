@@ -213,17 +213,17 @@ class HealthQuoteService extends BaseService
             'hqr.insurance_provider_id',
             DB::raw('
                 CASE
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
-                    WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
-                    ELSE insurer_aml_status
+                    WHEN hqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                    WHEN hqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                    WHEN hqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                    WHEN hqr.insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                    ELSE hqr.insurer_aml_status
                 END AS insurer_aml_status_display
             '),
             'c.pcp_tag',
             'hqr.pc_qualified',
             DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
-            DB::raw(HealthQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+            DB::raw(HealthQuote::formattedPcQualifiedCase('hqr').' as pc_qualified_formatted'),
             // Sub-source fields
             'hqr.sub_source_id',
             'hqr.sub_source_options_id',
@@ -234,8 +234,8 @@ class HealthQuoteService extends BaseService
             'ub.branch_id as advisor_primary_branch_id',
             'b.name as lead_branch_name',
             'b.id as lead_branch_id',
-            'is_quote_locked',
-            'is_branch_applicable',
+            'hqr.is_quote_locked',
+            'hqr.is_branch_applicable',
             'hqr.api_issuance_status_id',
             'hqr.insurer_api_status_id',
             'hqr.policy_holder_category_code',
@@ -287,8 +287,29 @@ class HealthQuoteService extends BaseService
             ->leftJoin('branches as b', 'b.id', '=', 'hqr.branch_id');
     }
 
+    private function applyUtmJoin(): void
+    {
+        if (auth()->user()?->can(PermissionsEnum::VIEW_UTM_SECTION)) {
+            $this->query
+                ->leftJoin('personal_quotes as pq', function ($join) {
+                    $join->on('pq.uuid', '=', 'hqr.uuid')
+                        ->where('pq.quote_type_id', '=', QuoteTypeId::Health);
+                })
+                ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', '=', 'pq.id')
+                ->addSelect(
+                    'pqd.utm_source',
+                    'pqd.utm_medium',
+                    'pqd.utm_campaign',
+                    'pqd.utm_content',
+                    'pqd.utm_term',
+                );
+        }
+    }
+
     public function getEntity($id)
     {
+        $this->applyUtmJoin();
+
         return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
     }
 

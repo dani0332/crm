@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
+use App\Http\Controllers\API\EpCancellationCallbackController;
 use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
@@ -100,6 +101,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
 
     Route::get('/get-ep-workflow-data', [EmbeddedProductController::class, 'getEpWorkflowData'])->name('get.ep-workflow-data');
+    Route::post('/ep-cancellation-callback', EpCancellationCallbackController::class)->name('api.ep-cancellation-callback');
     Route::post('/imcrm/debug/quote-documents/rewatermark', [ApiController::class, 'rewatermarkQuoteDocuments'])->name('debug.rewatermark-quote-documents');
 
     // !! Do not remove this route, it is used for debugging purposes and do not enable it in production without approval from the team !!.
@@ -110,6 +112,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
+Route::post('/imcrm/trigger-ep-retargeting-email', [EmbeddedProductController::class, 'triggerEpRetargetingEmail'])->name('trigger.ep-retargeting-email');
 // Route::post('/customers/tag-private-clientss', [ApiController::class, 'tagPrivateClients'])->name('tagPrivateClientss');
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);

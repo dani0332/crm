@@ -348,11 +348,13 @@ trait QuoteModelTrait
         );
     }
 
-    public static function formattedPcQualifiedCase(): string
+    public static function formattedPcQualifiedCase(string $tableAlias = ''): string
     {
+        $column = $tableAlias ? $tableAlias.'.pc_qualified' : 'pc_qualified';
+
         return "
             CASE
-                WHEN pc_qualified = 1 THEN 'Yes'
+                WHEN {$column} = 1 THEN 'Yes'
                 ELSE 'No'
             END
         ";
