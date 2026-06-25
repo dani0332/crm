@@ -105,7 +105,7 @@ class CustomerController extends Controller
     {
         $validated = $customerUploadRequest->validated();
 
-        $path = $customerUploadRequest->file('file_name')->store('customer-uploads');
+        $path = $customerUploadRequest->file('file_name')->store('customer-uploads', 'azureIMPrivate');
 
         ProcessCustomerUploadJob::dispatch(
             $path,

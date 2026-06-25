@@ -27,7 +27,6 @@ class ProcessCustomerUploadJob implements ShouldQueue
     public int $timeout = 600;
     public int $backoff = 60;
     public int $retryAfter = 660;
-    public string $queue = 'customer-upload';
 
     public function __construct(
         private readonly string $filePath,
@@ -35,11 +34,13 @@ class ProcessCustomerUploadJob implements ShouldQueue
         private readonly string $cdbId,
         private readonly bool $invitationEmail,
         private readonly int $userId,
-    ) {}
+    ) {
+        $this->onQueue('customer-upload');
+    }
 
     public function handle(SendEmailCustomerService $sendEmailCustomerService, BerlinService $berlinService): void
     {
-        if (! Storage::exists($this->filePath)) {
+        if (! Storage::disk('azureIMPrivate')->exists($this->filePath)) {
             Log::error('ProcessCustomerUploadJob: upload file missing, cannot import', [
                 'path' => $this->filePath,
                 'userId' => $this->userId,
@@ -56,7 +57,7 @@ class ProcessCustomerUploadJob implements ShouldQueue
             $sendEmailCustomerService,
             $berlinService,
         );
-        Excel::import($import, Storage::path($this->filePath));
+        Excel::import($import, $this->filePath, 'azureIMPrivate');
 
         collect($import->customersToExtend)
             ->chunk(50)
@@ -66,7 +67,7 @@ class ProcessCustomerUploadJob implements ShouldQueue
                     ->delay($delay));
             });
 
-        Storage::delete($this->filePath);
+        Storage::disk('azureIMPrivate')->delete($this->filePath);
 
         try {
             event(new CustomerUploadCompleted($this->userId, 'success', $import->rowCount, $this->cdbId));
@@ -86,7 +87,7 @@ class ProcessCustomerUploadJob implements ShouldQueue
             'error' => $e->getMessage(),
         ]);
 
-        Storage::delete($this->filePath);
+        Storage::disk('azureIMPrivate')->delete($this->filePath);
 
         event(new CustomerUploadCompleted($this->userId, 'failed', 0, $this->cdbId));
     }
