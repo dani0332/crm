@@ -27,7 +27,7 @@ class ProcessCustomerUploadJob implements ShouldQueue
     public int $timeout = 600;
     public int $backoff = 60;
     public int $retryAfter = 660;
-    public string $queue = 'process-customer-upload';
+    public string $queue = 'customer-upload';
 
     public function __construct(
         private readonly string $filePath,
