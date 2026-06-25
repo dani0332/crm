@@ -380,7 +380,10 @@ class AMLService
             ],
             function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser, $isAutomation) {
                 $message->to($emailRecipients);
-                if (! $isAutomation && (in_array($loginUserEmail, $emailRecipients)) || ! $forComplianceSuperUser) {
+                if (
+                    ! $isAutomation &&
+                    (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser)
+                ) {
                     $message->cc($loginUserEmail);
                 }
                 $message->subject($emailSubject);
