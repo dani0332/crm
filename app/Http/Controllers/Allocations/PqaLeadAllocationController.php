@@ -134,6 +134,7 @@ class PqaLeadAllocationController extends Controller
         $groupMedicalCount = DB::table('business_quote_request')
             ->whereNull('pq_advisor_id')
             ->where('business_type_of_insurance_id', $groupMedicalTypeId)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake])
             ->whereDate('created_at', $today)
             ->count();
 
