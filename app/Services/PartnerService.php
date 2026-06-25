@@ -56,7 +56,7 @@ class PartnerService
         return [
             'quote' => $quote,
             'insuranceProvider' => $insuranceProvider,
-            'partnerEmail' => $partner->email,
+            'partnerName' => $partner->name,
         ];
     }
 
@@ -99,7 +99,7 @@ class PartnerService
             return;
         }
 
-        PartnerPolicyDocumentJob::dispatch($filteredDocuments, $validation['partnerEmail'], $quote->uuid, $quoteType->id());
+        PartnerPolicyDocumentJob::dispatch($filteredDocuments, $validation['partnerName'], $quote->uuid, $quoteType->id());
     }
 
     /**
