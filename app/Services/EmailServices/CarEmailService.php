@@ -533,19 +533,9 @@ class CarEmailService extends BaseService
         try {
             info(self::class.' - Sending sendPCPFollowups followups email for lead: '.$lead->uuid.' | Time: '.now());
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::MOTOR_PCP_FOLLOWUPS);
-            $birdMotorPCPEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_PCP_FOLLOWUPS)->first();
-            if ($birdMotorPCPEvent) {
-                $response = app(BirdService::class)->triggerWebHookRequest($birdMotorPCPEvent->value, $emailData);
-                if (! empty($response->headers['Run-Id'])) {
-                    $this->createQuoteFlowDetails($lead, $response, QuoteFlowType::MOTOR_PCP_FOLLOWUPS->value);
-                }
-                LoggerService::info(self::class." - sendPCPFollowups event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                LoggerService::info(self::class." - sendPCPFollowups response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
-                LoggerService::info(self::class." - sendPCPFollowups lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-            } else {
-                LoggerService::info(self::class." - sendPCPFollowups key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-            }
+            $emailData = $this->buildEmailDataForWEFlow($lead, $advisor, WorkflowTypeEnum::MOTOR_PCP_FOLLOWUPS);
+            app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::MOTOR_PCP_FOLLOWUPS, (array) $emailData);
+            LoggerService::info(self::class." - sendPCPFollowups event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
         } catch (\Throwable $th) {
             $errorMessage = self::class." - sendPCPFollowups-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             LoggerService::error($errorMessage);
@@ -559,22 +549,48 @@ class CarEmailService extends BaseService
         try {
             LoggerService::info(self::class.' - Sending sendPCPOCBIntroEmail followups email for lead: '.$lead->uuid.' | Time: '.now());
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::MOTOR_PCP_OCB);
-            $birdMotorPCPEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_PCP_FOLLOWUPS)->first();
-            if ($birdMotorPCPEvent) {
-                $response = app(BirdService::class)->triggerWebHookRequest($birdMotorPCPEvent->value, $emailData);
-                LoggerService::info(self::class." - sendPCPOCBIntroEmail event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                LoggerService::info(self::class." - sendPCPOCBIntroEmail response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
-                LoggerService::info(self::class." - sendPCPOCBIntroEmail lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-            } else {
-                info(self::class." - sendPCPOCBIntroEmail key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-            }
+            $emailData = $this->buildEmailDataForWEFlow($lead, $advisor, WorkflowTypeEnum::MOTOR_PCP_OCB);
+            app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::MOTOR_PCP_OCB, (array) $emailData);
+
         } catch (\Throwable $th) {
             $errorMessage = self::class." - sendPCPOCBIntroEmail-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             LoggerService::error($errorMessage);
             LoggerService::error(self::class." - sendPCPOCBIntroEmail-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
 
         }
+    }
+    public function buildEmailDataForWEFlow($lead, $advisor, $workflowType, $pdfUrl = null)
+    {
+        $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+
+        return (object) [
+            'quoteUID' => $lead->uuid,
+            'customerEmail' => $lead->email,
+            'refID' => $lead->code,
+            'customerId' => $lead->customer_id ?? '',
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'firstName' => $lead->first_name ?? '',
+            'lastName' => $lead->last_name ?? '',
+            'companyName' => $lead->company_name ?? '',
+            'advisorId' => $advisor->id ?? null,
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'carMakeId' => ! empty($lead->car_make_id) ? true : false,
+            'documentUrl' => $documentUrl ?? null,
+            'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflowType' => $workflowType,
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+            'createdAt' => Carbon::parse($lead->created_at)->format('Y-m-d\TH:i:sO'),
+            'pdfUrl' => $pdfUrl ?? '',
+        ];
     }
     public function sendAIGWorkflow($lead)
     {
