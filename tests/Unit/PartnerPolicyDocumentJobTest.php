@@ -1,9 +1,12 @@
 <?php
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteTagEnums;
+use App\Enums\QuoteTypeId;
 use App\Jobs\PartnerPolicyDocumentJob;
+use App\Models\QuoteTag;
 use App\Services\BirdService;
+use App\Services\CentralService;
 use App\Services\QuoteDocumentService;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -20,23 +23,25 @@ afterEach(function () {
     Mockery::close();
 });
 
-describe('handle - buildDocumentPayload', function () {
-    it('generates fresh URLs at job execution time using doc_url', function () {
-        $quoteDocumentServiceMock = Mockery::mock(QuoteDocumentService::class)->makePartial();
-        $quoteDocumentServiceMock
-            ->shouldReceive('getDocumentUrl')
-            ->with('https://storage.example.com/doc.pdf', 'azureIMPrivate')
+describe('handle', function () {
+    it('sends email via BirdService and creates QuoteTag on success', function () {
+        $carQuote = TestDataSeeder::createCarQuote(['uuid' => 'test-uuid']);
+
+        $emailData = (object) ['partnerName' => 'Test Partner', 'some' => 'data'];
+
+        $centralServiceMock = mock(CentralService::class);
+        $centralServiceMock->shouldReceive('preparePolicyToCustomerData')
             ->once()
-            ->andReturn('https://azure.example.com/fresh-url.pdf');
+            ->andReturn($emailData);
+
+        $quoteDocumentServiceMock = mock(QuoteDocumentService::class);
+        $quoteDocumentServiceMock->shouldReceive('getHandBookDocuments')
+            ->once()
+            ->andReturn(collect());
 
         $birdServiceMock = mock(BirdService::class);
         $birdServiceMock->shouldReceive('triggerWebHookRequest')
             ->once()
-            ->withArgs(function ($url, $emailData) {
-                return $emailData->{DocumentTypeCode::TI} === 'https://azure.example.com/fresh-url.pdf'
-                    && $emailData->{'EXT_'.DocumentTypeCode::TI} === 'pdf'
-                    && $emailData->partnerEmail === 'partner@example.com';
-            })
             ->andReturn((object) ['status_code' => 200]);
 
         TestDataSeeder::seedApplicationStorage([
@@ -44,66 +49,77 @@ describe('handle - buildDocumentPayload', function () {
         ]);
 
         $job = new PartnerPolicyDocumentJob(
-            rawDocuments: [
-                [
-                    'document_type_code' => DocumentTypeCode::TI,
-                    'doc_url' => 'https://storage.example.com/doc.pdf',
-                ],
-            ],
-            partnerEmail: 'partner@example.com',
+            rawDocuments: [['document_type_code' => 'TI', 'doc_url' => 'https://storage.example.com/doc.pdf']],
+            partnerName: 'Test Partner',
             quoteUuid: 'test-uuid',
-            quoteTypeId: 1,
+            quoteTypeId: QuoteTypeId::Car,
         );
 
-        $job->handle($quoteDocumentServiceMock);
+        $job->handle();
+
+        expect(QuoteTag::where([
+            'quote_uuid' => 'test-uuid',
+            'name' => QuoteTagEnums::PARTNER_POLICY_DOCUMENT_SENT,
+        ])->exists())->toBeTrue();
     });
 
-    it('prefers watermarked_doc_url over doc_url when generating URLs', function () {
-        $quoteDocumentServiceMock = Mockery::mock(QuoteDocumentService::class)->makePartial();
-        $quoteDocumentServiceMock
-            ->shouldReceive('getDocumentUrl')
-            ->with('https://storage.example.com/watermarked.pdf', 'azureIMPrivate')
+    it('does not create QuoteTag when Bird returns non-200', function () {
+        TestDataSeeder::createCarQuote(['uuid' => 'test-uuid']);
+
+        $centralServiceMock = mock(CentralService::class);
+        $centralServiceMock->shouldReceive('preparePolicyToCustomerData')
             ->once()
-            ->andReturn('https://azure.example.com/fresh-watermarked.pdf');
+            ->andReturn((object) []);
+
+        $quoteDocumentServiceMock = mock(QuoteDocumentService::class);
+        $quoteDocumentServiceMock->shouldReceive('getHandBookDocuments')
+            ->once()
+            ->andReturn(collect());
 
         $birdServiceMock = mock(BirdService::class);
         $birdServiceMock->shouldReceive('triggerWebHookRequest')
             ->once()
-            ->withArgs(function ($url, $emailData) {
-                return $emailData->{DocumentTypeCode::TI} === 'https://azure.example.com/fresh-watermarked.pdf';
-            })
-            ->andReturn((object) ['status_code' => 200]);
+            ->andReturn((object) ['status_code' => 500]);
 
         TestDataSeeder::seedApplicationStorage([
             ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
         ]);
 
         $job = new PartnerPolicyDocumentJob(
-            rawDocuments: [
-                [
-                    'document_type_code' => DocumentTypeCode::TI,
-                    'doc_url' => 'https://storage.example.com/original.pdf',
-                    'watermarked_doc_url' => 'https://storage.example.com/watermarked.pdf',
-                ],
-            ],
-            partnerEmail: 'partner@example.com',
+            rawDocuments: [['document_type_code' => 'TI', 'doc_url' => 'https://storage.example.com/doc.pdf']],
+            partnerName: 'Test Partner',
             quoteUuid: 'test-uuid',
-            quoteTypeId: 1,
+            quoteTypeId: QuoteTypeId::Car,
         );
 
-        $job->handle($quoteDocumentServiceMock);
+        $job->handle();
+
+        expect(QuoteTag::where([
+            'quote_uuid' => 'test-uuid',
+            'name' => QuoteTagEnums::PARTNER_POLICY_DOCUMENT_SENT,
+        ])->exists())->toBeFalse();
     });
 
-    it('uses empty string when URL generation returns null', function () {
-        $quoteDocumentServiceMock = Mockery::mock(QuoteDocumentService::class)->makePartial();
-        $quoteDocumentServiceMock->shouldReceive('getDocumentUrl')->once()->andReturn(null);
+    it('passes rawDocuments document type codes to preparePolicyToCustomerData', function () {
+        TestDataSeeder::createCarQuote(['uuid' => 'test-uuid']);
+
+        $quoteDocumentServiceMock = mock(QuoteDocumentService::class);
+        $quoteDocumentServiceMock->shouldReceive('getHandBookDocuments')
+            ->once()
+            ->andReturn(collect());
+
+        $centralServiceMock = mock(CentralService::class);
+        $centralServiceMock->shouldReceive('preparePolicyToCustomerData')
+            ->once()
+            ->withArgs(function ($quote, $quoteTypeId, $extra, $existingEmailData) {
+                return $existingEmailData->quoteDocuments !== null
+                    && $existingEmailData->handBookDocuments !== null;
+            })
+            ->andReturn((object) []);
 
         $birdServiceMock = mock(BirdService::class);
         $birdServiceMock->shouldReceive('triggerWebHookRequest')
             ->once()
-            ->withArgs(function ($url, $emailData) {
-                return $emailData->{DocumentTypeCode::TI} === '';
-            })
             ->andReturn((object) ['status_code' => 200]);
 
         TestDataSeeder::seedApplicationStorage([
@@ -112,46 +128,27 @@ describe('handle - buildDocumentPayload', function () {
 
         $job = new PartnerPolicyDocumentJob(
             rawDocuments: [
-                [
-                    'document_type_code' => DocumentTypeCode::TI,
-                    'doc_url' => 'https://storage.example.com/doc.pdf',
-                ],
+                ['document_type_code' => 'TI', 'doc_url' => 'https://storage.example.com/doc1.pdf'],
+                ['document_type_code' => 'CTIRBB', 'doc_url' => 'https://storage.example.com/doc2.pdf'],
             ],
-            partnerEmail: 'partner@example.com',
+            partnerName: 'Test Partner',
             quoteUuid: 'test-uuid',
-            quoteTypeId: 1,
+            quoteTypeId: QuoteTypeId::Car,
         );
 
-        $job->handle($quoteDocumentServiceMock);
+        $job->handle();
     });
 
-    it('generates payload for multiple documents', function () {
-        $quoteDocumentServiceMock = Mockery::mock(QuoteDocumentService::class)->makePartial();
-        $quoteDocumentServiceMock->shouldReceive('getDocumentUrl')->twice()->andReturn('https://azure.example.com/doc.pdf');
-
-        $birdServiceMock = mock(BirdService::class);
-        $birdServiceMock->shouldReceive('triggerWebHookRequest')
-            ->once()
-            ->withArgs(function ($url, $emailData) {
-                return property_exists($emailData, DocumentTypeCode::TI)
-                    && property_exists($emailData, DocumentTypeCode::CTIRBB);
-            })
-            ->andReturn((object) ['status_code' => 200]);
-
-        TestDataSeeder::seedApplicationStorage([
-            ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL => 'https://example.test/bird/workflow',
-        ]);
+    it('logs error on job failure without rethrowing', function () {
+        $exception = new Exception('Test exception');
 
         $job = new PartnerPolicyDocumentJob(
-            rawDocuments: [
-                ['document_type_code' => DocumentTypeCode::TI, 'doc_url' => 'https://storage.example.com/doc1.pdf'],
-                ['document_type_code' => DocumentTypeCode::CTIRBB, 'doc_url' => 'https://storage.example.com/doc2.pdf'],
-            ],
-            partnerEmail: 'partner@example.com',
+            rawDocuments: [],
+            partnerName: 'Test Partner',
             quoteUuid: 'test-uuid',
-            quoteTypeId: 1,
+            quoteTypeId: QuoteTypeId::Car,
         );
 
-        $job->handle($quoteDocumentServiceMock);
+        expect(fn () => $job->failed($exception))->not->toThrow(Exception::class);
     });
 });

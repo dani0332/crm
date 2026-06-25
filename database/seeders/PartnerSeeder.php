@@ -17,7 +17,7 @@ class PartnerSeeder extends Seeder
     {
         $partnerEmail = 'sureshbabu.rajendran@myalfred.com';
         if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
-            $partnerEmail = '';
+            $partnerEmail = 'fni.uae@cars24.com';
         }
 
         InsurancePartner::firstOrCreate(

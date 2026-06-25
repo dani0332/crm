@@ -4,8 +4,11 @@ namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTagEnums;
+use App\Enums\QuoteTypeId;
+use App\Models\CarQuote;
 use App\Models\QuoteTag;
 use App\Services\BirdService;
+use App\Services\CentralService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Bus\Queueable;
@@ -24,42 +27,32 @@ class PartnerPolicyDocumentJob implements ShouldBeUnique, ShouldQueue
     /** @var array<int, array<string, mixed>> Raw document records with doc_url / watermarked_doc_url */
     private array $rawDocuments;
 
-    private string $partnerEmail;
+    private string $partnerName;
     private string $quoteUuid;
     private int $quoteTypeId;
 
-    public function __construct(array $rawDocuments, string $partnerEmail, string $quoteUuid, int $quoteTypeId)
+    public function __construct(array $rawDocuments, string $partnerName, string $quoteUuid, int $quoteTypeId)
     {
         $this->rawDocuments = $rawDocuments;
-        $this->partnerEmail = $partnerEmail;
+        $this->partnerName = $partnerName;
         $this->quoteUuid = $quoteUuid;
         $this->quoteTypeId = $quoteTypeId;
     }
 
-    /**
-     * Get the unique ID for the job to prevent duplicate processing.
-     */
     public function uniqueId(): string
     {
         return "partner-policy-document-job-{$this->quoteUuid}-{$this->quoteTypeId}";
     }
 
     /**
-     * Execute the job.
-     *
      * URLs are generated here — at execution time — so they are never expired
      * by the time Bird receives them, even under queue backlog or retries.
      */
-    public function handle(QuoteDocumentService $quoteDocumentService): void
+    public function handle(): void
     {
-        LoggerService::info('PartnerPolicyDocumentJob - Starting job', extra: ['partnerEmail' => $this->partnerEmail]);
+        LoggerService::info('PartnerPolicyDocumentJob - Starting job', extra: ['partnerName' => $this->partnerName]);
 
-        $documentPayload = $this->buildDocumentPayload($quoteDocumentService);
-
-        $emailData = (object) [
-            'partnerEmail' => $this->partnerEmail,
-            ...$documentPayload,
-        ];
+        $emailData = $this->buildEmailPayload();
 
         $birdUrlKey = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL);
         $response = app(BirdService::class)->triggerWebHookRequest($birdUrlKey, $emailData);
@@ -89,21 +82,27 @@ class PartnerPolicyDocumentJob implements ShouldBeUnique, ShouldQueue
         LoggerService::error('PartnerPolicyDocumentJob - Failed', exception: $ex);
     }
 
-    /**
-     * Generate fresh temporary Azure URLs at job execution time.
-     *
-     * @return array<string, string>
-     */
-    private function buildDocumentPayload(QuoteDocumentService $quoteDocumentService): array
+    private function buildEmailPayload(): object
     {
-        $payload = [];
+        $quote = CarQuote::where('uuid', $this->quoteUuid)
+            ->with(['advisor', 'carMake', 'carModel', 'carModelDetail', 'insuranceProvider', 'plan.insuranceProvider'])
+            ->first();
 
-        foreach ($this->rawDocuments as $document) {
-            $docUrl = $document['watermarked_doc_url'] ?? $document['doc_url'];
-            $payload[$document['document_type_code']] = $quoteDocumentService->getDocumentUrl($docUrl, 'azureIMPrivate') ?? '';
-            $payload['EXT_'.$document['document_type_code']] = $quoteDocumentService->getDocumentExtension($docUrl) ?? '';
-        }
+        $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
 
-        return $payload;
+        $documentTypeCodes = collect($this->rawDocuments)->pluck('document_type_code')->toArray();
+        $quoteDocuments = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->latest()->get();
+
+        $existingEmailData = (object) [
+            'quoteDocuments' => $quoteDocuments,
+            'handBookDocuments' => $handBookDocuments,
+        ];
+
+        return app(CentralService::class)->preparePolicyToCustomerData(
+            $quote,
+            QuoteTypeId::Car,
+            null,
+            $existingEmailData
+        );
     }
 }
