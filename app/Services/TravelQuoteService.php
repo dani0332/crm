@@ -292,7 +292,7 @@ class TravelQuoteService extends BaseService
     public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest): array
     {
         $message = '';
-        $requiredProperty = collect(['first_name', 'dob', 'nationality_id', 'passport']);
+        $requiredProperty = collect(['first_name', 'dob', 'nationality_id']);
 
         $missingDetails = [];
         foreach ($requiredProperty as $value) {
@@ -305,6 +305,10 @@ class TravelQuoteService extends BaseService
                 };
                 array_push($missingDetails, ucwords($propertyName));
             }
+        }
+
+        if (($travelQuoteRequest['id_type'] ?? null) === 'passport' && empty($travelQuoteRequest['id_number'])) {
+            $missingDetails[] = 'Passport';
         }
 
         $missingDetailCount = count($missingDetails);

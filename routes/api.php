@@ -170,6 +170,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/claim-documents', [QuoteDocumentController::class, 'getClaimDocuments']);
 
     Route::post('/imcrm/update-revival-lead-source', [ApiController::class, 'updateRevivalLeadSource'])->name('updateRevivalLeadSource');
+    Route::post('/imcrm/travel/retrigger-aml-screening', [AMLController::class, 'retriggerTravelAmlScreening'])->name('api.imcrm.travel.retrigger-aml-screening');
 });
 
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

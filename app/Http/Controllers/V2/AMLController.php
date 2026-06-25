@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -12,6 +14,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -25,13 +28,16 @@ use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
 use App\Http\Requests\AutomateQuoteAmlScreeningRequest;
 use App\Http\Requests\InsuredKycRequest;
+use App\Http\Requests\RetriggerTravelAmlScreeningRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Http\Requests\TogglePolicyIssuanceAutomationRequest;
 use App\Http\Requests\UpdateAdditionalVehicleDriverDetailsRequest;
+use App\Jobs\AmlScreeningAutomationJob;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
+use App\Models\AmlAutomation;
 use App\Models\BikeQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\KycLog;
@@ -867,6 +873,50 @@ class AMLController extends Controller
                 'message' => 'Unable to toggle policy issuance automation, Please try again later.',
             ], 500);
         }
+    }
+
+    /**
+     * IMCRM: bulk-retrigger AML screening automation for Travel quotes in a given date range.
+     *
+     * Finds Travel quotes with PolicyBooked status and AML_PENDING, then queues
+     * AmlScreeningAutomationJob for each in chunks of 50.
+     */
+    public function retriggerTravelAmlScreening(RetriggerTravelAmlScreeningRequest $request): JsonResponse
+    {
+        getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_AML_RETRIGGER_ENABLED) || abort(403, 'Retriggering AML screening is disabled.');
+
+        $validated = $request->validated();
+
+        $startDate = Carbon::parse($validated['start_date'])->startOfDay();
+        $endDate = Carbon::parse($validated['end_date'])->endOfDay();
+
+        $dispatched = 0;
+
+        TravelQuote::query()
+            ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
+            ->where(function ($query): void {
+                $query->whereNull('aml_status')
+                    ->orWhere('aml_status', AMLStatusCode::AMLPending);
+            })
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->select(['id', 'code', 'uuid'])
+            ->chunk(50, function ($quotes) use (&$dispatched): void {
+                foreach ($quotes as $quote) {
+                    AmlAutomation::updateOrCreate(
+                        ['code' => $quote->code],
+                        ['status' => AmlAutomationStatus::Queue->value],
+                    );
+
+                    AmlScreeningAutomationJob::dispatch(QuoteTypes::TRAVEL, $quote);
+                    $dispatched++;
+                }
+            });
+
+        return response()->json([
+            'success' => true,
+            'message' => "Retrigger AML screening dispatched for {$dispatched} Travel quote(s).",
+            'data' => ['dispatched_count' => $dispatched],
+        ]);
     }
 
     /**
