@@ -22,6 +22,7 @@ class ProcessCustomerUploadJob implements ShouldQueue
 
     private const SUBSCRIPTION_TYPE = 'CORPORATE';
     private const SUBSCRIPTION_QUEUE = 'corporate-myalfred-we';
+    private const SUBSCRIPTION_DISPATCH_DELAY_SECONDS = 1;
 
     public int $tries = 2;
     public int $timeout = 600;
@@ -67,7 +68,7 @@ class ProcessCustomerUploadJob implements ShouldQueue
         collect($import->customersToExtend)
             ->chunk(50)
             ->each(function ($chunk, int $chunkIndex) {
-                $delay = $chunkIndex * 1; // Stagger the dispatch of jobs by 1 second per chunk to avoid overwhelming the queue
+                $delay = $chunkIndex * self::SUBSCRIPTION_DISPATCH_DELAY_SECONDS;
                 $chunk->each(fn ($customer) => ExtendCustomerSubscriptionViaSQS::dispatch($customer, self::SUBSCRIPTION_TYPE, self::SUBSCRIPTION_QUEUE)
                     ->delay($delay));
             });
@@ -94,6 +95,10 @@ class ProcessCustomerUploadJob implements ShouldQueue
 
         Storage::disk('azureIMPrivate')->delete($this->filePath);
 
-        event(new CustomerUploadCompleted($this->userId, 'failed', 0, $this->cdbId));
+        try {
+            event(new CustomerUploadCompleted($this->userId, 'failed', 0, $this->cdbId));
+        } catch (Throwable $broadcastException) {
+            Log::error('ProcessCustomerUploadJob: failed to broadcast failed event', [...$context, 'broadcastError' => $broadcastException->getMessage()]);
+        }
     }
 }

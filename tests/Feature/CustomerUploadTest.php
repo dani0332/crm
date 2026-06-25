@@ -103,6 +103,33 @@ test('ProcessCustomerUploadJob handle imports file, dispatches SQS jobs, and fir
     });
 });
 
+test('ProcessCustomerUploadJob handle fires CustomerUploadCompleted with failed status when file is missing', function (): void {
+    Event::fake([CustomerUploadCompleted::class]);
+    Storage::fake('azureIMPrivate');
+
+    $job = new ProcessCustomerUploadJob(
+        filePath: 'customer-uploads/missing.xlsx',
+        myalfredExpiryDate: '2026-12-31',
+        cdbId: 'CDB-003',
+        invitationEmail: false,
+        userId: 55,
+    );
+
+    $sendEmailService = Mockery::mock(SendEmailCustomerService::class);
+    $berlinService = Mockery::mock(BerlinService::class);
+
+    $job->handle($sendEmailService, $berlinService);
+
+    Event::assertDispatched(CustomerUploadCompleted::class, function (CustomerUploadCompleted $event): bool {
+        $data = $event->broadcastWith();
+
+        return $data['status'] === 'failed'
+            && $data['userId'] === 55
+            && $data['uploadedCount'] === 0
+            && $data['cdbId'] === 'CDB-003';
+    });
+});
+
 test('ProcessCustomerUploadJob failed fires CustomerUploadCompleted with failed status', function (): void {
     Event::fake([CustomerUploadCompleted::class]);
     Storage::fake('azureIMPrivate');
