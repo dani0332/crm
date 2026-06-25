@@ -101,6 +101,7 @@ class PqaAllocationService
                 'pqaAdvisorEmail' => $advisor?->email,
                 'pqaAdvisorPhone' => $whatsAppNumber,
                 'pqaAdvisorLandLine' => $landLine,
+                'pqaAdvisorProfilePhotoPath' => $advisor?->profile_photo_path,
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
