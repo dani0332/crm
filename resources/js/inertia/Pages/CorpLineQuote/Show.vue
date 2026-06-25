@@ -3,6 +3,7 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
@@ -192,6 +193,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  leadTypeOptions: {
+    type: Array,
+    required: true,
+  },
 });
 
 const page = usePage();
@@ -333,33 +338,9 @@ const onLeadStatus = () => {
   );
 };
 
-// Lead History
-
-const historyData = ref(null),
-  activityActionEdit = ref(false),
+const activityActionEdit = ref(false),
   assignLead = ref(null),
-  isDisabled = ref(false),
-  historyLoading = ref(false);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    route('getLeadHistory', {
-      modelType: 'business',
-      recordId: page.props.quote.id,
-    }),
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
+  isDisabled = ref(false);
 
 //activities
 
@@ -703,6 +684,13 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  if (!props.quote.lead_type) {
+    notification.error({
+      title: 'Please select a Lead Type before adding a plan.',
+      position: 'top',
+    });
+  }
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -725,6 +713,36 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
   createReusableTemplate();
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
+
+const leadTypeForm = useForm({
+  lead_type: props.quote.lead_type ?? null,
+});
+
+const onLeadTypeUpdate = () => {
+  if (!leadTypeForm.lead_type) {
+    notification.error({
+      title: 'Please select a lead type before saving.',
+      position: 'top',
+    });
+    return;
+  }
+
+  leadTypeForm.patch(route('business.updateLeadType', props.quote.uuid), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Lead type updated successfully.',
+        position: 'top',
+      });
+    },
+    onError: () => {
+      notification.error({
+        title: 'Failed to update lead type.',
+        position: 'top',
+      });
+    },
+  });
+};
 </script>
 
 <template>
@@ -1081,6 +1099,72 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LEAD TYPE</dt>
+                <dd>
+                  <div class="flex items-center gap-2">
+                    <x-select
+                      v-model="leadTypeForm.lead_type"
+                      :options="leadTypeOptions"
+                      class="w-full"
+                      placeholder="Select Lead Type"
+                    />
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      :loading="leadTypeForm.processing"
+                      @click.prevent="onLeadTypeUpdate"
+                      v-if="readOnlyMode.isDisable === true"
+                    >
+                      Save
+                    </x-button>
+                  </div>
+                </dd>
+              </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ quote.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ quote.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ quote.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ quote.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ quote.utm_term }}</dd>
+                </div>
+              </template>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LEAD TYPE</dt>
+                <dd>
+                  <div class="flex items-center gap-2">
+                    <x-select
+                      v-model="leadTypeForm.lead_type"
+                      :options="leadTypeOptions"
+                      class="w-full"
+                      placeholder="Select Lead Type"
+                    />
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      :loading="leadTypeForm.processing"
+                      @click.prevent="onLeadTypeUpdate"
+                      v-if="readOnlyMode.isDisable === true"
+                    >
+                      Save
+                    </x-button>
+                  </div>
+                </dd>
               </div>
             </dl>
           </div>
@@ -1564,6 +1648,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quoteType="page.props.quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
+      :isSaveDisabled="!quote.lead_type"
     />
 
     <!-- Payments -->
@@ -1853,65 +1938,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       </x-modal>
     </div>
 
-    <x-accordion show-icon>
-      <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
-        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-        <template #content>
-          <x-divider class="mb-4 mt-1" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </x-accordion-item>
-    </x-accordion>
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
-    </div>
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div v-if="historyData === null" class="text-center py-3">
-        <x-button
-          size="sm"
-          color="primary"
-          outlined
-          @click.prevent="onLoadHistoryData"
-          :loading="historyLoading"
-        >
-          Load History Data
-        </x-button>
-      </div>
-      <DataTable
-        v-else
-        table-class-name="compact"
-        :headers="historyDataTable"
-        :items="historyData || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="historyData.length < 15"
-      />
-    </div> -->
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="$page.props.quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <FtcEmailTrack
       :quoteType="$page.props.modelType"

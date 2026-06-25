@@ -3,6 +3,7 @@ import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
 import CustomerVerificationNotification from '@/inertia/Components/CustomerVerificationNotification.vue';
 import LeadStatusUpdatedNotification from '@/inertia/Components/LeadStatusUpdatedNotification.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import { usePayment } from '@/inertia/Composables/usePayment';
@@ -121,6 +122,10 @@ defineProps({
   isAddionalFieldsEnabled: Boolean,
   rtaConfigurationData: Object,
   carTypeofInsurance: Object,
+  communicationEventLogs: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -404,20 +409,6 @@ const emailStatusTable = reactive({
   ],
 });
 
-// history data
-const historyData = ref(null);
-const historyLoading = ref(false);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    `/quotes/lead-history?modelType=car&recordId=${page.props.paymentEntityModel.id}&quoteTypeId=${page.props.quoteTypeId}`,
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
 const onLoadAvailablePlansData = async () => {
   isLoadingAvailablePlans.value = true;
   let data = {
@@ -463,14 +454,6 @@ const loadEmbeddedProducts = async () => {
       console.log(err);
     });
 };
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'created_at' },
-  { text: 'Modified By', value: 'created_by.email' },
-  { text: 'Lead Status From', value: 'previous_quote_status.text' },
-  { text: 'Lead Status To', value: 'current_quote_status.text' },
-  { text: 'Notes', value: 'notes' },
-];
 
 const availablePlansItems = computed(() => {
   if (!Array.isArray(availablePlansTable.data)) {
@@ -1145,6 +1128,7 @@ const onLeadStatus = () => {
 const toggleLoader = ref(false);
 const exportLoader = ref(false);
 const isLoadingAvailablePlans = ref(false);
+const isLoading = ref(false);
 
 const onTogglePlans = toggle => {
   toggleLoader.value = true;
@@ -1910,6 +1894,10 @@ const handleCancelConfirmationModal = () => {
 };
 
 const { openTempUrl } = useDocumentTempUrl();
+
+const isCars24 = computed(() => {
+  return page.props.record.source == page.props.leadSourceEnum.CARS24;
+});
 </script>
 
 <template>
@@ -2432,12 +2420,38 @@ const { openTempUrl } = useDocumentTempUrl();
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ record.transaction_approved_at }}</dd>
               </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ record.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ record.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ record.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ record.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ record.utm_term }}</dd>
+                </div>
+              </template>
               <div
                 class="grid sm:grid-cols-2"
                 v-if="can(permissionEnum.VIEW_PCP)"
               >
                 <dt class="font-medium">PC-Qualified</dt>
                 <dd>{{ record.pc_qualified_formatted }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS UPDATE QUOTE READY</dt>
+                <dd>{{ record.is_update_quote_ready ? 'YES' : 'NO' }}</dd>
               </div>
             </dl>
           </div>
@@ -3712,10 +3726,29 @@ const { openTempUrl } = useDocumentTempUrl();
                   puaType,
                   isSystemDiscountPrice,
                   tags,
+                  insurerQuoteStatus,
                 }"
               >
                 <p>{{ providerName }}</p>
                 <div class="flex gap-1">
+                  <x-tag
+                    v-if="
+                      isCars24 &&
+                      [
+                        genericRequestEnum.QUOTE_INITIATED,
+                        genericRequestEnum.QUOTE_FINALIZED,
+                      ].includes(insurerQuoteStatus)
+                    "
+                    size="xs"
+                    :color="
+                      insurerQuoteStatus === genericRequestEnum.QUOTE_INITIATED
+                        ? 'error'
+                        : 'success'
+                    "
+                    class="mt-0.5 text-[10px]"
+                  >
+                    {{ insurerQuoteStatus }}
+                  </x-tag>
                   <x-tag
                     v-if="isManualUpdate"
                     size="xs"
@@ -3748,27 +3781,29 @@ const { openTempUrl } = useDocumentTempUrl();
                   >
                     SDP
                   </x-tag>
-                  <x-tag
-                    v-if="puaType"
-                    size="xs"
-                    class="mt-0.5 text-[10px] text-white"
-                    style="background-color: #e00000"
-                  >
-                    <x-tooltip placement="right">
-                      <template #tooltip>
-                        <span
-                          class="font-medium"
-                          v-if="puaType == puaTypeEnum.PPUA"
-                        >
-                          {{ puaTypeEnum.PPUA_TOOLTIP }}
-                        </span>
-                        <span class="font-medium" v-else>
-                          {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
-                        </span>
-                      </template>
-                      {{ puaType }}
-                    </x-tooltip>
-                  </x-tag>
+                  <x-tooltip placement="right">
+                    <x-tag
+                      v-if="puaType"
+                      size="xs"
+                      class="mt-0.5 text-[10px] text-white"
+                      style="background-color: #e00000"
+                    >
+                      <span>{{ puaType }}</span>
+                    </x-tag>
+
+                    <template #tooltip>
+                      <span
+                        class="font-medium"
+                        v-if="puaType == puaTypeEnum.PPUA"
+                      >
+                        {{ puaTypeEnum.PPUA_TOOLTIP }}
+                      </span>
+                      <span class="font-medium" v-else>
+                        {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+
                   <x-tag
                     v-for="tag in tags
                       ? tags.split(',').filter(t => t.trim())
@@ -4399,6 +4434,11 @@ const { openTempUrl } = useDocumentTempUrl();
       </Collapsible>
     </div>
 
+    <CommunicationEventLog
+      :communication-event-logs="communicationEventLogs"
+      :expanded="sectionExpanded"
+    />
+
     <!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
@@ -4653,39 +4693,11 @@ const { openTempUrl } = useDocumentTempUrl();
       :quoteStatusId="quote?.quote_status_id"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="record.id"
+      :quoteTypeId="page.props.quoteTypeId"
+    />
 
     <CustomerChatLogs
       :customerName="record?.first_name + ' ' + record?.last_name"

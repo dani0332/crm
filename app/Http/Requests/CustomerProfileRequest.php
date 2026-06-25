@@ -42,7 +42,7 @@ class CustomerProfileRequest extends FormRequest
                 'company_name' => 'required|max:200',
                 'company_address' => 'required',
                 'industry_type_code' => 'nullable',
-                'emirate_of_registration_id' => 'nullable',
+                'emirate_of_registration_id' => 'nullable|exists:emirates,id',
             ]);
         }
 
@@ -70,6 +70,7 @@ class CustomerProfileRequest extends FormRequest
     {
         return [
             'customer_id.required' => 'Something went wrong. Customer not associated with this lead',
+            'emirate_of_registration_id.exists' => 'Emirate of Registration ID is invalid',
         ];
     }
 }

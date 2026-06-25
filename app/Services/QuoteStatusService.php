@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatus;
@@ -17,7 +18,7 @@ class QuoteStatusService
     public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $notes = null)
     {
         info('fn updateQuoteStatus started, quoteTypeId: '.$quoteTypeId.', quoteRequestId: '.$quoteRequestId);
-        $AMLService = new AMLService;
+        $AMLService = app(AMLService::class);
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
         $updateQuote = $this->getQuoteObjectBy($quoteType->code, $quoteRequestId, 'uuid');
@@ -35,6 +36,7 @@ class QuoteStatusService
             'quote_request_id' => $quoteRequestId,
             'current_quote_status_id' => $currentStatusId,
             'previous_quote_status_id' => $previousStatusId,
+            'status_change_source' => LeadSourceEnum::IMCRM,
             'notes' => $notes ?? null,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
@@ -48,6 +50,19 @@ class QuoteStatusService
         $quoteType = QuoteType::findOrFail($quoteTypeId);
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
 
+        $workflowType = request('workflow_type');
+        $workflowTransition = request('workflow_transition');
+
+        $revivalTypes = [
+            QuoteFlowType::LIFE_REVIVAL_FOLLOWUPS->label(),
+            QuoteFlowType::HOME_REVIVAL_FOLLOWUP->label(),
+        ];
+
+        $automatedFollowupTypes = [
+            QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->label(),
+            QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->label(),
+        ];
+
         if (! empty($updateQuote->quote_status_id)) {
             switch ($updateQuote->quote_status_id) {
                 case QuoteStatusEnum::NewLead:
@@ -59,14 +74,22 @@ class QuoteStatusService
 
                     return $updateQuote;
                 case QuoteStatusEnum::Quoted:
-                    if (request('workflow_type') == QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->label() || request('workflow_type') == QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->label()) {
+                    if (in_array($workflowType, $revivalTypes, true)) {
+                        $updateQuote->quote_status_id = $workflowTransition === 'lost'
+                            ? QuoteStatusEnum::Lost
+                            : QuoteStatusEnum::FollowedUp;
+                    } elseif (in_array($workflowType, $automatedFollowupTypes, true)) {
                         $updateQuote->quote_status_id = QuoteStatusEnum::FollowedUp;
                     } else {
                         $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
                     }
                     break;
                 case QuoteStatusEnum::FollowedUp:
-                    $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
+                    if (in_array($workflowType, $revivalTypes, true)) {
+                        $updateQuote->quote_status_id = QuoteStatusEnum::Lost;
+                    } else {
+                        $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
+                    }
                     break;
                 default:
                     return $updateQuote;

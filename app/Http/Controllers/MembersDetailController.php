@@ -20,7 +20,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Inertia\Middleware;
 
 class MembersDetailController extends Controller
 {
@@ -31,14 +30,13 @@ class MembersDetailController extends Controller
      */
     public const FLASH_ERROR_MEMBER_DETAILS_LOCKED = 'This lead is now locked as the policy has been booked. If changes are needed such midterm deletion of member or marital status change, go to \'Send Update\', select \'Add Update\', and choose \'Endorsement Financial\'';
 
-    /**
-     * When member details are locked for a business quote, block add/update/delete of members/UBOs.
-     *
-     * @param  mixed  $quoteObject
-     */
-    private function responseIfBusinessQuoteMemberDetailsLocked(Request $request, $quoteObject): RedirectResponse|JsonResponse|null
+    private function responseIfBusinessQuoteMemberDetailsLocked(Request $request, $quoteObject, bool $isDelete = false): RedirectResponse|JsonResponse|null
     {
         if (! $quoteObject instanceof BusinessQuote) {
+            return null;
+        }
+
+        if ($request->boolean('from_aml_model') && $isDelete == false) {
             return null;
         }
 
@@ -59,7 +57,7 @@ class MembersDetailController extends Controller
     }
 
     /**
-     * AML and other axios callers expect JSON, not an HTML redirect. Inertia visits use {@see Middleware} X-Inertia header and must receive a redirect + flash.
+     * Non-Inertia clients that expect JSON get a 403 JSON body. Inertia visits send X-Inertia and must receive a redirect with flash.
      */
     private function memberLockResponseShouldBeJson(Request $request): bool
     {
@@ -67,8 +65,7 @@ class MembersDetailController extends Controller
             return false;
         }
 
-        return $request->boolean('from_aml_model')
-            || $request->expectsJson();
+        return $request->expectsJson();
     }
 
     /**
@@ -118,11 +115,15 @@ class MembersDetailController extends Controller
                 $quoteMemberDetails['last_name'] = (++$quoteMemberCount);
             }
 
+            $isThirdPartyPayer = $request->is_third_party_payer ?? false;
+            $isInsured = $isThirdPartyPayer ? false : ($request->is_insured ?? true);
+
             $quoteMemberDetails = CustomerMembers::updateOrCreate(array_merge($quoteMemberDetails), [
                 'quote_type' => ltrim($quoteModel, "'\'"),
                 'code' => generateQuoteMemberCode($request->customer_type, $customerEntityId),
                 'is_payer' => isset($request->is_payer) && $request->is_payer == 1,
-                'is_third_party_payer' => $request->is_third_party_payer ?? false,
+                'is_third_party_payer' => $isThirdPartyPayer,
+                'is_insured' => $isInsured,
             ]);
 
             $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
@@ -279,7 +280,7 @@ class MembersDetailController extends Controller
 
         $quoteObject = $this->getQuoteObject(strtolower($explode[1] ?? ''), $memberDetails->quote_id);
 
-        if ($quoteObject && ($response = $this->responseIfBusinessQuoteMemberDetailsLocked(request(), $quoteObject))) {
+        if ($quoteObject && ($response = $this->responseIfBusinessQuoteMemberDetailsLocked(request(), $quoteObject, true))) {
             return $response;
         }
 

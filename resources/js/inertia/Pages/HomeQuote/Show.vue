@@ -6,10 +6,10 @@ import {
 
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import OcrLogs from '@/inertia/Components/OcrLogs.vue';
 import OcrNotification from '@/inertia/Components/OcrNotification.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -144,7 +144,6 @@ const confirmDeleteData = reactive({
 
 const contactLoader = ref(false),
   activityActionEdit = ref(false),
-  historyLoading = ref(false),
   toggleLoader = ref(false);
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -321,29 +320,6 @@ const activityDeleteConfirmed = () => {
     },
   );
 };
-
-// history data
-const historyData = ref(null);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    route('getLeadHistory', {
-      modelType: 'home',
-      recordId: page.props.quote.id,
-    }),
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
 
 const dateToYMD = date => {
   if (date) {
@@ -580,6 +556,10 @@ const availablePlansTable = reactive({
     {
       text: 'Price',
       value: 'actualPremium',
+    },
+    {
+      text: 'Discounted Price',
+      value: 'discountPremiumPrice',
     },
     {
       text: 'Total Price',
@@ -1663,6 +1643,28 @@ function handleOcrNotification(event) {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ quote.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ quote.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ quote.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ quote.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ quote.utm_term }}</dd>
+                </div>
+              </template>
               <div
                 class="grid sm:grid-cols-2"
                 v-if="can(permissionEnum.VIEW_PCP)"
@@ -2283,6 +2285,15 @@ function handleOcrNotification(event) {
                   }}
                 </span>
               </template>
+              <template #item-discountPremiumPrice="item">
+                <span class="text-primary-600" v-if="item.isDiscountApplied">
+                  {{
+                    item.discountPremium
+                      ? parseFloat(item.discountPremium).toFixed(2)
+                      : '0.00'
+                  }}
+                </span>
+              </template>
               <template #item-discountPremium="item">
                 <span class="text-primary-600">
                   {{
@@ -2546,7 +2557,12 @@ function handleOcrNotification(event) {
       :expanded="sectionExpanded"
     />
 
-    <LeadHistory :quote="$page.props.quote" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      modelType="home"
+      :quoteId="$page.props.quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <CustomerChatLogs
       :customerName="quote?.first_name + ' ' + quote?.last_name"

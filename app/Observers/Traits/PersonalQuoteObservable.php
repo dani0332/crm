@@ -6,13 +6,16 @@ use App\Enums\BranchEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Events\QuotePolicyBooked;
 use App\Jobs\CourtesyEmailJob;
+use App\Jobs\EP\RetargetEpReminderJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
+use App\Jobs\OCB\SendDeviceOCBIntroEmailJob;
 use App\Jobs\SendAutomatedHomeRenewalFollowup;
 use App\Jobs\SendAutomatedLifeFollowup;
 use App\Jobs\SendFICEmailForLife;
@@ -27,6 +30,7 @@ use App\Services\BirdService;
 use App\Services\BranchAssignmentService;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\QuoteJourneyService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
@@ -159,7 +163,10 @@ trait PersonalQuoteObservable
             SendCyberOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
             LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
         }
-
+        if ($personalQuote->isDevice()) {
+            SendDeviceOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
+            LoggerService::info(self::class." - OCB Intro Email sent to customer for device quote {$personalQuote->uuid}");
+        }
         $this->handleIntroEmails($personalQuote, $oldAdvisorId);
     }
 
@@ -189,22 +196,35 @@ trait PersonalQuoteObservable
         }
     }
 
-    private function updatePersonalQuote(PersonalQuote $personalQuote, array $data): void
+    private function updatePersonalQuote(PersonalQuote $personalQuote, array $data, bool $withEvents = false): void
     {
-        PersonalQuote::withoutEvents(function () use ($personalQuote, $data) {
+        if (! $withEvents) {
+            PersonalQuote::withoutEvents(function () use ($personalQuote, $data) {
+                $personalQuote->update($data);
+            });
+        } else {
             $personalQuote->update($data);
-        });
+        }
     }
 
     private function handleTransactionApproved(PersonalQuote $personalQuote): void
     {
         $this->updatePersonalQuote($personalQuote, ['transaction_approved_at' => now()]);
+        $this->handleRevivalQuote($personalQuote);
     }
 
     private function handlePolicyIssued(PersonalQuote $personalQuote): void
     {
         $payment = $personalQuote->payments()->mainLeadPayment()->first();
         (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($personalQuote, $payment, QuoteTypes::PERSONAL->value);
+        try {
+            app(QuoteJourneyService::class)->completePolicyIssuanceEntry($personalQuote->uuid, $personalQuote->quote_type_id);
+        } catch (Exception $e) {
+            LoggerService::error('PersonalQuoteObserver - completePolicyIssuanceEntry failed', [
+                'uuid' => $personalQuote->uuid,
+                'quote_type_id' => $personalQuote->quote_type_id,
+            ], exception: $e);
+        }
     }
 
     private function handlePolicyBookedOrSentToCustomer(PersonalQuote $personalQuote): void
@@ -216,7 +236,8 @@ trait PersonalQuoteObservable
             'lead-status-update-myalfred-we'
         );
 
-        if ($personalQuote->isHome() || (($personalQuote->isBike() || $personalQuote->isCyber()) && $personalQuote->quote_status_id == QuoteStatusEnum::PolicySentToCustomer)) {
+        if ($personalQuote->isHome() || (($personalQuote->isBike() || $personalQuote->isDevice() || $personalQuote->isCyber()) && $personalQuote->quote_status_id == QuoteStatusEnum::PolicySentToCustomer)) {
+
             try {
                 EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
             } catch (Exception $e) {
@@ -229,6 +250,9 @@ trait PersonalQuoteObservable
 
         if ($personalQuote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             try {
+                if ($personalQuote->isBike()) {
+                    RetargetEpReminderJob::dispatch($personalQuote->uuid, QuoteTypeId::Bike);
+                }
                 app(BranchAssignmentService::class)->saveBranchOverride($personalQuote, $personalQuote->quote_type_id);
                 PersonalQuote::withoutEvents(function () use ($personalQuote) {
 
@@ -304,6 +328,22 @@ trait PersonalQuoteObservable
             LoggerService::info(self::class." Sending {$emailType} email to customer for {$quoteType->value} quote {$personalQuote->uuid}");
             app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, $quoteType->value, $oldAdvisorId);
             LoggerService::info(self::class." | {$emailType} email sent to customer for {$quoteType->value} quote {$personalQuote->uuid}");
+        }
+    }
+
+    private function handleRevivalQuote(PersonalQuote $personalQuote): void
+    {
+        LoggerService::info(self::class.' - handleRevivalQuote - Quote Type Request Received', [
+            'uuid' => $personalQuote->uuid,
+        ]);
+        if (in_array($personalQuote->quote_type_id, [(int) QuoteTypes::LIFE->id(), (int) QuoteTypes::HOME->id()]) && in_array($personalQuote->source, [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_SHORT, LeadSourceEnum::REVIVAL_ANNUAL])) {
+            $this->updatePersonalQuote($personalQuote, ['source' => LeadSourceEnum::REVIVAL_PAID], withEvents: true);
+            LoggerService::info(self::class.' - handleRevivalQuote - Quote Type Updated to Revival Paid', [
+                'quote_type_id' => $personalQuote->quote_type_id,
+                'uuid' => $personalQuote->uuid,
+                'quote_status_id' => $personalQuote->quote_status_id,
+                'source' => $personalQuote->source,
+            ]);
         }
     }
 

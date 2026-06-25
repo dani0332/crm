@@ -11,6 +11,8 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Jobs\SendSavingsOCAEmailJob;
+use App\Models\DttRevival;
+use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
@@ -38,6 +40,19 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     private function getQuoteTypeId()
     {
         return in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id();
+    }
+
+    protected function getParentLeadAdvisorId(): ?int
+    {
+        $revivalLead = DttRevival::where('uuid', $this->lead->uuid)->select('previous_quote_id')->first();
+
+        if (! $revivalLead) {
+            return null;
+        }
+
+        $parentLead = PersonalQuote::where('id', $revivalLead->previous_quote_id)->select('advisor_id')->first();
+
+        return $parentLead?->advisor_id;
     }
 
     public function execute()
@@ -111,6 +126,18 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             })
             ->when($this->quoteType === QuoteTypes::CORPLINE, function ($q) {
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
+            ->when($this->quoteType === QuoteTypes::LIFE, function ($q) {
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->where('source', '!=', LeadSourceEnum::REVIVAL)
+                        ->orWhereNull('source');
+                });
+            })
+            ->when(in_array($this->quoteType, [QuoteTypes::HOME, QuoteTypes::HOME_REVIVAL]), function ($q) {
+                $q->where(function ($lifeQuery) {
+                    $lifeQuery->whereNotIn('source', [LeadSourceEnum::REVIVAL_SHORT, LeadSourceEnum::REVIVAL_ANNUAL])
+                        ->orWhereNull('source');
+                });
             })
             ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
     }

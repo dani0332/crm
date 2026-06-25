@@ -390,12 +390,6 @@ onMounted(() => {
         <TabPanel>
           <div class="p-4">
             <table cellpadding="3" cellspacing="3" class="table-auto">
-              <thead>
-                <tr>
-                  <!-- <th class="px-4 py-2">Exclusions</th> -->
-                  <th class="px-4 py-2"></th>
-                </tr>
-              </thead>
               <tbody>
                 <tr
                   v-for="feature in props.plan.listQuotePlanBenefitsExclusions"
@@ -411,12 +405,6 @@ onMounted(() => {
         <TabPanel>
           <div>
             <table cellpadding="3" cellspacing="3" class="table-auto">
-              <thead>
-                <tr>
-                  <!-- <th class="px-4 py-2">COVID-19 Cover</th> -->
-                  <th class="px-4 py-2"></th>
-                </tr>
-              </thead>
               <tbody>
                 <tr
                   v-for="feature in props.plan.listQuotePlanBenefitsCovid19"

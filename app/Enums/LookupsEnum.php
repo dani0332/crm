@@ -66,4 +66,11 @@ enum LookupsEnum: string
     case SUB_SOURCE_OPTION = 'sub-source-option';
 
     case CYBER_COVERAGE = 'cyber-coverage';
+    case HEALTH_INSURE_OPTIONS = 'health_insure_options';
+    case POLICY_HOLDER_OPTIONS = 'policy_holder_options';
+    case POLICY_HOLDER_CATEGORY = 'policy_holder_category';
+    case GENDER = 'gender';
+    case HEALTH_MEMBER_RELATION = 'health-member-relation';
+    case DOMESTIC_WORKER_RELATION = 'domestic-worker-relation';
+    case CORPLINE_LEAD_TYPE = 'corpline-lead-type';
 }

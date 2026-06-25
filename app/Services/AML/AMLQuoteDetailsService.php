@@ -18,10 +18,13 @@ use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\NationalityRepository;
 use App\Services\AMLService;
+use App\Services\CentralService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsurancePayloadMapping;
+use App\Traits\GenericQueriesAllLobs;
 
 class AMLQuoteDetailsService
 {
+    use GenericQueriesAllLobs;
     public function __construct(
         private readonly AMLService $amlService,
         private readonly AMLQueryService $queryService,
@@ -65,7 +68,7 @@ class AMLQuoteDetailsService
 
         // Get reference data
         $nationalities = NationalityRepository::withActive()->get();
-        $emirates = Emirate::withActive()->orderBy('sort_order')->get();
+        $emirates = Emirate::withActive()->orderBy('text', 'asc')->get();
 
         // Get member details
         $membersDetails = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code);
@@ -90,9 +93,10 @@ class AMLQuoteDetailsService
 
         // Get additional fields configuration
         $isAddionalFieldsEnabled = $this->amlService->isAdditionalVehicleAndDriverDetailsEnabled(
-            $quoteType?->code,
-            $insuranceProvider?->code,
-            $quoteRequest?->registration_type
+            quoteTypeCode: $quoteType?->code,
+            insuranceProviderId: $insuranceProvider?->code,
+            vehicleRegistrationType: $quoteRequest?->registration_type,
+            source: $quoteRequest?->source,
         );
 
         // Get business-specific payload
@@ -101,11 +105,17 @@ class AMLQuoteDetailsService
         // Get RTA configuration for Car quotes
         $rtaConfigurationData = $this->amlService->getRTATransactionConfigurations($quoteType->code);
 
+        $isEmirateOfRegistrationLocked = app(CentralService::class)->isEmirateOfRegistrationLocked(
+            $quoteRequest,
+            $quoteType->code
+        );
+
         // Prepare enums
         $enums = $this->prepareEnums();
 
         return array_merge([
             'quoteType' => $quoteType,
+            'isEmirateOfRegistrationLocked' => $isEmirateOfRegistrationLocked,
             'quoteRequest' => $quoteRequest,
             'amlStatusName' => $amlStatusName,
             'amlLogs' => $amlLogs,
@@ -179,6 +189,24 @@ class AMLQuoteDetailsService
         return $isLIVA
             ? GenericModelTypeEnum::LIVA_INSURER_SCREENIN_DEFAULT_EMAIL
             : GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL;
+    }
+
+    public function resolveQuoteRequestId(string|int $quoteTypeId, string $quoteRequestId): int
+    {
+        if (is_numeric($quoteRequestId)) {
+            return (int) $quoteRequestId;
+        }
+
+        // Handles IDs with trailing noise chars like "1027818*-" — extract the leading digit run
+        if (preg_match('/^(\d{5,})/', $quoteRequestId, $matches)) {
+            return (int) $matches[1];
+        }
+
+        // Handles quote codes like "E8QR6QUX" or "TRA-ZKQ4R6LU" — look up the integer ID by code
+        $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
+        $quote = $this->getQuoteObjectBy($quoteType->code, $quoteRequestId, 'code');
+
+        return (int) ($quote ? $quote->id : 0);
     }
 
     private function prepareEnums(): array

@@ -51,7 +51,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Travel\QatarInsuranceService;
 use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
 use App\Services\Reports\RenewalBatchReportService;
@@ -281,13 +281,14 @@ class TravelController extends Controller
         $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($record, self::TYPE);
 
         $insuranceProvider = $record?->plan?->insuranceProvider ?? $record->insuranceProvider;
-        if ($insuranceProvider?->code === InsuranceProviderEnum::ALNC->value) {
-            $travelType = $record->direction_code === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND ? TravelQuoteEnum::ALLIANCE_OUT_BOUND : TravelQuoteEnum::ALLIANCE_IN_BOUND;
-            $record->days_cover_for = (new AllianceInsuranceService)->calculateCoverDaysForExpiryDate($record, $travelType);
+        if ($insuranceProvider?->code === InsuranceProviderEnum::QIC->value) {
+            $travelType = $record->direction_code === TravelQuoteEnum::TRAVEL_UAE_OUTBOUND ? TravelQuoteEnum::QATAR_OUT_BOUND : TravelQuoteEnum::QATAR_IN_BOUND;
+            $record->days_cover_for = (new QatarInsuranceService)->calculateCoverDaysForExpiryDate($record, $travelType);
         }
 
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel));
+        $isDicProvider = $insuranceProvider?->code === InsuranceProviderEnum::DIC->value;
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -367,8 +368,9 @@ class TravelController extends Controller
             'lockStatusOfPolicyIssuanceSteps' => $lockStatusOfPolicyIssuanceSteps,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
-            'isAllianceProvider' => $insuranceProvider?->code === InsuranceProviderEnum::ALNC->value,
+            'isQatarProvider' => $insuranceProvider?->code === InsuranceProviderEnum::QIC->value,
             'customerAddressData' => $customerAddressData,
+            'isDicProvider' => $isDicProvider,
         ]);
     }
 

@@ -4,7 +4,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
-use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
@@ -12,11 +12,13 @@ use Tests\Helpers\TestSchemaCreator;
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
 
-    $this->admin = TestDataSeeder::createAdminUser(['email' => fake()->unique()->safeEmail()]);
-    TestDataSeeder::seedRolePermissions('Admin', [PermissionsEnum::TeamThresholdView]);
+    $this->admin = TestDataSeeder::createAdminUser(['email' => fake()->unique()->safeEmail()], [
+        PermissionsEnum::TeamThresholdView,
+        PermissionsEnum::TEAM_ALLOCATION_THRESHOLD_EDIT,
+    ]);
 
     $this->actingAs($this->admin);
-    $this->withoutMiddleware(VerifyCsrfToken::class);
+    $this->withoutMiddleware(PreventRequestForgery::class);
 
     $db = DB::connection('sqlite');
 
@@ -168,6 +170,26 @@ it('requires TeamThresholdView permission to access index', function () {
     $this->actingAs($userWithoutPermission);
 
     $response = $this->get(route('allocation-threshold.index'));
+
+    $response->assertForbidden();
+});
+
+it('forbids update when user only has TeamThresholdView permission', function () {
+    $viewer = TestDataSeeder::createUserWithRole('ThresholdViewer', ['email' => fake()->unique()->safeEmail()]);
+    TestDataSeeder::seedRolePermissions('ThresholdViewer', [PermissionsEnum::TeamThresholdView]);
+
+    $this->actingAs($viewer);
+
+    $response = $this->postJson('/update-team-allocation-threshold', [
+        'category' => 'AUH',
+        'teams' => [
+            [
+                'team_id' => $this->gbpTeam,
+                'min' => 1,
+                'max' => 100,
+            ],
+        ],
+    ]);
 
     $response->assertForbidden();
 });

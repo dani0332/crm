@@ -597,6 +597,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
             'document_type_code' => $documentType->code,
             'document_type_text' => $documentType->text,
             'doc_uuid' => generateUUID(),
+            'document_type_id' => $documentType->id,
         ]);
 
         if ($newDocument?->exists && $documentCode == DocumentTypeCode::POLICY_CERTIFICATE) {
@@ -1174,7 +1175,7 @@ class LivaInsuranceService implements PolicyIssuanceInterface
                 }
             }
 
-            LoggerService::error('automation:'.$this->className.' fn:'.__FUNCTION__.' Token request failed', extra: [
+            LoggerService::warning('automation:'.$this->className.' fn:'.__FUNCTION__.' Token request failed', extra: [
                 'status' => $response->status(),
                 'response' => $response->body(),
             ]);

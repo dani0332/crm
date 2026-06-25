@@ -1,7 +1,7 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -106,30 +106,6 @@ const onCreateDuplicate = isValid => {
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
-const historyLoading = ref(false);
-
-// history data
-const historyData = ref(null);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    route('getLeadHistory', {
-      modelType: 'health',
-      recordId: page.props.quote.id,
-    }),
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
 const { isRequired, emiratesNumber } = useRules();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -698,6 +674,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ quote.quote_detail?.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ quote.quote_detail?.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ quote.quote_detail?.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ quote.quote_detail?.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ quote.quote_detail?.utm_term }}</dd>
+                </div>
+              </template>
               <div
                 class="grid sm:grid-cols-2"
                 v-if="can(permissionEnum.VIEW_PCP)"
@@ -1225,7 +1223,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
-    <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="$page.props.quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <lead-raw-data
       :modelType="'Cycle'"

@@ -9,6 +9,7 @@ use App\Exceptions\PolicyIssuanceProcessNotFoundException;
 use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicPolicyIssuanceAsyncBootstrap;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,7 +24,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 180;
-    public $uniqueFor = 185;
+    public $failOnTimeout = true;
+    public $uniqueFor = 305;
     public $tries = 1;
 
     private const TIMEOUT_INDICATORS = ['cURL error 28', 'has timed out', 'has been attempted too many times'];
@@ -45,11 +47,12 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'process_id' => $processId,
             ]);
         }
-        $this->onQueue('policy-issuance-automation');
+        $this->onConnection('redis_policy_issuance')->onQueue('policy-issuance-automation');
     }
 
     public function handle(): void
     {
+
         try {
             $this->loadProcess();
             $this->loadProcessModel();
@@ -75,14 +78,44 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             $this->updateProcessingStatus();
             $this->executeAutomation();
 
-            LoggerService::info('Policy issuance automation completed', [
-                'process_id' => $this->process->id,
-                'quote_code' => $quoteCode,
-                'final_status' => $this->process->fresh()->status,
-            ]);
+            $updatedProcess = $this->process?->fresh();
+
+            if (! $updatedProcess) {
+                return;
+            }
+
+            $this->process = $updatedProcess;
+
+            $finalStatus = $updatedProcess->status;
+
+            if ($finalStatus === PolicyIssuanceEnum::COMPLETED_STATUS) {
+                LoggerService::info('Policy issuance automation completed', [
+                    'process_id' => $this->process->id,
+                    'quote_code' => $quoteCode,
+                    'final_status' => $finalStatus,
+                ]);
+            } else {
+                LoggerService::info('Policy issuance automation ended with status', [
+                    'process_id' => $this->process->id,
+                    'quote_code' => $quoteCode,
+                    'final_status' => $finalStatus,
+                ]);
+            }
 
         } catch (Throwable $e) {
+            if ($this->isProcessAlreadyCompleted()) {
+                LoggerService::warning('Post-completion exception ignored to preserve result', [
+                    'process_id' => $this->process?->id ?? $this->processId,
+                    'quote_code' => $this->process?->model?->code ?? 'unknown',
+                    'status' => $this->process?->status ?? 'unknown',
+                    'error' => $e->getMessage(),
+                ]);
+
+                return;
+            }
+
             $this->handleException($e);
+            $this->fail($e);
         }
     }
 
@@ -94,7 +127,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             $this->process = PolicyIssuance::find($this->processId);
         }
 
-        LoggerService::error('Policy issuance job failed callback triggered', [
+        LoggerService::warning('Policy issuance job failed callback triggered', [
             'process_id' => $this->processId,
             'quote_code' => $this->process?->model?->code ?? 'unknown',
             'exception' => $exception->getMessage(),
@@ -193,7 +226,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         ]);
     }
 
-    private function executeAutomation(): void
+    private function executeAutomation()
     {
         $quoteType = $this->process?->quote_type;
         $insuranceProvider = $this->process?->insuranceProvider;
@@ -209,6 +242,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'status' => PolicyIssuanceEnum::FAILED_STATUS,
                 'message' => json_encode(['error' => 'Insurance provider not found']),
             ]);
+
+            $this->fail(new \RuntimeException('Insurance provider not found'));
 
             return;
         }
@@ -235,6 +270,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'message' => json_encode(['error' => "Automation not found for {$insuranceProvider->text}"]),
             ]);
 
+            $this->fail(new \RuntimeException("Automation not found for {$insuranceProvider->text}"));
+
             return;
         }
 
@@ -244,6 +281,12 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             'provider' => $insuranceProvider->text,
         ]);
 
+        if (DicPolicyIssuanceAsyncBootstrap::isTravelDic($quoteType, $insuranceProvider->code)) {
+            app(DicPolicyIssuanceAsyncBootstrap::class)->dispatchInitialStepFromOrchestratorJob($this->process);
+
+            return;
+        }
+
         $response = $automation->executeSteps($this->process);
 
         if (isset($response['timeout']) && $response['timeout']) {
@@ -251,7 +294,11 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'status' => PolicyIssuanceEnum::TIMEOUT_STATUS,
             ]);
         } elseif (! $response['status']) {
-            $errorMessage = $response['error'] ?? 'Unknown error';
+            $rawError = $response['error'] ?? 'Unknown error';
+            if (! is_string($rawError)) {
+                $rawError = json_encode($rawError) ?: 'Unserializable error';
+            }
+            $errorMessage = $rawError;
 
             LoggerService::info('Automation execution failed', [
                 'process_id' => $this->process->id,
@@ -264,8 +311,16 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                 'status' => PolicyIssuanceEnum::FAILED_STATUS,
                 'message' => json_encode(['error' => $errorMessage]),
             ]);
+
+            $this->fail(new \RuntimeException($errorMessage));
         } else {
-            if (isset($response['booking_pending']) && $response['booking_pending']) {
+            if (isset($response['documents_pending']) && $response['documents_pending']) {
+                LoggerService::info('Automation: Documents pending (async job dispatched)', [
+                    'process_id' => $this->process->id,
+                    'quote_code' => $quoteCode,
+                    'provider' => $insuranceProvider->text,
+                ]);
+            } elseif (isset($response['booking_pending']) && $response['booking_pending']) {
                 LoggerService::info('Automation: Booking pending', [
                     'process_id' => $this->process->id,
                     'quote_code' => $quoteCode,
@@ -281,7 +336,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
                     'quote_code' => $quoteCode,
                     'provider' => $insuranceProvider->text,
                 ]);
-                $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
+                $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS, 'message' => null]);
             }
         }
     }
@@ -319,9 +374,12 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         ]);
 
         LoggerService::error('Exception occurred during policy issuance automation', [
-            'process_id' => $this->process->id ?? $this->processId,
+            'process_id' => $this->process?->id ?? $this->processId,
             'quote_code' => $quoteCode,
-            'exception' => $e,
+        ], exception: $e instanceof \Exception ? $e : null, context: [
+            'error_class' => get_class($e),
+            'error_message' => $e->getMessage(),
+            'error_trace' => $e->getTraceAsString(),
         ]);
     }
 
@@ -336,5 +394,10 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
         }
 
         return false;
+    }
+
+    private function isProcessAlreadyCompleted(): bool
+    {
+        return $this->process?->status === PolicyIssuanceEnum::COMPLETED_STATUS;
     }
 }

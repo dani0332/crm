@@ -9,7 +9,6 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
@@ -19,9 +18,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeShortCode;
-use App\Enums\RenewalProcessStatuses;
-use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
@@ -35,7 +31,6 @@ use App\Models\Entity;
 use App\Models\Lookup;
 use App\Models\QuoteBatches;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\RenewalQuoteProcess;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\UserTeams;
@@ -591,11 +586,11 @@ class CarQuoteService extends BaseService
                 'c.last_name as customer_last_name',
                 DB::raw('
                     CASE
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
-                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
-                        ELSE insurer_aml_status
+                        WHEN cqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN cqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN cqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN cqr.insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE cqr.insurer_aml_status
                     END AS insurer_aml_status_display
                 '),
                 'cqr.email',
@@ -606,7 +601,7 @@ class CarQuoteService extends BaseService
                 'c.pcp_tag',
                 'cqr.pc_qualified',
                 DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
-                DB::raw(CarQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+                DB::raw(CarQuote::formattedPcQualifiedCase('cqr').' as pc_qualified_formatted'),
                 'cqr.api_issuance_status_id',
                 'cqr.insurer_api_status_id',
                 'cqr.rta_upload_status',
@@ -627,6 +622,9 @@ class CarQuoteService extends BaseService
                 'cqr.is_branch_applicable',
                 'vdd.driver_eid_number',
                 'vdd.driver_gender',
+                'cqrd.is_update_quote_ready',
+                'cqrd.engagement_level',
+                DB::raw('DATE_FORMAT(cqrd.engagement_level_updated_at, "%d-%m-%Y %H:%i:%s") as engagement_level_updated_at'),
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -685,6 +683,20 @@ class CarQuoteService extends BaseService
             ->leftJoin('vehicle_driver_details as vdd', function ($join) {
                 $join->on('vdd.quoteable_id', '=', 'cqr.id')
                     ->where('vdd.quoteable_type', '=', CarQuote::class);
+            })
+            ->when(auth()->user()?->can(PermissionsEnum::VIEW_UTM_SECTION), function ($q) {
+                $q->leftJoin('personal_quotes as pq', function ($join) {
+                    $join->on('pq.uuid', '=', 'cqr.uuid')
+                        ->where('pq.quote_type_id', '=', QuoteTypeId::Car);
+                })
+                    ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', '=', 'pq.id')
+                    ->addSelect(
+                        'pqd.utm_source',
+                        'pqd.utm_medium',
+                        'pqd.utm_campaign',
+                        'pqd.utm_content',
+                        'pqd.utm_term',
+                    );
             })
             ->groupBy('cqr.id')
             ->where('cqr.uuid', $id)
@@ -1226,21 +1238,12 @@ class CarQuoteService extends BaseService
         }])
             ->where('uuid', $uuid)->first();
 
-        if ($carQuote->latestUpdateRenewalQuoteProcess && $carQuote->latestUpdateRenewalQuoteProcess->data) {
-            $leadValidationErrors = collect();
-            $leadData = (object) $carQuote->latestUpdateRenewalQuoteProcess->data ?? [];
-            $checkGenesisLead = app(RenewalsUploadService::class)->isGenesisLead($leadData, $leadValidationErrors);
-            $carQuote->isGenesisLead = $checkGenesisLead['status'] ?? false;
-        }
-
-        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $carQuote->latestUpdateRenewalQuoteProcess->id)->where([
-            'quote_id' => $carQuote->id,
-            'quote_type' => QuoteTypeShortCode::CAR,
-            'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'type' => RenewalsUploadType::UPDATE_LEADS,
-            'email_sent' => true,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-        ])->exists() && $carQuote->isGenesisLead;
+        $renewalsUploadService = app(RenewalsUploadService::class);
+        $latestUpdateRenewalQuoteProcess = $carQuote->latestUpdateRenewalQuoteProcess;
+        $isTransitionableLead = $latestUpdateRenewalQuoteProcess
+            ? $renewalsUploadService->isTransitionableLeadWithCurrentData($latestUpdateRenewalQuoteProcess)
+            : false;
+        $isRenewalHistorical = $renewalsUploadService->resolveIsRenewalHistorical($carQuote, $isTransitionableLead);
 
         $plans = $this->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical);
 
@@ -1263,6 +1266,10 @@ class CarQuoteService extends BaseService
                     'file_name' => $pdf['name'],
                 ];
             }
+        }
+
+        if ($latestUpdateRenewalQuoteProcess && $latestUpdateRenewalQuoteProcess->data) {
+            $carQuote->isTransitionableLead = $isTransitionableLead;
         }
 
         $carQuote->plans = $plans;
@@ -1340,8 +1347,8 @@ class CarQuoteService extends BaseService
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            if (strpos($contents, 'Genesis') !== false) {
-                LoggerService::warning('FN: getQuotePlans KEN Genesis Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            if (strpos($contents, 'Genesis') !== false || strpos($contents, 'Phoenix') !== false) {
+                LoggerService::warning('FN: getQuotePlans KEN Transition Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
             } else {
                 LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
             }

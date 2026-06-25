@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\AuthGuardEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\CarQuote;
@@ -447,6 +448,93 @@ class TestDataSeeder
     }
 
     /**
+     * Seed device-quotes permissions and assign to Admin role (for DeviceQuote tests).
+     */
+    public static function seedDeviceQuotePermissions(): void
+    {
+        $db = DB::connection('sqlite');
+        $guard = 'web';
+        $names = [
+            PermissionsEnum::DEVICE_QUOTES_LIST,
+            PermissionsEnum::DEVICE_QUOTES_CREATE,
+            PermissionsEnum::DEVICE_QUOTES_EDIT,
+            PermissionsEnum::DEVICE_QUOTES_SHOW,
+        ];
+        $roleId = $db->table('roles')->where('name', RolesEnum::Admin)->value('id');
+        if (! $roleId) {
+            return;
+        }
+        foreach ($names as $name) {
+            $permId = $db->table('permissions')->where('name', $name)->where('guard_name', $guard)->value('id');
+            if (! $permId) {
+                $permId = $db->table('permissions')->insertGetId([
+                    'name' => $name,
+                    'guard_name' => $guard,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            $exists = $db->table('role_has_permissions')
+                ->where('permission_id', $permId)
+                ->where('role_id', $roleId)
+                ->exists();
+            if (! $exists) {
+                $db->table('role_has_permissions')->insert([
+                    'permission_id' => $permId,
+                    'role_id' => $roleId,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Seed required lookup data for DeviceQuote tests (make/model).
+     *
+     * @return array{make_id: int, model_id: int}
+     */
+    public static function seedDeviceQuoteLookups(): array
+    {
+        $db = DB::connection('sqlite');
+
+        // Device quote type (id=20) required for PersonalQuote->quoteType and redirects
+        $db->table('quote_type')->insertOrIgnore([
+            'id' => 20,
+            'code' => 'Device',
+            'short_code' => 'DEV',
+            'text' => 'Device Insurance',
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $makeId = $db->table('device_make')->where('text', 'Test Make')->value('id');
+        if (! $makeId) {
+            $makeId = $db->table('device_make')->insertGetId([
+                'text' => 'Test Make',
+                'name' => 'Test Make',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $modelId = $db->table('device_model')->where('make_id', $makeId)->where('text', 'Test Model')->value('id');
+        if (! $modelId) {
+            $modelId = $db->table('device_model')->insertGetId([
+                'make_id' => $makeId,
+                'text' => 'Test Model',
+                'name' => 'Test Model',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return [
+            'make_id' => $makeId,
+            'model_id' => $modelId,
+        ];
+    }
+
+    /**
      * Seed required lookup data for HealthQuote tests.
      *
      * @return array Array of created lookup IDs
@@ -470,5 +558,101 @@ class TestDataSeeder
         return [
             'nationality_id' => $nationalityId,
         ];
+    }
+
+    /**
+     * Seed required lookup data for Group Medical (AMT) lead tests.
+     * Ensures emirates and business_type_of_insurance (Group Medical) exist.
+     *
+     * @return array{emirate_of_registration_id: int, business_type_of_insurance_id: int}
+     */
+    public static function seedAmtGroupMedicalLookups(): array
+    {
+        $db = DB::connection('sqlite');
+
+        $emirateId = $db->table('emirates')->where('text', 'Dubai')->value('id');
+        if (! $emirateId) {
+            $emirateId = $db->table('emirates')->insertGetId([
+                'text' => 'Dubai',
+                'code' => 'DXB',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $businessTypeId = $db->table('business_type_of_insurance')->where('text', 'Group Medical')->value('id');
+        if (! $businessTypeId) {
+            $businessTypeId = $db->table('business_type_of_insurance')->insertGetId([
+                'text' => 'Group Medical',
+                'code' => 'GM',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return [
+            'emirate_of_registration_id' => (int) $emirateId,
+            'business_type_of_insurance_id' => (int) $businessTypeId,
+        ];
+    }
+
+    /**
+     * Seed a Savings DocumentType row on sqlite (e.g. `PP_SAV`).
+     *
+     * This is intentionally general-purpose for Savings. Add/override fields as new Savings OCR docs are introduced.
+     *
+     * @param  array<string, mixed>  $overrides
+     */
+    public static function seedSavingsDocumentType(string $code, string $text, array $overrides = []): void
+    {
+        $db = DB::connection('sqlite');
+
+        $defaults = [
+            'code' => $code,
+            'text' => $text,
+            'description' => '',
+            'category' => 'QUOTE',
+            'is_active' => 1,
+            'quote_type_id' => QuoteTypes::SAVINGS->id(),
+            'registration_type' => null,
+            'vehicle_use' => null,
+            'sort_order' => null,
+            'receive_from_customer' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        $db->table('document_types')->updateOrInsert(
+            ['code' => $code],
+            array_merge($defaults, $overrides),
+        );
+    }
+
+    /**
+     * Seed a DocumentType row by code/text/category for OCR tests.
+     *
+     * @param  array<string, mixed>  $overrides
+     */
+    public static function seedDocumentType(string $code, string $text, string $category = 'QUOTE', array $overrides = []): void
+    {
+        $db = DB::connection('sqlite');
+
+        $defaults = [
+            'code' => $code,
+            'text' => $text,
+            'description' => '',
+            'category' => $category,
+            'is_active' => 1,
+            'receive_from_customer' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        $db->table('document_types')->updateOrInsert(
+            ['code' => $code],
+            array_merge($defaults, $overrides),
+        );
     }
 }

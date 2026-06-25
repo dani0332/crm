@@ -62,11 +62,31 @@ return [
             'after_commit' => false,
         ],
 
+        'sqs_myalfred' => [
+            'driver' => 'sqs_myalfred',
+            'key' => env('SQS_AWS_ACCESS_KEY_ID'),
+            'secret' => env('SQS_AWS_SECRET_ACCESS_KEY'),
+            'region' => env('SQS_AWS_DEFAULT_REGION', 'us-east-1'),
+            'prefix' => env('SQS_PREFIX', 'https://sqs.us-east-1.amazonaws.com/your-account-id'),
+            'queue' => env('SQS_QUEUE', 'default'),
+            'suffix' => env('SQS_SUFFIX'),
+            'after_commit' => false,
+        ],
+
         'redis' => [
             'driver' => 'redis',
             'connection' => 'default',
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => 90,
+            'retry_after' => 150, // raised from 90 — must exceed the highest supervisor timeout (120s for ocr_dedicated), otherwise jobs can be re-queued before the worker finishes and processed twice
+            'block_for' => 5,    // changed from null — workers block-wait up to 5s for a job instead of polling continuously, reducing idle CPU usage
+            'after_commit' => false,
+        ],
+
+        'redis_policy_issuance' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'policy-issuance-automation',
+            'retry_after' => 300,
             'block_for' => null,
             'after_commit' => false,
         ],

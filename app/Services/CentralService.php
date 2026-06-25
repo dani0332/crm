@@ -29,8 +29,10 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\WatermarkDocTypesEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
@@ -40,7 +42,6 @@ use App\Jobs\AutomationFailedJob;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
-use App\Models\BrokerCommission;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CustomerAddress;
@@ -52,13 +53,16 @@ use App\Models\InsuranceProvider;
 use App\Models\InsurerRequestResponse;
 use App\Models\LifeQuote;
 use App\Models\Payment;
+use App\Models\PaymentAction;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusHistory;
+use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\PolicyWording;
 use App\Models\QuoteBatches;
+use App\Models\QuoteDocument;
 use App\Models\QuoteExportLog;
 use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
@@ -75,6 +79,7 @@ use App\Repositories\PersonalQuoteRepository;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
@@ -83,11 +88,15 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 
 class CentralService extends BaseService
 {
     use GenericQueriesAllLobs, HandlesDeadlockRetries, TeamHierarchyTrait;
+
+    private const MESSAGE_PAYMENT_NOT_FOUND = 'Payment not found';
+    private const MESSAGE_PAYMENT_DELETION_FAILED = 'Payment deletion failed';
 
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
@@ -102,6 +111,7 @@ class CentralService extends BaseService
             quoteTypeCode::Pet,
             quoteTypeCode::Cycle,
             quoteTypeCode::SAVINGS,
+            quoteTypeCode::Device,
         ];
 
         if (strtolower($quoteType) == strtolower(quoteTypeCode::Business)) {
@@ -256,7 +266,7 @@ class CentralService extends BaseService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home, quoteTypeCode::CYBER];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::SAVINGS, quoteTypeCode::Home, quoteTypeCode::CYBER, quoteTypeCode::Device];
         $quoteBatch = QuoteBatches::latest()->first();
         LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
@@ -369,6 +379,8 @@ class CentralService extends BaseService
                 return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
             case quoteTypeCode::SAVINGS:
                 return app(SavingsQuoteService::class)->getAvailablePlans($id);
+            case quoteTypeCode::Device:
+                return app(DeviceQuoteService::class)->getAvailablePlans($id);
             case quoteTypeCode::CYBER:
                 return app(CyberQuoteService::class)->getAvailablePlans($id);
             default:
@@ -544,9 +556,9 @@ class CentralService extends BaseService
         $isTravelQuote = ucfirst($quoteType) == QuoteTypes::TRAVEL->value;
         $isNormalPlan = $data['planType'] == 'normalPlans';
         $isSourceIMCRM = $data['quoteSource'] == LeadSourceEnum::IMCRM;
-        $isALNCProvider = $data['provider_code'] == InsuranceProviderEnum::ALNC->value;
+        $isQICProvider = $data['provider_code'] == InsuranceProviderEnum::QIC->value;
 
-        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isALNCProvider) {
+        if ($isTravelQuote && $isSourceIMCRM && $isNormalPlan && $isQICProvider) {
             $quoteModelObject = $this->getModelObject(strtolower($quoteType));
             $customerMembers = CustomerMembers::where([
                 'quote_type' => ltrim($quoteModelObject, '\\'),
@@ -679,6 +691,16 @@ class CentralService extends BaseService
                 ];
                 $response = Ken::request($endpoint, 'post', $data);
                 break;
+            case QuoteTypes::DEVICE->value:
+                $endpoint = '/device/process-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteUID' => $uuid,
+                    'quoteTypeId' => QuoteTypeId::Device,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+                $response = Ken::request($endpoint, 'post', $data);
+                break;
             case QuoteTypes::CYBER->value:
                 $endpoint = '/cyber/process-quote-plan';
                 $data = [
@@ -771,6 +793,22 @@ class CentralService extends BaseService
         }
 
         return $lockFunctionalities;
+    }
+
+    public function isEmirateOfRegistrationLocked(object $quote, string $quoteTypeCode): bool
+    {
+        $user = auth()->user();
+        $groupMedicalTypeId = quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical);
+
+        $isGroupMedicalBusinessContext =
+            ($quoteTypeCode === quoteTypeCode::Business)
+            && ($quote?->business_type_of_insurance_id ?? null) == $groupMedicalTypeId;
+
+        return $isGroupMedicalBusinessContext
+            && (
+                ($user && $user->hasAnyRole([RolesEnum::FINANCE, RolesEnum::Accounts]))
+                || (method_exists($quote, 'isPolicyBooked') && $quote->isPolicyBooked())
+            );
     }
 
     // This method is used to update payment allocation status when lead status is updated
@@ -1207,25 +1245,6 @@ class CentralService extends BaseService
         return $quoteStatuses;
     }
 
-    public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
-    {
-        LoggerService::info('fn:updateSendUpdateStatusLogs - Start - CentralService');
-
-        SendUpdateStatusLog::updateOrCreate([
-            'send_update_log_id' => $sendUpdateLogId,
-            'previous_status' => $previousStatus,
-            'current_status' => $currentStatus,
-        ], [
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
-
-        LoggerService::info('SendUpdateLog status changed', extra: [
-            'previousStatus' => $previousStatus,
-            'current_status' => $currentStatus,
-        ]);
-    }
-
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
         LoggerService::info('fn:checkStatusSUStatusLogs - Start - CentralService');
@@ -1350,7 +1369,6 @@ class CentralService extends BaseService
 
                 // Create status log and trigger journey if status actually changed
                 if ($previousQuoteStatus != $quote->quote_status_id) {
-                    app(QuoteStatusLogService::class)->createQuoteStatusLog($quoteTypeId, $quote, $previousQuoteStatus);
                     (new QuoteJourneyService)->policyIssuedQuoteJourney($quote->uuid, $quoteTypeId);
                     LoggerService::info("Quote Code: {$quoteCode} - Status log created and journey triggered");
                 } else {
@@ -1483,9 +1501,9 @@ class CentralService extends BaseService
         LoggerService::info('fn:voidPayment - Void authorized payment process started for payment code: '.$paymentCode);
         $payment = Payment::where('code', $paymentCode)->first();
         if (! $payment) {
-            LoggerService::info('fn:voidPayment - Payment not found. - Payment Code:'.$paymentCode);
+            LoggerService::info('fn:voidPayment - '.self::MESSAGE_PAYMENT_NOT_FOUND.'. - Payment Code:'.$paymentCode);
 
-            return ['status' => false, 'message' => 'Payment not found'];
+            return ['status' => false, 'message' => self::MESSAGE_PAYMENT_NOT_FOUND];
         }
 
         $paymentAgainst = $request->send_update_log_id ? 'Send Update' : 'Main Lead';
@@ -1570,6 +1588,97 @@ class CentralService extends BaseService
         return $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData);
     }
 
+    /**
+     * Process document URLs and extensions for email data
+     *
+     * @param  object  $emailData  - The email data object to update
+     * @param  object  $sendUpdateEmailData  - Email data containing documents
+     */
+    private function processDocumentUrlsForEmailData(object &$emailData, object $sendUpdateEmailData): void
+    {
+        // Define document types to process (generates properties like documentSUPC, documentSUPS, documentTAX_INVOICE)
+        $documentTypes = [
+            'SUPC' => WatermarkDocTypesEnum::SUPC,
+            'SUPS' => WatermarkDocTypesEnum::SUPS,
+            'TAX_INVOICE' => WatermarkDocTypesEnum::SUTAXINV,
+        ];
+
+        $sendUpdateEmailDocs = collect($sendUpdateEmailData?->documents ?? []);
+
+        // Initialize all document properties to empty strings to prevent email provider crashes
+        foreach ($documentTypes as $documentCode) {
+            $urlProperty = 'document'.$documentCode;
+            $extProperty = 'document'.$documentCode.'Ext';
+            $emailData->{$urlProperty} = '';
+            $emailData->{$extProperty} = '';
+        }
+
+        // Process each document directly and update properties only for existing documents
+        foreach ($sendUpdateEmailDocs as $document) {
+            $documentTypeCode = $document['document_type_code'];
+
+            // Only process documents that are in our defined types
+            if (! in_array($documentTypeCode, $documentTypes)) {
+                continue;
+            }
+
+            $documentUrl = $document['watermarked_doc_url'] ?? $document['doc_url'] ?? '';
+
+            // Generate property names dynamically using document type code directly
+            $urlProperty = 'document'.$documentTypeCode;
+            $extProperty = 'document'.$documentTypeCode.'Ext';
+
+            if (! empty($documentUrl)) {
+                // Generate presigned URL instead of direct storage URL
+                $emailData->{$urlProperty} = app(QuoteDocumentService::class)->getDocumentUrl($documentUrl, 'azureIMPrivate', 60); // 60 minutes expiry
+                $emailData->{$extProperty} = ! empty($emailData->{$urlProperty})
+                    ? app(QuoteDocumentService::class)->getDocumentExtension($emailData->{$urlProperty})
+                    : '';
+            }
+        }
+    }
+
+    /**
+     * Prepare email data specifically for Device update emails to Bird
+     * Combines Bird's standard data structure with update-specific fields
+     *
+     * @param  $quote  - The quote object
+     * @param  $quoteTypeId  - The quote type ID
+     * @param  $sendUpdateEmailData  - Email data from sendUpdateToCustomerEmailData
+     * @return object - Prepared email data for Bird
+     */
+    public function prepareDeviceUpdateBirdData($quote, $quoteTypeId, $sendUpdateEmailData)
+    {
+        LoggerService::info('fn:prepareDeviceUpdateBirdData - Start preparing Device update email data for Bird', extra: [
+            'uuid' => $quote->uuid,
+            'quoteTypeId' => $quoteTypeId,
+            'emailData' => json_encode($sendUpdateEmailData),
+        ]);
+
+        // Start with standard Bird data structure
+        $workflowType = WorkflowTypeEnum::DEVICE_UPDATE_POLICY;
+        $emailData = $this->preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $sendUpdateEmailData);
+
+        // Process document URLs and extensions
+        $this->processDocumentUrlsForEmailData($emailData, $sendUpdateEmailData);
+
+        // Preserve the reason/notes the user provided so Bird emails explain the update
+        if (is_array($sendUpdateEmailData)) {
+            $emailData->reason = $sendUpdateEmailData['reason'] ?? '';
+        } elseif (is_object($sendUpdateEmailData)) {
+            $emailData->reason = $sendUpdateEmailData->reason ?? '';
+        } else {
+            $emailData->reason = '';
+        }
+
+        LoggerService::info('fn:prepareDeviceUpdateBirdData - Email data preparation completed', extra: [
+            'uuid' => $quote->uuid,
+            'emailData' => json_encode($emailData),
+        ]);
+
+        return $emailData;
+    }
+
     public function preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData)
     {
         $emailData = (object) [
@@ -1579,6 +1688,7 @@ class CentralService extends BaseService
             'policyPeriodEnd' => Carbon::parse($quote->policy_expiry_date)->format('d/m/Y'),
             'refID' => $quote->code,
             'code' => $quote->code,
+            'reason' => $existingEmailData->reason ?? '',
         ];
 
         $this->emailDataExtend($emailData, $quote, $quoteTypeId, $workflowType, $existingEmailData);
@@ -1615,17 +1725,26 @@ class CentralService extends BaseService
         $quote->load('latestInsured');
         $emailData->insuredName = $quote?->latestInsured?->first_name ? strtoupper($quote?->latestInsured?->first_name.' '.$quote?->latestInsured?->last_name) : '-';
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home,
-            QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cyber, QuoteTypeId::Device])) {
             $emailData->quoteUID = $quote->uuid;
             $emailData->appLink = 'https://play.google.com/store/apps/details?id=com.myalfred.app&utm_source=newsletter&utm_medium=sib&utm_campaign=download_ma_app_email_campaign_ma-sib';
         }
 
+        $emailData->cc_emails = [];
         if ($quoteTypeId == QuoteTypeId::Car) {
             $emailData->carDetails = $quote?->carMake?->text.' '.$quote?->carModel?->text.' '.$quote?->carModelDetail?->text;
             $emailData->companyName = '';
             if (app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
                 $emailData->companyName = $quote->company_name ?? '';
+            }
+
+            if ($quote->source == LeadSourceEnum::CARS24) {
+                $cc = getAppStorageValueByKey(ApplicationStorageEnums::CARS24_SEND_POLICY_CC_EMAILS);
+                $emailData->cc_emails = $cc ? array_map('trim', explode(',', $cc)) : [];
+            }
+
+            if ($emailData->advisorEmail) {
+                $emailData->cc_emails[] = $emailData->advisorEmail;
             }
         }
 
@@ -1673,16 +1792,28 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Health) {
-            $emailData->tpa = $quote?->plan?->healthNetwork->text;
-            $emailData->numberOfMembersCovered = (string) count($quote->activeMembers);
-            $emailData->policyHolderName = implode(', ', array_map(function ($member) {
-                return $member['first_name'];
-            }, $quote->activeMembers->toArray()));
+            $emailData->tpa = $quote?->plan?->healthNetwork?->text ?? '-';
+            $activeMembers = $quote->activeMembers ?? collect();
+            $emailData->numberOfMembersCovered = (string) $activeMembers->count();
+            $emailData->policyHolderName = $activeMembers->isEmpty()
+                ? ''
+                : implode(', ', array_map(function ($member) {
+                    return $member['first_name'];
+                }, $activeMembers->toArray()));
 
             $emailData->emirateOfYourVisaId = $quote->emirate_of_your_visa_id == EmirateEnum::ABU_DHABI ? 'yes' : 'no';
         }
 
-        if ($quoteTypeId == QuoteTypeId::Cyber) {
+        if ($quoteTypeId == QuoteTypeId::Device) {
+            $emailData->planName = $quote?->insuranceProviderPlan?->text ?? '-';
+            $insuranceProviderCompanyText = $quote?->insuranceProvider?->text ?? '';
+            $insuranceProviderCompanyCode = $quote?->insuranceProvider?->code ?? '';
+            if (! empty($insuranceProviderCompanyText) && ! empty($insuranceProviderCompanyCode)) {
+                $emailData->insuranceCompany = $insuranceProviderCompanyText.' ('.$insuranceProviderCompanyCode.')';
+            } else {
+                $emailData->insuranceCompany = $insuranceProviderCompanyText;
+            }
+        } elseif ($quoteTypeId == QuoteTypeId::Cyber) {
             $emailData->coverage = isset($quote?->cyberPlanDetail?->coverage) && is_numeric($quote->cyberPlanDetail->coverage)
                 ? number_format($quote->cyberPlanDetail->coverage)
                 : '-';
@@ -1698,7 +1829,6 @@ class CentralService extends BaseService
                 ? app(QuoteDocumentService::class)->getDocumentUrl($taxInvoicePath, 'azureIMPrivate', 60) ?? ''
                 : '';
         }
-
         if (
             $quoteTypeId != QuoteTypeId::Business ||
             (
@@ -1713,21 +1843,17 @@ class CentralService extends BaseService
             $handBookDocuments = $existingEmailData->handBookDocuments ?? [];
             if (! empty($handBookDocuments)) {
                 $latestDocument = $quoteTypeId == QuoteTypeId::Health ? collect($handBookDocuments)->first() : collect($handBookDocuments)->last();
-                $url = $latestDocument['url'] ?? null;
-
-                if ($url) {
-                    if (str_contains($url, 'http')) {
-                        $emailData->handBookDocuments = $url;
-                    } else {
-                        $emailData->handBookDocuments = app(QuoteDocumentService::class)->getDocumentUrl($url, 'azureIMPrivate') ?? '';
-                    }
-                }
+                $emailData->handBookDocuments = $latestDocument['url'] ?? null;
             } else {
                 $policyHandBook = $quoteDocuments->filter(function ($document) {
-                    return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH]);
-                })->first()?->doc_url ?? '';
+                    return in_array($document['document_type_code'], [DocumentTypeCode::PHB, DocumentTypeCode::COMP_PH, DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_HANDBOOK]);
+                })->first();
 
-                if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life])) {
+                $policyHandBook = ! empty($policyHandBook?->watermarked_doc_url)
+                    ? $policyHandBook->watermarked_doc_url
+                    : ($policyHandBook?->doc_url ?? '');
+
+                if (empty($policyHandBook) && in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Device])) {
                     $policyHandBook = PolicyWording::where('quote_type_id', $quoteTypeId)
                         ->where('plan_id', $quote->plan_id)
                         ->first()?->link ?? '';
@@ -1749,18 +1875,22 @@ class CentralService extends BaseService
         if (! empty($quoteDocuments)) {
             $quoteDocuments = collect($quoteDocuments);
 
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business])) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Device])) {
                 $emailData->policyCertificate = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [
                         DocumentTypeCode::CPC, DocumentTypeCode::GH_PC, DocumentTypeCode::POLC, DocumentTypeCode::PC_TRVL,
                         DocumentTypeCode::PC_YTCH, DocumentTypeCode::COMP_PC, DocumentTypeCode::IND_PC, DocumentTypeCode::COMP_POLIC, DocumentTypeCode::FIDEL_POC,
+                        DocumentTypeCode::DEVICE_SMARTPHONE_POLICY_CERTIFICATE, DocumentTypeCode::TCOMP_PC,
                     ]);
-                })->first()?->doc_url ?? '';
+                })->first();
 
                 if (empty($emailData->policyCertificate)) {
                     LoggerService::info('Policy Certificate not found.');
                 } else {
-                    $emailData->policyCertificate = app(QuoteDocumentService::class)->getDocumentUrl($emailData->policyCertificate, 'azureIMPrivate') ?? '';
+                    $certificatePath = ! empty(data_get($emailData->policyCertificate, 'watermarked_doc_url')) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicyCertificate(), true)
+                        ? (data_get($emailData->policyCertificate, 'watermarked_doc_url') ?? '')
+                        : (data_get($emailData->policyCertificate, 'doc_url') ?? '');
+                    $emailData->policyCertificate = app(QuoteDocumentService::class)->getDocumentUrl($certificatePath, 'azureIMPrivate') ?? '';
                     $emailData->certificateExt = ! empty($emailData->policyCertificate) ? pathinfo(parse_url($emailData->policyCertificate, PHP_URL_PATH), PATHINFO_EXTENSION) : '';
                 }
             }
@@ -1773,7 +1903,11 @@ class CentralService extends BaseService
             if ($quoteTypeId == QuoteTypeId::Health) {
                 $emailData->signedMedicalApplicationForm = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::SMAF_HLTH;
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->signedMedicalApplicationForm = ! empty($emailData?->signedMedicalApplicationForm?->watermarked_doc_url)
+                    ? $emailData->signedMedicalApplicationForm->watermarked_doc_url
+                    : ($emailData?->signedMedicalApplicationForm?->doc_url ?? '');
 
                 if (empty($emailData->signedMedicalApplicationForm)) {
                     LoggerService::info('Signed Medical Application Form not found.');
@@ -1793,7 +1927,11 @@ class CentralService extends BaseService
             ) {
                 $emailData->eCard = $quoteDocuments->filter(function ($document) {
                     return in_array($document['document_type_code'], [DocumentTypeCode::GH_EC, DocumentTypeCode::ECARD_HLTH]);
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->eCard = ! empty($emailData?->eCard?->watermarked_doc_url)
+                    ? $emailData->eCard->watermarked_doc_url
+                    : ($emailData?->eCard?->doc_url ?? '');
 
                 if (empty($emailData->eCard)) {
                     LoggerService::info('E-Card not found.');
@@ -1811,7 +1949,11 @@ class CentralService extends BaseService
             ) {
                 $emailData->networkList = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::GH_NL;
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->networkList = ! empty($emailData?->networkList?->watermarked_doc_url)
+                    ? $emailData->networkList->watermarked_doc_url
+                    : ($emailData?->networkList?->doc_url ?? '');
 
                 if (empty($emailData->networkList)) {
                     LoggerService::info('Network List not found.');
@@ -1824,7 +1966,11 @@ class CentralService extends BaseService
             if ($quoteTypeId == QuoteTypeId::Life) {
                 $emailData->applicationCopy = $quoteDocuments->filter(function ($document) {
                     return $document['document_type_code'] == DocumentTypeCode::AC_LIFE;
-                })->first()?->doc_url ?? '';
+                })->first();
+
+                $emailData->applicationCopy = ! empty($emailData?->applicationCopy?->watermarked_doc_url)
+                    ? $emailData->applicationCopy->watermarked_doc_url
+                    : ($emailData?->applicationCopy?->doc_url ?? '');
 
                 if (empty($emailData->applicationCopy)) {
                     LoggerService::info('Application Copy not found.');
@@ -1835,16 +1981,18 @@ class CentralService extends BaseService
             }
 
             $emailData->policySchedule = $quoteDocuments->filter(function ($document) {
-                return in_array($document['document_type_code'], [
+                $scheduleDocumentTypeCodes = [
                     DocumentTypeCode::CPS, DocumentTypeCode::GH_PS, DocumentTypeCode::PS_LIFE, DocumentTypeCode::CPS_TRVL, DocumentTypeCode::COMP_PS,
-                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY,
-                    DocumentTypeCode::COMP_Polic, DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS,
-                ]);
+                    DocumentTypeCode::COM_P_MONE, DocumentTypeCode::COMP_LIVES, DocumentTypeCode::COMP_MARIN, DocumentTypeCode::COMP_MONEY, DocumentTypeCode::COMP_Polic,
+                    DocumentTypeCode::FIDEL_POS, DocumentTypeCode::IND_PS, DocumentTypeCode::CYB_PS, DocumentTypeCode::TCOMP_PS,
+                ];
+
+                return in_array($document['document_type_code'], $scheduleDocumentTypeCodes);
             })->first() ?? null;
 
-            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && $quoteTypeId == QuoteTypeId::Cyber
-                ? $emailData->policySchedule->watermarked_doc_url ?? ''
-                : ($emailData?->policySchedule?->doc_url ?? '') ?? '';
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicySchedule(), true)
+                ? ($emailData->policySchedule->watermarked_doc_url ?? '')
+                : ($emailData?->policySchedule?->doc_url ?? '');
 
             LoggerService::info('timing to check policy schedule: '.now(), extra: ['emailData' => $emailData->policySchedule, 'quoteDocuments' => $quoteDocuments]);
 
@@ -1894,6 +2042,55 @@ class CentralService extends BaseService
     }
 
     /**
+     * Send Device update email to customer via Bird
+     * Similar to sendInslyEmailToCustomer but specifically for update emails
+     *
+     * @param  $quote  - The quote object
+     * @param  $emailData  - Prepared email data object
+     * @param  $quoteTypeId  - The quote type ID
+     * @param  $emailType  - Type of email (e.g., 'Update Email')
+     * @return int|null - HTTP status code or null
+     */
+    public function sendUpdateToCustomerEmail($quote, $emailData, $quoteTypeId, $emailType = 'Update Email')
+    {
+        $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+
+        try {
+            LoggerService::info("Sending {$quoteType} update email for {$emailType} uuid: ".$quote->uuid.' | Time: '.now());
+
+            $birdUrlKey = ApplicationStorageEnums::BIRD_INSLY_WORKFLOW;
+            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
+            $response = null;
+
+            if ($birdUrl) {
+                LoggerService::info("Bird workflow URL retrieved: {$birdUrl->value} for uuid: {$quote->uuid}");
+
+                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl->value, $emailData);
+
+                LoggerService::info("{$quoteType} update email response: ".json_encode($response)." | {$emailType} uuid: {$quote->uuid} | Time: ".now());
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($quote, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
+                    LoggerService::info("Quote flow details created for {$emailType} uuid: {$quote->uuid}");
+                }
+            } else {
+                LoggerService::warning("{$birdUrlKey} not found in ApplicationStorage for uuid: {$quote->uuid}");
+            }
+
+            return $response?->status_code ?? null;
+        } catch (\Exception $ex) {
+            $errorMessage = "{$birdUrlKey}-Error: while sending update workflow for {$emailType}: uuid: {$quote->uuid} | Time: ".now();
+            LoggerService::error($errorMessage, extra: [
+                'exception' => $ex->getMessage(),
+                'line' => $ex->getLine(),
+                'trace' => $ex->getTraceAsString(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * Send automation email to Bird
      *
      * @param  $emailData  | should be object
@@ -1903,10 +2100,9 @@ class CentralService extends BaseService
     {
         LoggerService::startQuoteLogging($lead);
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
-
+        $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
         try {
             LoggerService::info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
-            $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
 
             $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
             if ($birdUrl) {
@@ -1985,7 +2181,6 @@ class CentralService extends BaseService
             InsuranceProviderEnum::RAK->value,    // RAK_INSURANCE
             InsuranceProviderEnum::TM->value,     // TOKIO_MARINE
             InsuranceProviderEnum::QIC->value,    // QATAR_INSURANCE
-            InsuranceProviderEnum::ALNC->value,   // ALLIANCE_INSURANCE
             InsuranceProviderEnum::OIC->value,    // SUKOON_OMAN_INSURANCE
         ];
 
@@ -2014,8 +2209,10 @@ class CentralService extends BaseService
         $isTravel = $quoteTypeId === QuoteTypes::TRAVEL->id();
 
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' isTravel: '.$isTravel.' | Time: '.now().' | Quote Type ID: '.$quoteTypeId);
+        $maskedEmail = null;
         if ($isTravel) {
             $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_TRAVEL ?? null;
+            $maskedEmail = app(CustomerEmailMaskingService::class)->maskPurchaseEmailForDisplay($quote->email ?? null);
         } else {
             $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
         }
@@ -2028,11 +2225,8 @@ class CentralService extends BaseService
             'workflowType' => $workFlowType,
             'quoteUUID' => $quote->uuid,
             'refId' => $quote->code,
+            ...($isTravel ? ['maskedEmail' => $maskedEmail] : []),
         ];
-
-        if ($isTravel) {
-            $messageData['maskedEmail'] = app(CustomerEmailMaskingService::class)->maskPurchaseEmailForDisplay($quote->email ?? null);
-        }
         LoggerService::info('Going to trigger workflow to Send Whatsapp Message', extra: $messageData);
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' trigger workflow to Send Whatsapp Message : Ref-ID: '.$quote->code.' | Time: '.now());
         $workFlowEvent = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL);
@@ -2086,55 +2280,145 @@ class CentralService extends BaseService
     public function deletePayment($request): array
     {
         $paymentCode = $request->payment_code;
-        LoggerService::info('fn:deletePayment - process started: '.$paymentCode);
+        LoggerService::info('Delete payment process started', extra: ['paymentCode' => $paymentCode]);
 
-        $payment = Payment::where(
-            [
-                'id' => $request->payment_id,
-                'code' => $request->payment_code,
-                'paymentable_type' => TravelQuote::class,
-            ])
-            ->whereIn('payment_status_id', [
-                PaymentStatusEnum::PENDING,
-                PaymentStatusEnum::NEW,
-                PaymentStatusEnum::DRAFT,
-                PaymentStatusEnum::OVERDUE,
-            ])
+        $allowedPaymentStatuses = array_merge([
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::DRAFT,
+            PaymentStatusEnum::OVERDUE,
+        ], PaymentStatusEnum::getCancelledDeclinedOrFailedStatuses());
+
+        $payment = Payment::where([
+            'id' => $request->payment_id,
+            'code' => $request->payment_code,
+            'paymentable_type' => TravelQuote::class,
+        ])
+            ->whereIn('payment_status_id', $allowedPaymentStatuses)
             ->first();
-        if (! $payment) {
-            LoggerService::info('fn:deletePayment - Payment not found: '.$paymentCode);
 
-            return ['status' => false, 'message' => 'Payment not found'];
-        }
+        if ($payment) {
+            $quote = $payment->paymentable;
 
-        $quote = $payment->paymentable;
-        $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
-        if ($quote->payments()->count() < 2 || ! $aboveAgeMembers) {
-            LoggerService::info('fn:deletePayment - Payment cannot be deleted: '.$paymentCode);
+            if ($quote->payments()->count() < 2) {
+                LoggerService::info('Payment cannot be deleted its the only associated payment with this quote', extra: ['paymentCode' => $paymentCode]);
+                $result = ['status' => false, 'message' => 'Payment cannot be deleted'];
 
-            return ['status' => false, 'message' => 'Payment cannot be deleted'];
-        }
+            } else {
+                try {
+                    LoggerService::info('Deleting travel payment with related updates in a single transaction', extra: ['paymentCode' => $paymentCode]);
 
-        // Delete Payment and Payment Splits
-        try {
-            $maxAttempts = 2;
-            $this->handleWithDeadlockRetries(function () use ($request) {
-                $paymentSplits = PaymentSplits::where('code', $request->payment_code)->get();
-                foreach ($paymentSplits as $paymentSplit) {
-                    $paymentSplit->documents()->forceDelete();
+                    $maxAttempts = 2;
+                    $retryResult = $this->handleWithDeadlockRetries(function () use ($request, $quote) {
+
+                        $this->performDeletePaymentAndSyncDependencies($request);
+                        $this->updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion($quote);
+                        $this->updateQuoteStatusAfterPaymentDeletion($quote);
+
+                    }, $maxAttempts);
+
+                    if (is_array($retryResult)) {
+                        throw new \RuntimeException((string) ($retryResult['message'] ?? self::MESSAGE_PAYMENT_DELETION_FAILED));
+                    }
+
+                    $result = ['status' => true, 'message' => 'Delete payment processed'];
+                } catch (\Throwable $th) {
+                    LoggerService::warning(self::MESSAGE_PAYMENT_DELETION_FAILED, extra: ['paymentCode' => $paymentCode], exception: $th);
+                    $result = ['status' => false, 'message' => self::MESSAGE_PAYMENT_DELETION_FAILED];
                 }
-                PaymentSplits::where('code', $request->payment_code)->delete();
-                PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
-                Payment::where('id', $request->payment_id)->delete();
-            }, $maxAttempts);
-            info('fn:deletePayment - Payment deleted successfully: '.$paymentCode);
-        } catch (\Throwable $th) {
-            info('fn:deletePayment - Payment deletion failed: '.$paymentCode);
-
-            return ['status' => false, 'message' => 'Payment deletion failed'];
+            }
+        } else {
+            LoggerService::warning(self::MESSAGE_PAYMENT_NOT_FOUND, extra: ['paymentCode' => $paymentCode]);
+            $result = ['status' => false, 'message' => self::MESSAGE_PAYMENT_NOT_FOUND];
         }
 
-        return ['status' => true, 'message' => 'Delete payment processed'];
+        return $result;
+    }
+
+    /**
+     * Remove payment rows and related splits/history for the given request.
+     * Must run inside an active transaction (see {@see deletePayment}).
+     */
+    private function performDeletePaymentAndSyncDependencies($request): void
+    {
+        QuoteDocument::query()
+            ->whereIn(
+                'payment_split_id',
+                PaymentSplits::query()
+                    ->select('id')
+                    ->where('code', $request->payment_code)
+            )
+            ->get()
+            ->each(fn (QuoteDocument $document) => $document->forceDelete());
+
+        PaymentSplits::query()
+            ->where('code', $request->payment_code)
+            ->orderBy('id')
+            ->get()
+            ->each(fn (PaymentSplits $split) => $split->delete());
+
+        PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
+
+        Payment::query()
+            ->where('id', $request->payment_id)
+            ->get()
+            ->each(fn (Payment $paymentRow) => $paymentRow->delete());
+    }
+
+    private function updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion(TravelQuote $quote): void
+    {
+        $quote->refresh();
+
+        $mainLeadPaymentsQuery = $quote->payments()->mainLeadPayment();
+        if ($mainLeadPaymentsQuery->count() !== 1) {
+            return;
+        }
+
+        $payment = $mainLeadPaymentsQuery->first();
+        $oldCode = (string) ($payment->code ?? '');
+        $newCode = $quote->code;
+        $expectedChildCode = $newCode.'-1';
+
+        if ($oldCode === '' || $oldCode !== $expectedChildCode) {
+            return;
+        }
+
+        Schema::withoutForeignKeyConstraints(function () use ($oldCode, $newCode, $payment): void {
+            PaymentSplits::query()
+                ->where('code', $oldCode)
+                ->update(['code' => $newCode]);
+
+            PaymentAction::query()
+                ->where('payment_code', $oldCode)
+                ->update(['payment_code' => $newCode]);
+
+            PaymentStatusHistory::query()
+                ->where('payment_code', $oldCode)
+                ->update(['payment_code' => $newCode]);
+
+            PaymentStatusLog::query()
+                ->where('payment_code', $oldCode)
+                ->update(['payment_code' => $newCode]);
+
+            $payment->code = $newCode;
+            $payment->save();
+        });
+
+        LoggerService::info('fn:updatePaymentCodeAndSyncDependenciesAfterPaymentDeletion - Updated travel payment code from '.$oldCode.' to '.$newCode.' for quote '.$quote->code);
+    }
+
+    /**
+     * Align travel quote status with the main-lead payment after a payment row was removed.
+     */
+    private function updateQuoteStatusAfterPaymentDeletion(TravelQuote $quote): void
+    {
+        $payment = $quote?->payments()->mainLeadPayment()->first();
+        $paymentStatus = $payment?->payment_status_id;
+
+        if (in_array($paymentStatus, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
+            $quote->quote_status_id = QuoteStatusEnum::TransactionApproved;
+            $quote->save();
+        }
     }
 
     public function getPlansPaymentGateway($request, $quoteType)
@@ -2248,7 +2532,7 @@ class CentralService extends BaseService
 
             AutomationFailedJob::dispatch(
                 $quote->id,
-                QuoteTypeId::Car,
+                $quoteTypeId,
                 $actionRequired,
                 $statusAPIFailed,
                 PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,
@@ -2302,7 +2586,7 @@ class CentralService extends BaseService
 
                     AutomationFailedJob::dispatch(
                         $quote->id,
-                        QuoteTypeId::Car,
+                        $quoteTypeId,
                         $actionRequired,
                         $statusAPIFailed,
                         PolicyIssuanceEnum::PROCESS_INVOLVED_PAYMENT_CAPTURE,

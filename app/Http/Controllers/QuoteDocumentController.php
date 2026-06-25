@@ -314,8 +314,8 @@ class QuoteDocumentController extends Controller
         }
 
         // check if the document is locked
-        $isEnableUploadDocument = $this->quoteDocumentService->isEnableUploadDocument($quoteDocumentable->quote_status_id ?? null);
-        if (! $isEnableUploadDocument) {
+        $isEnableDocumentUploadOrDelete = $this->quoteDocumentService->isEnableDocumentUploadOrDelete($quoteDocumentable->quote_status_id ?? null);
+        if (! $isEnableDocumentUploadOrDelete['delete']) {
             return redirect()->back()->with('error', 'Document cannot be deleted as the policy is locked.');
         }
 

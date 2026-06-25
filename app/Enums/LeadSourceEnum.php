@@ -74,4 +74,10 @@ final class LeadSourceEnum extends Enum
     const CPA_AUSTRALIA_SAVINGS = 'https://im-cpa-australia.insurancemarket.ae/savings-insurance/get-quote/';
     const ECOM_SOURCE = 'https://ecom.alfred.ae/health-insurance/';
     const INSURANCE_WALLET = 'INSURANCE_WALLET';
+    const CARS24 = 'cars24';
+    const REVIVAL_REINSTATED = 'REVIVAL_REINSTATED';
+
+    // Home Revivals
+    const REVIVAL_SHORT = 'REVIVAL_SHORT';
+    const REVIVAL_ANNUAL = 'REVIVAL_ANNUAL';
 }

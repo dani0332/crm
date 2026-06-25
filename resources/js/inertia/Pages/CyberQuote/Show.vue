@@ -1,9 +1,9 @@
 <script setup>
 import { createReusableTemplate } from '@vueuse/core';
 import { reactive } from 'vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import SelectPlan from '../../Components/SelectPlan.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -73,7 +73,6 @@ const countDays = computed(() =>
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const quote = page.props?.quote;
-const historyLoading = ref(false);
 
 const { isRequired } = useRules();
 const hasRole = role => useHasRole(role);
@@ -777,6 +776,28 @@ const formatDob = dob => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <template v-if="can(permissionsEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ quote.quote_detail?.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ quote.quote_detail?.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ quote.quote_detail?.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ quote.quote_detail?.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ quote.quote_detail?.utm_term }}</dd>
+                </div>
+              </template>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INSURER API STATUS</dt>
                 <dd>{{ quote?.insurer_api_status || 'N/A' }}</dd>
@@ -1719,7 +1740,11 @@ const formatDob = dob => {
       :expanded="sectionExpanded"
     />
 
-    <LeadHistory :quote="quote" :expanded="sectionExpanded" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <ApiLogs
       v-if="can(permissionsEnum.API_LOG_VIEW)"

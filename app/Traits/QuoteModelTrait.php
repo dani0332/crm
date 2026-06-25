@@ -348,11 +348,13 @@ trait QuoteModelTrait
         );
     }
 
-    public static function formattedPcQualifiedCase(): string
+    public static function formattedPcQualifiedCase(string $tableAlias = ''): string
     {
+        $column = $tableAlias ? $tableAlias.'.pc_qualified' : 'pc_qualified';
+
         return "
             CASE
-                WHEN pc_qualified = 1 THEN 'Yes'
+                WHEN {$column} = 1 THEN 'Yes'
                 ELSE 'No'
             END
         ";
@@ -478,6 +480,7 @@ trait QuoteModelTrait
             QuoteTypeId::Car => "{$baseUrl}/quotes/car/{$quoteId}",           // Car quote type
             QuoteTypeId::Bike => "{$baseUrl}/personal-quotes/bike/{$quoteId}", // Bike quote type
             QuoteTypeId::Cyber => "{$baseUrl}/personal-quotes/cyber/{$quoteId}", // Cyber quote type
+            QuoteTypeId::Device => "{$baseUrl}/personal-quotes/smartphone/{$quoteId}", // Device quote type
             default => 'N/A'
         };
     }

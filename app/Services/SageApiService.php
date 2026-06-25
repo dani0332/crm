@@ -21,17 +21,19 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Exceptions\BookingValidationException;
 use App\Factories\SagePayloadFactory;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Jobs\BookEmbeddedProductOnSageJob;
 use App\Jobs\BookPolicyOnSageJob;
 use App\Jobs\PostPrepaymentToSageJob;
+use App\Jobs\ReverseEmbeddedProductOnSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendUpdateSageJob;
 use App\Models\Customer;
+use App\Models\EmbeddedTransaction;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
@@ -48,6 +50,7 @@ use Cache;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class SageApiService
 {
@@ -731,6 +734,18 @@ class SageApiService
         }
         $paymentSplits = $payment->paymentSplits;
 
+        try {
+            app(BookingValidationService::class)->validate($payment, $quoteTypeId);
+        } catch (BookingValidationException $e) {
+            LoggerService::warning(self::class.' fn: '.__FUNCTION__.' - Booking validation failed for '.$quote->code, extra: [
+                'quote_type_id' => $quoteTypeId,
+                'errors' => $e->errors,
+            ]);
+            $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED);
+
+            return ['status' => false, 'message' => $e->getMessage()];
+        }
+
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
 
         // This block is for collection type INSURER and having any Credit Card Payment
@@ -773,8 +788,12 @@ class SageApiService
             in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::GroupMedical])
             && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
         ) {
-            $emirate = $quote?->latestInsured?->emirate_of_registration_id ?? null;
+            $emirate = $quote?->emirate_of_registration_id ?? null;
             $quoteTypeIdForBranch = QuoteTypeId::GroupMedical;
+
+            if (! $emirate) {
+                return ['status' => false, 'message' => 'Emirate of Registration ID is required for Group Medical'];
+            }
         }
         $branch = app(BranchAssignmentService::class)->getBranch($quote?->advisor?->primaryBranch?->branch_id, $quoteTypeIdForBranch, $emirate);
 
@@ -789,7 +808,7 @@ class SageApiService
 
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : mark status as policy booked for : '.$quote->code.' ##################################');
 
-            $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, auth()->id());
+            $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked);
 
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - ################################## Policy Book : Status updated to: '.$quote->quote_status_id.' for '.$quote->code.' ##################################');
 
@@ -843,7 +862,7 @@ class SageApiService
         $this->createSageProcess($quote, $sageRequest, $request);
 
         if ($quote->quote_status_id != QuoteStatusEnum::POLICY_BOOKING_QUEUED) {
-            $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
+            $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED);
         }
 
         $this->scheduleSageProcesses($sageRequest->insurerID);
@@ -883,7 +902,6 @@ class SageApiService
     {
         [$sageRequest, $quote, $request] = $sageRequestDataArray;
         $quoteTypeId = $sageRequest->quoteTypeId;
-        $userId = $sageRequest->userId;
 
         $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
 
@@ -914,7 +932,7 @@ class SageApiService
         $skipBookPolicyDocumentJob = false;
         if (in_array($quoteTypeId, [QuoteTypeId::Travel, QuoteTypeId::Cyber])) {
             $quote->load('policyIssuance');
-            if ($quote->policyIssuance?->status == PolicyIssuanceEnum::COMPLETED_STATUS && ! $quote->advisor_id) {
+            if (in_array($quote->policyIssuance?->status, [PolicyIssuanceEnum::COMPLETED_STATUS, PolicyIssuanceEnum::PROCESSING_STATUS]) && ! $quote->advisor_id) {
                 $skipBookPolicyDocumentJob = true;
             }
         }
@@ -933,6 +951,12 @@ class SageApiService
             LoggerService::info('Sage booking is temporarily disabled', extra: ['QuoteCode' => $quote->code]);
 
             return ['status' => false, 'message' => 'Sage booking temporarily disabled'];
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Business && $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL && ! $quote->emirate_of_registration_id) {
+            LoggerService::info('Emirate of registration is mandatory for SAGE posting.', extra: ['QuoteCode' => $quote->code]);
+
+            return ['status' => false, 'message' => 'Emirate of registration is mandatory for SAGE posting.'];
         }
 
         if (! $isPolicyBookedOnSage) {
@@ -999,7 +1023,7 @@ class SageApiService
         }
 
         LoggerService::info('Marking quote status as Policy Booked');
-        $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, $userId);
+        $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked);
 
         LoggerService::info('Quote status updated successfully', extra: [
             'QuoteStatusId' => $quote->quote_status_id,
@@ -1896,9 +1920,12 @@ class SageApiService
                 if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                     $dueDate = $bookingDateFormatted;
                 } else {
-                    $dueDate = $paymentSplit['sr_no'] == 1
-                        ? $bookingDateFormatted
-                        : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+
+                    if ($paymentSplit['sr_no'] == 1) {
+                        $dueDate = $bookingDateFormatted;
+                    } else {
+                        $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplit['due_date'], $bookingDateFormatted);
+                    }
                 }
 
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
@@ -1917,7 +1944,11 @@ class SageApiService
                     if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                         $dueDate = $bookingDateFormatted;
                     } else {
-                        $dueDate = $paymentSplit['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplit['due_date']));
+                        if ($paymentSplit['sr_no'] == 1) {
+                            $dueDate = $bookingDateFormatted;
+                        } else {
+                            $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplit['due_date'], $bookingDateFormatted);
+                        }
                     }
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
                     $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
@@ -2396,7 +2427,11 @@ class SageApiService
                             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                                 $dueDate = $bookingDateFormatted;
                             } else {
-                                $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $bookingDateFormatted : date(config('constants.DATE_FORMAT_ONLY'), strtotime($paymentSplits[$key]['due_date']));
+                                if ($paymentSplits[$key]['sr_no'] == 1) {
+                                    $dueDate = $bookingDateFormatted;
+                                } else {
+                                    $dueDate = $this->resolveInstallmentDueDateAgainstBookingDate($paymentSplits[$key]['due_date'], $bookingDateFormatted);
+                                }
                             }
 
                             $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(config('constants.SAGE_300_CUSTOM_API_DATE_FORMAT'));
@@ -3193,11 +3228,12 @@ class SageApiService
         return $returnMessage;
     }
 
-    public function logErrorAndReturn($logDataArray, $storeSageApiLog = true): array
+    public function logErrorAndReturn($logDataArray, $storeSageApiLog = true, $sectionData = null): array
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         $logDataArray = array_pad($logDataArray, 9, null);
         [$quote, $message, $errorMessage, $payload, $response, $currentStep, $totalSteps, $status, $userId] = $logDataArray;
+        $section = $sectionData ?? $quote;
 
         LoggerService::info(self::class.' fn: '.__FUNCTION__." - SAGE API: $quote->code - $message");
         LoggerService::info(self::class.' fn: '.__FUNCTION__." - SAGE API: $quote->code - $errorMessage");
@@ -3211,10 +3247,25 @@ class SageApiService
         $returnMessage['error'] = $sageErrorMessage;
         if ($this->sageHasProcessingConflict($sageErrorMessage)) {
             $returnMessage['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
+        } elseif ($section instanceof EmbeddedTransaction && $this->isEPDocumentNumberAlreadyExistsMessage($sageErrorMessage)) {
+
+            LoggerService::info('Updating Tax Invoice/Commission Invoice number in insurer request response for EP Sage booking to resolve already exists document error');
+
+            $documentNumber = $this->extractDocumentNumberFromErrorMessage($sageErrorMessage);
+            $isDocumentNumberUpdated = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($section, $documentNumber);
+
+            if ($isDocumentNumberUpdated) {
+                $returnMessage['message'] = SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE;
+            } else {
+                LoggerService::warning('EP Sage booking duplicate document number detected, but insurer request response document numbers were not updated', extra: [
+                    'ep_code' => $section->code,
+                    'sage_error_message' => $sageErrorMessage,
+                ]);
+            }
         }
 
         if ($storeSageApiLog) {
-            $this->logSageApiCall($payload, $response, $quote, $quote, $currentStep, $totalSteps, $status, $userId);
+            $this->logSageApiCall($payload, $response, $section, $quote, $currentStep, $totalSteps, $status, $userId);
         }
 
         return $returnMessage;
@@ -3280,49 +3331,25 @@ class SageApiService
         LoggerService::info($logFor.': updateSageProcessStatus - ID: '.$sageProcess->id.' - Status: '.$status);
     }
 
-    public function updateAndLogQuoteStatus($quote, $quoteTypeId, $quoteStatusId, $userId)
+    public function updateAndLogQuoteStatus($quote, $quoteTypeId, $quoteStatusId)
     {
-        $latestQuoteStatusLog = QuoteStatusLog::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quote->id,
-        ])->latest()->first();
-
         unset($quote->userId);
 
-        $previousQuoteStatusId = $quote->quote_status_id;
-        $newQuoteStatusId = $quoteStatusId;
-
         $quoteData = [
-            'quote_status_id' => $newQuoteStatusId,
+            'quote_status_id' => $quoteStatusId,
             'quote_status_date' => now(),
         ];
 
         if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Business])) {
-            $quoteData['stale_at'] = null;
+            $quoteData['stale_at'] = null; // TODO:: NGI:: need to ask ali or bilal about stale_at should we pass device here in above in_array condition ?
         }
-        if ($newQuoteStatusId == QuoteStatusEnum::PolicyBooked) {
+        if ($quoteStatusId == QuoteStatusEnum::PolicyBooked) {
             $quoteData['policy_booking_date'] = Carbon::now();
         }
 
         $quote->update($quoteData);
 
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy Book: updateAndLogQuoteStatus - Code: '.$quote->code.' - Status: '.$newQuoteStatusId);
-
-        $quoteLogData = [
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quote->id,
-            'current_quote_status_id' => $newQuoteStatusId,
-            'previous_quote_status_id' => $previousQuoteStatusId,
-            'created_by' => $userId,
-        ];
-
-        $isQuoteLogSameAsBefore = $latestQuoteStatusLog?->current_quote_status_id == QuoteStatusEnum::PolicyBooked && $latestQuoteStatusLog?->previous_quote_status_id == $previousQuoteStatusId;
-        // check if the last quote log status is same as new status then update the same log
-        if ($latestQuoteStatusLog && $isQuoteLogSameAsBefore) {
-            $latestQuoteStatusLog->update($quoteLogData);
-        } else {
-            QuoteStatusLog::create($quoteLogData);
-        }
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy Book: updateAndLogQuoteStatus - Code: '.$quote->code.' - Status: '.$quoteStatusId);
 
         if (in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED])) {
             LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy Book: updateAndLogQuoteStatus - Code: '.$quote->code.' - Start updateStatusesAndAllocate - Quote Status ID: '.$quote->quote_status_id);
@@ -3364,6 +3391,39 @@ class SageApiService
         $sageErrorMessage = strtolower($sageErrorMessage);
 
         return str_contains($sageErrorMessage, 'processing conflict') || str_contains($sageErrorMessage, 'post in progress') || str_contains($sageErrorMessage, 'record already exists');
+    }
+
+    public function isEPDocumentNumberAlreadyExistsMessage(?string $message): bool
+    {
+        if (! $message) {
+            return false;
+        }
+
+        // Normalize the message string by replacing escaped double quotes, newlines, and carriage returns
+        $normalizedMessage = str_replace(['\"', '\n', '\r'], ['"', "\n", "\r"], $message);
+
+        // Check if the normalized message starts with the pre-defined Sage error message constant,
+        // using a wildcard to match any additional text after the main error phrase.
+        // Str::is() performs this pattern match, e.g., checking if the message begins with
+        // SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_RESPONSE_ERROR and has any suffix after.
+        // Example error message that this function should detect:
+        // "Document number cannot be blank. Document number \"I452030" already exists.\n\nEnter a unique number. If the duplicate number was assigned by Accounts Receivable, correct the prefix and sequence numbers for the document type in A/R Options."
+        return Str::is(SageEnum::SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_RESPONSE_ERROR.'*', $normalizedMessage);
+    }
+
+    public function extractDocumentNumberFromErrorMessage(?string $message): ?string
+    {
+        if (! $message) {
+            return null;
+        }
+
+        $normalized = str_replace(['\"', '\n', '\r'], ['"', "\n", "\r"], $message);
+
+        if (preg_match('/Document number\s+"?([^"\s]+)"?\s+already exists/i', $normalized, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
     }
 
     public function scheduleSageProcesses($insurerId = null): void
@@ -3474,6 +3534,16 @@ class SageApiService
                                     continue;
                                 }
                                 BookEmbeddedProductOnSageJob::dispatch($sageRequest, $ePTransaction, $request, $sageProcess)->onQueue('insly');
+                            } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_REVERSE_EMBEDDED_PRODUCT_REQUEST) {
+                                $ePTransaction = $sageProcess->model;
+                                if (! $ePTransaction) {
+                                    LoggerService::warning('ePTransaction not found for REVERSE_EMBEDDED_PRODUCT_REQUEST', extra: [
+                                        'SageProcessID' => $sageProcess->id,
+                                    ]);
+
+                                    continue;
+                                }
+                                ReverseEmbeddedProductOnSageJob::dispatch($sageRequest, $ePTransaction, $request, $sageProcess)->onQueue('insly');
                             }
                         } catch (\Throwable $e) {
                             LoggerService::warning('Error processing individual sage process', extra: [
@@ -3517,8 +3587,8 @@ class SageApiService
             /* if the Policy Issuance exist for the Insurer and LOB than assign the Advisor */
             if ($insuranceProviderAutomation) {
                 LoggerService::info('Policy Book : Quote '.$quote?->code.' : '.__FUNCTION__.' - assign advisor and update insurer and api issuance status of quote');
-                $isCyberLob = $quoteType === QuoteTypes::CYBER->value && $insuranceProvider->code === InsuranceProvidersEnum::AWNI;
-                if ($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA]) || $isCyberLob) {
+                $shouldUpdateAPIIssuanceAndInsurerStatus = (new PolicyIssuanceService)->shouldUpdateAPIIssuanceAndInsurerStatus($quoteType, $insuranceProvider);
+                if (($quoteType === QuoteTypes::CAR->value && in_array($insuranceProvider?->code, [InsuranceProvidersEnum::RSA, InsuranceProvidersEnum::AXA])) || $shouldUpdateAPIIssuanceAndInsurerStatus) {
                     app(PolicyIssuanceService::class)->updateAPIIssuanceAndInsurerStatus($quote, $quoteType);
                 } else {
                     // TODO:: This should be updated with the new function in PolicyIssuanceService
@@ -4535,5 +4605,19 @@ class SageApiService
     public function allowedProviderForSageEPBooking()
     {
         return [InsuranceProviderEnum::OIC->value, InsuranceProviderEnum::NGI->value];
+    }
+
+    public function resolveInstallmentDueDateAgainstBookingDate(string|int $rawInstallmentDueDate, string $bookingDate): string
+    {
+        $dateFormat = config('constants.DATE_FORMAT_ONLY');
+        $installmentDueDate = date($dateFormat, strtotime((string) $rawInstallmentDueDate));
+        $resolvedDueDate = Carbon::parse($installmentDueDate)->startOfDay();
+        $resolvedBookingDate = Carbon::parse($bookingDate)->startOfDay();
+
+        if ($resolvedDueDate->lt($resolvedBookingDate)) {
+            return $resolvedBookingDate->format($dateFormat);
+        }
+
+        return $resolvedDueDate->format($dateFormat);
     }
 }

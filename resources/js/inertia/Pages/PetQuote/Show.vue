@@ -1,8 +1,8 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { reactive } from 'vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
@@ -67,7 +67,6 @@ const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at ?? props.quote?.stale_at),
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
-const historyLoading = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const { isRequired, emiratesNumber } = useRules();
 const hasRole = role => useHasRole(role);
@@ -620,6 +619,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ quote.quote_detail?.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ quote.quote_detail?.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ quote.quote_detail?.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ quote.quote_detail?.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ quote.quote_detail?.utm_term }}</dd>
+                </div>
+              </template>
               <div
                 class="grid sm:grid-cols-2"
                 v-if="can(permissionEnum.VIEW_PCP)"
@@ -1206,7 +1227,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
       @onAddUpdate="onAddUpdate"
     />
 
-    <LeadHistory :quote="quote" :expanded="sectionExpanded" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <FtcEmailTrack
       :quoteType="$page.props.modelType"

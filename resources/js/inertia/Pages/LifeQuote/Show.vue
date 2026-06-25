@@ -19,7 +19,7 @@ import CreatePlanVariant from './Partials/CreateVariant.vue';
 import EditPlan from './Partials/EditPlan.vue';
 import BorLogsSection from '@/inertia/Components/Bor/BorLogsSection.vue';
 import CustomerAcceptanceLogsSection from '@/inertia/Components/CustomerAcceptanceLogs/Section.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
+import LeadHistorySection from '@/inertia/Components/LeadHistorySection.vue';
 
 const page = usePage();
 const props = defineProps({
@@ -389,6 +389,7 @@ const getPaymentTermTitle = months => {
     4: 'Quarterly',
     2: 'Semi-Annually',
     1: 'Annually',
+    [-1]: 'Single Payment',
   };
   return mapping[months] || '';
 };
@@ -402,6 +403,7 @@ const getTotalAnnualPremium = item => {
     Quarterly: 4,
     'Semi-Annually': 2,
     Annually: 1,
+    'Single Payment': -1,
   };
 
   if (!paymentTermTitle || !mapping[paymentTermTitle]) return 'N/A';
@@ -433,7 +435,14 @@ const getTotalAnnualPremium = item => {
     }
   }
 
-  const value = price * mapping[paymentTermTitle];
+  let value;
+
+  if (item.isRateCalculator && mapping[paymentTermTitle] < 0) {
+    /* separate handling for RC because it is mapped to -1 and mapping[paymentTermTitle] cant be used multiply correctly */
+    value = price;
+  } else {
+    value = price * mapping[paymentTermTitle];
+  }
   return numberFormat(value);
 };
 
@@ -445,6 +454,7 @@ const getTotalAnnualPremiumAED = item => {
       Quarterly: 4,
       'Semi-Annually': 2,
       Annually: 1,
+      'Single Payment': -1,
     };
 
     const premiumInAED =
@@ -453,7 +463,15 @@ const getTotalAnnualPremiumAED = item => {
           ? item.actualPremium * planExchangeRate.value * 100
           : item.totalPrice * planExchangeRate.value * 100,
       ) / 100;
-    const totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
+
+    let totalAnnualPremiumAED;
+
+    if (item.isRateCalculator && mapping[paymentTermTitle] < 0) {
+      /* separate handling for RC because it is mapped to -1 and mapping[paymentTermTitle] cant be used multiply correctly */
+      totalAnnualPremiumAED = premiumInAED;
+    } else {
+      totalAnnualPremiumAED = premiumInAED * mapping[paymentTermTitle];
+    }
 
     return numberFormat(totalAnnualPremiumAED);
   } else if (item.currency === 'AED') {
@@ -545,34 +563,6 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const canAny = permissions => useCanAny(permissions);
-
-const historyLoading = ref(false);
-
-// history data
-const historyData = ref(null);
-
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  // const res = await fetch(
-  //   `/quotes/getLeadHistory?modelType=life&recordId=${page.props.quote.id}`,
-  // );
-  const res = await fetch(
-    route('getLeadHistory', {
-      modelType: 'life',
-      recordId: page.props.quote.id,
-    }),
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
-};
-
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
 
 const leadDuplicateForm = useForm({
   modelType: 'life',
@@ -1371,6 +1361,9 @@ const getDisplayPriceInAED = item => {
     return numberFormat(actualPremium + ridersPrice);
   }
 
+  if (item.isRateCalculator) {
+    return item.totalPrice != null ? numberFormat(item.totalPrice) : 'N/A';
+  }
   // zurich & manual plan
   return item.actualPremium != null ? numberFormat(item.actualPremium) : 'N/A';
 };
@@ -1666,6 +1659,28 @@ const getDisplayPriceInAED = item => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ quote.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ quote.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ quote.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ quote.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ quote.utm_term }}</dd>
+                </div>
+              </template>
               <div
                 class="grid sm:grid-cols-2"
                 v-if="can(permissionEnum.VIEW_PCP)"
@@ -3052,7 +3067,11 @@ const getDisplayPriceInAED = item => {
       :quote-type="quoteType"
     />
 
-    <LeadHistory :quote="$page.props.quote" />
+    <LeadHistorySection
+      :expanded="sectionExpanded"
+      :quoteId="quote.id"
+      :quoteTypeId="$page.props.quoteTypeId"
+    />
 
     <FtcEmailTrack
       :quoteType="$page.props.modelType"

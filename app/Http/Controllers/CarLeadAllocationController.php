@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Services\ApplicationStorageService;
 use App\Services\CacheService;
 use App\Services\CarLeadAllocationDashboardService;
+use App\Services\LeadAllocationPermissionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
@@ -37,7 +39,11 @@ class CarLeadAllocationController extends Controller
      */
     public function index(Request $request)
     {
-        if (Gate::allows('view-lead-allocation', auth()->user())) {
+        if (Gate::allows('view-lead-allocation', auth()->user()) || request()->user()->hasAnyPermission([
+            PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CAR_LEAD_ALLOCATION_EDIT,
+            PermissionsEnum::CAR_LEAD_ALLOCATION_VIEW_ONLY,
+        ])) {
             $totalAssignedLeadCount = 0;
             $availableUsers = 0;
             $unAvailableUsers = 0;
@@ -68,6 +74,7 @@ class CarLeadAllocationController extends Controller
                 'quoteType' => QuoteTypes::CAR->value,
                 'userBLStatuses' => LeadAllocationUserBLStatusFiltersEnum::withLabels(),
                 'data' => $data,
+                'canMutateLeadAllocation' => LeadAllocationPermissionService::userCanMutate(QuoteTypes::CAR),
             ]);
         } else {
             abort(403, 'Unauthorized action.');

@@ -2,21 +2,23 @@
 
 use App\Enums\PermissionsEnum;
 use App\Enums\TeamCategoryEnum;
+use App\Http\Middleware\PreventRequestForgery;
 use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
-use Tests\Helpers\VerifyCsrfToken;
 
 beforeEach(function () {
     TestSchemaCreator::createMinimalSchema();
     $db = DB::connection('sqlite');
 
-    $this->admin = TestDataSeeder::createAdminUser(['email' => fake()->unique()->safeEmail()]);
-    TestDataSeeder::seedRolePermissions('Admin', [PermissionsEnum::TeamThresholdView]);
+    $this->admin = TestDataSeeder::createAdminUser(['email' => fake()->unique()->safeEmail()], [
+        PermissionsEnum::TeamThresholdView,
+        PermissionsEnum::TEAM_ALLOCATION_THRESHOLD_EDIT,
+    ]);
 
     $this->actingAs($this->admin);
-    $this->withoutMiddleware(VerifyCsrfToken::class);
+    $this->withoutMiddleware(PreventRequestForgery::class);
 
     // Ensure teams table has category column (required for fetchTeamByPriceAndCategory)
     if ($db->getSchemaBuilder()->hasTable('teams')) {

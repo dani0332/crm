@@ -1,5 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
+import { notifyGmQuoteEmirateUpdated } from '@/inertia/Composables/useGmQuoteEmirateCrossTabSync.js';
+import moment from 'moment';
 import AdditionalDriverDetails from './AdditionalDriverDetails.vue';
 import AdditionalVehicleTransactionDetails from './AdditionalVehicleTransactionDetails.vue';
 import KYCDetails from './KYCDetails.vue';
@@ -21,6 +23,10 @@ const props = defineProps({
     default: () => ({}),
   },
   isAddionalFieldsEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  isEmirateOfRegistrationLocked: {
     type: Boolean,
     default: false,
   },
@@ -178,6 +184,65 @@ const customerTypeOptions = computed(() => {
   ];
 });
 
+/** YYYY-MM-DD from API values that may include a time (e.g. ISO strings). */
+const dateOnly = value => {
+  if (value == null || value === '') {
+    return value;
+  }
+  const m = moment(value);
+  return m.isValid() ? m.format('YYYY-MM-DD') : String(value).trim();
+};
+
+const isPolicyholderInsuredMember = computed(() => {
+  return page.props.membersDetails?.find(
+    x => x.is_insured == 1 && x.is_policy_holder == 1,
+  )
+    ? true
+    : false;
+});
+
+const getScreeningInsuredFirstName = () =>
+  page.props.insuredDetails?.insured?.first_name ??
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
+    ? quoteRequest?.first_name
+    : null);
+
+const getScreeningInsuredLastName = () =>
+  page.props.insuredDetails?.insured?.last_name ??
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
+    ? quoteRequest?.last_name
+    : null);
+
+const getScreeningNationalityId = () =>
+  page.props.insuredDetails?.insured?.nationality_id ??
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+  isPolicyholderInsuredMember.value
+    ? quoteRequest?.nationality_id
+    : null);
+
+const getScreeningDob = () =>
+  page.props.insuredDetails?.insured?.dob ??
+  (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+  isPolicyholderInsuredMember.value
+    ? dateOnly(quoteRequest?.dob)
+    : null);
+
+const getScreeningGender = () => {
+  const genderMap = {
+    [genericRequestEnum.MALE_SINGLE_VALUE]: genericRequestEnum.MALE_SINGLE,
+    [genericRequestEnum.FEMALE_SHORT_VALUE]: genericRequestEnum.FEMALE,
+  };
+
+  const isHealthQuote =
+    page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+    isPolicyholderInsuredMember.value;
+
+  return (
+    page.props.insuredDetails?.insured?.gender ??
+    (isHealthQuote ? (genderMap[quoteRequest?.gender] ?? null) : null)
+  );
+};
+
 const screeningFormDetails = useForm({
   customer_type: page.props.insuredDetails?.insured?.customer_type ?? null,
   customer_id: quoteRequest.customer_id,
@@ -190,19 +255,11 @@ const screeningFormDetails = useForm({
       genericRequestEnum.EMIRATES_ID
       ? applyScreeningIdMask(page.props.insuredDetails.insured.id_number)
       : (page.props.insuredDetails?.insured?.id_number ?? null),
-  insured_first_name:
-    page.props.insuredDetails?.insured?.first_name ??
-    (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
-      ? page.props.membersDetails[0]?.first_name
-      : null),
-  insured_last_name:
-    page.props.insuredDetails?.insured?.last_name ??
-    (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health
-      ? page.props.membersDetails[0]?.last_name
-      : null),
-  nationality_id: page.props.insuredDetails?.insured.nationality_id ?? null,
-  dob: page.props.insuredDetails?.insured.dob ?? null,
-  screening_gender: page.props.insuredDetails?.insured?.gender ?? null,
+  insured_first_name: getScreeningInsuredFirstName(),
+  insured_last_name: getScreeningInsuredLastName(),
+  nationality_id: getScreeningNationalityId(),
+  dob: getScreeningDob(),
+  screening_gender: getScreeningGender(),
   get_quote_email_gig:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
       ? quoteRequest?.car_quote_request_detail?.insurer_quote_email
@@ -225,6 +282,7 @@ const screeningFormDetails = useForm({
   company_address: page.props.insuredDetails?.insured?.company_address,
   industry_type_code: page.props.insuredDetails?.insured?.industry_type_code,
   emirate_of_registration_id:
+    quoteRequest.emirate_of_registration_id ??
     page.props.insuredDetails?.insured?.emirate_of_registration_id,
   lead_source: quoteRequest.source,
   insurance_provider_code:
@@ -706,6 +764,15 @@ const submitScreeningForm = isValid => {
         }
       },
       onSuccess: response => {
+        if (
+          page.props.quoteType.code === page.props.quoteTypeCodeEnum.Business
+        ) {
+          notifyGmQuoteEmirateUpdated({
+            quoteUuid: quoteRequest.uuid,
+            quoteId: quoteRequest.id,
+            source: 'aml-screening-modal',
+          });
+        }
         if (response.props.flash.success?.length === 0) {
           notification.success({
             title: 'Quote is updated',
@@ -776,6 +843,13 @@ const updateChassisNumber = chassisNumber => {
 
 const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
   createReusableTemplate();
+
+const isMigratedHealthQuote = computed(() => {
+  return (
+    page.props.quoteType.code === page.props.quoteTypeCodeEnum.Health &&
+    quoteRequest.is_migrated
+  );
+});
 </script>
 <template>
   <x-modal
@@ -879,21 +953,43 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             </x-button>
           </div>
         </template>
-        <x-field label="Insured First Name" required>
+        <x-field
+          :label="
+            isMigratedHealthQuote
+              ? 'Policyholder First Name'
+              : 'Insured First Name'
+          "
+          required
+        >
           <x-input
             v-model="screeningFormDetails.insured_first_name"
             :rules="[isRequired, rules.nameCheck]"
-            placeholder="Insured First Name"
+            :placeholder="
+              isMigratedHealthQuote
+                ? 'Policyholder First Name'
+                : 'Insured First Name'
+            "
             type="text"
             class="w-full"
             :error="screeningFormDetails.errors.insured_first_name"
           />
         </x-field>
-        <x-field label="Insured Last Name" required>
+        <x-field
+          :label="
+            isMigratedHealthQuote
+              ? 'Policyholder Last Name'
+              : 'Insured Last Name'
+          "
+          required
+        >
           <x-input
             v-model="screeningFormDetails.insured_last_name"
             :rules="[isRequired, rules.nameCheck]"
-            placeholder="Insured Last Name"
+            :placeholder="
+              isMigratedHealthQuote
+                ? 'Policyholder Last Name'
+                : 'Insured Last Name'
+            "
             type="text"
             class="w-full"
             :error="screeningFormDetails.errors.insured_last_name"
@@ -1022,8 +1118,43 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             :error="screeningFormDetails.errors.industry_type_code"
           />
         </x-field>
-        <x-field label="Emirates of Registration" required>
+        <div>
+          <h4 class="text-gray-700 text-sm font-medium mb-1">
+            <x-tooltip placement="bottom">
+              <span
+                class="underline decoration-dotted decoration-primary-600 cursor-help"
+              >
+                Emirates of Registration
+              </span>
+              <template #tooltip>
+                Editing this will update the Entity Profile and may alter
+                available plans, premiums, and branch assignment.
+              </template>
+            </x-tooltip>
+            <sup class="text-red-500">*</sup>
+          </h4>
+          <x-tooltip
+            v-if="isEmirateOfRegistrationLocked"
+            placement="top"
+            class="block w-full"
+          >
+            <x-select
+              v-model="screeningFormDetails.emirate_of_registration_id"
+              :options="emiratesOfRegistrationOptions"
+              placeholder="Emirates of Registration"
+              disabled
+              type="text"
+              class="w-full"
+              :rules="[isRequired]"
+              :error="screeningFormDetails.errors.emirate_of_registration_id"
+            />
+            <template #tooltip>
+              Emirate of registration cannot be changed after the policy is
+              booked.
+            </template>
+          </x-tooltip>
           <x-select
+            v-else
             v-model="screeningFormDetails.emirate_of_registration_id"
             :options="emiratesOfRegistrationOptions"
             placeholder="Emirates of Registration"
@@ -1032,7 +1163,7 @@ const [SubmitForScreeningBtnTemplate, SubmitForScreeningBtnReuseTemplate] =
             :rules="[isRequired]"
             :error="screeningFormDetails.errors.emirate_of_registration_id"
           />
-        </x-field>
+        </div>
       </template>
     </dl>
     <x-divider

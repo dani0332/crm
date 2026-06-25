@@ -22,6 +22,9 @@ final class PolicyIssuanceEnum extends Enum
     const BOOKING_PENDING_STATUS = 'booking_pending';
     const BOOKING_PROCESSING_STATUS = 'booking_processing';
 
+    /** Reserved status — excluded from IMCRM policy automation manual re-trigger allowlist */
+    const ON_HOLD_STATUS = 'on_hold';
+
     // Policy Issuance Automation Statuses IDs
     const PIA_POLICY_AUTOMATION_STATUS_YES_ID = 1;
     const PIA_POLICY_AUTOMATION_STATUS_NO_ID = 2;
@@ -65,7 +68,7 @@ final class PolicyIssuanceEnum extends Enum
     const PIA_RTA_UPLOAD_STATUS_PENDING = '0';
     const PIA_RTA_UPLOAD_STATUS_DONE = '1';
 
-    /* Insurer API Generic Status */ // These are in used for Travel Alliance Insurance
+    /* Insurer API Generic Status */ // These are in used for Travel Qatar Insurance
     const POLICY_ISSUANCE_API_STATUS_YES_ID = 1;
     const POLICY_ISSUANCE_API_STATUS_YES = 'Yes';
     const POLICY_ISSUANCE_API_STATUS_NO_ID = 2;
@@ -83,17 +86,26 @@ final class PolicyIssuanceEnum extends Enum
     const BOOKING_DETAILS_API_FAILED = 'Booking Details API Failed';
     const BOOKING_DETAILS_API_ACTION_MESSAGE = 'Retrieval of Required Booking Details via API';
 
-    /* Insurer API Generic Status */ // These are in used for Travel Alliance Insurance
+    /* Insurer API Generic Status */ // These are in used for Travel Qatar Insurance
 
-    /* Alliance Travel Steps */ // These are in used for Travel Alliance Insurance
+    /* Qatar Travel Steps */ // These are in used for Travel Qatar Insurance
 
-    const ALLIANCE_TRAVEL_ISSUE_POLICY = 'IssuePolicy';
-    const ALLIANCE_TRAVEL_PURCHASE_POLICY = 'PurchasePolicy';
-    const ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS = 'UploadPolicyDocuments';
-    const ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS = 'FillPolicyBookingDetails';
-    const ALLIANCE_TRAVEL_BOOK_POLICY = 'BookPolicy';
+    const QATAR_TRAVEL_ISSUE_POLICY = 'IssuePolicy';
+    const QATAR_TRAVEL_PURCHASE_POLICY = 'PurchasePolicy';
+    const QATAR_TRAVEL_UPLOAD_POLICY_DOCUMENTS = 'UploadPolicyDocuments';
+    const QATAR_TRAVEL_FILL_POLICY_BOOKING_DETAILS = 'FillPolicyBookingDetails';
+    const QATAR_TRAVEL_BOOK_POLICY = 'BookPolicy';
 
-    /* Alliance Travel Steps */ // These are in used for Travel Alliance Insurance
+    /* Qatar Travel Steps */ // These are in used for Travel Qatar Insurance
+
+    /* DIC Travel Steps */
+
+    const DIC_TRAVEL_ISSUE_POLICY = 'IssuePolicy';
+    const DIC_TRAVEL_GET_POLICY_DOC = 'GetPolicyDoc';
+    const DIC_TRAVEL_GET_BROKER_INVOICE = 'GetBrokerInvoice';
+    const DIC_TRAVEL_BOOK_POLICY = 'BookPolicy';
+
+    /* DIC Travel Steps */
 
     /* LIVA AML API Statuses */
 
@@ -119,20 +131,32 @@ final class PolicyIssuanceEnum extends Enum
     {
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
-                InsuranceProviderEnum::ALNC->value => self::getTravelAlliancePolicyIssuanceSteps(),
+                InsuranceProviderEnum::DIC->value => self::getTravelDicPolicyIssuanceSteps(),
+                InsuranceProviderEnum::QIC->value => self::getTravelQatarPolicyIssuanceSteps(),
                 default => null,
             },
             default => null,
         };
     }
-    public static function getTravelAlliancePolicyIssuanceSteps()
+
+    public static function getTravelDicPolicyIssuanceSteps(): array
     {
         return [
-            self::ALLIANCE_TRAVEL_ISSUE_POLICY,
-            self::ALLIANCE_TRAVEL_PURCHASE_POLICY,
-            self::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS,
-            self::ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS,
-            self::ALLIANCE_TRAVEL_BOOK_POLICY,
+            self::DIC_TRAVEL_ISSUE_POLICY,
+            self::DIC_TRAVEL_GET_POLICY_DOC,
+            self::DIC_TRAVEL_GET_BROKER_INVOICE,
+            self::DIC_TRAVEL_BOOK_POLICY,
+        ];
+    }
+
+    public static function getTravelQatarPolicyIssuanceSteps()
+    {
+        return [
+            self::QATAR_TRAVEL_ISSUE_POLICY,
+            self::QATAR_TRAVEL_PURCHASE_POLICY,
+            self::QATAR_TRAVEL_UPLOAD_POLICY_DOCUMENTS,
+            self::QATAR_TRAVEL_FILL_POLICY_BOOKING_DETAILS,
+            self::QATAR_TRAVEL_BOOK_POLICY,
         ];
     }
     public static function getInsurerAPIStatuses($status = null)

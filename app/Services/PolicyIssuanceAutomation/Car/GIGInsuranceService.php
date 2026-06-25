@@ -77,7 +77,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
     private const REQUEST_PATCH = 'PATCH';
     private const REQUEST_AUTH = 'AUTH';
 
-    private $maxRetries = 5;
+    private $maxRetries = 2;
     private $retryDelay = 10000; // 10 seconds
 
     private const CAR_REGISTRATION_CARD_DOC_TYPE_CODE = 'DT01';
@@ -533,7 +533,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
         $response = ['status' => false, 'completed_step' => self::GET_AND_UPLOAD_POLICY_DOCUMENTS_TO_IMCRM, 'error' => null, 'message' => null];
 
         $endPoint = $this->baseUrl.'/v1/insurance-documents/document';
-        $getDocumentDelay = 10;
+        $getDocumentDelay = 2;
         $getPolicyIssuanceResponse = $process->policyIssuanceLogs()->where([
             'step' => self::ISSUE_POLICY,
             'status' => PolicyIssuanceEnum::SUCCESS_STATUS,
@@ -861,6 +861,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
             'document_type_code' => $documentType->code,
             'document_type_text' => $documentType->text,
             'doc_uuid' => generateUUID(),
+            'document_type_id' => $documentType->id,
         ]);
 
         if ($newDocument->exists) {
@@ -1145,7 +1146,7 @@ class GIGInsuranceService implements PolicyIssuanceInterface
                     $this->maxRetries,
                     $this->retryDelay
                 )->timeout(30)->withHeaders($header)->asForm()->post($endPoint, $payload),
-                default => Http::retry($this->maxRetries, $this->retryDelay)->timeout(30)->withHeaders($header)->get($endPoint, $payload),
+                default => Http::retry($this->maxRetries, $this->retryDelay)->timeout(15)->withHeaders($header)->get($endPoint, $payload),
             };
 
             if ($httpResponse->successful()) {

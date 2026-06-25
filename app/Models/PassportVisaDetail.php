@@ -3,11 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class PassportVisaDetail extends Model
 {
+    protected $table = 'passport_visa_details';
     protected $fillable = [
         'passport_number',
+        'passport_country',
+        'passport_expiry_date',
         'name',
         'visa_number',
         'visa_file_number',
@@ -21,4 +25,12 @@ class PassportVisaDetail extends Model
         'quoteable_id',
         'customer_member_id',
     ];
+
+    /**
+     * Get the parent quoteable model (e.g. PersonalQuote).
+     */
+    public function quoteable(): MorphTo
+    {
+        return $this->morphTo();
+    }
 }

@@ -13,10 +13,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
+use App\Http\Requests\UpdateEpDocumentRequest;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
+use App\Services\EmbeddedTransactionService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiEmbeddedProductService;
 use Exception;
@@ -27,12 +29,14 @@ use Inertia\ResponseFactory;
 
 class EmbeddedProductController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'voidPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote']]);
+    public function __construct(
+        private EmbeddedTransactionService $embeddedTransactionService,
+    ) {
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'voidPayment', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote', 'updateEpDocument']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
         $this->middleware('permission:'.PermissionsEnum::PAYMENTS_VOID, ['only' => ['voidPayment']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'getDocuments', 'uploadQuoteDocument', 'force', 'getByQuote']]);
+        $this->middleware('permission:'.PermissionsEnum::EP_DOCUMENT_MANUAL_OVERRIDE, ['only' => ['updateEpDocument']]);
     }
 
     /**
@@ -321,5 +325,29 @@ class EmbeddedProductController extends Controller
             ]);
         }
 
+    }
+
+    public function updateEpDocument(UpdateEpDocumentRequest $request)
+    {
+        try {
+            $result = $this->embeddedTransactionService->updateEpDocument($request->validated());
+
+            if (! $result) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update document.',
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Document updated successfully.',
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

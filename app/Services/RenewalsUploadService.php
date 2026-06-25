@@ -15,6 +15,7 @@ use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProvidersTransitionEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentGatewayIdEnum;
@@ -81,6 +82,7 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceProviderPlan;
+use App\Models\InsuranceProviderTransition;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
@@ -135,6 +137,71 @@ class RenewalsUploadService
     protected $healthQuoteService;
     protected $homeQuoteService;
     protected $renewalsHelperService;
+
+    /**
+     * Per-instance memoization for resolveCarPlan(). Keyed by
+     * plan_name|plan_type|provider_id so the same lookup within one
+     * validation/fetch/email pass avoids duplicate CarPlan queries.
+     * Stores CarPlan|null (null encodes "not found" so misses are cached too).
+     *
+     * @var array<string, CarPlan|null>
+     */
+    private array $carPlanCache = [];
+
+    /**
+     * Per-instance memoization of transitionable lead resolution. Keyed by
+     * spl_object_id($lead) so that a lead already resolved by
+     * isTransitionableLead() within this instance can be reused by
+     * isTransitionableLeadForProcess() without re-querying the
+     * InsuranceProviderTransition row or re-loading its source/target
+     * providers via lazy relations in
+     * {@see RenewalQuoteProcess::checkIsTransitionableLead()}. Without this
+     * cache, the validation chunk loop performs 3 redundant queries per lead
+     * (transition + 2 providers).
+     *
+     * Each entry stores the transition_id observed at write time alongside
+     * the full result array so staleness (e.g. transition_id reset between
+     * calls) can be detected and the cache bypassed safely.
+     *
+     * @var array<int, array{
+     *     transitionId: int|null,
+     *     result: array{
+     *         status: bool,
+     *         carPlan: CarPlan|null,
+     *         insuranceProvider: InsuranceProvider|null,
+     *         transitionId: int|null,
+     *         tags: string,
+     *     },
+     * }>
+     */
+    private array $transitionableLeadCache = [];
+
+    /**
+     * Per-instance memoization for resolveInsuranceProviderByText(). Keyed by
+     * the raw provider_name string so the same text lookup issued by
+     * isTransitionableLead() during the transitionable resolution and the
+     * subsequent getNonTransitionableLeadConfig() fallback (for non-transitionable
+     * leads — where the transitionableLeadCache is intentionally empty) doesn't
+     * double the provider-by-text queries per lead in the validation chunk loop.
+     * Stores InsuranceProvider|null (null encodes "not found" so misses are cached too).
+     *
+     * @var array<string, InsuranceProvider|null>
+     */
+    private array $insuranceProviderByTextCache = [];
+
+    /**
+     * Per-instance memoization for source provider lookup by insurer code.
+     *
+     * @var array<string, InsuranceProvider|null>
+     */
+    private array $sourceInsuranceProviderByCodeCache = [];
+
+    /**
+     * Per-instance memoization for active transition lookup by source/target IDs.
+     *
+     * @var array<string, InsuranceProviderTransition|null>
+     */
+    private array $activeTransitionCache = [];
 
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
@@ -511,14 +578,7 @@ class RenewalsUploadService
             return false;
         }
 
-        $leadValidationErrors = collect();
-        $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
-        $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where('quote_id', $quote->id)->where([
-            'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'type' => RenewalsUploadType::UPDATE_LEADS,
-            'email_sent' => true,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-        ])->exists() && $isGenesisLead['status'];
+        $isRenewalHistorical = $this->isHistoricalRenewalForProcess($renewalQuoteProcess);
 
         if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
             $message = 'can not proceed with quote as payment is already in process. ';
@@ -530,7 +590,8 @@ class RenewalsUploadService
         }
 
         if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
-            $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id, $isGenesisLead, $isRenewalHistorical);
+            $isTransitionableLead = $this->isTransitionableLeadForProcess($renewalQuoteProcess);
+            $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id, $isTransitionableLead, $isRenewalHistorical);
 
             if (is_int($planResponse) && $planResponse == 200) {
                 LoggerService::info($logPrefix.' plan created successfully', extra: [
@@ -953,6 +1014,10 @@ class RenewalsUploadService
             }
 
             $quote = $quoteObject->create($quoteData);
+
+            if ($quoteType->id == QuoteTypeId::Health) {
+                app(HealthQuoteRevampMigrationService::class)->dispatchForRenewalLead($quote->id);
+            }
 
             if (! $isQuotePersonal) {
                 $this->syncQuote($quote, $quoteData);
@@ -1672,13 +1737,13 @@ class RenewalsUploadService
      *
      * @return void
      */
-    public function createPlan($data, $quote, $createdById, $isGenesisLead, $isRenewalHistorical)
+    public function createPlan($data, $quote, $createdById, $isTransitionableLead, $isRenewalHistorical)
     {
         $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
         LoggerService::info($logPrefix.' Create Plan Started');
 
-        // If the lead is a Genesis lead, then use the GIG(AXA) insurance provider
-        $provider = $isGenesisLead['insuranceProvider'];
+        // If the lead is a transitionable lead, then use the target insurance provider from transition config
+        $provider = $isTransitionableLead['insuranceProvider'];
         if (! $provider) {
             LoggerService::warning($logPrefix.' Provider not found due to change of plan name or repair type after the batch upload', [
                 'provider' => $data['provider_name'] ?? null,
@@ -1704,7 +1769,7 @@ class RenewalsUploadService
         }
 
         $planData = $this->preparePlanData($quote, $createdById, $isRenewalHistorical);
-        $plan = $this->preparePlan($data, $carPlan, $isGenesisLead, $provider, $quote);
+        $plan = $this->preparePlan($data, $carPlan, $isTransitionableLead, $provider, $quote);
 
         $plan['addons'] = $this->buildPlanAddons($data, $carPlan, $logPrefix);
 
@@ -1745,13 +1810,20 @@ class RenewalsUploadService
         ];
     }
 
-    private function preparePlan($data, $carPlan, $isGenesisLead, $provider, $quote)
+    private function preparePlan($data, $carPlan, $isTransitionableLead, $provider, $quote)
     {
+        LoggerService::info('preparePlan inside function', [
+            'status' => $isTransitionableLead['status'] ?? false,
+            'transitionId' => $isTransitionableLead['transitionId'] ?? null,
+            'carPlanId' => $isTransitionableLead['carPlan']?->id,
+            'insuranceProviderId' => $isTransitionableLead['insuranceProvider']?->id,
+            'tags' => $isTransitionableLead['tags'] ?? '',
+        ]);
         $plan = [
             'planId' => $carPlan->id,
             'isDisabled' => false,
-            'isManualUpdate' => $isGenesisLead['status'] ? true : false,
-            'isGenesis' => $isGenesisLead['status'] ? true : false,
+            'isManualUpdate' => $isTransitionableLead['status'] ? true : false,
+            'tags' => $isTransitionableLead['status'] ? $isTransitionableLead['tags'] : '',
             'actualPremium' => $data['premium'] ?? 0,
             'discountPremium' => $data['premium'] ?? 0,
             'ancillaryExcess' => $data['ancillary_excess'] ?? 0,
@@ -1889,19 +1961,8 @@ class RenewalsUploadService
                     'callSource' => 'imcrm',
                 ]);
                 LoggerService::info($logPrefix.' renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
-
-                $leadValidationErrors = collect();
-                $leadData = (object) $renewalQuoteProcess->data ?? [];
-                $checkGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
-
-                $isRenewalHistorical = RenewalQuoteProcess::where('id', '!=', $renewalQuoteProcess->id)->where([
-                    'quote_id' => $carQuote->id,
-                    'quote_type' => QuoteTypeShortCode::CAR,
-                    'status' => RenewalProcessStatuses::PLANS_FETCHED,
-                    'type' => RenewalsUploadType::UPDATE_LEADS,
-                    'email_sent' => true,
-                    'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-                ])->exists() && $checkGenesisLead['status'];
+                $isTransitionableLead = $this->isTransitionableLeadWithCurrentData($renewalQuoteProcess);
+                $isRenewalHistorical = $this->isHistoricalRenewalForProcess($renewalQuoteProcess, $isTransitionableLead);
 
                 $listQuotePlans = $carQuote->car_make_id != null && $carQuote->car_model_id != null ? $this->carQuoteService->getPlans($carQuote->uuid, true, true, true, $isRenewalHistorical) : [];
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
@@ -1930,8 +1991,11 @@ class RenewalsUploadService
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
-                // if the lead is a Genesis lead, then set the current insurer to empty
-                if ($checkGenesisLead['status']) {
+                // if the lead is a transitionable lead (e.g. Genesis), set the current insurer to empty in email.
+                // Uses the current-data consistency check — not the stored-transition-only
+                // checkIsTransitionableLead() — so a lead whose provider_name/insurer was mutated after
+                // validation no longer clears currentInsurer when the transition is stale.
+                if ($isTransitionableLead) {
                     $emailData->currentInsurer = '';
                 }
 
@@ -2315,21 +2379,20 @@ class RenewalsUploadService
 
                             if ($leadData->premium) {
 
-                                // check if the lead is a Genesis lead
-                                $isGenesisLead = $this->isGenesisLead($leadData, $leadValidationErrors);
-
+                                // Only place we run full transition resolution: during validation. Persist transition_id so fetch/email use stored value.
+                                $isTransitionableLead = $this->isTransitionableLead($lead, $leadValidationErrors);
                                 if (! empty($leadData->provider_name) && ! $leadData->plan_type) {
                                     $leadValidationErrors->push('Repair Type is required');
-                                } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0 && ! $isGenesisLead['status']) {
+                                } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0 && ! $isTransitionableLead) {
                                     $leadValidationErrors->push('Excess should be 0 with TPL');
-                                } elseif (($leadData->plan_type == CarPlanType::COMP || $leadData->plan_type == CarPlanType::AGENCY) && ! $isGenesisLead['status']) {
+                                } elseif (($leadData->plan_type == CarPlanType::COMP || $leadData->plan_type == CarPlanType::AGENCY) && ! $isTransitionableLead) {
                                     if (! $leadData->excess) {
                                         $leadValidationErrors->push('Excess should be > 0 with Repair Type - COMP or AGENCY');
                                     }
                                 }
 
-                                // if the lead is a Genesis lead, then the Insurer Quote No is not required
-                                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no && ! $isGenesisLead['status']) {
+                                // transitionable lead: Insurer Quote No is not required
+                                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no && ! $isTransitionableLead) {
                                     $leadValidationErrors->push('Insurer Quote No is required');
                                 }
 
@@ -2342,11 +2405,28 @@ class RenewalsUploadService
                                 if (! empty($leadData->provider_name) && ! $leadData->plan_name) {
                                     $leadValidationErrors->push('Plan Name is required');
                                 }
-                                if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name && $isGenesisLead['insuranceProvider'] != null) {
-                                    // if the lead is a Genesis lead then plan type and plan name validation done on isGenesisLead function
-                                    $carPlan = $isGenesisLead['carPlan'];
-                                    if (! $carPlan) {
-                                        $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
+                                // Defer the transition lookup/provider resolution/plan resolution
+                                // performed by isTransitionableLeadForProcess() until we actually need
+                                // its result. When any of provider_name/plan_type/plan_name is empty,
+                                // control drops into the else branch unconditionally, so calling it
+                                // up-front would incur wasted DB work per lead.
+                                if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name) {
+                                    $isTransitionableLeadForProcess = $this->isTransitionableLeadForProcess($lead);
+
+                                    if ($isTransitionableLeadForProcess['insuranceProvider'] != null) {
+                                        // transitionable lead: plan type and plan name validated in isTransitionableLead
+                                        $carPlan = $isTransitionableLeadForProcess['carPlan'];
+                                        // If transitionable validation already added the specific message,
+                                        // avoid adding the generic duplicate. Otherwise ensure plan-mismatch
+                                        // still surfaces a validation error (e.g. stale persisted transition_id).
+                                        $hasTransitionablePlanError = $leadValidationErrors->contains(
+                                            'Invalid Insurer Plan Name or Repair Type for Transitionable Lead'
+                                        );
+                                        if (! $carPlan && ! $hasTransitionablePlanError) {
+                                            $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
+                                        }
+                                    } else {
+                                        $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
                                     }
                                 } else {
                                     $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
@@ -2358,7 +2438,7 @@ class RenewalsUploadService
                                     info('currentlyInsuredWith:'.$currentlyInsuredWith);
                                     $providerName = trim($leadData->provider_name ?? '');
                                     info('providerName:'.$providerName);
-                                    if ($currentlyInsuredWith !== '' && $providerName !== '' && strcasecmp($currentlyInsuredWith, $providerName) !== 0 && ! $isGenesisLead['status']) {
+                                    if ($currentlyInsuredWith !== '' && $providerName !== '' && strcasecmp($currentlyInsuredWith, $providerName) !== 0 && ! $isTransitionableLead) {
                                         $leadValidationErrors->push('Provider Name must match Currently Insured With');
                                     }
                                 }
@@ -2666,9 +2746,9 @@ class RenewalsUploadService
                                 }
                             }
                             if (isset($leadData->previous_advisor_email) && ! empty($leadData->previous_advisor_email)) {
-                                LoggerService::info('fn - uploadedLeadsValidation - previous advisor email is invalid '.$leadData->previous_advisor_email);
+                                LoggerService::info('fn - uploadedLeadsValidation - checking previous advisor email');
                                 if (! $this->renewalsAddonService->getUserInfo($leadData->previous_advisor_email)) {
-                                    LoggerService::info('fn - uploadedLeadsValidation - previous advisor email is invalid '.$leadData->previous_advisor_email);
+                                    LoggerService::info('fn - uploadedLeadsValidation - previous advisor email is invalid');
                                     $leadValidationErrors->push('Invalid Previous Advisor Email');
                                     break;
                                 }
@@ -3472,6 +3552,115 @@ class RenewalsUploadService
         return ! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY;
     }
 
+    /**
+     * Resolve InsuranceProvider by display text (e.g. provider_name from upload).
+     * Tries exact match (trimmed), then normalized match so "Gulf... B.S.C. ©" matches DB "Gulf... B.S.C. (C)".
+     */
+    private function resolveInsuranceProviderByText(?string $providerName): ?InsuranceProvider
+    {
+        $provider = null;
+
+        if ($providerName !== null && $providerName !== '') {
+            if (array_key_exists($providerName, $this->insuranceProviderByTextCache)) {
+                $provider = $this->insuranceProviderByTextCache[$providerName];
+            } else {
+                $trimmed = trim($providerName);
+                $provider = InsuranceProvider::where('text', $trimmed)->first();
+
+                if ($provider === null) {
+                    // Normalize © (U+00A9) to (C) so upload text matches DB text.
+                    $normalized = trim(str_replace('©', '(C)', $trimmed));
+                    if ($normalized !== $trimmed) {
+                        $provider = InsuranceProvider::where('text', $normalized)->first();
+                    }
+                }
+
+                $this->insuranceProviderByTextCache[$providerName] = $provider;
+            }
+        }
+
+        return $provider;
+    }
+
+    private function resolveSourceProviderByCode(?string $providerCode): ?InsuranceProvider
+    {
+        if ($providerCode === null || $providerCode === '') {
+            return null;
+        }
+
+        if (array_key_exists($providerCode, $this->sourceInsuranceProviderByCodeCache)) {
+            return $this->sourceInsuranceProviderByCodeCache[$providerCode];
+        }
+
+        return $this->sourceInsuranceProviderByCodeCache[$providerCode] = InsuranceProvider::where('code', $providerCode)->first();
+    }
+
+    private function resolveActiveTransition(?int $sourceProviderId, ?int $targetProviderId): ?InsuranceProviderTransition
+    {
+        if ($sourceProviderId === null || $targetProviderId === null) {
+            return null;
+        }
+
+        $cacheKey = $sourceProviderId.'|'.$targetProviderId;
+        if (array_key_exists($cacheKey, $this->activeTransitionCache)) {
+            return $this->activeTransitionCache[$cacheKey];
+        }
+
+        return $this->activeTransitionCache[$cacheKey] = InsuranceProviderTransition::where('source_insurance_provider_id', $sourceProviderId)
+            ->where('target_insurance_provider_id', $targetProviderId)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /**
+     * Resolve transitionable status directly from current lead data without relying on persisted transition_id.
+     *
+     * @return array{status: bool, transition: InsuranceProviderTransition|null, sourceProvider: InsuranceProvider|null, targetProvider: InsuranceProvider|null, carPlan: CarPlan|null}
+     */
+    private function resolveTransitionabilityFromCurrentData(object $leadData): array
+    {
+        $sourceProvider = $this->resolveSourceProviderByCode($leadData->insurer ?? null);
+        $targetProvider = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
+        $transition = $sourceProvider && $targetProvider
+            ? $this->resolveActiveTransition($sourceProvider->id, $targetProvider->id)
+            : null;
+
+        if (! $sourceProvider || ! $targetProvider || ! $transition) {
+            return [
+                'status' => false,
+                'transition' => null,
+                'sourceProvider' => $sourceProvider,
+                'targetProvider' => $targetProvider,
+                'carPlan' => null,
+            ];
+        }
+
+        if (! $this->isPhoenixGccCompliant($sourceProvider->code, $leadData)) {
+            return [
+                'status' => false,
+                'transition' => null,
+                'sourceProvider' => $sourceProvider,
+                'targetProvider' => $targetProvider,
+                'carPlan' => null,
+            ];
+        }
+
+        $planName = $leadData->plan_name ?? null;
+        $planType = $leadData->plan_type ?? null;
+        $isPlanValidationRequired = $planName !== null && $planName !== '' && $planType !== null && $planType !== '';
+        $carPlan = $isPlanValidationRequired
+            ? $this->resolveCarPlan($planName, $planType, $targetProvider->id)
+            : null;
+
+        return [
+            'status' => ! $isPlanValidationRequired || $carPlan !== null,
+            'transition' => $transition,
+            'sourceProvider' => $sourceProvider,
+            'targetProvider' => $targetProvider,
+            'carPlan' => $carPlan,
+        ];
+    }
+
     public function incrementBatchEmailSent($renewalsBatchEmailId, $renewalQuoteProcessId)
     {
         RenewalsBatchEmails::where('id', $renewalsBatchEmailId)->update(['total_sent' => DB::raw('total_sent+1')]);
@@ -3481,40 +3670,358 @@ class RenewalsUploadService
     }
 
     /**
-     * Criteria to identify if the lead is a Genesis lead if insurance provider is LIVA(RSA) and plan is related to GIG(AXA)
-     *
-     * @param [type] $leadData
-     * @param [type] $currentInsuranceProvider
-     * @param [type] $leadValidationErrors
+     * Resolve CarPlan by text, repair type, and provider ID.
      */
-    public function isGenesisLead($leadData, &$leadValidationErrors): array
+    private function resolveCarPlan(?string $planName, ?string $planType, ?int $providerId): ?CarPlan
     {
-        $currentInsuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->first();
+        if ($planName === null || $planType === null || $providerId === null) {
+            return null;
+        }
+
+        $cacheKey = $planName.'|'.$planType.'|'.$providerId;
+
+        if (array_key_exists($cacheKey, $this->carPlanCache)) {
+            return $this->carPlanCache[$cacheKey];
+        }
+
+        return $this->carPlanCache[$cacheKey] = CarPlan::where('text', $planName)
+            ->where('repair_type', $planType)
+            ->where('provider_id', $providerId)
+            ->first();
+    }
+
+    /**
+     * Phoenix (TM-sourced) transitions are only valid for GCC vehicles.
+     * Genesis and all other transition sources are not subject to this constraint.
+     */
+    private function isPhoenixGccCompliant(string $sourceCode, object $leadData): bool
+    {
+        if ($sourceCode !== InsuranceProvidersEnum::TM) {
+            return true;
+        }
+
+        return strtolower($leadData->is_gcc ?? '') === 'yes';
+    }
+
+    /**
+     * Resolve transitionable provider config: check if lead's insurer can transition to provider_name and resolve plan.
+     *
+     * @param  RenewalQuoteProcess  $lead  Must have insurer (code), provider_name (text), plan_name, plan_type
+     */
+    public function isTransitionableLead(RenewalQuoteProcess $lead, &$leadValidationErrors): bool
+    {
+        $rawData = $lead->data;
+        $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
         $status = false;
         $carPlan = null;
-        $insuranceProvider = $currentInsuranceProvider ?? null;
 
-        // if insurance provider is GIG(AXA) and code is RSA then check if the plan is related to GIG(AXA)
-        if ($currentInsuranceProvider && $leadData->insurer == InsuranceProvidersEnum::RSA && $currentInsuranceProvider->code == InsuranceProvidersEnum::AXA) {
-            // check if the plan is related to GIG(AXA)
-            $isGigPlan = CarPlan::where('text', $leadData->plan_name)->where('repair_type', $leadData->plan_type)->where('provider_id', $currentInsuranceProvider->id)->first();
-            if (! $isGigPlan) {
-                $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Genesis Lead');
-            }
-            LoggerService::info('isGenesisLead - isGigPlan: '.($isGigPlan ? 'true' : 'false'));
-            $status = $isGigPlan ? true : false;
-            $carPlan = $isGigPlan ? $isGigPlan : null;
-        } else {
-            $currentInsuranceProvider = $currentInsuranceProvider?->code == $leadData->insurer ? $currentInsuranceProvider : null;
-            if ($currentInsuranceProvider != null) {
-                $carPlan = CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $currentInsuranceProvider->id)->first();
+        $originalTransitionId = $lead->insurance_provider_transition_id;
+        $newTransitionId = null;
+
+        $sourceProvider = $this->resolveSourceProviderByCode($leadData->insurer ?? null);
+        $targetProvider = ! empty($leadData->provider_name)
+            ? $this->resolveInsuranceProviderByText($leadData->provider_name)
+            : null;
+
+        LoggerService::info('isTransitionableLead inside function', [
+            'insurer' => $leadData->insurer ?? null,
+            'provider_name' => $leadData->provider_name ?? null,
+            'plan_name' => $leadData->plan_name ?? null,
+            'plan_type' => $leadData->plan_type ?? null,
+            'sourceProvider' => $sourceProvider?->id,
+            'targetProvider' => $targetProvider?->id,
+        ]);
+
+        if ($sourceProvider && $targetProvider) {
+            LoggerService::info('isTransitionableLead inside function - sourceProvider and targetProvider found');
+            $transition = $this->resolveActiveTransition($sourceProvider->id, $targetProvider->id);
+
+            LoggerService::info('isTransitionableLead inside function - transition', ['transition_id' => $transition?->id]);
+            if ($transition && $this->isPhoenixGccCompliant($sourceProvider->code, $leadData)) {
+                LoggerService::info('isTransitionableLead inside function - transition found');
+                $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $targetProvider->id);
+
+                // Persist transition_id whenever a valid active transition exists (even if plan is invalid)
+                // so downstream isTransitionableLeadForProcess() recognises the provider combination as valid
+                // and callers don't report a misleading "Invalid Insurance Provider & Provider Name Combination".
+                $newTransitionId = $transition->id;
+
+                if (! $carPlan) {
+                    $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type for Transitionable Lead');
+                }
+
+                $status = (bool) $carPlan;
             }
         }
 
-        LoggerService::info('fn: isGenesisLead - status: '.$status);
+        if ($originalTransitionId !== $newTransitionId) {
+            $lead->insurance_provider_transition_id = $newTransitionId;
+            $lead->save();
+            LoggerService::info('isTransitionableLead - updated transition_id to: '.($newTransitionId ?? 'NULL'));
+        }
 
-        // return the status
-        return ['status' => $status, 'carPlan' => $carPlan, 'insuranceProvider' => $insuranceProvider];
+        // Cache the fully resolved transitionable path so isTransitionableLeadForProcess() — typically
+        // called immediately after in the validation chunk loop — can skip re-querying the transition
+        // row and both providers via RenewalQuoteProcess::checkIsTransitionableLead()'s lazy relations.
+        // Only cache the transitionable branch: when no transition resolved, checkIsTransitionableLead()
+        // short-circuits on a null transition_id without any DB queries so there is nothing to save.
+        if ($newTransitionId !== null) {
+            $this->transitionableLeadCache[spl_object_id($lead)] = [
+                'transitionId' => $newTransitionId,
+                'result' => [
+                    'status' => $status,
+                    'carPlan' => $carPlan,
+                    'insuranceProvider' => $targetProvider,
+                    'transitionId' => $newTransitionId,
+                    'tags' => $status ? InsuranceProvidersTransitionEnum::tagForSourceCode($sourceProvider->code) : '',
+                ],
+            ];
+        }
+
+        LoggerService::info('isTransitionableLead - status', ['status' => $status]);
+
+        return $status;
+    }
+
+    /**
+     * Determine whether a car quote's renewal history qualifies as historical
+     * (i.e. a prior email has already been sent via a transitionable process).
+     * Centralises the duplicated block from CRUDController and CarQuoteService.
+     *
+     * @param  bool|null  $isTransitionableLead  When the caller already computed
+     *                                           {@see RenewalQuoteProcess::checkIsTransitionableLead()}
+     *                                           for {@code $carQuote->latestUpdateRenewalQuoteProcess},
+     *                                           pass it here to avoid evaluating it twice inside
+     *                                           {@see isTransitionableLeadWithCurrentData()}.
+     */
+    public function resolveIsRenewalHistorical(CarQuote $carQuote, ?bool $isTransitionableLead = null): bool
+    {
+        $latestProcess = $carQuote->latestUpdateRenewalQuoteProcess;
+
+        if (! $latestProcess) {
+            return false;
+        }
+
+        return $this->isHistoricalRenewalForProcess($latestProcess, $isTransitionableLead);
+    }
+
+    /**
+     * Determine whether a given renewal process qualifies as historical — i.e. a
+     * prior PLANS_FETCHED UPDATE_LEADS process already sent an email for the
+     * same quote_id AND quote_type, AND the given process is transitionable.
+     *
+     * Scoping to both quote_id and quote_type is critical because quote_id is
+     * just an integer and can overlap across different LOB tables (CarQuote,
+     * HealthQuote, TravelQuote, ...). Without the quote_type filter the
+     * exists() can match unrelated renewal processes across LOBs.
+     *
+     * @param  bool|null  $isTransitionableLead  Optional precomputed
+     *                                           {@see RenewalQuoteProcess::checkIsTransitionableLead()}
+     *                                           for {@code $process} to skip duplicate evaluation.
+     */
+    public function isHistoricalRenewalForProcess(RenewalQuoteProcess $process, ?bool $isTransitionableLead = null): bool
+    {
+        if (! $this->isTransitionableLeadWithCurrentData($process, $isTransitionableLead)) {
+            return false;
+        }
+
+        return RenewalQuoteProcess::where('id', '!=', $process->id)->where([
+            'quote_id' => $process->quote_id,
+            'quote_type' => $process->quote_type,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'email_sent' => true,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        ])->exists();
+    }
+
+    /**
+     * Guard against a stale `insurance_provider_transition_id`: the column is
+     * persisted during validation from the lead's `insurer` + `provider_name`
+     * at that moment. If `data` is mutated afterwards (e.g. `provider_name`
+     * cleared or swapped), the stored id keeps pointing at a transition that
+     * no longer describes the current lead, and
+     * {@see RenewalQuoteProcess::checkIsTransitionableLead()} alone would
+     * still return true — producing incorrect historical plan sorting and
+     * OCB email routing (e.g. `currentInsurer` wrongly cleared in OCB email).
+     *
+     * Restores the pre-refactor {@code isGenesisLead} contract of freshly
+     * evaluating the current `insurer` code and `provider_name` text against
+     * the stored transition's source/target providers before trusting it.
+     *
+     * Prefer this over {@see RenewalQuoteProcess::checkIsTransitionableLead()}
+     * in any code path that acts on transitionable status AFTER validation
+     * (OCB email sending, historical plan resolution, etc.).
+     */
+    public function isTransitionableLeadWithCurrentData(RenewalQuoteProcess $process, ?bool $isTransitionableLead = null): bool
+    {
+        if ($isTransitionableLead === false) {
+            return false;
+        }
+
+        $rawData = $process->data;
+        $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
+        $checkIsTransitionableLead = $process->checkIsTransitionableLead();
+
+        if ($isTransitionableLead === null && ! $checkIsTransitionableLead) {
+            return $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
+        }
+
+        $isTransitionable = false;
+        $transition = $process->insuranceProviderTransition;
+        $hasValidTransition = $transition !== null
+            && $transition->is_active
+            && $transition->targetProvider
+            && $transition->sourceProvider;
+
+        if ($hasValidTransition && ($leadData->insurer ?? null) === $transition->sourceProvider->code) {
+            if ($this->isPhoenixGccCompliant($transition->sourceProvider->code, $leadData)) {
+                $currentTarget = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
+                $matchesCurrentTarget = $currentTarget !== null && $currentTarget->id === $transition->targetProvider->id;
+
+                if ($matchesCurrentTarget) {
+                    $planName = $leadData->plan_name ?? null;
+                    $planType = $leadData->plan_type ?? null;
+                    $isPlanValidationRequired = $planName !== null && $planName !== '' && $planType !== null && $planType !== '';
+                    $isTransitionable = ! $isPlanValidationRequired
+                        || $this->resolveCarPlan($planName, $planType, $currentTarget->id) !== null;
+                }
+            }
+        }
+
+        // If caller passed a precomputed "true" hint but stored transition data no longer
+        // matches current lead data, use current-data resolution as a deterministic fallback.
+        if (! $isTransitionable && $isTransitionableLead === true && ! $checkIsTransitionableLead) {
+            $isTransitionable = $this->resolveTransitionabilityFromCurrentData($leadData)['status'];
+        }
+
+        return $isTransitionable;
+    }
+
+    /**
+     * Get transitionable provider config from stored transition on process only.
+     * Does not run isTransitionableLead; use that only during validation and persist transition_id there.
+     * If process has no transition_id, returns non-transitionable config (status false, provider/plan from lead data).
+     *
+     * `status` mirrors isTransitionableLead's contract: true only when the full
+     * transitionable path resolves (active transition, both providers present,
+     * AND a matching car plan). When the transition is valid but the plan
+     * lookup fails, `status` is false while `transitionId` and
+     * `insuranceProvider` are still populated so callers can distinguish
+     * "plan missing on transitionable path" from "not a transitionable lead".
+     *
+     * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null, transitionId: int|null, tags: string}
+     */
+    public function isTransitionableLeadForProcess(RenewalQuoteProcess $lead): array
+    {
+        // Reuse the full resolution cached by a preceding isTransitionableLead() call for this lead
+        // instance. The staleness check against $lead->insurance_provider_transition_id makes the
+        // cache safe to bypass if something (e.g. a reload) changed the transition_id between calls.
+        $cacheKey = spl_object_id($lead);
+        if (isset($this->transitionableLeadCache[$cacheKey])
+            && $this->transitionableLeadCache[$cacheKey]['transitionId'] === $lead->insurance_provider_transition_id
+        ) {
+            LoggerService::info('isTransitionableLeadForProcess - cache hit', [
+                'transitionId' => $this->transitionableLeadCache[$cacheKey]['transitionId'],
+            ]);
+
+            return $this->transitionableLeadCache[$cacheKey]['result'];
+        }
+
+        $rawData = $lead->data;
+        $leadData = (object) (is_array($rawData) ? $rawData : ($rawData ?? []));
+
+        $transition = null;
+        $target = null;
+        $source = null;
+        $resolvedViaPersistedTransition = false;
+
+        if ($lead->checkIsTransitionableLead()) {
+            $transition = $lead->insuranceProviderTransition;
+            $target = $transition->targetProvider;
+            $source = $transition->sourceProvider;
+            $resolvedViaPersistedTransition = true;
+        } else {
+            // Fallback for pre-existing leads (e.g. Genesis RSA->AXA) where transition_id was not yet
+            // persisted during a prior validation pass. Matches the historical resolution logic in
+            // isTransitionableLeadWithCurrentData() to ensure plans created for in-flight leads
+            // receive the correct transitionable flags (isManualUpdate, tags).
+            $currentResolution = $this->resolveTransitionabilityFromCurrentData($leadData);
+            if ($currentResolution['transition']) {
+                $transition = $currentResolution['transition'];
+                $target = $currentResolution['targetProvider'];
+                $source = $currentResolution['sourceProvider'];
+            }
+        }
+
+        if ($transition && $target && $source) {
+
+            $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $target->id);
+
+            LoggerService::info('isTransitionableLeadForProcess inside function', ['carPlan_id' => $carPlan?->id]);
+
+            $result = [
+                'status' => $carPlan !== null,
+                'carPlan' => $carPlan,
+                'insuranceProvider' => $target,
+                'transitionId' => $transition->id,
+                'tags' => $carPlan !== null ? InsuranceProvidersTransitionEnum::tagForSourceCode($source->code) : '',
+            ];
+
+            // Only cache when we resolved via the persisted transition_id. The cache's staleness key
+            // is $lead->insurance_provider_transition_id, and the fallback path resolves the
+            // transition from current $lead->data without writing it back to that column. Caching
+            // the fallback result would store ['transitionId' => null, 'result.transitionId' => N],
+            // and any later mutation to $lead->data (with the column still null) would be served
+            // the stale result, producing wrong isManualUpdate/tags during plan creation.
+            if ($resolvedViaPersistedTransition) {
+                $this->transitionableLeadCache[$cacheKey] = [
+                    'transitionId' => $lead->insurance_provider_transition_id,
+                    'result' => $result,
+                ];
+            }
+
+            return $result;
+        }
+
+        return $this->getNonTransitionableLeadConfig($leadData);
+    }
+
+    /**
+     * Resolve provider and plan from leadData only (no transition logic). Use when process has no transition_id.
+     *
+     * Mirrors the pre-refactor isGenesisLead() contract: the returned
+     * `insuranceProvider` is always the provider resolved by text (or null when
+     * no provider matches by text at all), regardless of whether its `code`
+     * matches the lead's `insurer`. `carPlan` is only resolved when the codes
+     * match. This keeps validation (uploadedLeadsValidation) on the
+     * plan-validation branch so a mismatched-but-valid provider name produces
+     * the existing "Invalid Insurer Plan Name or Repair Type" error and
+     * continues to run downstream `$carPlan`-dependent checks, instead of
+     * short-circuiting to "Invalid Insurance Provider & Provider Name
+     * Combination Provided".
+     *
+     * @return array{status: bool, carPlan: CarPlan|null, insuranceProvider: InsuranceProvider|null, transitionId: null, tags: string}
+     */
+    private function getNonTransitionableLeadConfig($leadData): array
+    {
+        $insuranceProvider = $this->resolveInsuranceProviderByText($leadData->provider_name ?? null);
+        LoggerService::info('isTransitionableLeadForProcess inside function - insuranceProvider', ['insuranceProvider_id' => $insuranceProvider?->id]);
+
+        $carPlan = null;
+        if ($insuranceProvider && $insuranceProvider->code === ($leadData->insurer ?? null)) {
+            $carPlan = $this->resolveCarPlan($leadData->plan_name ?? null, $leadData->plan_type ?? null, $insuranceProvider->id);
+        }
+
+        LoggerService::info('isTransitionableLeadForProcess inside function - carPlan', ['carPlan_id' => $carPlan?->id]);
+
+        return [
+            'status' => false,
+            'carPlan' => $carPlan,
+            'insuranceProvider' => $insuranceProvider,
+            'transitionId' => null,
+            'tags' => '',
+        ];
     }
 
     private function updateAdvisorAssignmentOrMarkedAsSIC($quote, $advisorId, $renewalUploadLead, $quoteType, $previousAdvisor, $logPrefix)

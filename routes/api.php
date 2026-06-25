@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
+use App\Http\Controllers\API\EpCancellationCallbackController;
 use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\API\V1\QuoteDocumentController;
 use App\Http\Controllers\FtcEmailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\AlfredChatController;
+use App\Http\Controllers\V2\AMLController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +29,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
+    Route::post('/imcrm/re-trigger-life-revival', [ApiController::class, 'reTriggerLifeRevival'])->name('reTriggerLifeRevival');
 });
 
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
@@ -37,8 +40,11 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/send-health-apply-now-email', [ApiController::class, 'sendHealthApplyNowEmail'])->name('sendHealthApplyNowEmail');
     // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
     Route::post('/imcrm/event/quote-updated', [ApiController::class, 'quoteUpdated'])->name('quoteUpdated');
+    Route::post('/imcrm/quotes/automate-aml-screening', [AMLController::class, 'automateQuoteAmlScreening'])->name('api.imcrm.automate-aml-screening');
     Route::post('/imcrm/trigger-sic-whatsapp', [ApiController::class, 'triggerSICWhatsapp'])->name('triggerSICWhatsapp');
     Route::post('/imcrm/run-cqf-jobs', [ApiController::class, 'runCQFJobs']);
+    Route::post('/imcrm/trigger-conversion-optimization-scheduled-export', [ApiController::class, 'triggerConversionOptimizationScheduledExport'])
+        ->name('triggerConversionOptimizationScheduledExport');
 
     // FTC email
     Route::post('ftc-email/{quoteType}/{uuid}/dispatch', [FtcEmailController::class, 'send'])->name('api.ftc-email.dispatch');
@@ -95,23 +101,34 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/debug/lead-ocr-comparison', [ApiController::class, 'getLeadOCRComparison'])->name('debug.car-documents');
 
     Route::get('/get-ep-workflow-data', [EmbeddedProductController::class, 'getEpWorkflowData'])->name('get.ep-workflow-data');
+    Route::post('/ep-cancellation-callback', EpCancellationCallbackController::class)->name('api.ep-cancellation-callback');
     Route::post('/imcrm/debug/quote-documents/rewatermark', [ApiController::class, 'rewatermarkQuoteDocuments'])->name('debug.rewatermark-quote-documents');
+
+    // !! Do not remove this route, it is used for debugging purposes and do not enable it in production without approval from the team !!.
+    // Route::post('/imcrm/re-trigger-revival-followups', [ApiController::class, 'reTriggerRevivalFollowups'])->name('reTriggerRevivalFollowups');
+    Route::post('/imcrm/re-trigger-revival-followups-with-date', [ApiController::class, 'reTriggerRevivalFollowupsWithDate'])->name('reTriggerRevivalFollowupsWithDate');
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
+Route::post('/imcrm/trigger-ep-retargeting-email', [EmbeddedProductController::class, 'triggerEpRetargetingEmail'])->name('trigger.ep-retargeting-email');
 // Route::post('/customers/tag-private-clientss', [ApiController::class, 'tagPrivateClients'])->name('tagPrivateClientss');
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
 Route::post('/bird-outbound-emails-status', [ApiController::class, 'birdOutboundEmailsHook']);
+Route::post('/bird-whatsapp-inbound-hook', [ApiController::class, 'birdWhatsappInboundHook']);
+Route::post('/bird-whatsapp-outbound-hook', [ApiController::class, 'birdWhatsappOutboundHook']);
+Route::post('/bird-whatsapp-interaction-hook', [ApiController::class, 'birdWhatsappInteractionHook']);
 Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'logFollowUpEvent']);
 Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::class, 'stopFollowUpEvent']);
 Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
 Route::post('/email-status/update-customer-replied', [ApiController::class, 'updateCustomerRepliedStatus'])->name('updateCustomerRepliedStatus');
+Route::post('/imcrm/eligible-for-revival-followups', [ApiController::class, 'eligibleForRevivalFollowups'])->name('eligibleForRevivalFollowups');
 
 Route::prefix('v1')->group(function () {
+    Route::post('/log-ep-email-statuses', [ApiController::class, 'logEpEmailStatuses'])->name('logEpEmailStatuses');
 
     Route::post('quotes/car/followup-started', [CarQuoteController::class, 'followupStarted']);
     Route::post('quotes/car/pause-resume-followup', [CarQuoteController::class, 'updatePauseAndResumeCounters']);
@@ -149,7 +166,10 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/{quoteType}/upload-to-metlife', [QuoteDocumentController::class, 'handleMetLife']);
     Route::get('/failed-ila-emails/{quoteType}', [ApiController::class, 'exportFailedIlaLeads'])->name('export-failed-ila-leads');
 
+    Route::post('quotes/send-zero-plans-email', [ApiController::class, 'sendZeroPlansEmail'])->name('sendZeroPlansEmail');
     Route::get('/claim-documents', [QuoteDocumentController::class, 'getClaimDocuments']);
+
+    Route::post('/imcrm/update-revival-lead-source', [ApiController::class, 'updateRevivalLeadSource'])->name('updateRevivalLeadSource');
 });
 
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

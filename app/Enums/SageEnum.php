@@ -20,6 +20,7 @@ final class SageEnum extends Enum
     /* Sage Process Request Type */
     const SAGE_PROCESS_BOOK_POLICY_REQUEST = 'book_policy';
     const SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST = 'book_embedded_product';
+    const SAGE_PROCESS_REVERSE_EMBEDDED_PRODUCT_REQUEST = 'reverse_embedded_product';
     const SAGE_PROCESS_SEND_UPDATE_REQUEST = 'send_update';
     const SAGE_PROCESS_POST_PREPAYMENT_REQUEST = 'post_prepayment';
 
@@ -234,6 +235,8 @@ final class SageEnum extends Enum
     const SAGE_TIMEOUT_REQUEST_MESSAGE = 'cURL error 28';
     const SAGE_EMPTY_RESPONSE_MESSAGE = 'empty reply from server';
     const SAGE_ERROR_OCCURRED_MESSAGE = 'error has occurred';
+    const SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_MESSAGE = 'EP Document number already exists';
+    const SAGE_EP_DOCUMENT_NUMBER_ALREADY_EXISTS_RESPONSE_ERROR = 'Document number * already exists.';
 
     // Sage Payload
     const BANK_CODE_INS = 'INSBANK';

@@ -31,7 +31,6 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const leadSourceEnum = page.props.leadSource;
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
-const quote = page.props.quote;
 
 const notification = useNotifications('toast');
 const isLoading = ref(false);
@@ -55,15 +54,15 @@ const emit = defineEmits(['update:selectedPlanChanged']);
 const isPlanSelectionDisable = computed(() => {
   const quoteType = props.quoteType?.toLowerCase();
   const isNormalPlan = props.extraDetails?.planType == 'normalPlans';
-  const isSourceIMCRM = quote?.source == leadSourceEnum?.IMCRM;
-  const isALNCProvider =
-    props.plan?.providerCode == insuranceProviderCodeEnum?.ALNC;
+  const isSourceIMCRM = page.props.quote?.source == leadSourceEnum?.IMCRM;
+  const isQICProvider =
+    props.plan?.providerCode == insuranceProviderCodeEnum?.QIC;
 
   if (
     quoteType == quoteTypeCodeEnum?.Travel?.toLowerCase() &&
     isSourceIMCRM &&
     isNormalPlan &&
-    isALNCProvider
+    isQICProvider
   ) {
     const travelers = page.props.travelers ?? [];
     return (
@@ -77,7 +76,7 @@ const isPlanSelectionDisable = computed(() => {
   return false;
 });
 
-const isLocked = quote?.is_quote_locked ?? false;
+const isLocked = computed(() => page.props.quote?.is_quote_locked ?? false);
 
 const closeSelectPlanConfirmModal = () => {
   showSelectPlanConfirm.value = false;
@@ -335,8 +334,8 @@ const updateSelectedPlan = () => {
 
   if (props.quoteType.toLocaleLowerCase() == 'travel') {
     data.planType = props.extraDetails?.planType;
-    data.quoteSource = quote?.source;
-    data.quoteId = quote?.id;
+    data.quoteSource = page.props.quote?.source;
+    data.quoteId = page.props.quote?.id;
 
     if (props.extraDetails?.selectedPlansIds.length > 0) {
       for (let i = 0; i < props.extraDetails?.selectedPlansIds.length; i++) {

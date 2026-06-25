@@ -382,7 +382,6 @@ $child = Child::factory()
 
 ```php
 beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
     $this->user = TestDataSeeder::createAdminUser();
     $this->actingAs($this->user);
 
@@ -452,7 +451,7 @@ Consider adding these factory states as needed:
 1. **More Insurance Providers**
 
    ```php
-   public function alliance() { /* ... */ }
+   public function qatar() { /* ... */ }
    public function metlife() { /* ... */ }
    ```
 

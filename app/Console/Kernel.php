@@ -9,6 +9,7 @@ use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
 use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
+use App\Enums\ApplicationStorageEnums;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\SLAMonitoringJob;
 use App\Services\Logger\LoggerService;
@@ -29,7 +30,6 @@ class Kernel extends ConsoleKernel
         Commands\AddBatchNumber::class,
         Commands\AddBatchNumberNonMotors::class,
         Commands\Dtt::class,
-        Commands\DttFollowUp::class,
         Commands\UpdateUserStatus::class,
         Commands\RetryCarAllocation::class,
         Commands\RetryCarRevivalAllocation::class,
@@ -114,6 +114,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('RetryAllocation:cron --quoteType=Yacht')->name('retry_allocation:cron:yacht')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('RetryAllocation:cron --quoteType=Savings')->name('retry_allocation:cron:savings')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('RetryAllocation:cron --quoteType=Cyber')->name('retry_allocation:cron:cyber')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->command('RetryAllocation:cron --quoteType=Device')->name('retry_allocation:cron:device')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
 
@@ -163,6 +164,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
 
+        $schedule->command('DttLife')->timezone('Asia/Dubai')->dailyAt('09:10')->onOneServer()->withoutOverlapping();
+
+        $schedule->command('DttHome')->timezone('Asia/Dubai')->dailyAt('09:06')->onOneServer()->withoutOverlapping();
+
         $schedule->command('DttHealth')->timezone('Asia/Dubai')->dailyAt('09:03')->onOneServer()->withoutOverlapping();
         $schedule->command('DttHealthFollowUp')->timezone('Asia/Dubai')->dailyAt('11:48')->onOneServer()->withoutOverlapping();
 
@@ -171,8 +176,20 @@ class Kernel extends ConsoleKernel
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->dailyAt('00:50')->onOneServer()->withoutOverlapping();
         $schedule->command('leads:process-car-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('03:00')->onOneServer()->withoutOverlapping();
+        $this->scheduleWithEnvironment(
+            $schedule,
+            'policy-issuance-automation:run',
+            default: fn ($event) => $event->timezone('Asia/Dubai')->everyThreeMinutes()->onOneServer()->withoutOverlapping(4),
+            environments: [
+                'test' => fn ($event) => $event->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4),
+                'uat' => function ($event) {
+                    $environment = app()->environment();
+                    LoggerService::info("policy-issuance-automation:run skipped on {$environment}");
 
-        $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyThreeMinutes()->onOneServer()->withoutOverlapping(4);
+                    return $event->skip(fn () => true);
+                },
+            ]
+        );
         $schedule->command('aml-screening-automation:run')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
         $schedule->command('aml-screening-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('policy-issuance-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping();
@@ -206,6 +223,19 @@ class Kernel extends ConsoleKernel
             default: fn ($event) => $event->timezone('Asia/Dubai')->mondays()->at('08:00')->onOneServer()->withoutOverlapping(),
             environments: ['staging' => fn ($event) => $event->hourly()->onOneServer()->withoutOverlapping()]
         );
+
+        $schedule
+            ->command(
+                'reports:conversion-optimization-scheduled-export '.ApplicationStorageEnums::CONVERSION_OPTIMIZATION_SCHEDULED_EXPORT_PARAMS
+            )
+            ->mondays()
+            ->at('10:00')
+            ->timezone('Asia/Dubai')
+            ->onOneServer()
+            ->withoutOverlapping();
+
+        // Alternate recipient set: add a new ApplicationStorageEnums constant + application_storage row, then e.g.:
+        // $schedule->command('reports:conversion-optimization-scheduled-export OTHER_KEY_NAME')->environments(['production'])->mondays()->at('10:00')->onOneServer()->withoutOverlapping();
     }
 
     /**

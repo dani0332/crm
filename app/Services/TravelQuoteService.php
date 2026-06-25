@@ -6,6 +6,7 @@ use App\Builders\TravelQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -185,17 +186,17 @@ class TravelQuoteService extends BaseService
             'tqr.gender',
             DB::raw('
                 CASE
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
-                    WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
-                    ELSE insurer_aml_status
+                    WHEN tqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                    WHEN tqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                    WHEN tqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                    WHEN tqr.insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                    ELSE tqr.insurer_aml_status
                 END AS insurer_aml_status_display
             '),
             'c.pcp_tag',
             'tqr.pc_qualified',
             DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
-            DB::raw(TravelQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+            DB::raw(TravelQuote::formattedPcQualifiedCase('tqr').' as pc_qualified_formatted'),
             // Sub-source fields
             'tqr.sub_source_id',
             'tqr.sub_source_options_id',
@@ -247,6 +248,25 @@ class TravelQuoteService extends BaseService
                     ->where('ub.status', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'tqr.branch_id');
+    }
+
+    private function applyUtmJoin(): void
+    {
+        if (auth()->user()?->can(PermissionsEnum::VIEW_UTM_SECTION)) {
+            $this->query
+                ->leftJoin('personal_quotes as pq', function ($join) {
+                    $join->on('pq.uuid', '=', 'tqr.uuid')
+                        ->where('pq.quote_type_id', '=', QuoteTypeId::Travel);
+                })
+                ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', '=', 'pq.id')
+                ->addSelect(
+                    'pqd.utm_source',
+                    'pqd.utm_medium',
+                    'pqd.utm_campaign',
+                    'pqd.utm_content',
+                    'pqd.utm_term',
+                );
+        }
     }
 
     public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
@@ -499,6 +519,8 @@ class TravelQuoteService extends BaseService
 
     public function getEntity($id)
     {
+        $this->applyUtmJoin();
+
         return $this->query->addSelect(['tqr.email', 'tqr.mobile_no'])->where('tqr.uuid', $id)->first();
     }
 
@@ -550,6 +572,14 @@ class TravelQuoteService extends BaseService
         $travelQuote->last_name = $request->last_name;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->premium = $request->premium;
+        $fetchLatestRating = (
+            $travelQuote->direction_code != $request->direction_code ||
+            $travelQuote->coverage_code != $request->coverage_code ||
+            $travelQuote->destination_id != $request->destination_id ||
+            $travelQuote->region_cover_for_id != $request->region_cover_for_id ||
+            $travelQuote->start_date != $request->start_date
+        );
+
         if (
             $travelQuote->days_cover_for != $request->days_cover_for ||
             $travelQuote->destination_id != $request->destination_id ||
@@ -606,6 +636,14 @@ class TravelQuoteService extends BaseService
         }
 
         $travelQuote->save();
+
+        if ($fetchLatestRating) {
+            LoggerService::info('Fields changed, Fetching quote plans with latest rating', extra: [
+                'getLatestRating' => true,
+                'uuid' => $travelQuote->uuid,
+            ]);
+            $this->getQuotePlans($id, ['getLatestRating' => true]);
+        }
 
         $customerId = app(CustomerService::class)->getCustomerIdByEmail($travelQuote->email);
         if (($request->has('addressObj') && ! empty(array_filter((array) $request->input('addressObj'))))) {
@@ -885,8 +923,8 @@ class TravelQuoteService extends BaseService
     public function getAboveAgeMembers($id)
     {
         return CustomerMembers::where('quote_id', $id)
-            ->where('quote_type', 'App\Models\TravelQuote')
-            ->whereDate('dob', '<=', now()->subYears(65))->count();
+            ->where('quote_type', TravelQuote::class)
+            ->whereDate('dob', '<=', now()->subYears(GenericRequestEnum::TRAVEL_SENIOR_MEMBER_AGE))->count();
     }
 
     public function getDuplicateEntityByCode($code)
@@ -1403,4 +1441,40 @@ class TravelQuoteService extends BaseService
         }
     }
 
+    public function memberHasAuthorizedPayment(CustomerMembers $member, TravelQuote $quote): bool
+    {
+        $payments = $quote->payments()->mainLeadPayment()->get();
+
+        if ($payments->isEmpty()) {
+            return false;
+        }
+
+        $rawDob = $member->getRawOriginal('dob') ?? null;
+        $memberAge = 0;
+        if ($rawDob !== null && $rawDob !== '') {
+            try {
+                $memberAge = Carbon::parse($rawDob)->age;
+            } catch (\Throwable) {
+                $memberAge = 0;
+            }
+        }
+
+        $memberIsSenior = $memberAge >= GenericRequestEnum::TRAVEL_SENIOR_MEMBER_AGE;
+        $relevantPayments = $payments->filter(function (Payment $payment) use ($memberIsSenior): bool {
+            $code = $payment->code ?? null;
+            $isSeniorPaymentCode = is_string($code) && $code !== '' && str_ends_with(trim($code), '-1');
+
+            return $memberIsSenior ? $isSeniorPaymentCode : ! $isSeniorPaymentCode;
+        });
+
+        if ($relevantPayments->isEmpty()) {
+            return false;
+        }
+
+        $confirmedOrSettledStatuses = PaymentStatusEnum::getConfirmedOrSettledPaymentStatuses();
+
+        return $relevantPayments->contains(function (Payment $payment) use ($confirmedOrSettledStatuses): bool {
+            return in_array((int) $payment->payment_status_id, $confirmedOrSettledStatuses, true);
+        });
+    }
 }

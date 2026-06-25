@@ -14,6 +14,7 @@ use App\Repositories\YachtQuoteRepository;
 use App\Services\BranchAssignmentService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Quotes\CyberQuoteService;
+use App\Services\Quotes\DeviceQuoteService;
 use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
@@ -90,6 +91,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::SAVINGS->value,
             QuoteTypes::HOME->value,
             QuoteTypes::CYBER->value,
+            QuoteTypes::DEVICE->value,
         ];
     }
 
@@ -105,6 +107,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::LIFE->value => app(LifeQuoteService::class)->getLifeQuotes(isExportRequest: true)->get(),
             QuoteTypes::SAVINGS->value => app(SavingsQuoteService::class)->getData(forExport: true),
             QuoteTypes::CYBER->value => app(CyberQuoteService::class)->getData(forExport: true),
+            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->getData(false, true),
             default => abort(404),
         };
     }
@@ -123,8 +126,9 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::JETSKI->value => JetskiQuoteRepository::getData(true, requestParams: $requestParams),
             QuoteTypes::HOME->value => HomeQuoteRepository::getData(true, false, $requestParams),
             QuoteTypes::LIFE->value => app(LifeQuoteService::class)->getLifeQuotes(isExportRequest: true, requestParams: $requestParams),
-            QuoteTypes::SAVINGS->value => app(SavingsQuoteService::class)->getData(forExport: true),
+            QuoteTypes::SAVINGS->value => app(SavingsQuoteService::class)->getData(forExport: true, getQuery: true),
             QuoteTypes::CYBER->value => app(CyberQuoteService::class)->getData(getQuery: true),
+            QuoteTypes::DEVICE->value => app(DeviceQuoteService::class)->getData(false, false, false),
             default => abort(404),
         };
     }
@@ -351,6 +355,21 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::SOURCE,
                 self::PLAN_NAME,
                 self::COVERAGE_UP_TO,
+                self::PREMIUM,
+                self::POLICY_NUMBER,
+                self::ADVISOR,
+                self::BRANCH,
+                self::CREATED_DATE,
+                self::LAST_MODIFIED_DATE,
+                self::PREVIOUS_POLICY_EXPIRY_DATE,
+            ],
+            QuoteTypes::DEVICE->value => [
+                self::REF_ID,
+                self::FIRST_NAME,
+                self::LAST_NAME,
+                self::LEAD_STATUS,
+                self::SOURCE,
+                self::PLAN_NAME,
                 self::PREMIUM,
                 self::POLICY_NUMBER,
                 self::ADVISOR,
@@ -617,6 +636,21 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['last_modified_date'],
                 $baseFields['previous_policy_expiry_date'],
             ],
+            QuoteTypes::DEVICE->value => [
+                $baseFields['code'],
+                $baseFields['first_name'],
+                $baseFields['last_name'],
+                $baseFields['lead_status'],
+                $baseFields['source'],
+                $quote?->insuranceProviderPlan?->text ?? '',
+                $baseFields['premium'],
+                $baseFields['policy_number'],
+                $baseFields['advisor'],
+                $baseFields['branch'],
+                $baseFields['created_date'],
+                $baseFields['last_modified_date'],
+                $baseFields['previous_policy_expiry_date'],
+            ],
             default => [],
         };
     }
@@ -631,6 +665,7 @@ class PersonalQuotesExport implements CsvExportableInterface
             QuoteTypes::JETSKI->value => QuoteTypeId::Jetski,
             QuoteTypes::HOME->value => QuoteTypeId::Home,
             QuoteTypes::CYBER->value => QuoteTypeId::Cyber,
+            QuoteTypes::DEVICE->value => QuoteTypeId::Device,
         ];
 
         return [
