@@ -11,7 +11,7 @@ use App\Enums\SLAActionTypeEnum;
 use App\Enums\SLAStatusEnum;
 use App\Models\SLATracking;
 use App\Services\AllocationService;
-use App\Services\BirdService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -214,21 +214,29 @@ class SLAService
         $this->meetSLA($lead, $actionType, "Lead edited with action type: {$actionType->label()}");
     }
 
-    private function buildPayload(SLATracking $slaRecord, $workflowType): array
+    private function buildPayload(SLATracking $slaRecord, string $workflowType): array
     {
         $lead = $slaRecord->getLead();
+        $advisor = $slaRecord->advisor;
 
         $remainingHours = (int) ceil(now()->diffInHours($slaRecord->sla_due_at));
         $remainingMinutes = (int) ceil(now()->diffInMinutes($slaRecord->sla_due_at));
 
+        $advisorNameParts = explode(' ', $advisor?->name ?? '', 2);
+
         return [
+            'customerId' => $advisor?->email ?? '',
+            'firstName' => $advisorNameParts[0] ?? '',
+            'lastName' => $advisorNameParts[1] ?? '',
+            'customerEmail' => $advisor?->email ?? '',
+            'customerMobile' => ! empty($advisor?->mobile_no) ? '+'.formatMobileNoWithoutPlus($advisor->mobile_no) : '',
+            'quoteUID' => $lead->uuid,
             'workflowType' => $workflowType,
-            'advisorName' => $slaRecord->advisor?->name,
-            'advisorEmail' => $slaRecord->advisor?->email,
+            'advisorName' => $advisor?->name,
+            'advisorEmail' => $advisor?->email,
             'assignedDateTime' => $slaRecord->assigned_at->toDateTimeString(),
             'currentStatus' => $lead?->quoteStatus?->text,
             'customerName' => "{$lead->first_name} {$lead->last_name}",
-            'customerEmail' => $lead->email,
             'customerPhone' => $lead->mobile_no,
             'uuid' => $lead->uuid,
             'refID' => $lead->code,
@@ -238,26 +246,13 @@ class SLAService
         ];
     }
 
-    private function triggerBirdWorkflow(array $payload): bool
+    private function triggerWebEngageEvent(array $payload): bool
     {
-        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW, useCache: true);
-        if (! empty($customerNotificationWorkflow)) {
-            $response = app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
+        app(WebEngageService::class)->sendEvent($payload['workflowType'], $payload);
 
-            if ($response->status_code >= 200 && $response->status_code < 300) {
-                LoggerService::info(self::class.' - triggerBirdWorkflow - Webhook Request Sent');
+        LoggerService::info(self::class.' - triggerWebEngageEvent - Event triggered successfully');
 
-                return true;
-            } else {
-                LoggerService::info(self::class.'- triggerBirdWorkflow - Webhook Request Failed');
-
-                return false;
-            }
-        } else {
-            LoggerService::info(self::class.'- dispatchCallbackNotification - Webhook URL not found in storage');
-
-            return false;
-        }
+        return true;
     }
 
     public function sendCallbackNotification(SLATracking $slaRecord): bool
@@ -266,7 +261,7 @@ class SLAService
 
         $payload = $this->buildPayload($slaRecord, 'new_pec_la');
 
-        $isSent = $this->triggerBirdWorkflow($payload);
+        $isSent = $this->triggerWebEngageEvent($payload);
 
         LoggerService::info('SLAService - Callback notification', [
             'advisor_email' => $slaRecord->advisor?->email,
@@ -290,7 +285,7 @@ class SLAService
 
         $payload = $this->buildPayload($slaRecord, 'sla_email_notification');
 
-        $isSent = $this->triggerBirdWorkflow($payload);
+        $isSent = $this->triggerWebEngageEvent($payload);
 
         if ($isSent) {
             $slaRecord->touch('reminder_sent_at');
@@ -320,11 +315,17 @@ class SLAService
 
         $payload = $this->buildPayload($slaRecord, 'sla_breach_notification');
 
-        $payload['headEmail'] = $this->getHeadEmail();
+        $headEmail = $this->getHeadEmail();
+        $payload['customerId'] = $headEmail;
+        $payload['firstName'] = '';
+        $payload['lastName'] = '';
+        $payload['customerEmail'] = $headEmail;
+        $payload['customerMobile'] = '';
+        $payload['headEmail'] = $headEmail;
         $payload['ccEmails'] = $this->getCCEmails($advisor);
         $payload['breachDateTime'] = now()->toDateTimeString();
 
-        $isSent = $this->triggerBirdWorkflow($payload);
+        $isSent = $this->triggerWebEngageEvent($payload);
 
         if ($isSent) {
             $slaRecord->markBreached();

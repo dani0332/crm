@@ -1905,9 +1905,13 @@ class SendEmailCustomerService extends BaseService
 
         $bccEmails = $this->getBCCEmails($quoteType, $quote->source);
         $payload = [
+            'customerId' => $quote->customer_id ?? $quote->email,
+            'firstName' => $quote->first_name ?? '',
+            'lastName' => $quote->last_name ?? '',
             'customerEmail' => $quote->email,
-            'customerName' => $quote->first_name.' '.$quote->last_name,
+            'customerMobile' => ! empty($quote->mobile_no) ? '+'.formatMobileNoWithoutPlus($quote->mobile_no) : '',
             'quoteUID' => $quote->uuid,
+            'customerName' => $quote->first_name.' '.$quote->last_name,
             'refID' => $quote->code,
             'quoteType' => $quoteType,
             'advisor' => $advisor,
@@ -1924,13 +1928,8 @@ class SendEmailCustomerService extends BaseService
             'bccEmails' => $bccEmails,
         ];
 
-        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
-        if (! empty($customerNotificationWorkflow)) {
-            app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
-            LoggerService::info(self::class.' - sendIntroAndReassignEmail - Webhook request sent to: '.$customerNotificationWorkflow.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
-        } else {
-            LoggerService::info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
-        }
+        app(WebEngageService::class)->sendEvent($workflowType, $payload);
+        LoggerService::info(self::class.' - sendIntroAndReassignEmail - WebEngage event sent for Ref-ID: '.$quote->uuid.' | Time:'.now());
     }
 
     public function sendSupportUserAssignmentEmail($emailData)
