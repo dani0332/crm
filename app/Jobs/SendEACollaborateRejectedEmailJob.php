@@ -66,6 +66,7 @@ class SendEACollaborateRejectedEmailJob implements ShouldQueue
                 'lob' => $this->quoteType,
                 'eaModel' => $this->quote->ea_model instanceof EaModelEnum ? $this->quote->ea_model->value : $this->quote->ea_model,
                 'leadSource' => $this->quote->source,
+                'refID' => $this->quote->code,
             ],
             'tags' => [$tag],
         ];

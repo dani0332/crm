@@ -39,7 +39,7 @@ class SendEALeadSubmittedEmailJob implements ShouldQueue
             return;
         }
 
-        $this->quote->loadMissing(['advisor', 'leadGenerator']);
+        $this->quote->loadMissing(['advisor', 'leadGenerator', 'expertAdvisor']);
 
         if (! $this->quote->advisor?->email) {
             LoggerService::info('SendEALeadSubmittedEmailJob: No advisor email, skipping', ['ref_id' => $this->quote->code ?? '']);
@@ -73,6 +73,7 @@ class SendEALeadSubmittedEmailJob implements ShouldQueue
                 'lob' => $this->quoteType,
                 'eaModel' => $this->quote->ea_model instanceof EaModelEnum ? $this->quote->ea_model->value : $this->quote->ea_model,
                 'leadSource' => $this->quote->source,
+                ...($this->quote->ea_model === EaModelEnum::Collaborate ? ['eaAdvisor' => $this->quote->expertAdvisor?->name ?? ''] : []),
             ],
             'tags' => [$tag],
         ];

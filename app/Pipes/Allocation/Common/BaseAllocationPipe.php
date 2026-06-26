@@ -247,6 +247,15 @@ abstract class BaseAllocationPipe extends AllocationService
             ->when(
                 $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === EaModelEnum::Referral,
                 fn ($q) => $q->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedReferralAdvisor))
+            )
+            ->when(
+                $this->lead?->source === LeadSourceEnum::EA_IMCRM
+                    && $this->lead?->ea_model === EaModelEnum::Collaborate
+                    && $this->lead?->lead_generator_id
+                    && User::where('id', $this->lead->lead_generator_id)
+                        ->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedExpertAdvisor))
+                        ->exists(),
+                fn ($q) => $q->whereNotIn('users.id', [$this->lead->lead_generator_id])
             );
     }
 

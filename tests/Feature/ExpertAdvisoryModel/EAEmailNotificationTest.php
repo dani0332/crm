@@ -68,6 +68,54 @@ it('SendEALeadSubmittedEmailJob skips sending when advisor has no email', functi
     Http::assertNothingSent();
 });
 
+it('SendEALeadSubmittedEmailJob includes eaAdvisor param for Collaborate ea model', function () {
+    $advisor = TestDataSeeder::createUser(['email' => 'advisor-collab@example.com', 'name' => 'Advisor Collab']);
+    $expert = TestDataSeeder::createUser(['email' => 'expert-collab@example.com', 'name' => 'Expert Collab']);
+    TestDataSeeder::createUserWithRole(RolesEnum::EAManager, ['email' => 'manager-collab@example.com']);
+
+    $lead = PersonalQuote::create([
+        'uuid' => Str::uuid()->toString(), 'code' => 'CYB-email-collab-01',
+        'quote_type_id' => 20, 'first_name' => 'Collab', 'last_name' => 'Test',
+        'email' => 'customer-collab@example.com', 'mobile_no' => '0501000010',
+        'source' => LeadSourceEnum::EA_IMCRM,
+        'ea_model' => EaModelEnum::Collaborate,
+        'advisor_id' => $advisor->id,
+        'expert_advisor_id' => $expert->id,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+    ]);
+
+    (new SendEALeadSubmittedEmailJob($lead, 'personal', 999))->handle();
+
+    Http::assertSent(function ($request) use ($expert) {
+        $params = $request->data()['params'] ?? [];
+
+        return isset($params['eaAdvisor']) && $params['eaAdvisor'] === $expert->name;
+    });
+});
+
+it('SendEALeadSubmittedEmailJob does not include eaAdvisor param for non-Collaborate ea model', function () {
+    $advisor = TestDataSeeder::createUser(['email' => 'advisor-ref@example.com', 'name' => 'Advisor Ref']);
+    TestDataSeeder::createUserWithRole(RolesEnum::EAManager, ['email' => 'manager-ref@example.com']);
+
+    $lead = PersonalQuote::create([
+        'uuid' => Str::uuid()->toString(), 'code' => 'CYB-email-ref-01',
+        'quote_type_id' => 20, 'first_name' => 'Ref', 'last_name' => 'Test',
+        'email' => 'customer-ref@example.com', 'mobile_no' => '0501000011',
+        'source' => LeadSourceEnum::EA_IMCRM,
+        'ea_model' => EaModelEnum::Referral,
+        'advisor_id' => $advisor->id,
+        'quote_status_id' => QuoteStatusEnum::NewLead,
+    ]);
+
+    (new SendEALeadSubmittedEmailJob($lead, 'personal', 999))->handle();
+
+    Http::assertSent(function ($request) {
+        $params = $request->data()['params'] ?? [];
+
+        return ! array_key_exists('eaAdvisor', $params);
+    });
+});
+
 it('SendEALeadSubmittedEmailJob skips sending when template ID is not configured', function () {
     $advisor = TestDataSeeder::createUser(['email' => 'adv-skip@example.com']);
     $lead = PersonalQuote::create([
