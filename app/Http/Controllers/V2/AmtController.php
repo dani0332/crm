@@ -31,6 +31,7 @@ use App\Models\KycLog;
 use App\Models\Lookup;
 use App\Models\LostReasons;
 use App\Models\Nationality;
+use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BusinessQuoteRepository;
@@ -573,6 +574,10 @@ class AmtController extends Controller
         $advisors = User::role(RolesEnum::GMAdvisor)
             ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
             ->get();
+
+        if (auth()->user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            $quoteStatuses = array_values(QuoteStatus::whereIn('id', [QuoteStatusEnum::FollowedUp, QuoteStatusEnum::MissingDocumentsRequested, $record->quote_status_id])->get()->toArray());
+        }
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,

@@ -74,6 +74,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
+use App\Models\QuoteStatus;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\AuditRepository;
@@ -1315,6 +1316,12 @@ class CRUDController extends Controller
                     ? User::select('id', 'name')->find($record->pq_advisor_id)
                     : null;
 
+                if (auth()->user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+                    $quoteStatuses = array_values(QuoteStatus::whereIn('id', [QuoteStatusEnum::FollowedUp, QuoteStatusEnum::MissingDocumentsRequested, $record->quote_status_id])->get()->toArray());
+                } else {
+                    $quoteStatuses = array_values($leadStatuses->toArray());
+                }
+
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
                     'emailStatuses' => $emailStatuses,
@@ -1330,7 +1337,7 @@ class CRUDController extends Controller
                     'memberRelationDisplayMap' => $this->lookupService->getMemberRelationDisplayMap(),
                     'memberCategoryDisplayMap' => $this->lookupService->getAllMemberCategories(),
                     'allowedDuplicateLOB' => $allowedDuplicateLOB,
-                    'leadStatuses' => array_values($leadStatuses->toArray()),
+                    'leadStatuses' => $quoteStatuses,
                     'ecomDetails' => $ecomDetails,
                     'coPayment' => $coPayment,
                     'membersDetail' => $membersDetail,
