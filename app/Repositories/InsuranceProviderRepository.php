@@ -20,11 +20,11 @@ class InsuranceProviderRepository extends BaseRepository
         return $this->withActive()->orderBy($orderBy, $order)->get();
     }
 
-    public function fetchByQuoteTypeMapping($quoteTypeId)
+    public function fetchByQuoteTypeMapping($quoteTypeId, $insuranceProviderId = null)
     {
         LoggerService::info('fn:fetchByQuoteTypeMapping - Start - InsuranceProviderRepository');
 
-        return DB::table('insurance_provider_quote_type')
+        $providers = DB::table('insurance_provider_quote_type')
             ->select([
                 'insurance_provider.id',
                 'insurance_provider.code',
@@ -39,6 +39,28 @@ class InsuranceProviderRepository extends BaseRepository
             ->join('insurance_provider', 'insurance_provider.id', '=', 'insurance_provider_quote_type.insurance_provider_id')
             ->orderBy('text')
             ->get();
+
+        if ($insuranceProviderId && $providers->where('id', $insuranceProviderId)->isEmpty()) {
+            $missing = DB::table('insurance_provider')
+                ->select([
+                    'id',
+                    'code',
+                    'text',
+                    'text_lms',
+                    DB::raw('id as insurance_provider_id'),
+                    DB::raw('NULL as quote_type_id'),
+                ])
+                ->where('id', $insuranceProviderId)
+                ->where('is_active', 1)
+                ->where('is_deleted', 0)
+                ->first();
+
+            if ($missing) {
+                $providers->push($missing);
+            }
+        }
+
+        return $providers;
     }
 
     public function fetchNetworksByInsuranceProviders($request)
