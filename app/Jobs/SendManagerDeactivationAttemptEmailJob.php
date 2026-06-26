@@ -70,24 +70,10 @@ class SendManagerDeactivationAttemptEmailJob implements ShouldQueue
                 'attempted_by' => $attemptedByPayload->id,
             ]);
 
-            $response = app(SendEmailCustomerService::class)->sendManagerDeactivationAttemptEmail(
+            app(SendEmailCustomerService::class)->sendManagerDeactivationAttemptEmail(
                 $managerPayload,
                 $attemptedByPayload
             );
-
-            if ($response === null) {
-                LoggerService::warning(
-                    'Manager deactivation attempt email not sent (missing configuration)',
-                    [],
-                    null,
-                    [
-                        'manager_id' => $this->deactivatingUserId,
-                        'attempted_by' => $this->attemptedByUserId,
-                    ]
-                );
-
-                return;
-            }
 
             LoggerService::info(
                 'Manager deactivation attempt email sent successfully',
