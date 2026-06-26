@@ -61,11 +61,11 @@ const filteredAssignedCount = computed(() => {
 });
 
 const filteredAvailableUsers = computed(
-  () => filteredData.value.filter(item => item.isAvailable == 1).length,
+  () => displayData.value.filter(item => item.isAvailable == 1).length,
 );
 
 const filteredUnavailableUsers = computed(
-  () => filteredData.value.filter(item => item.isAvailable != 1).length,
+  () => displayData.value.filter(item => item.isAvailable != 1).length,
 );
 
 const filteredUnassignedCount = computed(() => {
