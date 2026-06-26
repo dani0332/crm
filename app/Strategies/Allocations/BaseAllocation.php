@@ -133,7 +133,8 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             })
             ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
                 $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
-                $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Lost]);
+                // $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Lost]);
+                $q->whereIn('quote_status_id', [QuoteStatusEnum::Qualified]);
             }, function ($q) {
                 $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost]);
 
