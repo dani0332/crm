@@ -118,6 +118,7 @@ const takeAdvisorAction = async action => {
     emit('updated');
   } catch (err) {
     actionError.value = err?.response?.data?.message ?? 'An error occurred.';
+    emit('updated');
   } finally {
     isLoading.value = false;
   }
