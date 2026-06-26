@@ -73,6 +73,36 @@ const filteredUnassignedCount = computed(() => {
   return props.unassignedCountsByLob?.[selectedLob.value] ?? 0;
 });
 
+const displayData = computed(() => {
+  if (!selectedLob.value) {
+    const groupMap = new Map();
+    filteredData.value.forEach(item => {
+      if (!groupMap.has(item.userId)) {
+        groupMap.set(item.userId, {
+          id: item.id,
+          userId: item.userId,
+          userName: item.userName,
+          lobs: [item.quoteTypeCode],
+          allocationCount: item.allocationCount ?? 0,
+          lastAllocation: item.lastAllocation,
+          isAvailable: item.isAvailable,
+          maxCapacity: item.maxCapacity,
+          reset_cap: item.reset_cap,
+        });
+      } else {
+        const group = groupMap.get(item.userId);
+        group.lobs.push(item.quoteTypeCode);
+        group.allocationCount += item.allocationCount ?? 0;
+        if (item.lastAllocation > group.lastAllocation) {
+          group.lastAllocation = item.lastAllocation;
+        }
+      }
+    });
+    return Array.from(groupMap.values());
+  }
+  return filteredData.value;
+});
+
 const loaders = reactive({
   submit: false,
   table: false,
@@ -82,7 +112,7 @@ const statusText = statusId => resolveUserStatusText(statusId);
 
 const tableHeader = ref([
   { text: 'Name', value: 'userName', width: '240' },
-  { text: 'Line of Business', value: 'quoteTypeCode', width: '100' },
+  { text: 'Line of Business', value: 'quoteTypeCode', width: '160' },
   {
     text: 'Total Assigned Leads',
     value: 'allocationCount',
@@ -93,6 +123,16 @@ const tableHeader = ref([
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
   { text: 'Reset Cap', value: 'reset_cap', width: '100' },
 ]);
+
+const visibleHeaders = computed(() => {
+  const lobSpecificColumns = ['maxCapacity', 'reset_cap'];
+  return tableHeader.value.filter(col => {
+    if (!selectedLob.value && lobSpecificColumns.includes(col.value)) {
+      return false;
+    }
+    return true;
+  });
+});
 
 const leadData = ref([
   {
@@ -381,8 +421,8 @@ onMounted(() => {
 
     <DataTable
       table-class-name="compact"
-      :headers="tableHeader"
-      :items="filteredData"
+      :headers="visibleHeaders"
+      :items="displayData"
       :sort-by="'userName'"
       :sort-type="'asc'"
       :rows-per-page="999"
@@ -390,8 +430,16 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
-      <template #item-quoteTypeCode="{ quoteTypeCode }">
-        {{ displayLobName(quoteTypeCode) }}
+      <template #item-quoteTypeCode="{ quoteTypeCode, lobs }">
+        <div class="flex flex-wrap gap-1">
+          <span
+            v-for="lob in (lobs ?? [quoteTypeCode])"
+            :key="lob"
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700"
+          >
+            {{ displayLobName(lob) }}
+          </span>
+        </div>
       </template>
 
       <template #item-maxCapacity="{ maxCapacity, id }">
