@@ -53,8 +53,6 @@ class InsuranceProviderRepository extends BaseRepository
         if ($insuranceProviderId !== null && $providers->where('id', $insuranceProviderId)->isEmpty()) {
             $missing = DB::table('insurance_provider')
                 ->where('id', $insuranceProviderId)
-                ->where('is_active', 1)
-                ->where('is_deleted', 0)
                 ->first([
                     'id',
                     'code',
