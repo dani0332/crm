@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteStatusEnum;
 use Illuminate\Support\Carbon;
@@ -9,8 +10,6 @@ use Illuminate\Support\Collection;
 
 class AllianceHistoricalProviderService
 {
-    private const ALLIANCE_BRAND_SWITCH_DATE = '2026-05-25';
-
     /**
      * Leads booked before the Alliance→Qatar brand switch should continue displaying
      * Alliance as the provider instead of Qatar Insurance.
@@ -32,9 +31,12 @@ class AllianceHistoricalProviderService
             fn ($payment) => $payment->insuranceProvider?->code === InsuranceProviderEnum::ALNC->value
         )?->insuranceProvider;
 
+        $switchDate = getAppStorageValueByKey(ApplicationStorageEnums::ALLIANCE_BRAND_SWITCH_DATE);
+
         if (
             $bookingDate
-            && Carbon::parse($bookingDate)->lt(Carbon::parse(self::ALLIANCE_BRAND_SWITCH_DATE))
+            && $switchDate
+            && Carbon::parse($bookingDate)->lt(Carbon::parse($switchDate))
             && $alliancePaymentProvider
         ) {
             $record->travel_plan_provider_text = $alliancePaymentProvider->text;
