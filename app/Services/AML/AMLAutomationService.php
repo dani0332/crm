@@ -8,14 +8,18 @@ use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
+use App\Jobs\AmlScreeningAutomationJob;
 use App\Models\AmlAutomation;
 use App\Models\PersonalQuote;
 use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
 use App\Services\Quotes\PersonalQuoteAmlAutomationCustomerService;
 use App\Services\TravelQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -43,6 +47,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class AMLAutomationService
 {
+    use GenericQueriesAllLobs;
+
     // -------------------------------------------------------------------------
     // Result state — populated by check(); read by callers after check() returns
     // -------------------------------------------------------------------------
@@ -66,6 +72,138 @@ class AMLAutomationService
         private readonly PersonalQuoteAmlAutomationCustomerService $personalQuoteCustomerService,
     ) {}
 
+    /**
+     * IMCRM API entry point: validate eligibility then synchronously run AML automation
+     * for a single quote identified by UUID and explicit LOB.
+     *
+     * All eligibility checks are delegated to {@see AMLAutomationService} so
+     * they are shared with the Artisan command path and never duplicated.
+     *
+     * The LOB-match guard (quote's stored type vs. the requested type) is the only check
+     * kept here because it is specific to this API surface — the command already knows
+     * the LOB from its own query loop.
+     *
+     * @return array{success: bool, http_status: int, message: string, data?: array<string, mixed>}
+     */
+    public function initiateAutomatedAmlByQuoteUuid(string $quoteUuid, QuoteTypes $quoteType): array
+    {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::AML_AUTOMATION_BY_QUOTE_UUID);
+        LoggerService::info('AML automate-by-uuid: request received', extra: [
+            'quoteUuid' => $quoteUuid,
+            'quoteType' => $quoteType->value,
+        ]);
+
+        $respond = function (bool $success, int $httpStatus, string $message, ?array $data = null): array {
+            $payload = ['success' => $success, 'http_status' => $httpStatus, 'message' => $message];
+            if ($data !== null) {
+                $payload['data'] = $data;
+            }
+
+            return $payload;
+        };
+
+        try {
+            $quote = $this->getQuoteObject($quoteType->value, $quoteUuid);
+
+            $quoteContext = [
+                'quoteUuid' => $quoteUuid,
+                'quoteType' => $quoteType->value,
+                'quoteId' => (int) $quote->id,
+                'quoteCode' => $quote->code,
+                'quoteTypeId' => (int) $quote->quote_type_id,
+                'customerId' => $quote->customer_id !== null ? (int) $quote->customer_id : null,
+                'amlStatus' => $quote->aml_status,
+                'apiIssuanceStatusId' => $quote->api_issuance_status_id !== null ? (int) $quote->api_issuance_status_id : null,
+                'insuranceProviderCode' => $quote->insuranceProvider?->code,
+            ];
+
+            // EligibilityCheck: CMS flag, issuance status, AML status, automation row state, LOB-specific constraints, and customer data completeness
+            $eligibilityCheck = $this->eligibilityCheck($quoteType, $quote);
+            if (! $eligibilityCheck->isEligible()) {
+                LoggerService::info('AML automate-by-uuid: blocked — eligibility check failed', extra: array_merge($quoteContext, [
+                    'outcome' => 'blocked',
+                    'reason' => $eligibilityCheck->reasonCode,
+                    'message' => $eligibilityCheck->reason,
+                    'http_status' => $eligibilityCheck->httpStatus,
+                ]));
+
+                return $respond(false, $eligibilityCheck->httpStatus, $eligibilityCheck->reason);
+            }
+
+            LoggerService::info('AML automate-by-uuid: all eligibility checks passed', extra: array_merge($quoteContext, [
+                'outcome' => 'progress',
+                'step' => 'eligibility_passed',
+            ]));
+
+            if ($quote === false) {
+                LoggerService::info('AML automate-by-uuid: blocked — quote not found', extra: array_merge($quoteContext, [
+                    'quoteUuid' => $quoteUuid,
+                    'quoteType' => $quoteType->value,
+                    'outcome' => 'blocked',
+                    'reason' => 'quote_not_found',
+                    'http_status' => Response::HTTP_NOT_FOUND,
+                ]));
+
+                return $respond(false, Response::HTTP_NOT_FOUND, 'Quote not found');
+            }
+
+            LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AML_AUTOMATION_BY_QUOTE_UUID);
+
+            $quote->loadMissing('insuranceProvider');
+
+            LoggerService::info('AML automate-by-uuid: quote loaded', extra: array_merge($quoteContext, [
+                'outcome' => 'progress',
+                'step' => 'quote_loaded',
+            ]));
+            $quoteTypeFromQuote = QuoteTypes::getName((int) $quote->quote_type_id);
+            if (! $quoteTypeFromQuote instanceof QuoteTypes || $quoteTypeFromQuote !== $quoteType) {
+                LoggerService::info('AML automate-by-uuid: blocked — quote LOB does not match requested quoteType', extra: array_merge($quoteContext, [
+                    'outcome' => 'blocked',
+                    'reason' => 'quote_lob_mismatch',
+                    'resolvedQuoteType' => $quoteTypeFromQuote instanceof QuoteTypes ? $quoteTypeFromQuote->value : null,
+                    'http_status' => Response::HTTP_UNPROCESSABLE_ENTITY,
+                ]));
+
+                return $respond(false, Response::HTTP_UNPROCESSABLE_ENTITY, 'Quote does not match the requested line of business');
+            }
+
+            try {
+                AmlAutomation::updateOrCreate(
+                    ['code' => $quote->code],
+                    ['status' => AmlAutomationStatus::Queue->value]
+                );
+
+                LoggerService::info('AML automate-by-uuid: running job via dispatchSync', extra: array_merge($quoteContext, [
+                    'outcome' => 'progress',
+                    'step' => 'dispatch_sync',
+                ]));
+
+                AmlScreeningAutomationJob::dispatchSync($quoteType, $quote);
+
+                LoggerService::info('AML automate-by-uuid: successfully — dispatched', extra: array_merge($quoteContext, [
+                    'outcome' => 'success',
+                    'step' => 'dispatch_sync_complete',
+                    'http_status' => Response::HTTP_OK,
+                ]));
+
+                return $respond(true, Response::HTTP_OK, 'AML screening automation dispatched', [
+                    'dispatch_sync' => true,
+                    'quote_code' => $quote->code,
+                ]);
+            } catch (\Throwable $e) {
+                LoggerService::error('AML automate-by-uuid: post-validation failure', array_merge($quoteContext, [
+                    'outcome' => 'error',
+                    'reason' => 'post_validation_exception',
+                    'exceptionMessage' => $e->getMessage(),
+                ]), $e);
+
+                return $respond(false, Response::HTTP_INTERNAL_SERVER_ERROR, 'Unable to complete AML automation: '.$e->getMessage());
+            }
+        } finally {
+            LoggerService::endLogging();
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Eligibility checks
     // -------------------------------------------------------------------------
@@ -80,7 +218,7 @@ class AMLAutomationService
      * @param  QuoteTypes  $quoteType  The resolved LOB enum.
      * @param  Model  $quote  Quote model with `insuranceProvider` already loaded.
      */
-    public function check(QuoteTypes $quoteType, Model $quote): self
+    public function eligibilityCheck(QuoteTypes $quoteType, Model $quote): self
     {
         // 1. Global: AML automation feature flag (CMS)
         if (! $this->applicationStorageService->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED)) {

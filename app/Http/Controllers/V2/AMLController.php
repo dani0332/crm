@@ -41,6 +41,7 @@ use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\QuoteTypeRepository;
+use App\Services\AML\AMLAutomationService;
 use App\Services\AML\AMLDisplayService;
 use App\Services\AML\AMLEntityService;
 use App\Services\AML\AMLExportService;
@@ -876,7 +877,7 @@ class AMLController extends Controller
     {
         $validated = $request->validated();
 
-        $result = app(AMLService::class)->initiateAutomatedAmlByQuoteUuid(
+        $result = app(AMLAutomationService::class)->initiateAutomatedAmlByQuoteUuid(
             $validated['quoteUuid'],
             $request->validatedQuoteType(),
         );
