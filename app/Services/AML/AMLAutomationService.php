@@ -105,6 +105,22 @@ class AMLAutomationService
         try {
             $quote = $this->getQuoteObject($quoteType->value, $quoteUuid);
 
+            if ($quote === false) {
+                LoggerService::info('AML automate-by-uuid: blocked — quote not found', extra: [
+                    'quoteUuid' => $quoteUuid,
+                    'quoteType' => $quoteType->value,
+                    'outcome' => 'blocked',
+                    'reason' => 'quote_not_found',
+                    'http_status' => Response::HTTP_NOT_FOUND,
+                ]);
+
+                return $respond(false, Response::HTTP_NOT_FOUND, 'Quote not found');
+            }
+
+            LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AML_AUTOMATION_BY_QUOTE_UUID);
+
+            $quote->loadMissing('insuranceProvider');
+
             $quoteContext = [
                 'quoteUuid' => $quoteUuid,
                 'quoteType' => $quoteType->value,
@@ -134,22 +150,6 @@ class AMLAutomationService
                 'outcome' => 'progress',
                 'step' => 'eligibility_passed',
             ]));
-
-            if ($quote === false) {
-                LoggerService::info('AML automate-by-uuid: blocked — quote not found', extra: array_merge($quoteContext, [
-                    'quoteUuid' => $quoteUuid,
-                    'quoteType' => $quoteType->value,
-                    'outcome' => 'blocked',
-                    'reason' => 'quote_not_found',
-                    'http_status' => Response::HTTP_NOT_FOUND,
-                ]));
-
-                return $respond(false, Response::HTTP_NOT_FOUND, 'Quote not found');
-            }
-
-            LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AML_AUTOMATION_BY_QUOTE_UUID);
-
-            $quote->loadMissing('insuranceProvider');
 
             LoggerService::info('AML automate-by-uuid: quote loaded', extra: array_merge($quoteContext, [
                 'outcome' => 'progress',
