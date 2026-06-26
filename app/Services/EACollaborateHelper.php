@@ -62,6 +62,6 @@ class EACollaborateHelper
             'uuid' => $quote->uuid ?? null,
         ]);
 
-        SendEALeadSubmittedEmailJob::dispatch($quote, $quoteType);
+        SendEALeadSubmittedEmailJob::dispatch($quote, $quoteType)->delay(now()->addMinutes(2));
     }
 }

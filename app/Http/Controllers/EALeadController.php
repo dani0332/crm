@@ -190,7 +190,7 @@ class EALeadController extends Controller
             'quote_type_name' => $quoteTypeName,
         ]);
 
-        SendEALeadSubmittedEmailJob::dispatch($quote, $quoteTypeName);
+        SendEALeadSubmittedEmailJob::dispatch($quote, $quoteTypeName)->delay(now()->addMinutes(2));
 
         LoggerService::info(self::class.' [7/7] EA lead creation completed successfully', extra: [
             'quote_type_id' => $quoteTypeId,

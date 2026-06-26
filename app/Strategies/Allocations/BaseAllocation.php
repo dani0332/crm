@@ -312,7 +312,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
             $previousAdvisorAssignedDate = $this->updateQuoteDetail($this->lead->id);
 
-            if ($this->lead->source != LeadSourceEnum::REFERRAL && ! $isEACollaborate) {
+            if ($this->lead->source != LeadSourceEnum::REFERRAL) {
                 LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
                 if ($assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED) {
                     $this->addAllocationCounts($advisor->id, $this->getQuoteTypeId());

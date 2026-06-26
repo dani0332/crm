@@ -427,7 +427,7 @@ abstract class BaseAllocationPipe extends AllocationService
             $isEACollaborate = $this->lead->source === LeadSourceEnum::EA_IMCRM
                 && $this->lead->ea_model === EaModelEnum::Collaborate;
 
-            if ($this->lead->source != LeadSourceEnum::REFERRAL && ! $isEACollaborate) {
+            if ($this->lead->source != LeadSourceEnum::REFERRAL) {
                 LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
 
                 $quoteTypeId = $this->allocationRequest->getQuoteType()->id();
