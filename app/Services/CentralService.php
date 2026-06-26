@@ -1349,6 +1349,8 @@ class CentralService extends BaseService
             return;
         }
 
+        // Update status qualified or business and coument type census list
+
         $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
         LoggerService::info("Quote Code: {$quoteCode} - Policy details filled: ".($isPolicyDetailsFilled ? 'YES' : 'NO'));
 
