@@ -50,7 +50,7 @@ class EAManagerService
     /** @param class-string $modelClass */
     private function queryModel(string $modelClass, array $filters, string $quoteType): Collection
     {
-        return $modelClass::with(['advisor:id,name,email', 'expertAdvisor:id,name', 'leadGenerator:id,name'])
+        return $modelClass::with(['advisor:id,name,email', 'expertAdvisor:id,name', 'leadGenerator:id,name', 'quoteStatus:id,text'])
             ->where('source', LeadSourceEnum::EA_IMCRM)
             ->when($filters['ref_id'] ?? null, fn ($q, $v) => $q->where('code', 'like', "%{$v}%"))
             ->when($filters['ea_model'] ?? null, fn ($q, $v) => $q->where('ea_model', $v))
@@ -65,7 +65,7 @@ class EAManagerService
 
     private function queryPersonalLeads(array $filters): Collection
     {
-        return PersonalQuote::with(['advisor:id,name,email', 'expertAdvisor:id,name', 'leadGenerator:id,name'])
+        return PersonalQuote::with(['advisor:id,name,email', 'expertAdvisor:id,name', 'leadGenerator:id,name', 'quoteStatus:id,text'])
             ->where('source', LeadSourceEnum::EA_IMCRM)
             ->when($filters['ref_id'] ?? null, fn ($q, $v) => $q->where('code', 'like', "%{$v}%"))
             ->when($filters['lob'] ?? null, fn ($q, $v) => $q->where('quote_type_id', $v))
@@ -125,6 +125,7 @@ class EAManagerService
                 : $quoteType,
             'ea_model' => EaModelEnum::tryFrom($lead->getRawOriginal('ea_model'))?->value,
             'quote_status_id' => $lead->quote_status_id,
+            'quote_status_text' => $lead->quoteStatus?->text ?? '',
             'created_at' => $lead->created_at,
             'advisor' => optional($lead->advisor)->only(['id', 'name', 'email']),
             'expert_advisor' => optional($lead->expertAdvisor)->only(['id', 'name']),
