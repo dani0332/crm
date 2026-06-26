@@ -431,6 +431,7 @@ final class ApplicationStorageEnums extends Enum
     // Branch Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
     public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';
+    public const MISREPORT_RECIPIENT_EMAIL = 'MISREPORT_RECIPIENT_EMAIL';
 
     // Failed ILA Email Switch
     public const SEND_FAILED_ILA_EMAILS_SWITCH = 'SEND_FAILED_ILA_EMAILS_SWITCH';

@@ -2117,30 +2117,15 @@ class SendEmailCustomerService extends BaseService
         return true;
     }
 
-    public function sendManagerDeactivationAttemptEmail(Collection $baseManagers, $attemptedBy): ?object
+    public function sendManagerDeactivationAttemptEmail(Collection $baseManagers, $attemptedBy): void
     {
-        $workflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW);
         $itSupportEmail = getAppStorageValueByKey(ApplicationStorageEnums::IT_SUPPORT_EMAIL);
-
-        if (empty($workflowUrl)) {
-            LoggerService::error('Manager Deactivation Attempt: BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW not found in ApplicationStorage.');
-
-            return null;
-        }
 
         if (empty($itSupportEmail)) {
             LoggerService::error('Manager Deactivation Attempt: IT_SUPPORT_EMAIL not found in ApplicationStorage.');
 
-            return null;
+            return;
         }
-
-        $emailData = (object) [
-            'recipientEmail' => $itSupportEmail,
-            'recipientName' => 'IT Support AFIA',
-            'managerIds' => $baseManagers->pluck('id')->filter()->values()->implode(','),
-            'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL,
-            'timestamp' => now()->toDateTimeString(),
-        ];
 
         /* Base user's manager's */
         $managerEmails = $baseManagers
@@ -2150,17 +2135,28 @@ class SendEmailCustomerService extends BaseService
             ->values()
             ->all();
 
-        if (! empty($managerEmails)) {
-            $emailData->managerEmails = $managerEmails;
-        }
+        $emailData = [
+            'customerId' => $itSupportEmail,
+            'firstName' => 'IT Support',
+            'lastName' => 'AFIA',
+            'customerEmail' => $itSupportEmail,
+            'customerMobile' => '',
+            'quoteUID' => '',
+            'recipientEmail' => $itSupportEmail,
+            'recipientName' => 'IT Support AFIA',
+            'managerIds' => $baseManagers->pluck('id')->filter()->values()->implode(','),
+            'managerEmails' => $managerEmails,
+            'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL,
+            'timestamp' => now()->toDateTimeString(),
+        ];
 
-        LoggerService::info('Sending manager deactivation attempt email via Bird', [
-            'manager_ids' => $emailData->managerIds,
+        LoggerService::info('Sending manager deactivation attempt email via WebEngage', [
+            'manager_ids' => $emailData['managerIds'],
             'attempted_by' => $attemptedBy->id,
-            'emailData' => $emailData,
         ]);
 
-        return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL, $emailData);
+        LoggerService::info('Manager deactivation attempt email - WebEngage event triggered successfully');
     }
 
     public function sendBikeEpRetargetingEmail(int $templateId, array $emailData, string $tag): int
