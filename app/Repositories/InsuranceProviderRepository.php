@@ -23,7 +23,7 @@ class InsuranceProviderRepository extends BaseRepository
     public function fetchByQuoteTypeMapping(int $quoteTypeId, ?int $insuranceProviderId = null)
     {
         LoggerService::info('fn:fetchByQuoteTypeMapping - Start - InsuranceProviderRepository', [
-            'quote_type_id'         => $quoteTypeId,
+            'quote_type_id' => $quoteTypeId,
             'insurance_provider_id' => $insuranceProviderId,
         ]);
 
