@@ -160,7 +160,7 @@ describe('validatePartnerQuote', function () {
         expect($result)->toBeArray()
             ->and($result['quote'])->toBeInstanceOf(CarQuote::class)
             ->and($result['quote']->uuid)->toBe($carQuote->uuid)
-            ->and($result)->toHaveKeys(['quote', 'insuranceProvider', 'partnerEmail']);
+            ->and($result)->toHaveKeys(['quote', 'insuranceProvider', 'partnerName']);
     });
 
     it('returns false when quote does not exist', function () {

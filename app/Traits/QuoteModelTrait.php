@@ -488,4 +488,9 @@ trait QuoteModelTrait
             default => 'N/A'
         };
     }
+
+    public function isLeadSourceCar24(): bool
+    {
+        return in_array($this->source, [LeadSourceEnum::CAR_24, LeadSourceEnum::CARS24]);
+    }
 }
