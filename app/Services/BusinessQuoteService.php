@@ -159,6 +159,12 @@ class BusinessQuoteService extends BaseService
                 'lg.email as lead_generator_email',
                 'bqr.expert_advisor_id',
                 'ea.name as expert_advisor_name',
+                'bqr.ea_assigned_advisor_approved_at',
+                'bqr.ea_assigned_advisor_rejected_at',
+                'bqr.ea_expert_advisor_approved_at',
+                'bqr.ea_expert_advisor_rejected_at',
+                'bqr.ea_manager_approved_at',
+                'bqr.ea_manager_rejected_at',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
