@@ -2085,27 +2085,28 @@ class CentralService extends BaseService
     {
         LoggerService::startQuoteLogging($lead);
         $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
-        $birdUrlKey = ApplicationStorageEnums::BIRD_AUTOMATION_WORKFLOW_URL;
+
         try {
             LoggerService::info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
 
-            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
-            if ($birdUrl) {
-                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
-                LoggerService::info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$lead->uuid} |Time: ".now());
+            $emailData->customerId = $emailData->recipientEmail ?? '';
+            $emailData->firstName = $emailData->recipientName ?? '';
+            $emailData->lastName = '';
+            $emailData->customerEmail = $emailData->recipientEmail ?? '';
+            $emailData->customerMobile = '';
+            $emailData->cc = implode(',', array_filter(array_values((array) ($emailData->cc ?? []))));
+            $emailData->ccEmails = implode(',', array_filter((array) ($emailData->ccEmails ?? [])));
 
-                if (! empty($response->headers['Run-Id'])) {
-                    $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
-                }
-            } else {
-                LoggerService::info("{$birdUrlKey} key not found for {$emailType} uuid: {$lead->uuid} |Time: ".now());
+            app(WebEngageService::class)->sendEvent($emailData->workflowType, (array) $emailData);
+            LoggerService::info("{$quoteType} WebEngage event sent | {$emailType} uuid: {$lead->uuid} | Time: ".now());
+
+            $flowType = constant('App\Enums\QuoteFlowType::'.strtoupper($emailData->workflowType));
+            if ($flowType !== null) {
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, $flowType->value, $quoteTypeId);
             }
-
-            return $response?->status_code ?? null;
         } catch (\Exception $ex) {
-            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now();
-            LoggerService::info($errorMessage);
-            LoggerService::info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
+            LoggerService::info("Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now());
+            LoggerService::info("Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
         }
     }
 
@@ -2203,10 +2204,16 @@ class CentralService extends BaseService
         }
 
         $messageData = [
+            'customerId' => $quote->customer_id ?? $quote->email,
+            'firstName' => $quote->first_name ?? '',
+            'lastName' => $quote->last_name ?? '',
+            'customerEmail' => $quote->email ?? '',
+            'customerMobile' => ! empty($quote->mobile_no) ? '+'.formatMobileNoWithoutPlus($quote->mobile_no) : '',
+            'quoteUID' => $quote->uuid,
             'customerName' => "{$quote->first_name} {$quote->last_name}",
             'policyNumber' => $quote->policy_number,
             'lob' => $lobName,
-            'whatsAppNumber' => '+'.formatMobileNoWithoutPlus($quote->mobile_no),
+            'whatsAppNumber' => ! empty($quote->mobile_no) ? '+'.formatMobileNoWithoutPlus($quote->mobile_no) : '',
             'workflowType' => $workFlowType,
             'quoteUUID' => $quote->uuid,
             'refId' => $quote->code,
@@ -2214,18 +2221,9 @@ class CentralService extends BaseService
         ];
         LoggerService::info('Going to trigger workflow to Send Whatsapp Message', extra: $messageData);
         LoggerService::info(self::class.'fn:'.__FUNCTION__.' trigger workflow to Send Whatsapp Message : Ref-ID: '.$quote->code.' | Time: '.now());
-        $workFlowEvent = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL);
-        if ($workFlowEvent) {
-            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent, $messageData);
-            LoggerService::info(self::class.'fn:'.__FUNCTION__.'sendPolicyIssuedWhatsappMessage workflow event triggered for lead  Ref-ID: '.$quote->code.' | Time: '.now());
 
-            return $response->status_code;
-        } else {
-            LoggerService::info(self::class.'fn:'.__FUNCTION__.' workflow key not found for lead : Ref-ID: '.$quote->code.' | Time: '.now());
-        }
-
-        return null;
-
+        app(WebEngageService::class)->sendEvent($workFlowType, $messageData);
+        LoggerService::info(self::class.'fn:'.__FUNCTION__.'sendPolicyIssuedWhatsappMessage WebEngage event triggered for lead Ref-ID: '.$quote->code.' | Time: '.now());
     }
 
     public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode, $quote)
