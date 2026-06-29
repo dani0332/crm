@@ -98,7 +98,7 @@ class InstallmentReportService extends ManagementReport
             );
         $this->paymentJoin($query, function ($join) {
             $join->where('p.frequency', '<>', PaymentFrequency::UPFRONT);
-        });
+        }, request: $request);
         $query->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->leftJoin('quote_status as q', 'q.id', '=', 'personal_quotes.quote_status_id')
@@ -133,7 +133,7 @@ class InstallmentReportService extends ManagementReport
             ->orderBy('personal_quotes.id', 'desc')
             ->orderBy('ps.due_date', 'asc');
 
-        $this->branchJoin($query);
+        $this->branchJoin($query, $request);
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
 
