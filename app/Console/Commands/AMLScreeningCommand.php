@@ -74,6 +74,9 @@ class AMLScreeningCommand extends Command
         ]);
 
         foreach ($quoteTypesToProcess as $quoteType) {
+            LoggerService::info($this->className.' - processing all quotes of type: '.$quoteType->value, extra: [
+                'quote_type' => $quoteType->value,
+            ]);
             $this->processQuoteType($quoteType);
         }
     }
@@ -144,13 +147,13 @@ class AMLScreeningCommand extends Command
             ]);
 
             foreach ($quoteRequests as $quoteRequest) {
-                LoggerService::info($this->className.' - processing quote', extra: [
+
+                LoggerService::info($this->className.' - processing quote: '.$quoteRequest->code, extra: [
                     'quote_type' => $quoteType->value,
                     'quote_id' => $quoteRequest->id,
                     'quote_code' => $quoteRequest->code,
                 ]);
 
-                continue;
                 $quoteRequestId = $quoteRequest->id;
                 $quote = $this->getQuoteObject($quoteType->value, $quoteRequestId);
 
