@@ -68,7 +68,7 @@ const serverOptions = ref({
 
 const eaModelOptions = [
   { value: 'referral', label: 'Referral' },
-  { value: 'collaborate', label: 'Collaborate' },
+  { value: 'collaborate', label: 'Collaborative' },
 ];
 
 const filters = reactive({

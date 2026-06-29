@@ -86,7 +86,7 @@ class EALeadCreateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'ea_model.required' => 'Please select an EA model (Referral or Collaborate).',
+            'ea_model.required' => 'Please select an EA model (Referral or Collaborative).',
             'quote_type_id.required' => 'Please select a line of business.',
             'business_type_of_insurance_id.required' => 'Business type is required for Corpline leads.',
             'health_plan_type_id.required' => 'Plan type is required for Health leads.',

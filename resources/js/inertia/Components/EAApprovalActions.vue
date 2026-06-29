@@ -131,7 +131,7 @@ const takeAdvisorAction = async action => {
     class="p-4 rounded shadow mb-6 bg-white border-l-4 border-blue-500"
   >
     <h3 class="font-semibold text-primary-800 text-lg mb-3">
-      EA Collaborate Approval
+      EA Collaborative Approval
     </h3>
 
     <p v-if="advisorAlreadyActed" class="text-sm text-gray-600">

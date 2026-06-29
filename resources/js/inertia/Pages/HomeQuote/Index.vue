@@ -153,7 +153,7 @@ const filters = reactive({
 
 const eaModelOptions = [
   { value: 'referral', label: 'Referral' },
-  { value: 'collaborate', label: 'Collaborate' },
+  { value: 'collaborate', label: 'Collaborative' },
 ];
 
 // PUA Export Modal state

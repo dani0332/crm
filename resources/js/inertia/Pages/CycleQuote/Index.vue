@@ -74,7 +74,7 @@ const quotesSelected = ref([]);
 const canExport = ref(false);
 const eaModelOptions = [
   { value: 'referral', label: 'Referral' },
-  { value: 'collaborate', label: 'Collaborate' },
+  { value: 'collaborate', label: 'Collaborative' },
 ];
 
 const can = permission => useCan(permission);

@@ -76,7 +76,7 @@ const canExport = ref(false);
 const filters = reactive(availableFilters);
 const eaModelOptions = [
   { value: 'referral', label: 'Referral' },
-  { value: 'collaborate', label: 'Collaborate' },
+  { value: 'collaborate', label: 'Collaborative' },
 ];
 
 watch(

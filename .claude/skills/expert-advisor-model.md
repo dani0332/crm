@@ -30,7 +30,7 @@ This skill covers: role/permission setup, model selection UI, lead creation form
 
 - Once "Expert Advisor Model" is selected, the next control must be a **dropdown** labelled **"EA Model"** with exactly two values:
   - **Referral**
-  - **Collaborate**
+  - **Collaborative**
 
 ### A4. LOB Filter Dropdown
 

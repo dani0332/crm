@@ -141,7 +141,7 @@ const eaModelOptions = computed(() => {
   }
 
   if (canCollaborate.value && hasCollaborateEligibleLob.value) {
-    options.push({ value: 'collaborate', label: 'Collaborate' });
+    options.push({ value: 'collaborate', label: 'Collaborative' });
   }
 
   return options;
@@ -431,7 +431,7 @@ watch(
           v-if="leadForm.type === 'expert_advisor_model'"
           class="flex flex-col gap-4"
         >
-          <!-- EA Model selector (Referral / Collaborate) -->
+          <!-- EA Model selector (Referral / Collaborative) -->
           <x-select
             v-model="leadForm.ea_model"
             label="EA MODEL"
