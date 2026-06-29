@@ -181,7 +181,7 @@ class LifeEmailService extends BaseService
 
             if ($response && $response->status_code) {
                 LoggerService::info('sendEmailBirthdayWishToCustomer - Successfully triggered event');
-                app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value, QuoteTypes::CYBER->id());
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::LIFE_BIRTHDAY_WISH->value, QuoteTypes::LIFE->id());
 
             } else {
                 LoggerService::info("sendEmailBirthdayWishToCustomer - Error triggering event having response status code: {$response?->status_code}");
