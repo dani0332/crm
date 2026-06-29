@@ -1631,7 +1631,8 @@ onMounted(() => {
       const memberSalaryMissing = policyHolder.salary_band_id === null;
       if (quoteSalaryMissing || memberSalaryMissing) {
         notification.error({
-          title: 'Salary band information is missing for the insured policyholder. Please fill in the missing customer details to recalculate the plans.',
+          title:
+            'Salary band information is missing for the insured policyholder. Please fill in the missing customer details to recalculate the plans.',
           position: 'top',
         });
       }

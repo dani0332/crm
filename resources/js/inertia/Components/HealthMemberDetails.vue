@@ -1382,7 +1382,8 @@ defineExpose({
                     !(
                       memberForm.is_policy_holder == 1 &&
                       memberForm.is_insured == 1 &&
-                      item.value === salaryBandEnum.NO_SALARY_DEPENDENTS_OR_CHILDREN
+                      item.value ===
+                        salaryBandEnum.NO_SALARY_DEPENDENTS_OR_CHILDREN
                     ),
                 )
               "
