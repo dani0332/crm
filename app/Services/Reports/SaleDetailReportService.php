@@ -103,7 +103,7 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
                 'bqr.lead_type',
             );
-        $this->paymentJoin($query, request: $request);
+        $this->paymentJoin($query);
         $query->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
@@ -141,7 +141,7 @@ class SaleDetailReportService extends ManagementReport
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Business);
             });
 
-        $this->branchJoin($query, $request);
+        $this->branchJoin($query);
         $this->applyFilters($query, $request);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);
