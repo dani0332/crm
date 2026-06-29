@@ -2,11 +2,9 @@
 
 namespace App\Mail\Bor;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\QuoteTypeId;
-use App\Models\ApplicationStorage;
 use App\Models\InsuranceProvider;
 
 trait BorMailTrait
@@ -62,13 +60,4 @@ trait BorMailTrait
         return $name.' For signature - Broker Appointment Letter '.$personalQuote->code;
     }
 
-    /**
-     * Get Bird workflow URL for BOR request emails
-     */
-    protected function getBirdWorkflowUrl()
-    {
-        $workflowConfig = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL)->first();
-
-        return $workflowConfig ? $workflowConfig->value : null;
-    }
 }

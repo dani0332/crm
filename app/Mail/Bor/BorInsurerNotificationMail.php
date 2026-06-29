@@ -6,8 +6,8 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\BorLog;
-use App\Services\BirdService;
 use App\Services\Bor\BorPdfService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -40,35 +40,22 @@ class BorInsurerNotificationMail extends Mailable
     }
 
     /**
-     * Send BOR insurer notification email via Bird service
+     * Send BOR insurer notification email via WebEngage
      */
     public function sendViaBird()
     {
         try {
-            $birdData = $this->buildBirdEmailData();
-            $workflowUrl = $this->getBirdWorkflowUrl();
+            $payload = $this->buildBirdEmailData();
 
-            if (! $workflowUrl) {
-                LoggerService::error('BOR Insurer Notification Email: Bird workflow URL not configured', [
-                    'bor_log_id' => $this->borLog->id,
-                    'personal_quote_id' => $this->borLog->personal_quote_id,
-                    'insurer_email' => $this->insurerContact->emails,
-                ]);
+            app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::BOR_INSURER_NOTIFICATION, $payload);
 
-                return false;
-            }
-
-            $birdService = app(BirdService::class);
-            $response = $birdService->triggerWebHookRequest($workflowUrl, $birdData);
-
-            LoggerService::info('BOR Insurer Notification Email sent via Bird', [
+            LoggerService::info('BOR Insurer Notification Email sent via WebEngage', [
                 'bor_log_id' => $this->borLog->id,
                 'personal_quote_id' => $this->borLog->personal_quote_id,
                 'insurer_email' => $this->insurerContact->emails,
-                'response_status' => $response->status_code,
             ]);
 
-            return $response->status_code >= 200 && $response->status_code < 300;
+            return true;
 
         } catch (\Exception $e) {
             LoggerService::error('BOR Insurer Notification Email failed', [
@@ -103,6 +90,12 @@ class BorInsurerNotificationMail extends Mailable
         ($advisorEmail != null && $advisorEmail != '') && $ccEmails[] = $advisorEmail;
 
         return [
+            'customerId' => $recipientEmail,
+            'firstName' => '',
+            'lastName' => '',
+            'customerEmail' => $recipientEmail,
+            'customerMobile' => '',
+            'quoteUID' => $personalQuote->uuid ?? '',
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
             'workflow_type' => WorkflowTypeEnum::BOR_INSURER_NOTIFICATION ?? 'bor_insurer_notification',
