@@ -1280,6 +1280,13 @@ class CarQuoteService extends BaseService
     public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false, $isRenewalHistorical = false, $process = '')
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
+
+        if (! $quoteUuId) {
+            LoggerService::warning(self::class .' - FN: getQuotePlans - CarQuote not found for UUID: '.$id);
+
+            return 'Quote Not Found!';
+        }
+
         if ($useKen2Endpoint) {
             $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
         } else {
