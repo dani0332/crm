@@ -407,6 +407,19 @@ watch(
   },
 );
 
+const isExistingInsuranceNo = computed(() => quoteForm.has_existing_group_health_insurance === 0);
+
+watch(isExistingInsuranceNo, isNo => {
+  if (isNo) {
+    quoteForm.categories.forEach(row => {
+      row.insurance_provider_id = null;
+      row.health_third_party_administrator_id = null;
+      row.health_network_id = null;
+      row.renewal_date = null;
+    });
+  }
+});
+
 onMounted(() => {
   const uniqueTpaIds = [
     ...new Set(
@@ -910,6 +923,7 @@ function onSubmit(isValid) {
                       class="w-full min-w-[10rem]"
                       placeholder="Select provider"
                       filterable
+                      :disabled="isExistingInsuranceNo"
                       :error="
                         quoteForm.errors[
                           `categories.${idx}.insuranceProviderId`
@@ -925,6 +939,7 @@ function onSubmit(isValid) {
                       class="w-full min-w-[10rem]"
                       placeholder="Select TPA"
                       filterable
+                      :disabled="isExistingInsuranceNo"
                       :error="
                         quoteForm.errors[
                           `categories.${idx}.healthTpaId`
@@ -936,7 +951,7 @@ function onSubmit(isValid) {
                     <x-select
                       v-model="row.health_network_id"
                       :options="networkOptionsForRow(idx)"
-                      :disabled="!tpaIdForRow(idx) || isNetworkLoadingForRow(idx)"
+                      :disabled="isExistingInsuranceNo || !tpaIdForRow(idx) || isNetworkLoadingForRow(idx)"
                       :placeholder="
                         isNetworkLoadingForRow(idx)
                           ? 'Loading...'
@@ -959,6 +974,7 @@ function onSubmit(isValid) {
                       type="date"
                       class="w-full min-w-[9.5rem]"
                       size="sm"
+                      :disabled="isExistingInsuranceNo"
                       :error="quoteForm.errors[`categories.${idx}.renewalDate`]"
                     />
                   </td>
