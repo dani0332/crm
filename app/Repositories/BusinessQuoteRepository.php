@@ -105,8 +105,13 @@ class BusinessQuoteRepository extends BaseRepository
         }
         // apply assignment_type filter when present
         if (! empty($requestParams['assignment_type'])) {
-            $values = (array) $requestParams['assignment_type'];
-            $query->whereIn('business_quote_request.assignment_type', $values);
+            $assignmentTypes = (array) $requestParams['assignment_type'];
+            if (! in_array('all', $assignmentTypes)) {
+                $query->whereIn('business_quote_request.assignment_type', $assignmentTypes);
+            }
+        }
+        if (! empty($requestParams['pq_advisor_id']) && is_array($requestParams['pq_advisor_id'])) {
+            $query->whereIn('business_quote_request.pq_advisor_id', $requestParams['pq_advisor_id']);
         }
 
         if (! empty($requestParams['emirate_of_registration_id']) && $quoteType == quoteTypeCode::GroupMedical) {
@@ -146,6 +151,7 @@ class BusinessQuoteRepository extends BaseRepository
         $quote = $this->where($queryWhere)
             ->with([
                 'advisor',
+                'preQualificationAdvisor',
                 'advisor.primaryBranch',
                 'supportUser',
                 'previousAdvisor',

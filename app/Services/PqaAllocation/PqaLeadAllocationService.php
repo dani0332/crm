@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\PqaAllocation;
 
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
@@ -57,6 +58,7 @@ class PqaLeadAllocationService
      */
     public function updatePqaAllocationConfig(int $userId, int $quoteTypeId): bool
     {
+        $quoteTypeId = in_array($quoteTypeId, [QuoteTypeId::GroupMedical, QuoteTypeId::Corpline]) ? QuoteTypeId::Business : $quoteTypeId;
         $updated = PqaLeadAllocationConfig::query()
             ->where('user_id', $userId)
             ->where('quote_type_id', $quoteTypeId)
