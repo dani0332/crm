@@ -76,6 +76,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\Quotes\CyberQuoteService;
@@ -1709,7 +1710,12 @@ class CentralService extends BaseService
         $emailData->advisorWhatsAppNo = str_replace(' ', '', $quote->advisor->mobile_no ?? '');
         $emailData->customerFullName = ucfirst($quote->first_name);
         $emailData->rtaPortalLink = getAppStorageValueByKey(ApplicationStorageEnums::RTA_PORTAL_LINK);
+        $emailData->customerId = $quote->customer_id ?? $quote->email;
+        $emailData->firstName = $quote->first_name ?? '';
+        $emailData->lastName = $quote->last_name ?? '';
         $emailData->customerEmail = $quote->email;
+        $emailData->customerMobile = ! empty($quote->mobile_no) ? '+'.formatMobileNoWithoutPlus($quote->mobile_no) : '';
+        $emailData->quoteUID = $quote->uuid ?? '';
         $emailData->workflowType = $workflowType;
 
         $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? '';
@@ -2025,23 +2031,15 @@ class CentralService extends BaseService
 
         try {
             info("Sending {$quoteType} followups email for {$emailType} uuid: ".$lead->uuid.' | Time: '.now());
-            $birdUrlKey = ApplicationStorageEnums::BIRD_INSLY_WORKFLOW;
 
-            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
-            if ($birdUrl) {
-                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl?->value, $emailData);
-                LoggerService::info("{$quoteType} response: ".json_encode($response)." | {$emailType} uuid: {$lead->uuid} |Time: ".now());
+            app(WebEngageService::class)->sendEvent($emailData->workflowType, (array) $emailData);
+            LoggerService::info("{$quoteType} WebEngage event sent | {$emailType} uuid: {$lead->uuid} | Time: ".now());
 
-                if (! empty($response->headers['Run-Id'])) {
-                    $this->createQuoteFlowDetails($lead, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
-                }
-            }
-
-            return $response?->status_code ?? null;
+            $flowType = constant('App\Enums\QuoteFlowType::'.strtoupper($emailData->workflowType));
+            app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, $flowType->value, $quoteTypeId);
         } catch (\Exception $ex) {
-            $errorMessage = "{$birdUrlKey}-Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now();
-            LoggerService::info($errorMessage);
-            LoggerService::info("{$birdUrlKey}-Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
+            LoggerService::info("Error: while sending quote workflow for {$emailType}: uuid: {$lead->uuid} | Time: ".now());
+            LoggerService::info("Error: {$ex->getMessage()} | uuid: {$lead->uuid} | Time: ".now());
         }
     }
 
@@ -2062,35 +2060,18 @@ class CentralService extends BaseService
         try {
             LoggerService::info("Sending {$quoteType} update email for {$emailType} uuid: ".$quote->uuid.' | Time: '.now());
 
-            $birdUrlKey = ApplicationStorageEnums::BIRD_INSLY_WORKFLOW;
-            $birdUrl = ApplicationStorage::where('key_name', $birdUrlKey)->first();
-            $response = null;
+            app(WebEngageService::class)->sendEvent($emailData->workflowType, (array) $emailData);
+            LoggerService::info("{$quoteType} update email WebEngage event sent | {$emailType} uuid: {$quote->uuid} | Time: ".now());
 
-            if ($birdUrl) {
-                LoggerService::info("Bird workflow URL retrieved: {$birdUrl->value} for uuid: {$quote->uuid}");
-
-                $response = app(BirdService::class)->triggerWebHookRequest($birdUrl->value, $emailData);
-
-                LoggerService::info("{$quoteType} update email response: ".json_encode($response)." | {$emailType} uuid: {$quote->uuid} | Time: ".now());
-
-                if (! empty($response->headers['Run-Id'])) {
-                    $this->createQuoteFlowDetails($quote, $response, $quoteTypeId, $emailType, strtoupper($emailData->workflowType));
-                    LoggerService::info("Quote flow details created for {$emailType} uuid: {$quote->uuid}");
-                }
-            } else {
-                LoggerService::warning("{$birdUrlKey} not found in ApplicationStorage for uuid: {$quote->uuid}");
-            }
-
-            return $response?->status_code ?? null;
+            $flowType = constant('App\Enums\QuoteFlowType::'.strtoupper($emailData->workflowType));
+            app(WebEngageService::class)->createQuoteWorkFlowDetails($quote->uuid, $flowType->value, $quoteTypeId);
+            LoggerService::info("Quote flow details created for {$emailType} uuid: {$quote->uuid}");
         } catch (\Exception $ex) {
-            $errorMessage = "{$birdUrlKey}-Error: while sending update workflow for {$emailType}: uuid: {$quote->uuid} | Time: ".now();
-            LoggerService::error($errorMessage, extra: [
+            LoggerService::error("Error: while sending update workflow for {$emailType}: uuid: {$quote->uuid} | Time: ".now(), extra: [
                 'exception' => $ex->getMessage(),
                 'line' => $ex->getLine(),
                 'trace' => $ex->getTraceAsString(),
             ]);
-
-            return null;
         }
     }
 

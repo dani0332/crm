@@ -5,8 +5,8 @@ namespace App\Mail\Bor;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\BorLog;
-use App\Services\BirdService;
 use App\Services\Bor\BorPdfService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -42,36 +42,22 @@ class BorRequestMail extends Mailable
     }
 
     /**
-     * Send BOR request email via Bird service
+     * Send BOR request email via WebEngage
      */
     public function sendViaBird()
     {
         try {
-            $birdData = $this->buildBirdEmailData();
-            $workflowUrl = $this->getBirdWorkflowUrl();
+            $payload = $this->buildBirdEmailData();
 
-            if (! $workflowUrl) {
-                LoggerService::error('BOR Request Email: Bird workflow URL not configured', [
-                    'bor_log_id' => $this->borLog->id,
-                    'personal_quote_id' => $this->borLog->personal_quote_id,
-                ]);
+            app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::BOR_REQUEST, $payload);
 
-                return false;
-            }
-
-            $birdService = app(BirdService::class);
-            LoggerService::info('BOR Request Email: Bird data', $birdData);
-            $response = $birdService->triggerWebHookRequest($workflowUrl, $birdData);
-
-            LoggerService::info('BOR Request Email sent via Bird', [
+            LoggerService::info('BOR Request Email sent via WebEngage', [
                 'bor_log_id' => $this->borLog->id,
                 'personal_quote_id' => $this->borLog->personal_quote_id,
                 'customer_email' => $this->customerData['email'] ?? '',
-                'advisor_email' => $this->advisorData['email'] ?? '',
-                'response_status' => $response->status_code,
             ]);
 
-            return $response->status_code >= 200 && $response->status_code < 300;
+            return true;
 
         } catch (\Exception $e) {
             LoggerService::error('BOR Request Email failed', [
@@ -98,6 +84,12 @@ class BorRequestMail extends Mailable
         $quoteLink = $this->portalUrl.'/'.$quoteType.'/quote/'.$quoteUuid.'/bor/'.$this->borLog->bor_reference;
 
         return [
+            'customerId' => $personalQuote->customer_id ?? $this->customerData['email'] ?? '',
+            'firstName' => $this->customerData['first_name'] ?? '',
+            'lastName' => $this->customerData['last_name'] ?? '',
+            'customerEmail' => $this->customerData['email'] ?? '',
+            'customerMobile' => ! empty($this->customerData['mobile']) ? '+'.formatMobileNoWithoutPlus($this->customerData['mobile']) : '',
+            'quoteUID' => $quoteUuid ?? '',
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
             'quote_type' => $quoteType ?? '',
