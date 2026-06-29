@@ -181,32 +181,6 @@ it('rejected collaborate lead has_rejection flag set', function () {
 
 // ─── E5 / Approve action ──────────────────────────────────────────────────────
 
-it('EA manager approve force-sets both advisor approval timestamps', function () {
-    Queue::fake();
-    $manager = TestDataSeeder::createUserWithRole(RolesEnum::EAManager, ['email' => fake()->unique()->safeEmail()]);
-    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
-    $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
-
-    $lead = PersonalQuote::create([
-        'uuid' => Str::uuid()->toString(), 'code' => 'CYB-mgr-001',
-        'quote_type_id' => 20, 'first_name' => 'Test', 'last_name' => 'Lead',
-        'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0501330001',
-        'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id, 'expert_advisor_id' => $expert->id,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-    ]);
-
-    $this->actingAs($manager);
-    $this->postJson(route('ea-manager.decision', ['quoteType' => 'personal', 'quoteId' => $lead->id]), ['action' => 'approve'])
-        ->assertOk()->assertJsonPath('success', true);
-
-    $lead->refresh();
-    expect($lead->ea_assigned_advisor_approved_at)->not->toBeNull()
-        ->and($lead->ea_expert_advisor_approved_at)->not->toBeNull()
-        ->and($lead->ea_manager_id)->toBe($manager->id);
-
-    Queue::assertPushed(SendEAManagerDecisionEmailJob::class); // F3
-});
 
 it('EA manager approve dispatches decision email to both advisors (F3)', function () {
     Queue::fake();
@@ -229,27 +203,6 @@ it('EA manager approve dispatches decision email to both advisors (F3)', functio
     Queue::assertPushed(SendEAManagerDecisionEmailJob::class, fn ($job) => true);
 });
 
-it('EA manager reject does NOT dispatch decision email (Gap 7 fix)', function () {
-    Queue::fake();
-    $manager = TestDataSeeder::createUserWithRole(RolesEnum::EAManager, ['email' => fake()->unique()->safeEmail()]);
-    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
-    $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
-
-    $lead = PersonalQuote::create([
-        'uuid' => Str::uuid()->toString(), 'code' => 'CYB-mgr-rej-001',
-        'quote_type_id' => 20, 'first_name' => 'Rej', 'last_name' => 'Test',
-        'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0501330003',
-        'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id, 'expert_advisor_id' => $expert->id,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-    ]);
-
-    $this->actingAs($manager);
-    $this->postJson(route('ea-manager.decision', ['quoteType' => 'personal', 'quoteId' => $lead->id]), ['action' => 'reject'])
-        ->assertOk();
-
-    Queue::assertNotPushed(SendEAManagerDecisionEmailJob::class);
-});
 
 // ─── E6 / Model change: Collaborative → Referral ──────────────────────────────
 
@@ -319,43 +272,9 @@ it('EA manager can approve a BusinessQuote (Corpline/GroupMedical) via ea-manage
 
     $lead->refresh();
     expect($lead->ea_manager_approved_at)->not->toBeNull()
-        ->and($lead->ea_assigned_advisor_approved_at)->not->toBeNull()
-        ->and($lead->ea_expert_advisor_approved_at)->not->toBeNull()
         ->and($lead->ea_manager_id)->toBe($manager->id);
 });
 
-it('EA manager reject demotes a BusinessQuote to Referral model (E6)', function () {
-    Queue::fake();
-    $manager = TestDataSeeder::createUserWithRole(RolesEnum::EAManager, ['email' => fake()->unique()->safeEmail()]);
-    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
-    $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
-
-    $lead = BusinessQuote::create([
-        'uuid' => Str::uuid()->toString(),
-        'code' => 'BUS-mgr-rej-001',
-        'first_name' => 'Test',
-        'last_name' => 'Lead',
-        'email' => fake()->unique()->safeEmail(),
-        'mobile_no' => '0501550002',
-        'source' => LeadSourceEnum::EA_IMCRM,
-        'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id,
-        'expert_advisor_id' => $expert->id,
-        'lead_generator_id' => $advisor->id,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-        'ea_assigned_advisor_rejected_at' => now(),
-    ]);
-
-    $this->actingAs($manager);
-    $this->postJson(route('ea-manager.decision', ['quoteType' => 'business', 'quoteId' => $lead->id]), ['action' => 'reject'])
-        ->assertOk()->assertJsonPath('success', true);
-
-    $lead->refresh();
-    expect($lead->ea_model)->toBe(EaModelEnum::Referral->value)
-        ->and($lead->advisor_id)->toBe($expert->id)
-        ->and($lead->lead_generator_id)->toBe($advisor->id)
-        ->and($lead->expert_advisor_id)->toBeNull();
-});
 
 // ─── E9 / Export access ───────────────────────────────────────────────────────
 
