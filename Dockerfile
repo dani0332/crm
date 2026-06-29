@@ -107,7 +107,10 @@ cp docker/nginx.conf /etc/nginx/sites-enabled/default && \
 cp -r docker/*.pem /etc/nginx/conf.d/
 
 # Deployment steps
-RUN composer install --optimize-autoloader --no-dev
+#RUN composer install --optimize-autoloader --no-dev
+RUN composer install --optimize-autoloader --no-dev \
+    || composer install --optimize-autoloader --no-dev \
+    || composer install --optimize-autoloader --no-dev
 RUN chmod +x /var/www/docker/run.sh
 
 ENTRYPOINT ["/var/www/docker/run.sh"]
