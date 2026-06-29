@@ -45,6 +45,11 @@ class AssignLeadPipe extends BasePqaAllocationPipe
                 );
             }
 
+            LoggerService::info(self::class.' - Updating PQA config', extra: [
+                'advisorId' => $advisor->id,
+                'quoteTypeId' => $this->getPqaQuoteTypeId(),
+            ]);
+
             app(PqaLeadAllocationService::class)->updatePqaAllocationConfig(
                 $advisor->id,
                 (int) $this->getPqaQuoteTypeId(),
