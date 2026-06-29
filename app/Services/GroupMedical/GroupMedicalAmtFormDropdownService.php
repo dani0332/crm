@@ -123,7 +123,7 @@ final class GroupMedicalAmtFormDropdownService
             ->join('health_network_quote_type as hqt', 'hqt.health_network_id', 'health_networks.id')
             ->select('id', 'level as text')
             ->where('hqt.quote_type_id', QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL))
-            ->orderByDesc('id');
+            ->orderBy('health_networks.sort_order');
 
         if ($tpaId !== null) {
             $query->where('health_third_party_administrator_id', $tpaId);
