@@ -1932,8 +1932,10 @@ class ApplicationStorageSeeder extends Seeder
     private function seedPartnerAutomation()
     {
         $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/092b76fa-f599-43a3-8927-edc7b7b4a9cd/invoke-sync';
+        $ccEmails = 'sureshbabu.rajendran@myalfred.com';
         if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
-            $birdWorkflowUrl = '';
+            $birdWorkflowUrl = 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/0432a5ce-fec0-45f9-8d23-15144644609a/invoke-sync';
+            $ccEmails = 'fni.uae@cars24.com, abhishek.pandey@insurancemarket.ae';
         }
 
         ApplicationStorage::firstOrCreate(
@@ -1959,7 +1961,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CARS24_SEND_POLICY_CC_EMAILS],
             [
-                'value' => 'fni.uae@cars24.com, abhishek.pandey@insurancemarket.ae',
+                'value' => $ccEmails,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => true,
