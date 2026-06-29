@@ -509,4 +509,7 @@ final class ApplicationStorageEnums extends Enum
 
     // Home Revivals
     public const DTT_HOME_ENABLED = 'DTT_HOME_ENABLED';
+
+    // Alliance → Qatar Insurance brand switch
+    public const ALLIANCE_BRAND_SWITCH_DATE = 'ALLIANCE_BRAND_SWITCH_DATE';
 }

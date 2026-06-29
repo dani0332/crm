@@ -190,6 +190,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedDttLifeEnabled();
         $this->seedOcrPlanValidation();
         $this->seedDttHomeEnabled();
+        $this->seedAllianceBrandSwitchDate();
     }
 
     private function livaCarAutomationSeed()
@@ -2105,6 +2106,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES],
             [
                 'value' => '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAllianceBrandSwitchDate(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ALLIANCE_BRAND_SWITCH_DATE],
+            [
+                'value' => '2026-05-25',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

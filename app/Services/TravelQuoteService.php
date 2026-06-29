@@ -209,6 +209,7 @@ class TravelQuoteService extends BaseService
             'b.name as lead_branch_name',
             'b.id as lead_branch_id',
             'tqr.is_branch_applicable',
+            'tqr.quote_status_date',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
