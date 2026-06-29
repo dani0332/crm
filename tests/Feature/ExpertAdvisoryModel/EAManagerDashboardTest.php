@@ -181,7 +181,6 @@ it('rejected collaborate lead has_rejection flag set', function () {
 
 // ─── E5 / Approve action ──────────────────────────────────────────────────────
 
-
 it('EA manager approve dispatches decision email to both advisors (F3)', function () {
     Queue::fake();
     $manager = TestDataSeeder::createUserWithRole(RolesEnum::EAManager, ['email' => fake()->unique()->safeEmail()]);
@@ -202,7 +201,6 @@ it('EA manager approve dispatches decision email to both advisors (F3)', functio
 
     Queue::assertPushed(SendEAManagerDecisionEmailJob::class, fn ($job) => true);
 });
-
 
 // ─── E6 / Model change: Collaborative → Referral ──────────────────────────────
 
@@ -274,7 +272,6 @@ it('EA manager can approve a BusinessQuote (Corpline/GroupMedical) via ea-manage
     expect($lead->ea_manager_approved_at)->not->toBeNull()
         ->and($lead->ea_manager_id)->toBe($manager->id);
 });
-
 
 // ─── E9 / Export access ───────────────────────────────────────────────────────
 
