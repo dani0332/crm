@@ -2,6 +2,7 @@
 
 namespace App\Services\Quotes;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LeadSourceEnum;
@@ -226,10 +227,12 @@ class DeviceQuoteService extends BaseQuoteService
         if ($quote->advisor && $quote->advisor->email === $automationUserEmail) {
             $quote->advisor->name = PolicyIssuanceEnum::API_POLICY_ISSUANCE_AUTOMATION_USER_LABEL;
         }
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         return [
             'canAddBatchNumber' => $this->hasAnyRole(Auth::user(), [RolesEnum::SmartPhoneManager]),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'amlStatusName' => $amlStatusName,
             ...$data,
         ];
     }

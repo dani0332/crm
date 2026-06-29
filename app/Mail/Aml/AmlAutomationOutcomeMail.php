@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mail\Aml;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
@@ -85,7 +86,7 @@ class AmlAutomationOutcomeMail extends Mailable
             'advisorPhone' => $this->quote?->advisor?->mobile_no ?? '',
             'advisorEmail' => $advisorEmail,
             'advisorName' => $advisorName,
-            'workflowType' => 'aml_automation_outcome',
+            'workflowType' => WorkflowTypeEnum::AML_AUTOMATION_OUTCOME,
             'paymentLink' => $this->paymentLink ?? '',
             'customerEmail' => $customerEmail ?? '',
             'currency' => $this->quote?->savingsQuote?->currency?->code ?? '',

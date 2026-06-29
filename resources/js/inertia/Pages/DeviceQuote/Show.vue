@@ -57,6 +57,7 @@ const props = defineProps({
   isFuncsEnabled: Object,
   paymentGatewayEnum: Array,
   planURL: String,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -759,6 +760,10 @@ const formatToDateTime = dateString => {
                   <template #tooltip> Reference ID </template>
                 </x-tooltip>
                 <div>{{ quote.code }}</div>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">IM AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
