@@ -1738,6 +1738,15 @@ class CentralService extends BaseService
                 $emailData->companyName = $quote->company_name ?? '';
             }
 
+            if (
+                $quote->source == LeadSourceEnum::CARS24 &&
+                app(PartnerService::class)->isPartnerActive($quote->source, $quoteTypeId, $quote?->plan?->insuranceProvider?->id, $quote?->plan?->id)
+            ) {
+
+                $cc = getAppStorageValueByKey(ApplicationStorageEnums::CARS24_SEND_POLICY_CC_EMAILS);
+                $emailData->cc_emails = $cc ? array_map('trim', explode(',', $cc)) : [];
+            }
+
             if ($emailData->advisorEmail) {
                 $emailData->cc_emails[] = $emailData->advisorEmail;
             }
@@ -1882,7 +1891,7 @@ class CentralService extends BaseService
                 if (empty($emailData->policyCertificate)) {
                     LoggerService::info('Policy Certificate not found.');
                 } else {
-                    $certificatePath = ! empty(data_get($emailData->policyCertificate, 'watermarked_doc_url')) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicyCertificate(), true)
+                    $certificatePath = ! empty(data_get($emailData->policyCertificate, 'watermarked_doc_url'))
                         ? (data_get($emailData->policyCertificate, 'watermarked_doc_url') ?? '')
                         : (data_get($emailData->policyCertificate, 'doc_url') ?? '');
                     $emailData->policyCertificate = app(QuoteDocumentService::class)->getDocumentUrl($certificatePath, 'azureIMPrivate') ?? '';
@@ -1985,7 +1994,7 @@ class CentralService extends BaseService
                 return in_array($document['document_type_code'], $scheduleDocumentTypeCodes);
             })->first() ?? null;
 
-            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url) && in_array($quoteTypeId, QuoteTypeId::quoteTypesUsingWatermarkedPolicySchedule(), true)
+            $emailData->policySchedule = ! empty($emailData?->policySchedule?->watermarked_doc_url)
                 ? ($emailData->policySchedule->watermarked_doc_url ?? '')
                 : ($emailData?->policySchedule?->doc_url ?? '');
 

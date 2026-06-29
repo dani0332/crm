@@ -57,6 +57,13 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
                 LoggerService::info(self::class.'::verifyPreChecks - REVIVAL_REINSTATED lead passed flow checks, continuing assignment');
                 $continueAssignment = true;
             }
+        } elseif ($lead->isLeadSourceCar24()) {
+            if ($lead->isPaymentAuthorized()) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead source is Cars24 and payment is authorized, continuing assignment');
+                $continueAssignment = true;
+            } else {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead source is Cars24 but payment is not authorized, skipping assignment');
+            }
         } elseif ($lead->hasExemptedSource()) {
             if ($lead->isCatABuyLeadApplicable(QuoteTypes::CAR_CAT_A)) {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead is a Revival lead and is a CAT A nationality, continuing assignment');

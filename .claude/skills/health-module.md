@@ -140,6 +140,16 @@ All steps run inside a **single DB transaction** in `applyAll()`. Members are lo
 
 The mutator uses `18 * 12` months (216 months = 18 years) and `12` months as age thresholds for visa category and salary band decisions. These values are correct domain rules — do not flag them as magic numbers or bugs.
 
+### `getCoverForId` — null fallback (IMPORTANT)
+
+`getCoverForId()` initializes `$coverForId = $hqr->cover_for_id` (no int cast). When `cover_for_id` is `null` and the lead is not a domestic worker, it falls back to `HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value` via the null-coalescing return:
+
+```php
+return $coverForId ?? HealthCoverForEnum::INDIVIDUAL_AND_FAMILIES->value;
+```
+
+**Do not revert to `(int) $hqr->cover_for_id`** as the initializer — casting null to int produces `0`, which violates the `health_cover_for` FK constraint (`SQLSTATE[23000] 1452`).
+
 ---
 
 ## Key Enums (all in `app/Enums/`)

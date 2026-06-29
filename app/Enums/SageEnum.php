@@ -20,6 +20,7 @@ final class SageEnum extends Enum
     /* Sage Process Request Type */
     const SAGE_PROCESS_BOOK_POLICY_REQUEST = 'book_policy';
     const SAGE_PROCESS_BOOK_EMBEDDED_PRODUCT_REQUEST = 'book_embedded_product';
+    const SAGE_PROCESS_REVERSE_EMBEDDED_PRODUCT_REQUEST = 'reverse_embedded_product';
     const SAGE_PROCESS_SEND_UPDATE_REQUEST = 'send_update';
     const SAGE_PROCESS_POST_PREPAYMENT_REQUEST = 'post_prepayment';
 

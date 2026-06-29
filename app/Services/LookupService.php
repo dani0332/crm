@@ -571,4 +571,12 @@ class LookupService extends BaseService
             }
         );
     }
+
+    public function getCorplineLeadTypes(): Collection
+    {
+        return Lookup::where('key', LookupsEnum::CORPLINE_LEAD_TYPE->value)
+            ->select('code', 'text')
+            ->get()
+            ->map(fn ($lookup) => ['value' => $lookup->code, 'label' => $lookup->text]);
+    }
 }

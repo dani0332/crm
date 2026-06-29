@@ -70,6 +70,7 @@ final class WorkflowTypeEnum extends Enum
     public const BOR_INSURER_NOTIFICATION = 'bor_insurer_notification';
     public const CAR_AUTOMATION_FAILED = 'car_automation_failed';
     public const CYBER_AUTOMATION_FAILED = 'cyber_automation_failed';
+    public const TRAVEL_POLICY_ISSUANCE_AUTOMATION_FAILED = 'travel_policy_issuance_automation_failed';
     public const OE_ASSIGNMENT = 'oe_assignment';
     public const CLAIM_INTRODUCTORY_EMAIL_TO_CUSTOMER = 'claim_introductory_email_to_customer';
     public const CLAIM_GOOGLE_REVIEW_EMAIL = 'claim_google_review_email';
@@ -109,6 +110,7 @@ final class WorkflowTypeEnum extends Enum
 
     // Life Revival OCB
     public const LIFE_REVIVAL_OCB = 'life_revival_ocb';
+    public const AML_AUTOMATION_OUTCOME = 'aml_automation_outcome';
 
     // Home Revival OCB
     public const HOME_REVIVAL_OCB = 'home_revival_ocb';

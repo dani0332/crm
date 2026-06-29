@@ -69,6 +69,7 @@ class DatabaseSeeder extends Seeder
             MakeGenderMaritalStatusUppercase::class,
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
+            PartnerSeeder::class,
             InsuranceProviderTransitionsSeeder::class,
             BackfillBusinessQuoteEmirateFromInsuredSeeder::class,
             ConverILAGroupMedicalConfigurationBranchWise::class,

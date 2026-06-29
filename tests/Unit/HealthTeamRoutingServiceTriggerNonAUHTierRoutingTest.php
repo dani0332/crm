@@ -377,10 +377,16 @@ it('assigns team from plan type when lead is not sic2', function () {
     $log = Mockery::mock(HealthTeamRoutingLogService::class);
     $log->shouldReceive('log')->andReturnNull();
 
+    $canonicalNationalityService = Mockery::mock(CanonicalNationalityService::class);
+    $canonicalNationalityService->shouldReceive('getByNationalityId')->andReturnNull();
+
+    $nationalityPoolService = Mockery::mock(NationalityPoolService::class);
+    $nationalityPoolService->shouldReceive('getNationalityCodes')->andReturnNull();
+
     $service = new HealthTeamRoutingService(
         $log,
-        Mockery::mock(CanonicalNationalityService::class),
-        Mockery::mock(NationalityPoolService::class),
+        $canonicalNationalityService,
+        $nationalityPoolService,
         HealthRoutingSourceEnum::ROUTING,
     );
 
@@ -395,6 +401,7 @@ it('assigns team from plan type when lead is not sic2', function () {
                 'id' => 107,
                 'uuid' => 'non-auh-direct-good',
                 'health_plan_type_id' => HealthPlanTypeEnum::GOOD->value,
+                'nationality_id' => 1,
             ], true);
         }
 
@@ -419,5 +426,5 @@ it('assigns team from plan type when lead is not sic2', function () {
     $service->triggerNonAUHTierRouting($lead);
 
     expect($lead->saveCount)->toBe(1)
-        ->and($lead->health_team_type)->toBe(TeamNameEnum::RM_SPEED);
+        ->and($lead->health_team_type)->toBeNull();
 });

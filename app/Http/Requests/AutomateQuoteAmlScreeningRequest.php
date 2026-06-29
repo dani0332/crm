@@ -6,7 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\V2\AMLController;
-use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
+use App\Services\AML\AMLAutomationService;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -15,7 +15,7 @@ use Illuminate\Validation\Rule;
  * Form Request for IMCRM-triggered AML screening automation.
  *
  * Restricts the {@see AMLController::automateQuoteAmlScreening()}
- * endpoint to LOBs explicitly whitelisted in {@see AmlAutomatableLobRegistry}.
+ * endpoint to LOBs explicitly whitelisted in {@see AMLAutomationService}.
  */
 class AutomateQuoteAmlScreeningRequest extends FormRequest
 {
@@ -39,7 +39,7 @@ class AutomateQuoteAmlScreeningRequest extends FormRequest
             'quoteType' => [
                 'required',
                 'string',
-                Rule::enum(QuoteTypes::class)->only(AmlAutomatableLobRegistry::allowed()),
+                Rule::enum(QuoteTypes::class)->only(AMLAutomationService::allowedLobsFromAPI()),
             ],
         ];
     }
