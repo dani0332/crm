@@ -51,6 +51,10 @@ class AMLScreeningCommand extends Command
      */
     public function handle(): void
     {
+        LoggerService::info($this->className.' - handle() invoked', extra: [
+            'quote_type_option' => $this->option('quote-type') ?? 'all',
+        ]);
+
         $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
         if (! $isAmlAutomationEnabled) {
             LoggerService::info($this->className.' is not enabled from cms');
@@ -60,8 +64,14 @@ class AMLScreeningCommand extends Command
 
         $quoteTypesToProcess = $this->resolveQuoteTypes($this->option('quote-type'));
         if (empty($quoteTypesToProcess)) {
+            LoggerService::info($this->className.' - no valid quote types resolved, aborting');
+
             return;
         }
+
+        LoggerService::info($this->className.' - resolved quote types to process', extra: [
+            'quote_types' => array_map(fn ($qt) => $qt->value, $quoteTypesToProcess),
+        ]);
 
         foreach ($quoteTypesToProcess as $quoteType) {
             $this->processQuoteType($quoteType);
@@ -78,6 +88,10 @@ class AMLScreeningCommand extends Command
      */
     private function processQuoteType(QuoteTypes $quoteType): void
     {
+        LoggerService::info($this->className.' - processQuoteType() started', extra: [
+            'quote_type' => $quoteType->value,
+        ]);
+
         $quoteModel = $this->getModelObject(strtolower($quoteType->value));
 
         if (! class_exists($quoteModel)) {
@@ -111,11 +125,32 @@ class AMLScreeningCommand extends Command
         }
 
         if (! $quoteRequestQuery->exists()) {
+            LoggerService::info($this->className.' - no matching quotes found, skipping', extra: [
+                'quote_type' => $quoteType->value,
+                'date_from' => $date->toDateTimeString(),
+            ]);
+
             return;
         }
 
+        LoggerService::info($this->className.' - matching quotes found, starting chunk processing', extra: [
+            'quote_type' => $quoteType->value,
+        ]);
+
         $quoteRequestQuery->chunk(100, function ($quoteRequests) use ($quoteType) {
+            LoggerService::info($this->className.' - processing chunk', extra: [
+                'quote_type' => $quoteType->value,
+                'chunk_size' => $quoteRequests->count(),
+            ]);
+
             foreach ($quoteRequests as $quoteRequest) {
+                LoggerService::info($this->className.' - processing quote', extra: [
+                    'quote_type' => $quoteType->value,
+                    'quote_id' => $quoteRequest->id,
+                    'quote_code' => $quoteRequest->code,
+                ]);
+
+                continue;
                 $quoteRequestId = $quoteRequest->id;
                 $quote = $this->getQuoteObject($quoteType->value, $quoteRequestId);
 
