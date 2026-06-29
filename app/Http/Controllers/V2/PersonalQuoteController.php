@@ -79,7 +79,7 @@ class PersonalQuoteController extends Controller
             }
         }
 
-        app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId);
+        app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId, $request->document_type_code);
 
         if ($quote && $quote instanceof Model) {
             app(SLAService::class)->meetSLAOnEdit($quote, SLAActionTypeEnum::DOCUMENTS_UPLOAD);

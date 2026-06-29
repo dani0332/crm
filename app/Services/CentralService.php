@@ -1325,7 +1325,7 @@ class CentralService extends BaseService
      * We check policy issuance status is not 'Policy Issued' & if afilled policy details & required documents are uploaded
      * This will trigger once policy details section update or new document upload from upload document section
      */
-    public function updateQuoteInformation($type, $id)
+    public function updateQuoteInformation($type, $id, $documentTypeCode = null)
     {
         if ($type == 'send-update') {
             return;
@@ -1350,6 +1350,10 @@ class CentralService extends BaseService
         }
 
         // Update status qualified or business and coument type census list
+        if ($type === QuoteTypes::BUSINESS->value && $documentTypeCode === 'GM_CL') {
+            // Send Capi request
+        }
+        exit;
 
         $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
         LoggerService::info("Quote Code: {$quoteCode} - Policy details filled: ".($isPolicyDetailsFilled ? 'YES' : 'NO'));
