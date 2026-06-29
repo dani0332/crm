@@ -11,7 +11,7 @@ use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Models\ApplicationStorage;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
-use App\Services\BirdService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 
 class EmailService
@@ -35,61 +35,52 @@ class EmailService
             return;
         }
 
-        // map data for bird service
+        // map data for  service
         $emailData = $this->mapOCAEmailData($lead, $data);
-
-        // get bird flow url for Life from ApplicationStorage
-        $flowUrl = $this->getApplicationStorage();
-        if (! $flowUrl) {
-            LoggerService::info($logPrefix.' - Flow URL not found');
-
-            return false;
-        }
 
         try {
 
-            $response = app(BirdService::class)->triggerWebHookRequest($flowUrl, $emailData);
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::LIFE_OCA_EMAIL, (array) $emailData);
 
-            if ($response && $response->status_code == 200) {
+            if ($lead->quote_status_id == QuoteStatusEnum::NewLead) {
+
+                $checkPlans = $this->checkPlans($lead->uuid);
+
+                if (isset($checkPlans['hasError']) && $checkPlans['hasError']) {
+                    LoggerService::warning("sendOCAEmail - Error checking plans: {$checkPlans['errorMessage']}, keeping lead status as NewLead");
+
+                    return;
+                }
+
+                if ($checkPlans['totalNumberOfPlans'] == 0) {
+                    LoggerService::info('sendOCAEmail - total number of plans is 0, so lead status will remain NewLead');
+
+                    return;
+                }
+
+                if ($checkPlans['totalNumberOfHiddenPlans'] == $checkPlans['totalNumberOfPlans']) {
+                    LoggerService::info('sendOCAEmail - total number of hidden plans is equal to total number of plans, so lead status will remain NewLead');
+
+                    return;
+                }
+
+                LoggerService::info('sendOCAEmail - changing lead status to Quoted', [
+                    'totalPlans' => $checkPlans['totalNumberOfPlans'],
+                    'hiddenPlans' => $checkPlans['totalNumberOfHiddenPlans'],
+                    'visiblePlans' => $checkPlans['totalNumberOfPlans'] - $checkPlans['totalNumberOfHiddenPlans'],
+                ]);
                 if ($lead->quote_status_id == QuoteStatusEnum::NewLead) {
-
-                    $checkPlans = $this->checkPlans($lead->uuid);
-
-                    if (isset($checkPlans['hasError']) && $checkPlans['hasError']) {
-                        LoggerService::warning("sendOCAEmail - Error checking plans: {$checkPlans['errorMessage']}, keeping lead status as NewLead");
-
-                        return;
-                    }
-
-                    if ($checkPlans['totalNumberOfPlans'] == 0) {
-                        LoggerService::info('sendOCAEmail - total number of plans is 0, so lead status will remain NewLead');
-
-                        return;
-                    }
-
-                    if ($checkPlans['totalNumberOfHiddenPlans'] == $checkPlans['totalNumberOfPlans']) {
-                        LoggerService::info('sendOCAEmail - total number of hidden plans is equal to total number of plans, so lead status will remain NewLead');
-
-                        return;
-                    }
-
-                    LoggerService::info('sendOCAEmail - changing lead status to Quoted', [
-                        'totalPlans' => $checkPlans['totalNumberOfPlans'],
-                        'hiddenPlans' => $checkPlans['totalNumberOfHiddenPlans'],
-                        'visiblePlans' => $checkPlans['totalNumberOfPlans'] - $checkPlans['totalNumberOfHiddenPlans'],
-                    ]);
-
                     $lead->quote_status_id = QuoteStatusEnum::Quoted;
                     LifeQuote::where('uuid', $lead->uuid)->update([
                         'quote_status_id' => QuoteStatusEnum::Quoted,
                     ]);
                     $lead->save();
-                } else {
-                    LoggerService::info("sendOCAEmail - Quote status is not new lead for quote: {$lead->uuid}");
                 }
+            } else {
+                LoggerService::info("sendOCAEmail - Quote status is not new lead for quote: {$lead->uuid}");
             }
 
-            LoggerService::info("$logPrefix Bird flow triggered successfully - Email sent to customer", extra: [
+            LoggerService::info("$logPrefix  flow triggered successfully - Email sent to customer", extra: [
                 'email' => $emailData->customerEmail,
             ]);
 
@@ -134,6 +125,9 @@ class EmailService
             'customerMobile' => $lead->mobile_no ?? null,
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::LIFE, $lead->uuid),
             'flowExecutedAt' => $lead->automated_flow_executed_at ?? null,
+            'customerId' => $lead->customer_id ?? '',
+            'firstName' => $lead->first_name ?? '',
+            'lastName' => $lead->last_name ?? '',
 
             // Advisor-related data
             'advisorId' => $advisor?->id,
@@ -221,7 +215,6 @@ class EmailService
                 'totalNumberOfPlans' => $totalNumberOfPlans,
                 'hasError' => false,
             ];
-
         } catch (\Exception $e) {
             LoggerService::error('checkPlans - Exception occurred', exception: $e);
 

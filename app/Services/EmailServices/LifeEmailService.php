@@ -2,17 +2,14 @@
 
 namespace App\Services\EmailServices;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\ApplicationStorage;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\BaseService;
-use App\Services\BirdService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -104,9 +101,9 @@ class LifeEmailService extends BaseService
         return (object) $data;
     }
 
-    public function sendEmailAdvanceBirthdayWishToCustomer(PersonalQuote $personalQuote, $emailData, $workflowUrl)
+    public function sendEmailAdvanceBirthdayWishToCustomer(PersonalQuote $personalQuote, $emailData)
     {
-        $isFollowupExecuted = app(BirdService::class)
+        $isFollowupExecuted = app(WebEngageService::class)
             ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::LIFE->id(), QuoteFlowType::LIFE_ADVANCE_BIRTHDAY_WISH->value);
 
         if ($isFollowupExecuted) {
@@ -135,11 +132,12 @@ class LifeEmailService extends BaseService
 
             $emailData->workflowType = WorkflowTypeEnum::LIFE_ADVANCE_BIRTHDAY_WISH_EMAIL;
             $emailData = array_merge((array) $emailData, $notifyBirthdayDate);
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
 
-            if ($response && $response->status_code === 200) {
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::LIFE_ADVANCE_BIRTHDAY_WISH_EMAIL, (array) $emailData);
+
+            if ($response && $response->status_code) {
                 LoggerService::info('sendEmailAdvanceBirthdayWishToCustomer - Successfully triggered event');
-                app(BirdService::class)->createQuoteWorkFlowDetails($personalQuote, $response, QuoteFlowType::LIFE_ADVANCE_BIRTHDAY_WISH->value, QuoteTypes::LIFE->id());
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::LIFE_ADVANCE_BIRTHDAY_WISH->value, QuoteTypes::LIFE->id());
 
             } else {
                 LoggerService::info("sendEmailAdvanceBirthdayWishToCustomer - Error triggering event having response status code: {$response?->status_code}");
@@ -149,9 +147,9 @@ class LifeEmailService extends BaseService
         }
     }
 
-    public function sendEmailBirthdayWishToCustomer(PersonalQuote $personalQuote, $emailData, $workflowUrl)
+    public function sendEmailBirthdayWishToCustomer(PersonalQuote $personalQuote, $emailData)
     {
-        $isFollowupExecuted = app(BirdService::class)
+        $isFollowupExecuted = app(WebEngageService::class)
             ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::LIFE->id(), QuoteFlowType::LIFE_BIRTHDAY_WISH->value);
 
         if ($isFollowupExecuted) {
@@ -179,11 +177,12 @@ class LifeEmailService extends BaseService
             ];
             $emailData->workflowType = WorkflowTypeEnum::LIFE_BIRTHDAY_WISH_EMAIL;
             $emailData = array_merge((array) $emailData, $notifyBirthdayDate);
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::LIFE_BIRTHDAY_WISH_EMAIL, (array) $emailData);
 
-            if ($response && $response->status_code === 200) {
+            if ($response && $response->status_code) {
                 LoggerService::info('sendEmailBirthdayWishToCustomer - Successfully triggered event');
-                app(BirdService::class)->createQuoteWorkFlowDetails($personalQuote, $response, QuoteFlowType::LIFE_BIRTHDAY_WISH->value, QuoteTypes::LIFE->id());
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::CYBER_OCB_INTRO_EMAIL->value, QuoteTypes::CYBER->id());
+
             } else {
                 LoggerService::info("sendEmailBirthdayWishToCustomer - Error triggering event having response status code: {$response?->status_code}");
             }
@@ -194,30 +193,24 @@ class LifeEmailService extends BaseService
 
     public function sendAutomatedLifeFollowup(PersonalQuote $personalQuote)
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::FIC_LIFE_EMAIL)->first();
 
         LoggerService::info('| sendAutomatedLifeFollowup - Initiating process');
+        // Fetch the advisor
+        $advisor = User::find($personalQuote->advisor_id);
+        if (! $advisor) {
+            LoggerService::info("sendAutomatedLifeFollowup - Advisor not found for quote: {$personalQuote->uuid}");
+        }
+        $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_AUTOMATED_FOLLOWUPS);
+        $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::LIFE_AUTOMATED_FOLLOWUPS, (array) $emailData);
 
-        if ($workflowUrl && ! empty($workflowUrl->value)) {
-            // Fetch the advisor
-            $advisor = User::find($personalQuote->advisor_id);
-            if (! $advisor) {
-                LoggerService::info("sendAutomatedLifeFollowup - Advisor not found for quote: {$personalQuote->uuid}");
-            }
-            $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_AUTOMATED_FOLLOWUPS);
+        $this->sendEmailAdvanceBirthdayWishToCustomer($personalQuote, $emailData);
+        $this->sendEmailBirthdayWishToCustomer($personalQuote, $emailData);
 
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-            $this->sendEmailAdvanceBirthdayWishToCustomer($personalQuote, $emailData, $workflowUrl->value);
-            $this->sendEmailBirthdayWishToCustomer($personalQuote, $emailData, $workflowUrl->value);
-
-            if ($response && $response->status_code === 200) {
-                LoggerService::info("sendAutomatedLifeFollowup - Successfully triggered event for quote: {$personalQuote->uuid}");
-                app(BirdService::class)->createQuoteWorkFlowDetails($personalQuote, $response, QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS->value, QuoteTypes::LIFE->id());
-            } else {
-                LoggerService::info("sendAutomatedLifeFollowup - Error triggering event having response status code: {$response?->status_code}");
-            }
+        if ($response && $response->status_code) {
+            LoggerService::info("sendAutomatedLifeFollowup - Successfully triggered event for quote: {$personalQuote->uuid}");
+            app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS->value, QuoteTypes::LIFE->id());
         } else {
-            LoggerService::info(self::class." - Automated Life Followup is not set workflow url not found for quote: {$personalQuote->uuid}");
+            LoggerService::info("sendAutomatedLifeFollowup - Error triggering event having response status code: {$response?->status_code}");
         }
     }
     private function checkPlans(string $quoteUID): array
