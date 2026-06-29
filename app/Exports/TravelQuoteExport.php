@@ -137,7 +137,7 @@ class TravelQuoteExport implements CsvExportableInterface
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
             $quote->customer?->pcp_tag_formatted ?? '',
             $quote->subSource?->text ?? '',
-            $quote->ea_model ?? '',
+            $quote->ea_model?->value ?? '',
             $quote->leadGenerator?->name ?? '',
         ];
     }
