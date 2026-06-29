@@ -36,7 +36,7 @@ afterEach(function (): void {
 
 test('processCustomerUpload stores file and dispatches ProcessCustomerUploadJob then redirects', function (): void {
     Bus::fake();
-    Storage::fake();
+    Storage::fake('azureIMPrivate');
 
     $user = TestDataSeeder::createUser();
     $file = UploadedFile::fake()->create(
@@ -68,10 +68,10 @@ test('processCustomerUpload stores file and dispatches ProcessCustomerUploadJob 
 test('ProcessCustomerUploadJob handle imports file, dispatches SQS jobs, and fires CustomerUploadCompleted', function (): void {
     Event::fake([CustomerUploadCompleted::class]);
     Bus::fake([ExtendCustomerSubscriptionViaSQS::class]);
-    Storage::fake();
+    Storage::fake('azureIMPrivate');
 
     $filePath = 'customer-uploads/test.xlsx';
-    Storage::put($filePath, 'fake xlsx content');
+    Storage::disk('azureIMPrivate')->put($filePath, 'fake xlsx content');
 
     Excel::shouldReceive('import')->once()->andReturnUsing(function ($import): void {
         $import->rowCount = 42;
@@ -94,7 +94,7 @@ test('ProcessCustomerUploadJob handle imports file, dispatches SQS jobs, and fir
 
     $job->handle($sendEmailService, $berlinService);
 
-    Storage::assertMissing($filePath);
+    Storage::disk('azureIMPrivate')->assertMissing($filePath);
     Bus::assertDispatched(ExtendCustomerSubscriptionViaSQS::class);
     Event::assertDispatched(CustomerUploadCompleted::class, function (CustomerUploadCompleted $event): bool {
         $data = $event->broadcastWith();
@@ -103,12 +103,39 @@ test('ProcessCustomerUploadJob handle imports file, dispatches SQS jobs, and fir
     });
 });
 
+test('ProcessCustomerUploadJob handle fires CustomerUploadCompleted with failed status when file is missing', function (): void {
+    Event::fake([CustomerUploadCompleted::class]);
+    Storage::fake('azureIMPrivate');
+
+    $job = new ProcessCustomerUploadJob(
+        filePath: 'customer-uploads/missing.xlsx',
+        myalfredExpiryDate: '2026-12-31',
+        cdbId: 'CDB-003',
+        invitationEmail: false,
+        userId: 55,
+    );
+
+    $sendEmailService = Mockery::mock(SendEmailCustomerService::class);
+    $berlinService = Mockery::mock(BerlinService::class);
+
+    $job->handle($sendEmailService, $berlinService);
+
+    Event::assertDispatched(CustomerUploadCompleted::class, function (CustomerUploadCompleted $event): bool {
+        $data = $event->broadcastWith();
+
+        return $data['status'] === 'failed'
+            && $data['userId'] === 55
+            && $data['uploadedCount'] === 0
+            && $data['cdbId'] === 'CDB-003';
+    });
+});
+
 test('ProcessCustomerUploadJob failed fires CustomerUploadCompleted with failed status', function (): void {
     Event::fake([CustomerUploadCompleted::class]);
-    Storage::fake();
+    Storage::fake('azureIMPrivate');
 
     $filePath = 'customer-uploads/test.xlsx';
-    Storage::put($filePath, 'fake xlsx content');
+    Storage::disk('azureIMPrivate')->put($filePath, 'fake xlsx content');
 
     $job = new ProcessCustomerUploadJob(
         filePath: $filePath,
@@ -120,7 +147,7 @@ test('ProcessCustomerUploadJob failed fires CustomerUploadCompleted with failed 
 
     $job->failed(new RuntimeException('Import error'));
 
-    Storage::assertMissing($filePath);
+    Storage::disk('azureIMPrivate')->assertMissing($filePath);
 
     Event::assertDispatched(CustomerUploadCompleted::class, function (CustomerUploadCompleted $event): bool {
         $data = $event->broadcastWith();
