@@ -57,7 +57,7 @@ function makeEaPersonalQuote(array $attrs = []): PersonalQuote
         'last_name' => 'User',
         'email' => fake()->unique()->safeEmail(),
         'mobile_no' => '050'.fake()->numerify('#######'),
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
     ], $attrs));
 }
 
@@ -70,7 +70,7 @@ function makeEaCarQuote(array $attrs = []): CarQuote
         'last_name' => 'User',
         'email' => fake()->unique()->safeEmail(),
         'mobile_no' => '050'.fake()->numerify('#######'),
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
     ], $attrs));
 }
 
@@ -83,7 +83,7 @@ function makeEaHealthQuote(array $attrs = []): HealthQuote
         'last_name' => 'User',
         'email' => fake()->unique()->safeEmail(),
         'mobile_no' => '050'.fake()->numerify('#######'),
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
     ], $attrs));
 }
 
@@ -96,7 +96,7 @@ function makeEaTravelQuote(array $attrs = []): TravelQuote
         'last_name' => 'User',
         'email' => fake()->unique()->safeEmail(),
         'mobile_no' => '050'.fake()->numerify('#######'),
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
     ], $attrs));
 }
 
@@ -109,7 +109,7 @@ function makeEaBusinessQuote(array $attrs = []): BusinessQuote
         'last_name' => 'User',
         'email' => fake()->unique()->safeEmail(),
         'mobile_no' => '050'.fake()->numerify('#######'),
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
     ], $attrs));
 }
 
@@ -379,7 +379,7 @@ it('postBookPolicyToSage allows manager-approved non-personal EA lead past EA ga
 
 // ─── Section 4: PersonalQuoteObserver ────────────────────────────────────────
 
-it('blocked EA PersonalQuote status stays at PolicyIssued — observer never receives blocked statuses', function () {
+it('blocked EA PersonalQuote status stays at PaymentPending — observer never receives blocked statuses', function () {
     $user = TestDataSeeder::createAdminUser();
     $quote = makeEaPersonalQuote(array_merge(eaCollaborateBlocked(), ['advisor_id' => $user->id]));
     $originalStatus = $quote->quote_status_id;

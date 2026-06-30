@@ -34,7 +34,7 @@ function makeCollaborateLead(int $advisorId, int $expertAdvisorId): PersonalQuot
         'ea_model' => 'collaborate',
         'advisor_id' => $advisorId,
         'expert_advisor_id' => $expertAdvisorId,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
     ]);
 }
 
@@ -52,7 +52,7 @@ it('returns 422 when lead is not a collaborate EA lead', function () {
         'source' => 'IMCRM',
         'ea_model' => null,
         'advisor_id' => $advisor->id,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
     ]);
 
     $this->actingAs($advisor);
@@ -60,7 +60,7 @@ it('returns 422 when lead is not a collaborate EA lead', function () {
         ->assertStatus(422);
 });
 
-it('returns 422 when lead status is not PolicyIssued', function () {
+it('returns 422 when lead status is not PaymentPending', function () {
     $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
     $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
 
@@ -74,7 +74,7 @@ it('returns 422 when lead status is not PolicyIssued', function () {
         'ea_model' => 'collaborate',
         'advisor_id' => $advisor->id,
         'expert_advisor_id' => $expert->id,
-        'quote_status_id' => QuoteStatusEnum::NewLead, // not PolicyIssued
+        'quote_status_id' => QuoteStatusEnum::NewLead, // not PaymentPending
     ]);
 
     $this->actingAs($advisor);
@@ -126,7 +126,7 @@ it('both advisors approving records both timestamps but does not auto-advance st
     $lead->refresh();
     expect($lead->ea_assigned_advisor_approved_at)->not->toBeNull()
         ->and($lead->ea_expert_advisor_approved_at)->not->toBeNull()
-        ->and($lead->quote_status_id)->toBe(QuoteStatusEnum::PolicyIssued);
+        ->and($lead->quote_status_id)->toBe(QuoteStatusEnum::PaymentPending);
 });
 
 it('unrelated user cannot approve and gets 403', function () {

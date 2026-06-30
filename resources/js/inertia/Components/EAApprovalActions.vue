@@ -63,14 +63,14 @@ const { auth } = usePage().props;
 const currentUserId = auth.user.id;
 const isEaManager = useHasRole('EA_MANAGER');
 
-// PolicyIssued = 33
-const POLICY_ISSUED = 33;
+// PaymentPending = 28
+const PAYMENT_PENDING = 28;
 
 const isEaCollaborateLead = computed(
   () =>
     props.source === 'EA_IMCRM' &&
     props.eaModel === 'collaborate' &&
-    props.quoteStatusId === POLICY_ISSUED,
+    props.quoteStatusId === PAYMENT_PENDING,
 );
 
 const isAdvisor = computed(

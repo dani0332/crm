@@ -90,6 +90,6 @@ class EAApprovalController extends Controller
     {
         return $quote->source === LeadSourceEnum::EA_IMCRM
             && $quote->ea_model === EaModelEnum::Collaborate
-            && $quote->quote_status_id === QuoteStatusEnum::PolicyIssued;
+            && $quote->quote_status_id === QuoteStatusEnum::PaymentPending;
     }
 }

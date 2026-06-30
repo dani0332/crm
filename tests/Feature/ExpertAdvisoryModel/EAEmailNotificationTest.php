@@ -149,7 +149,7 @@ it('SendEACollaborateRejectedEmailJob sends to EA managers with advisor details 
         'ea_model' => EaModelEnum::Collaborate,
         'advisor_id' => $advisor->id,
         'expert_advisor_id' => $expert->id,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_assigned_advisor_rejected_at' => now(),
     ]);
 
@@ -176,7 +176,7 @@ it('SendEACollaborateRejectedEmailJob skips when no EA managers exist', function
         'source' => LeadSourceEnum::EA_IMCRM,
         'ea_model' => EaModelEnum::Collaborate,
         'advisor_id' => $advisor->id,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_assigned_advisor_rejected_at' => now(),
     ]);
 
@@ -199,7 +199,7 @@ it('SendEAManagerDecisionEmailJob sends to both advisors with Approved status', 
         'ea_model' => EaModelEnum::Collaborate,
         'advisor_id' => $advisor->id,
         'expert_advisor_id' => $expert->id,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
     ]);
 
     (new SendEAManagerDecisionEmailJob($lead, 'personal', 'Approved', 999))->handle();
@@ -224,7 +224,7 @@ it('SendEAManagerDecisionEmailJob skips when no recipients can be resolved', fun
         'ea_model' => EaModelEnum::Collaborate,
         'advisor_id' => null,
         'expert_advisor_id' => null,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
     ]);
 
     (new SendEAManagerDecisionEmailJob($lead, 'personal', 'Approved', 999))->handle();

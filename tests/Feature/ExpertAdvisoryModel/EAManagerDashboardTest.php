@@ -48,7 +48,7 @@ it('pending rejections count includes leads with any rejection timestamp', funct
         'quote_type_id' => 20, 'first_name' => 'Test', 'last_name' => 'Lead',
         'email' => 'rej1@example.com', 'mobile_no' => '0501110001',
         'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_assigned_advisor_rejected_at' => now(),
     ]);
 
@@ -57,7 +57,7 @@ it('pending rejections count includes leads with any rejection timestamp', funct
         'first_name' => 'Test', 'last_name' => 'Lead',
         'email' => 'rej2@example.com', 'mobile_no' => '0501110002',
         'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_expert_advisor_rejected_at' => now(),
     ]);
 
@@ -67,7 +67,7 @@ it('pending rejections count includes leads with any rejection timestamp', funct
         'quote_type_id' => 20, 'first_name' => 'Managed', 'last_name' => 'Lead',
         'email' => 'managed@example.com', 'mobile_no' => '0501110003',
         'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_assigned_advisor_rejected_at' => now(),
         'ea_manager_approved_at' => now(), // already actioned — excluded
     ]);
@@ -84,7 +84,7 @@ it('pending rejections count endpoint returns correct count via HTTP', function 
         'quote_type_id' => 20, 'first_name' => 'Test', 'last_name' => 'Lead',
         'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0501220001',
         'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_assigned_advisor_rejected_at' => now(),
     ]);
 
@@ -125,7 +125,7 @@ it('EA Manager can filter leads by status=rejected', function () {
         'quote_type_id' => 20, 'first_name' => 'Rej', 'last_name' => 'Lead',
         'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0503330001',
         'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_assigned_advisor_rejected_at' => now(),
     ]);
 
@@ -135,7 +135,7 @@ it('EA Manager can filter leads by status=rejected', function () {
         'quote_type_id' => 20, 'first_name' => 'Ok', 'last_name' => 'Lead',
         'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0503330002',
         'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_manager_approved_at' => now(),
     ]);
 
@@ -152,7 +152,7 @@ it('EA Manager can filter leads by status=approved', function () {
         'quote_type_id' => 20, 'first_name' => 'App', 'last_name' => 'Lead',
         'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0503340001',
         'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_manager_approved_at' => now(),
     ]);
 
@@ -171,7 +171,7 @@ it('rejected collaborate lead has_rejection flag set', function () {
         'quote_type_id' => 20, 'first_name' => 'HasRej', 'last_name' => 'Lead',
         'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0504440001',
         'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
-        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_assigned_advisor_rejected_at' => now(),
     ]);
 
@@ -193,7 +193,7 @@ it('EA manager approve dispatches decision email to both advisors (F3)', functio
         'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0501330002',
         'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
         'advisor_id' => $advisor->id, 'expert_advisor_id' => $expert->id,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
     ]);
 
     $this->actingAs($manager);
@@ -217,7 +217,7 @@ it('model change swaps advisor fields correctly and does NOT dispatch email (Gap
         'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
         'advisor_id' => $advisor->id, 'expert_advisor_id' => $expert->id,
         'lead_generator_id' => $advisor->id,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_assigned_advisor_rejected_at' => now(),
     ]);
 
@@ -260,7 +260,7 @@ it('EA manager can approve a BusinessQuote (Corpline/GroupMedical) via ea-manage
         'ea_model' => 'collaborate',
         'advisor_id' => $advisor->id,
         'expert_advisor_id' => $expert->id,
-        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
         'ea_assigned_advisor_rejected_at' => now(),
     ]);
 
