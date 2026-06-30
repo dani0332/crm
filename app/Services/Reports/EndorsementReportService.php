@@ -194,7 +194,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
             ->leftJoin('business_quote_request as bqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'bqr.id')
-                    ->whereIn('personal_quotes.quote_type_id', [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical]);
+                    ->whereIn('personal_quotes.quote_type_id', [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical, QuoteTypeId::Health]);
             })
             ->leftJoin('users as pqa_user', 'pqa_user.id', '=', 'bqr.pq_advisor_id')
             ->leftJoin('users as health_pqa_user', 'health_pqa_user.id', '=', 'hqr.pq_advisor_id')
@@ -324,7 +324,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
             ->leftJoin('business_quote_request as bqr', function ($join) {
                 $join->on('personal_quotes.quote_id', '=', 'bqr.id')
-                    ->whereIn('personal_quotes.quote_type_id', [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical]);
+                    ->whereIn('personal_quotes.quote_type_id', [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical, QuoteTypeId::Health]);
             })
             ->leftJoin('users as pqa_user', 'pqa_user.id', '=', 'bqr.pq_advisor_id')
             ->leftJoin('users as health_pqa_user', 'health_pqa_user.id', '=', 'hqr.pq_advisor_id')
