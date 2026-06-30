@@ -157,6 +157,7 @@ class TravelEmailService extends BaseService
             'customerMobile' => ! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : '',
             'customerEmail' => $lead->email,
             'whatsAppNumber' => $whatsAppNumber,
+            'uniqueId' => (string) Str::ulid(),
             'landLine' => (! empty($advisor?->landline_no) ? formatLandlineDisplay($advisor?->landline_no) : ''),
             'mobilePhone' => (! empty($advisor?->mobile_no) ? formatMobileNoDisplay($advisor?->mobile_no) : ''),
             'mobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? preg_replace('/\s+/', '', $advisor?->mobile_no) : ''),

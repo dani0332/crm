@@ -13,6 +13,7 @@ use App\Services\BaseService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class LifeEmailService extends BaseService
 {
@@ -75,6 +76,7 @@ class LifeEmailService extends BaseService
     {
         $data = [
             // Lead-related data
+            'uniqueId' => (string) Str::ulid(),
             'customerId' => $lead->customer_id ?? $lead->email,
             'firstName' => $lead->first_name ?? '',
             'lastName' => $lead->last_name ?? '',
