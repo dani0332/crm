@@ -475,7 +475,7 @@ class AmtController extends Controller
                 return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             })->values();
         }
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id(), $record->insurance_provider_id);
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
         $lookupService = app(LookupService::class);
         $paymentMethods = $lookupService->getPaymentMethods();
