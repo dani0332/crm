@@ -8,9 +8,9 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  totalAssignedLeadCount: {
-    type: Number,
-    default: 0,
+  assignedCountsByLob: {
+    type: Object,
+    default: () => ({}),
   },
   availableUsers: {
     type: Number,
@@ -20,13 +20,9 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  todayTotalLeadCount: {
-    type: Number,
-    default: 0,
-  },
-  todayTotalUnAssignedLeadCount: {
-    type: Number,
-    default: 0,
+  unassignedCountsByLob: {
+    type: Object,
+    default: () => ({}),
   },
   canMutatePqaAllocation: {
     type: Boolean,
@@ -42,6 +38,71 @@ const notification = useToast();
 
 const statusModal = getStatusModal();
 
+const selectedLob = ref('');
+
+const displayLobName = code => (code === 'CorpLine' ? 'CorpLine' : code);
+
+const lobFilterOptions = computed(() => {
+  const codes = [...new Set(props.data.map(item => item.quoteTypeCode))].sort();
+  return [
+    { value: '', label: 'All' },
+    ...codes.map(code => ({ value: code, label: displayLobName(code) })),
+  ];
+});
+
+const filteredData = computed(() => {
+  if (!selectedLob.value) return props.data;
+  return props.data.filter(item => item.quoteTypeCode === selectedLob.value);
+});
+
+const filteredAssignedCount = computed(() => {
+  if (!selectedLob.value) return props.assignedCountsByLob?.total ?? 0;
+  return props.assignedCountsByLob?.[selectedLob.value] ?? 0;
+});
+
+const filteredAvailableUsers = computed(
+  () => displayData.value.filter(item => item.isAvailable == 1).length,
+);
+
+const filteredUnavailableUsers = computed(
+  () => displayData.value.filter(item => item.isAvailable != 1).length,
+);
+
+const filteredUnassignedCount = computed(() => {
+  if (!selectedLob.value) return props.unassignedCountsByLob?.total ?? 0;
+  return props.unassignedCountsByLob?.[selectedLob.value] ?? 0;
+});
+
+const displayData = computed(() => {
+  if (!selectedLob.value) {
+    const groupMap = new Map();
+    filteredData.value.forEach(item => {
+      if (!groupMap.has(item.userId)) {
+        groupMap.set(item.userId, {
+          id: item.id,
+          userId: item.userId,
+          userName: item.userName,
+          lobs: [item.quoteTypeCode],
+          allocationCount: item.allocationCount ?? 0,
+          lastAllocation: item.lastAllocation,
+          isAvailable: item.isAvailable,
+          maxCapacity: item.maxCapacity,
+          reset_cap: item.reset_cap,
+        });
+      } else {
+        const group = groupMap.get(item.userId);
+        group.lobs.push(item.quoteTypeCode);
+        group.allocationCount += item.allocationCount ?? 0;
+        if (item.lastAllocation > group.lastAllocation) {
+          group.lastAllocation = item.lastAllocation;
+        }
+      }
+    });
+    return Array.from(groupMap.values());
+  }
+  return filteredData.value;
+});
+
 const loaders = reactive({
   submit: false,
   table: false,
@@ -51,7 +112,7 @@ const statusText = statusId => resolveUserStatusText(statusId);
 
 const tableHeader = ref([
   { text: 'Name', value: 'userName', width: '240' },
-  { text: 'Line of Business', value: 'quoteTypeCode', width: '100' },
+  { text: 'Line of Business', value: 'quoteTypeCode', width: '160' },
   {
     text: 'Total Assigned Leads',
     value: 'allocationCount',
@@ -62,6 +123,16 @@ const tableHeader = ref([
   { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
   { text: 'Reset Cap', value: 'reset_cap', width: '100' },
 ]);
+
+const visibleHeaders = computed(() => {
+  const lobSpecificColumns = ['maxCapacity', 'reset_cap'];
+  return tableHeader.value.filter(col => {
+    if (!selectedLob.value && lobSpecificColumns.includes(col.value)) {
+      return false;
+    }
+    return true;
+  });
+});
 
 const leadData = ref([
   {
@@ -280,7 +351,15 @@ onMounted(() => {
 
     <Head :title="'Pre Qualification Advisor (ILA)'" />
     <div class="flex justify-between items-center">
-      <div></div>
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-medium text-gray-600">Line of Business:</span>
+        <x-select
+          v-model="selectedLob"
+          :options="lobFilterOptions"
+          placeholder="All"
+          class="w-40"
+        />
+      </div>
       <div
         class="flex gap-1"
         v-if="
@@ -303,25 +382,25 @@ onMounted(() => {
         <p>Pre Qualification</p>
       </div>
       <div class="labox border-primary-500">
-        <h3>Assigned Lead Count</h3>
-        <p>{{ props.totalAssignedLeadCount }}</p>
+        <h3>Assigned Lead Count (today)</h3>
+        <p>{{ filteredAssignedCount }}</p>
       </div>
       <div class="labox border-purple-500">
         <h3>Available / UnAvailable</h3>
-        <p>{{ props.availableUsers }} / {{ props.unAvailableUsers }}</p>
+        <p>{{ filteredAvailableUsers }} / {{ filteredUnavailableUsers }}</p>
       </div>
-      <div class="labox border-yellow-500">
+      <!-- <div class="labox border-yellow-500">
         <h3>Total Advisors</h3>
-        <p>{{ data.length }}</p>
-      </div>
+        <p>{{ filteredData.length }}</p>
+      </div> -->
       <div class="labox border-red-500">
         <h3>Unassigned Leads Count (today)</h3>
-        <p>{{ props.todayTotalUnAssignedLeadCount }}</p>
+        <p>{{ filteredUnassignedCount }}</p>
       </div>
-      <div class="labox border-slate-300 col-span-2">
+      <!-- <div class="labox border-slate-300 col-span-2">
         <h3>Leads today (total)</h3>
         <p>{{ props.todayTotalLeadCount }}</p>
-      </div>
+      </div> -->
 
       <TransitionGroup name="fade">
         <div v-if="isCapChanged" class="col-span-2">
@@ -342,8 +421,8 @@ onMounted(() => {
 
     <DataTable
       table-class-name="compact"
-      :headers="tableHeader"
-      :items="props.data || []"
+      :headers="visibleHeaders"
+      :items="displayData"
       :sort-by="'userName'"
       :sort-type="'asc'"
       :rows-per-page="999"
@@ -351,6 +430,18 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
+      <template #item-quoteTypeCode="{ quoteTypeCode, lobs }">
+        <div class="flex flex-wrap gap-1">
+          <span
+            v-for="lob in (lobs ?? [quoteTypeCode])"
+            :key="lob"
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700"
+          >
+            {{ displayLobName(lob) }}
+          </span>
+        </div>
+      </template>
+
       <template #item-maxCapacity="{ maxCapacity, id }">
         <div v-if="!currentRow(id)" @click="editCap(id)">
           {{ maxCapacity }}

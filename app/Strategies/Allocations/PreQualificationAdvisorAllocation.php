@@ -21,30 +21,20 @@ class PreQualificationAdvisorAllocation implements Allocation
 {
     public function __construct(
         protected string $uuid,
-        protected int $quoteTypeId,
         protected bool $overrideAdvisorId = false,
+        protected QuoteTypes $quoteType = QuoteTypes::BUSINESS,
     ) {}
 
     public function execute(): array
     {
-        $quoteType = QuoteTypes::getName($this->quoteTypeId);
-
         LoggerService::info(self::class.' - starting PQA allocation', extra: [
             'uuid' => $this->uuid,
-            'quoteTypeId' => $this->quoteTypeId,
             'overrideAdvisorId' => $this->overrideAdvisorId,
+            'quoteType' => $this->quoteType->value,
         ]);
 
-        if ($quoteType === null) {
-            return [
-                'assignedPqaAdvisorId' => 0,
-                'message' => 'Invalid quote type for Pre Qualification Advisor allocation',
-                'status' => 422,
-            ];
-        }
-
         $allocationRequest = new AllocationRequest(
-            quoteType: $quoteType,
+            quoteType: $this->quoteType,
             quoteUUID: $this->uuid,
             overrideAdvisorId: $this->overrideAdvisorId,
         );

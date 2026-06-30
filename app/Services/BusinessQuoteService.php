@@ -134,26 +134,29 @@ class BusinessQuoteService extends BaseService
                 'bqr.policy_issuance_status_id',
                 'bqr.policy_issuance_status_other',
                 'bqr.policy_booking_date',
-                'policy_start_date',
-                'policy_issuance_date',
+                'bqr.policy_start_date',
+                'bqr.policy_issuance_date',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'ps.text AS payment_status_id_text',
                 'py.payment_status_id',
                 'bqr.insly_migrated',
                 'bqr.aml_status',
+                'bqr.lead_type',
                 DB::raw('
                     CASE
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
-                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
-                        ELSE insurer_aml_status
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN bqr.insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE bqr.insurer_aml_status
                     END AS insurer_aml_status_display
                 '),
                 'ub.branch_id as advisor_primary_branch_id',
                 'b.name as lead_branch_name',
                 'b.id as lead_branch_id',
                 'bqr.is_branch_applicable',
+                'bqr.pq_advisor_id',
+                'pqa_u.name as pre_qualification_advisor_name',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -188,7 +191,27 @@ class BusinessQuoteService extends BaseService
                     ->where('ub.is_primary', '=', 1)
                     ->where('ub.status', '=', 1);
             })
-            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
+            ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id');
+    }
+
+    private function applyUtmJoin(): void
+    {
+        if (auth()->user()?->can(PermissionsEnum::VIEW_UTM_SECTION)) {
+            $this->query
+                ->leftJoin('personal_quotes as pq', function ($join) {
+                    $join->on('pq.uuid', '=', 'bqr.uuid')
+                        ->where('pq.quote_type_id', '=', QuoteTypeId::Business);
+                })
+                ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', '=', 'pq.id')
+                ->addSelect(
+                    'pqd.utm_source',
+                    'pqd.utm_medium',
+                    'pqd.utm_campaign',
+                    'pqd.utm_content',
+                    'pqd.utm_term',
+                );
+        }
     }
 
     public function postProcessBusinessQuotes($quotes)
@@ -202,6 +225,8 @@ class BusinessQuoteService extends BaseService
 
     public function getEntity($id)
     {
+        $this->applyUtmJoin();
+
         return $this->query->where('bqr.uuid', $id)->first();
     }
 
@@ -414,7 +439,9 @@ class BusinessQuoteService extends BaseService
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
             $this->query->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
-        if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
+        if (Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            $this->query->where('bqr.pq_advisor_id', Auth::id());
+        } elseif (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
@@ -503,6 +530,12 @@ class BusinessQuoteService extends BaseService
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
                     }
+                } elseif ($item == 'pq_advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    if (count($request[$item]) === 1 && $request[$item][0] == '-1') {
+                        $this->query->whereNull('bqr.pq_advisor_id');
+                    } else {
+                        $this->query->whereIn('bqr.pq_advisor_id', $request[$item]);
+                    }
                 } elseif ($item == 'business_type_of_insurance_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('bqr.business_type_of_insurance_id', $request[$item]);
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
@@ -529,6 +562,10 @@ class BusinessQuoteService extends BaseService
             $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
             $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
             $this->query->whereBetween('py.captured_at', [$startDate, $endDate]);
+        }
+
+        if (! empty($request->lead_type) && is_array($request->lead_type)) {
+            $this->query->whereIn('bqr.lead_type', $request->lead_type);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');
@@ -990,20 +1027,18 @@ class BusinessQuoteService extends BaseService
     }
 
     /**
-     * Manually assign or reassign Pre‑Qualification Advisor on Group Medical business quotes (IMCRM list).
+     * Manually assign or reassign Pre‑Qualification Advisor on Corpline business quotes (IMCRM list).
      *
      * @param  array<int, string|int>  $leadIds
      */
     public function assignPreQualificationAdvisor(array $leadIds, int $preQualificationAdvisorUserId, string $modelType): ?string
     {
-        if (strtolower($modelType) !== strtolower(quoteTypeCode::Business)) {
-            return null;
-        }
 
         $pqaService = app(PqaLeadAllocationService::class);
         $quoteTypeId = (int) QuoteTypes::BUSINESS->id();
 
         if (! $pqaService->userIsEligiblePreQualificationAdvisor($preQualificationAdvisorUserId, $quoteTypeId)) {
+
             LoggerService::warning(self::class.'::assignPreQualificationAdvisor: ineligible PQA user '.$preQualificationAdvisorUserId);
 
             return null;
@@ -1021,19 +1056,13 @@ class BusinessQuoteService extends BaseService
             return null;
         }
 
-        foreach ($parsedIds as $id) {
-            $quote = $this->getEntityPlain($id);
-            if ($quote === null || (int) $quote->business_type_of_insurance_id !== BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
-                return null;
-            }
-        }
-
         $updatedLeadIds = [];
         $messageModel = ucfirst($modelType);
 
         DB::transaction(function () use ($parsedIds, $preQualificationAdvisorUserId, $pqaService, $quoteTypeId, &$updatedLeadIds, &$messageModel) {
             foreach ($parsedIds as $id) {
                 $quote = $this->getEntityPlain($id);
+                // if ($quote === null || (int) $quote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                 if ($quote === null) {
                     continue;
                 }
@@ -1051,6 +1080,7 @@ class BusinessQuoteService extends BaseService
                 $previousId = $quote->pq_advisor_id !== null ? (int) $quote->pq_advisor_id : null;
 
                 $quote->pq_advisor_id = $preQualificationAdvisorUserId;
+                $quote->pq_assigned_at = now();
                 $quote->save();
 
                 $pqaService->recordManualPqaAssignment($preQualificationAdvisorUserId, $quoteTypeId, $previousId);
@@ -1062,7 +1092,7 @@ class BusinessQuoteService extends BaseService
         if ($updatedLeadIds === []) {
             $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
 
-            return 'Selected Group Medical leads already have '.$assigneeName.' as Pre‑Qualification Advisor.';
+            return 'Selected leads already have '.$assigneeName.' as Pre‑Qualification Advisor.';
         }
 
         $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';

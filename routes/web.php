@@ -739,6 +739,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
         Route::resource('business', BusinessQuoteController::class)->middleware('check_route_access:corpline-quotes');
+        Route::patch('business/{uuid}/lead-type', [BusinessQuoteController::class, 'updateLeadType'])->name('business.updateLeadType');
 
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');

@@ -525,14 +525,15 @@ class SendEmailCustomerService extends BaseService
             LoggerService::info('sendMyAlfredWelcomeEmail  , emailTemplateId: '.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
+            $customerName = ! empty($emailData->customerFirstName) && ! empty($emailData->customerLastName) ? $emailData->customerFirstName.' '.$emailData->customerLastName : 'Customer';
             $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
-                    'name' => $emailData->customerFirstName.' '.$emailData->customerLastName,
+                    'name' => $customerName,
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
-                    'customerName' => $emailData->customerFirstName.' '.$emailData->customerLastName,
+                    'customerName' => $customerName,
                     'customerEmail' => $emailData->customerEmail,
                     'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                     'email' => $emailData->customerEmail,
@@ -2117,5 +2118,106 @@ class SendEmailCustomerService extends BaseService
         ]);
 
         return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+    }
+
+    public function sendBikeEpRetargetingEmail(int $templateId, array $emailData, string $tag): int
+    {
+        LoggerService::info('fn:sendBikeEpRetargetingEmail - email sending started', extra: [
+            'templateId' => $templateId,
+            'tag' => $tag,
+            'customerEmail' => $emailData['customerEmail'],
+        ]);
+
+        $messageId = null;
+        $response = null;
+        $subject = null;
+        $isEmailSent = 0;
+        $responseCode = 0;
+
+        try {
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
+            $senderEmail = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_FROM_EMAIL);
+            $bccEmail = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_BCC_EMAIL);
+            $subject = getAppStorageValueByKey(ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_EMAIL_SUBJECT, 'Add Rider Medical Cover to Your Bike Policy in Just Seconds (REF-ID)');
+            $subject = str_replace('REF-ID', $emailData['refId'] ?? '', $subject);
+            $headers = [
+                'Accept' => $this->accept,
+                'api-key' => $this->apiKey,
+                'Content-Type' => $this->accept,
+            ];
+
+            $body = [
+                'sender' => [
+                    'email' => $senderEmail,
+                    'name' => 'InsuranceMarket.ae',
+                ],
+                'to' => [[
+                    'email' => $emailData['customerEmail'],
+                    'name' => $emailData['customerName'],
+                ]],
+                'templateId' => $templateId,
+                'params' => $emailData,
+                'tags' => [$tag],
+            ];
+            if (isset($subject)) {
+                $body['subject'] = $this->appEnv == EnvEnum::PRODUCTION ? $subject : $this->appEnv.' - '.$subject;
+            }
+            if (isset($emailData['advisor']['email']) && isset($emailData['advisor']['name'])) {
+                $body['cc'] = [[
+                    'email' => $emailData['advisor']['email'],
+                    'name' => $emailData['advisor']['name'],
+                ]];
+
+                $body['replyTo'] = [
+                    'email' => $emailData['advisor']['email'],
+                    'name' => $emailData['advisor']['name'],
+                ];
+            }
+            if (! empty($bccEmail)) {
+                $body['bcc'] = [[
+                    'email' => $bccEmail,
+                ]];
+            }
+
+            LoggerService::info('fn:sendBikeEpRetargetingEmail - payload', extra: ['payload' => json_encode($body)]);
+
+            $client = new Client;
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => json_encode($body),
+                    'timeout' => 10000,
+                ]
+            );
+
+            $message = json_decode($clientRequest->getBody()->getContents());
+            $responseCode = $clientRequest->getStatusCode();
+            if (isset($message->messageId)) {
+                $messageId = $message->messageId;
+                LoggerService::info('fn:sendBikeEpRetargetingEmail - email sending completed', extra: ['messageId' => $message->messageId]);
+                $response = json_decode(json_encode($responseCode.' '.$clientRequest->getBody()->getContents()), true);
+                $isEmailSent = $responseCode == 201 ? 1 : 0;
+            } else {
+                $isEmailSent = 0;
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            LoggerService::error('fn:sendBikeEpRetargetingEmail - email sending failed', extra: [
+                'Code/Message' => $responseCode,
+                'customerEmail' => $emailData['customerEmail'],
+                'refId' => $emailData['refId'] ?? null,
+                'Class' => get_class(),
+                'line' => $ex->getLine(),
+            ], exception: $ex);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $isEmailSent = 0;
+        }
+        $status = $responseCode == 201 ? ProcessStatusCode::SENT : ProcessStatusCode::FAILED;
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData['customerEmail']);
+        $this->emailStatusService->addEmailStatus((object) $emailData, $messageId, $subject, $status, 'RDX Retargeting Email to Customer');
+
+        return $responseCode;
     }
 }

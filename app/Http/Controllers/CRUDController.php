@@ -76,6 +76,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
+use App\Models\QuoteStatus;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\AuditRepository;
@@ -141,6 +142,7 @@ use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Response;
@@ -348,6 +350,24 @@ class CRUDController extends Controller
                 && Auth::user()->hasRole(RolesEnum::CLIENTSUPPORTLEAD)
                 && Auth::user()->hasProduct(QuoteTypes::HEALTH->value);
 
+            $preQualificationAdvisors = User::activeUser()
+                ->select(
+                    'users.id',
+                    DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::PreQualificationAdvisor."') AS name"),
+                )
+                ->join('model_has_roles as pqa_mr', 'pqa_mr.model_id', '=', 'users.id')
+                ->join('roles as pqa_r', 'pqa_r.id', '=', 'pqa_mr.role_id')
+                ->join('pqa_lead_allocation_config as pqa_cfg', 'pqa_cfg.user_id', '=', 'users.id')
+                ->where('pqa_mr.model_type', User::class)
+                ->where('pqa_r.name', RolesEnum::PreQualificationAdvisor)
+                ->where('pqa_cfg.quote_type_id', QuoteTypes::HEALTH->id())
+                ->orderBy('users.name')
+                ->distinct()
+                ->get();
+
+            $canAssignPreQualificationAdvisor = Auth::user()->can(PermissionsEnum::ASSIGN_GROUP_MEDICAL_PRE_QUALIFICATION_ADVISOR)
+                || Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::LeadPool]);
+
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
                 'renewalBatches' => $renewalBatches,
@@ -368,6 +388,8 @@ class CRUDController extends Controller
                 'subSources' => $subSources,
                 'canAssignLeadAdvisor' => $canAssignLeadAdvisor,
                 'canAssignClientSupport' => $canAssignClientSupport,
+                'canAssignPreQualificationAdvisor' => $canAssignPreQualificationAdvisor,
+                'preQualificationAdvisors' => $preQualificationAdvisors,
                 'supportUsers' => $supportUsers,
                 'dropdownSource' => $dropdownSource,
                 'healthSignatoryFilterOptions' => HealthQuoteDigitalSignatory::filterDropdown(),
@@ -1293,6 +1315,15 @@ class CRUDController extends Controller
                 // Health show uses DB::table() entity (not Eloquent), so model appends are not applied; set label here.
                 $record->signatory_text = HealthQuoteDigitalSignatory::displayLabel($record->digital_signatory ?? null);
                 $record->uae_pass_api_status_text = HealthQuoteUaePassApiStatus::displayLabel($record->uae_pass_api_status ?? null);
+                $record->preQualificationAdvisor = $record->pq_advisor_id
+                    ? User::select('id', 'name')->find($record->pq_advisor_id)
+                    : null;
+
+                if (auth()->user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+                    $quoteStatuses = array_values(QuoteStatus::whereIn('id', [QuoteStatusEnum::FollowedUp, QuoteStatusEnum::MissingDocumentsRequested, $record->quote_status_id])->get()->toArray());
+                } else {
+                    $quoteStatuses = array_values($leadStatuses->toArray());
+                }
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
@@ -1309,7 +1340,7 @@ class CRUDController extends Controller
                     'memberRelationDisplayMap' => $this->lookupService->getMemberRelationDisplayMap(),
                     'memberCategoryDisplayMap' => $this->lookupService->getAllMemberCategories(),
                     'allowedDuplicateLOB' => $allowedDuplicateLOB,
-                    'leadStatuses' => array_values($leadStatuses->toArray()),
+                    'leadStatuses' => $quoteStatuses,
                     'ecomDetails' => $ecomDetails,
                     'coPayment' => $coPayment,
                     'membersDetail' => $membersDetail,
@@ -1788,7 +1819,7 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-
+        $modelType = ($modelType == 'group_medical') ? 'business' : $modelType;
         $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER, quoteTypeCode::Device];
         if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Savings';
@@ -2033,6 +2064,11 @@ class CRUDController extends Controller
 
     public function updateLeadStatus(UpdateLeadStatusRequest $request)
     {
+        $blockedStatuses = [QuoteStatusEnum::QualificationPending, QuoteStatusEnum::Qualified];
+        if (in_array((int) $request->leadStatus, $blockedStatuses)) {
+            return redirect()->back()->with('error', 'This status can only be set by the system.');
+        }
+
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
             $lead = $this->carQuoteService->getEntityPlain($request->leadId);
@@ -2645,17 +2681,25 @@ class CRUDController extends Controller
         $leadIds = array_filter(explode(',', $request->assigned_lead_id));
         $preQualificationAdvisorUserId = (int) $request->pq_advisor_id;
         $modelType = $request->modelType;
+        if ($modelType == 'health') {
+            $successMessage = $this->healthQuoteService->assignPreQualificationAdvisor(
+                $leadIds,
+                $preQualificationAdvisorUserId,
+                $modelType
+            );
+        } else {
 
-        $successMessage = $this->businessQuoteService->assignPreQualificationAdvisor(
-            $leadIds,
-            $preQualificationAdvisorUserId,
-            $modelType
-        );
+            $successMessage = $this->businessQuoteService->assignPreQualificationAdvisor(
+                $leadIds,
+                $preQualificationAdvisorUserId,
+                $modelType
+            );
+        }
 
         if ($successMessage !== null) {
             return Redirect::back()->with('success', $successMessage);
         }
 
-        return Redirect::back()->with('error', 'Could not assign Pre‑Qualification Advisor. Ensure all selected rows are Group Medical leads and the advisor is enabled for PQA allocation.');
+        return Redirect::back()->with('error', 'Could not assign Pre‑Qualification Advisor. Ensure all selected rows are Group Medical leads and the advisor is enabled for PQA allocation and Eligibility criteria meets.');
     }
 }

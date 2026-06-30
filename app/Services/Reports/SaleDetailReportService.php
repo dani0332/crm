@@ -102,6 +102,7 @@ class SaleDetailReportService extends ManagementReport
                 'ipp.text as plan_name',
                 DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
                 DB::raw('IFNULL(COALESCE(pqa_user.name, health_pqa_user.name), "N/A") as pqa'),
+                'bqr.lead_type',
             );
         $this->paymentJoin($query);
         $query->join('payment_splits as ps', 'p.code', '=', 'ps.code')

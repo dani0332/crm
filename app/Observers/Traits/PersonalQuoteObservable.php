@@ -6,11 +6,13 @@ use App\Enums\BranchEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\PrivateClientUpdatedEvent;
 use App\Events\QuotePolicyBooked;
 use App\Jobs\CourtesyEmailJob;
+use App\Jobs\EP\RetargetEpReminderJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
 use App\Jobs\OCB\SendCyberOCBIntroEmailJob;
 use App\Jobs\OCB\SendDeviceOCBIntroEmailJob;
@@ -248,6 +250,9 @@ trait PersonalQuoteObservable
 
         if ($personalQuote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             try {
+                if ($personalQuote->isBike()) {
+                    RetargetEpReminderJob::dispatch($personalQuote->uuid, QuoteTypeId::Bike);
+                }
                 app(BranchAssignmentService::class)->saveBranchOverride($personalQuote, $personalQuote->quote_type_id);
                 PersonalQuote::withoutEvents(function () use ($personalQuote) {
 

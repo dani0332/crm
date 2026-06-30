@@ -25,7 +25,6 @@ class TestDataSeeder
     {
         $defaults = [
             'name' => 'Test User',
-            'email' => 'test@example.com',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             // Required for routes behind CheckLastLoginMiddleware (last_login_check)

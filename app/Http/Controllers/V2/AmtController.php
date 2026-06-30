@@ -19,6 +19,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TeamTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
@@ -30,6 +31,7 @@ use App\Models\KycLog;
 use App\Models\Lookup;
 use App\Models\LostReasons;
 use App\Models\Nationality;
+use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BusinessQuoteRepository;
@@ -83,7 +85,6 @@ class AmtController extends Controller
             ->leftJoin('business_type_of_insurance as bit', 'bqr.business_type_of_insurance_id', '=', 'bit.id')
             ->leftJoin('users as u', 'bqr.advisor_id', '=', 'u.id')
             ->leftJoin('users as su', 'bqr.support_user_id', '=', 'su.id')
-            ->leftJoin('users as pqa_u', 'bqr.pq_advisor_id', '=', 'pqa_u.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -96,6 +97,7 @@ class AmtController extends Controller
             })
             ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
             ->leftJoin('emirates as e', 'bqr.emirate_of_registration_id', '=', 'e.id')
+            ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -157,6 +159,7 @@ class AmtController extends Controller
                     WHEN bqr.assignment_type = '.AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD.' THEN "Reassigned as Bought Lead"
                     WHEN bqr.assignment_type = '.AssignmentTypeEnum::SELF_ASSIGNED.' THEN "Self Assigned"
                     ELSE "" END) as assignment_type_text'),
+                'bqr.pq_advisor_id',
             );
         // PQA-only users see leads where they are the assigned pre-qualification advisor.
         // We skip the generic whereBasedOnRole for these users because isAdvisor() would
@@ -344,6 +347,9 @@ class AmtController extends Controller
         if ($request->filled('assignment_type') && strtolower((string) $request->assignment_type) !== 'all') {
             $data->where('bqr.assignment_type', $request->assignment_type);
         }
+        if ($request->filled('pq_advisor_id')) {
+            $data->whereIn('bqr.pq_advisor_id', $request->pq_advisor_id);
+        }
 
         // Apply authorize_date filter
         if (! empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
@@ -384,7 +390,8 @@ class AmtController extends Controller
             $isManagerORDeputy ||
             Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
 
-        $canAssignPreQualificationAdvisor = Auth::user()->can(PermissionsEnum::ASSIGN_GROUP_MEDICAL_PRE_QUALIFICATION_ADVISOR);
+        $canAssignPreQualificationAdvisor = Auth::user()->can(PermissionsEnum::ASSIGN_GROUP_MEDICAL_PRE_QUALIFICATION_ADVISOR)
+            || Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::LeadPool]);
 
         $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport || $canAssignPreQualificationAdvisor);
         $quotes = $data->simplePaginate(15)->withQueryString();
@@ -395,7 +402,33 @@ class AmtController extends Controller
         $emirates = Emirate::getActiveEmirates();
         $assignmentTypes = AssignmentTypeEnum::withLabels();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'pqas', 'supportUsers', 'preQualificationAdvisors', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'canAssignPreQualificationAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes'));
+        $groupMedicalName = QuoteTypes::GROUP_MEDICAL->value;
+        $productType = TeamTypeEnum::PRODUCT;
+
+        $preQualificationAdvisors = User::activeUser()
+            ->select(
+                'users.id',
+                DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::PreQualificationAdvisor."') AS name"),
+            )
+            ->join('model_has_roles as pqa_mr', 'pqa_mr.model_id', '=', 'users.id')
+            ->join('roles as pqa_r', 'pqa_r.id', '=', 'pqa_mr.role_id')
+            ->join('pqa_lead_allocation_config as pqa_cfg', 'pqa_cfg.user_id', '=', 'users.id')
+            ->where('pqa_mr.model_type', User::class)
+            ->where('pqa_r.name', RolesEnum::PreQualificationAdvisor)
+            ->where('pqa_cfg.quote_type_id', QuoteTypes::BUSINESS->id())
+            ->whereExists(function ($sub) use ($productType, $groupMedicalName) {
+                $sub->selectRaw('1')
+                    ->from('user_products as up_gm')
+                    ->join('teams as t_gm', 't_gm.id', '=', 'up_gm.product_id')
+                    ->whereColumn('up_gm.user_id', 'users.id')
+                    ->where('t_gm.type', $productType)
+                    ->whereRaw("UPPER(t_gm.name) = UPPER('{$groupMedicalName}')");
+            })
+            ->orderBy('users.name')
+            ->distinct()
+            ->get();
+
+        return inertia('GroupMedicalQuote/Index', compact('model', 'pqas', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes', 'canAssignPreQualificationAdvisor', 'preQualificationAdvisors'));
     }
 
     /**
@@ -538,7 +571,7 @@ class AmtController extends Controller
                 return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             })->values();
         }
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id(), $record->insurance_provider_id);
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
         $lookupService = app(LookupService::class);
         $paymentMethods = $lookupService->getPaymentMethods();
@@ -600,6 +633,10 @@ class AmtController extends Controller
         $advisors = User::role(RolesEnum::GMAdvisor)
             ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
             ->get();
+
+        if (auth()->user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            $quoteStatuses = array_values(QuoteStatus::whereIn('id', [QuoteStatusEnum::FollowedUp, QuoteStatusEnum::MissingDocumentsRequested, $record->quote_status_id])->get()->toArray());
+        }
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,

@@ -176,15 +176,6 @@ class ApiController extends Controller
             }
 
             return app(PqaAllocationService::class)->processPqaAllocation($request);
-        } catch (\Exception $e) {
-            LoggerService::warning(self::class.': PQA allocation failed with error', exception: $e);
-
-            return apiResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ], $e->getCode() ?? Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (ValidationException $e) {
             LoggerService::warning(self::class.': PQA allocation failed due to validation errors', extra: [
                 'errors' => $e->errors(),
@@ -195,9 +186,17 @@ class ApiController extends Controller
                 'message' => $e->getMessage(),
                 'errors' => $e->errors(),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            LoggerService::warning(self::class.': PQA allocation failed with error', exception: $e);
+
+            $statusCode = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : Response::HTTP_UNPROCESSABLE_ENTITY;
+
+            return apiResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+            ], $statusCode);
         }
     }
-
     public function quotePaymentStatusUpdated(PaymentNotificationRequest $request)
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::PAYMENT_STATUS_UPDATE, $request->quoteId);
@@ -207,7 +206,6 @@ class ApiController extends Controller
             LoggerService::info('Payment Status Update API - Quote Type Not Valid', extra: [
                 'quote_type' => $request->quoteType,
                 'quote_id' => $request->quoteId,
-                'reason' => 'Quote type must be a string, not numeric',
             ]);
 
             return response()->json(['message' => 'Quote type not valid'], 422);

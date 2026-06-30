@@ -43,7 +43,7 @@ class AssignPreQualificationAdvisorRequest extends FormRequest
         return [
             'pq_advisor_id' => 'required|integer|exists:users,id',
             'assigned_lead_id' => 'required|string',
-            'modelType' => 'required|string|in:business',
+            'modelType' => 'required|string|in:business,health,group_medical',
         ];
     }
 
@@ -57,7 +57,7 @@ class AssignPreQualificationAdvisorRequest extends FormRequest
             'pq_advisor_id.exists' => 'The selected Pre‑Qualification Advisor does not exist.',
             'assigned_lead_id.required' => 'Lead ID is required for assignment.',
             'modelType.required' => 'Model type is required for assignment.',
-            'modelType.in' => 'Pre‑Qualification Advisor assignment is only available for business (Group Medical) leads.',
+            'modelType.in' => 'Pre‑Qualification Advisor assignment is only available for Corpline and Group Medical leads.',
         ];
     }
 

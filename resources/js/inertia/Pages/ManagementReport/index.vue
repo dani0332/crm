@@ -67,6 +67,7 @@ const filters = reactive({
   page: 1,
   lob: [],
   pec_flag: 'all',
+  corpLineLeadType: [],
 });
 
 const filterkeys = () => {
@@ -148,6 +149,14 @@ const lobs = computed(() => {
   return props.filterOptions?.lobs?.map(item => {
     return { value: item, label: item };
   });
+});
+
+const isCorpLineSelected = computed(() => {
+  return Array.isArray(filters.lob) && filters.lob.includes('CorpLine');
+});
+
+const corplineLeadTypes = computed(() => {
+  return props.filterOptions?.corplineLeadTypes ?? [];
 });
 
 const branchOptions = computed(() => {
@@ -414,6 +423,15 @@ function setQueryStringFilters() {
 onMounted(() => {
   setQueryStringFilters();
 });
+
+watch(
+  () => filters.lob,
+  lob => {
+    if (!Array.isArray(lob) || !lob.includes('CorpLine')) {
+      filters.corpLineLeadType = [];
+    }
+  },
+);
 
 watch(
   () => filters.reportCategory,
@@ -947,6 +965,31 @@ watch(
           filterable
           filterPlaceholder="Filter PEC Flag...."
         />
+      </x-field>
+
+      <x-field label="Lead Type" v-if="isCorpLineSelected">
+        <x-select
+          v-model="filters.corpLineLeadType"
+          placeholder="Filter by Lead Type"
+          :options="corplineLeadTypes"
+          deselect-all
+          filterable
+          filterPlaceholder="Filter Lead Type...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.corpLineLeadType = corplineLeadTypes.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.corpLineLeadType = []"
+            />
+          </template>
+        </x-select>
       </x-field>
 
       <x-field

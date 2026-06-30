@@ -260,7 +260,9 @@ onMounted(() => {
 
       <div
         v-if="
-          props.quoteType === 'business' &&
+          (props.quoteType === 'business' ||
+            props.quoteType === 'health' ||
+            props.quoteType === 'group_medical') &&
           props.canAssignPqa &&
           props.pqaAdvisors &&
           props.pqaAdvisors.length > 0
@@ -282,12 +284,7 @@ onMounted(() => {
               </x-tooltip>
               <x-select
                 v-model="pqaAssignForm.pq_advisor_id"
-                :options="
-                  props.pqaAdvisors.map(a => ({
-                    value: a.id,
-                    label: a.name,
-                  }))
-                "
+                :options="pqaAdvisors"
                 placeholder="Select Pre‑Qualification Advisor"
                 class="w-full"
                 filterable
