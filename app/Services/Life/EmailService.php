@@ -13,6 +13,7 @@ use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Str;
 
 class EmailService
 {
@@ -117,6 +118,7 @@ class EmailService
         return (object) [
             // Lead-related data
             'quoteUID' => $lead->uuid,
+            'uniqueId' => (string) Str::ulid(),
             'uuid' => $lead->uuid,
             'customerEmail' => $lead->email,
             'customerFullName' => $customerFullName,
