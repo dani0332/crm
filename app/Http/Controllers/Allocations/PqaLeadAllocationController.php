@@ -12,6 +12,8 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PqaAllocationAvailabilityRequest;
+use App\Models\BusinessQuote;
+use App\Models\HealthQuote;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\PqaAllocation\PqaLeadAllocationService;
@@ -75,14 +77,14 @@ class PqaLeadAllocationController extends Controller
         $groupMedicalTypeId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
         $today = now()->toDateString();
 
-        $healthCount = DB::table('health_quote_request')
+        $healthCount = HealthQuote::query()
             ->whereNotNull('pq_advisor_id')
             // ->where('quote_status_id', $healthNewLeadStatus)
             ->whereDate('pq_assigned_at', $today)
             ->whereDate('created_at', $today)
             ->count();
 
-        $corplineCount = DB::table('business_quote_request')
+        $corplineCount = BusinessQuote::query()
             ->whereNotNull('pq_advisor_id')
             // ->where('quote_status_id', $corplineQualPendingStatus)
             ->where('business_type_of_insurance_id', '!=', $groupMedicalTypeId)
@@ -90,7 +92,7 @@ class PqaLeadAllocationController extends Controller
             ->whereDate('created_at', $today)
             ->count();
 
-        $groupMedicalCount = DB::table('business_quote_request')
+        $groupMedicalCount = BusinessQuote::query()
             ->whereNotNull('pq_advisor_id')
             ->where('business_type_of_insurance_id', $groupMedicalTypeId)
             ->whereDate('pq_assigned_at', $today)
@@ -118,20 +120,20 @@ class PqaLeadAllocationController extends Controller
 
         $today = now()->toDateString();
 
-        $healthCount = DB::table('health_quote_request')
+        $healthCount = HealthQuote::query()
             ->whereNull('pq_advisor_id')
             // ->where('quote_status_id', $healthNewLeadStatus)
             ->whereDate('created_at', $today)
             ->count();
 
-        $corplineCount = DB::table('business_quote_request')
+        $corplineCount = BusinessQuote::query()
             ->whereNull('pq_advisor_id')
             // ->where('quote_status_id', $corplineQualPendingStatus)
             ->where('business_type_of_insurance_id', '!=', $groupMedicalTypeId)
             ->whereDate('created_at', $today)
             ->count();
 
-        $groupMedicalCount = DB::table('business_quote_request')
+        $groupMedicalCount = BusinessQuote::query()
             ->whereNull('pq_advisor_id')
             ->where('business_type_of_insurance_id', $groupMedicalTypeId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake])
