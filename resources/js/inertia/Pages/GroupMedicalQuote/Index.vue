@@ -130,7 +130,6 @@ const pqaAdvisorOptions = computed(() => {
     ? page.props.preQualificationAdvisors
     : [];
   const options = list.map(user => ({ value: user.id, label: user.name }));
-  options.push({ value: '-1', label: 'UnAssigned' });
   return options;
 });
 
