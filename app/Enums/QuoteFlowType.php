@@ -55,6 +55,8 @@ enum QuoteFlowType: int
     case HOME_REVIVAL_OCB = 80;
     case HOME_REVIVAL_FOLLOWUP = 81;
     case LIFE_FIC_EMAIL = 82;
+    case COMMERCIAL_CAR_NEW_POLICY = 83;
+    case PROFESSIONAL_NEW_POLICY = 84;
 
     public function label(): string
     {
@@ -108,6 +110,8 @@ enum QuoteFlowType: int
             QuoteFlowType::HOME_REVIVAL_OCB => 'home_revival_ocb',
             QuoteFlowType::HOME_REVIVAL_FOLLOWUP => 'home_revival_followup',
             QuoteFlowType::LIFE_FIC_EMAIL => 'life_fic_email',
+            QuoteFlowType::COMMERCIAL_CAR_NEW_POLICY => 'commercial_car_new_policy',
+            QuoteFlowType::PROFESSIONAL_NEW_POLICY => 'professional_new_policy',
         };
     }
 
@@ -164,6 +168,8 @@ enum QuoteFlowType: int
             80 => QuoteFlowType::HOME_REVIVAL_OCB,
             81 => QuoteFlowType::HOME_REVIVAL_FOLLOWUP,
             82 => QuoteFlowType::LIFE_FIC_EMAIL,
+            83 => QuoteFlowType::COMMERCIAL_CAR_NEW_POLICY,
+            84 => QuoteFlowType::PROFESSIONAL_NEW_POLICY,
             default => null,  // Return null if the value doesn't match any case
         };
     }
