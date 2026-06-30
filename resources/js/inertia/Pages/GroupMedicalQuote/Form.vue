@@ -393,7 +393,7 @@ watch(selectedEmirateId, (newEmirate, oldEmirate) => {
 });
 
 watch(
-  () => quoteForm.categories.map(row => row.healthTpaId),
+  () => quoteForm.categories.map(row => row.health_third_party_administrator_id ?? row.healthTpaId),
   (newTpaIds, oldTpaIds) => {
     newTpaIds.forEach((tpaId, idx) => {
       const oldTpaId = oldTpaIds?.[idx];
@@ -406,6 +406,19 @@ watch(
     });
   },
 );
+
+const isExistingInsuranceNo = computed(() => quoteForm.has_existing_group_health_insurance === 0);
+
+watch(isExistingInsuranceNo, isNo => {
+  if (isNo) {
+    quoteForm.categories.forEach(row => {
+      row.insurance_provider_id = null;
+      row.health_third_party_administrator_id = null;
+      row.health_network_id = null;
+      row.renewal_date = null;
+    });
+  }
+});
 
 onMounted(() => {
   const uniqueTpaIds = [
@@ -514,9 +527,9 @@ function onSubmit(isValid) {
         groupMedicalCategoryId: row.group_medical_category_id ?? row.groupMedicalCategoryId ?? null,
         insuranceProviderId: row.insurance_provider_id ?? row.insuranceProviderId ?? null,
         healthTpaId: row.health_third_party_administrator_id ?? row.healthTpaId ?? null,
-        groupMedicalNetworkId: row.group_medical_network_id ?? row.groupMedicalNetworkId ?? null,
+        healthNetworkId: row.health_network_id ?? row.group_medical_network_id ?? row.groupMedicalNetworkId ?? null,
         renewalDate: row.renewal_date ?? row.renewalDate ?? null,
-        numberOfPeople: row.no_of_people ?? row.number_of_people ?? row.numberOfPeople ?? null,
+        numberOfPeople: (() => { const v = row.no_of_people ?? row.number_of_people ?? row.numberOfPeople ?? null; return v !== null && v !== '' ? parseInt(v, 10) : null; })(),
       })),
     }))
     .submit(method, url, options);
@@ -781,7 +794,7 @@ function onSubmit(isValid) {
                     : 'category rows'
                 }}
               </span>
-              <x-tooltip placement="left">
+              <x-tooltip v-show="false" placement="left">
                 <x-button
                   type="button"
                   size="sm"
@@ -910,6 +923,7 @@ function onSubmit(isValid) {
                       class="w-full min-w-[10rem]"
                       placeholder="Select provider"
                       filterable
+                      :disabled="isExistingInsuranceNo"
                       :error="
                         quoteForm.errors[
                           `categories.${idx}.insuranceProviderId`
@@ -926,19 +940,19 @@ function onSubmit(isValid) {
                       :placeholder="row.insurance_provider_id ? 'Select TPA' : 'Select insurer first'"
                       :disabled="!row.insurance_provider_id"
                       filterable
+                      :disabled="isExistingInsuranceNo"
                       :error="
                         quoteForm.errors[
                           `categories.${idx}.healthTpaId`
                         ]
                       "
-                      @update:modelValue="value => fetchNetworksForTpa(value)"
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
                       v-model="row.health_network_id"
                       :options="networkOptionsForRow(idx)"
-                      :disabled="!tpaIdForRow(idx) || isNetworkLoadingForRow(idx)"
+                      :disabled="isExistingInsuranceNo || !tpaIdForRow(idx) || isNetworkLoadingForRow(idx)"
                       :placeholder="
                         isNetworkLoadingForRow(idx)
                           ? 'Loading...'
@@ -950,7 +964,7 @@ function onSubmit(isValid) {
                       filterable
                       :error="
                         quoteForm.errors[
-                          `categories.${idx}.groupMedicalNetworkId`
+                          `categories.${idx}.healthNetworkId`
                         ]
                       "
                     />
@@ -961,6 +975,7 @@ function onSubmit(isValid) {
                       type="date"
                       class="w-full min-w-[9.5rem]"
                       size="sm"
+                      :disabled="isExistingInsuranceNo"
                       :error="quoteForm.errors[`categories.${idx}.renewalDate`]"
                     />
                   </td>

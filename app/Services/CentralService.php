@@ -1325,7 +1325,7 @@ class CentralService extends BaseService
      * We check policy issuance status is not 'Policy Issued' & if afilled policy details & required documents are uploaded
      * This will trigger once policy details section update or new document upload from upload document section
      */
-    public function updateQuoteInformation($type, $id)
+    public function updateQuoteInformation($type, $id, $documentTypeCode = null)
     {
         if ($type == 'send-update') {
             return;
@@ -1347,6 +1347,15 @@ class CentralService extends BaseService
             LoggerService::info("Quote Code: {$quoteCode} - Status is LOCKED {$currentQuoteStatus}, preventing document uploads from changing status");
 
             return;
+        }
+
+        // Update status qualified or business and coument type census list
+        if ($type === QuoteTypes::BUSINESS->value && $documentTypeCode === 'GM_CL') {
+            LoggerService::info("Quote Code: {$quoteCode} - Sending qualify group medical request to CAPI");
+            $response = Capi::request('/api/v1-qualify-group-medical-quote?lang=en', 'post', [
+                'quoteUID' => $quote->uuid,
+            ]);
+            LoggerService::info("Quote Code: {$quoteCode} - CAPI qualify group medical response: ".json_encode($response));
         }
 
         $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);

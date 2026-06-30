@@ -326,7 +326,6 @@ class BusinessQuoteService extends BaseService
             $this->savePremium(quoteTypeCode::BusinessQuote, $request, $response);
 
             $this->selfAssign(QuoteTypes::BUSINESS, $response->quoteUID);
-
         }
 
         return $response;
@@ -685,45 +684,34 @@ class BusinessQuoteService extends BaseService
     public function updateBusinessQuote(Request $request, $id)
     {
         $businessQuote = BusinessQuote::where('uuid', $id)->first();
-        if ($businessQuote) {
-            // Log sub-source parameters for updates
-            LoggerService::info('BusinessQuoteService update - Sub-source parameters', [
-                'uuid' => $id,
-                'sub_source_id' => $request->sub_source_id ?? null,
-                'sub_source_options_id' => $request->sub_source_options_id ?? null,
-            ]);
-            $businessQuote->first_name = $request->first_name;
-            $businessQuote->last_name = $request->last_name;
-            $businessQuote->company_name = $request->company_name;
-            $businessQuote->company_address = $request->company_address;
-            $businessQuote->gender = $request->gender;
-            $businessQuote->brief_details = $request->brief_details;
-            $businessQuote->premium = $request->premium;
-            $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
-            $businessQuote->number_of_employees = $request->number_of_employees;
-            // Persist sub-source fields locally on Business LOB
-            if ($request->has('sub_source_id')) {
-                $businessQuote->sub_source_id = $request->sub_source_id;
-            }
-            if ($request->has('sub_source_options_id')) {
-                $businessQuote->sub_source_options_id = $request->sub_source_options_id;
-            }
 
-            if ($request->has('additional_notes')) {
-                $businessQuote->additional_notes = $request->additional_notes;
-            }
-            if (isset($request->group_medical_type_id)) {
-                $businessQuote->group_medical_type_id = $request->group_medical_type_id;
-            }
-            $this->syncGroupMedicalLeadIntakeFields($businessQuote, $request);
-            $businessQuote->save();
-
-            if (isset($request->return_to_view)) {
-                return redirect('quote/business/'.$businessQuote->id)->with('success', 'Business Quote has been updated');
-            }
-        } else {
+        if (! $businessQuote) {
             return redirect('quote/business')->with('message', 'Business Quote not found');
         }
+
+        $capiPayload = array_merge(
+            [
+                'quoteUID' => $id,
+                'firstName' => $request->first_name,
+                'lastName' => $request->last_name,
+                'mobileNo' => $request->mobile_no,
+                'companyName' => $request->company_name,
+                'emirateOfRegistrationId' => $request->emirate_of_registration_id,
+                'businessActivityId' => $request->nature_of_company_activity_id,
+                'briefDetails' => $request->brief_details,
+                'premium' => $request->premium ?? 0,
+            ],
+            $this->buildGroupMedicalCapiPayload($request),
+        );
+
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-revise-group-medical-quote', $capiPayload);
+        LoggerService::info('Capi revise-group-medical-quote response', ['response' => $response]);
+
+        if (isset($request->return_to_view)) {
+            return redirect('quote/business/'.$businessQuote->id)->with('success', 'Business Quote has been updated');
+        }
+
+        return $response;
     }
 
     public function fillModelProperties()

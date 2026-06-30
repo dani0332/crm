@@ -234,6 +234,7 @@ const transactionTypes = ref(props.filterOptions?.transactionTypes);
 
 const groupBy = reactive([
   { label: 'Advisor', value: 'advisor' },
+  { label: 'Pre-Qualification Advisor', value: 'pqa' },
   { label: 'OE/AE', value: 'support_user' },
   { label: 'Policy Issuer', value: 'policy_issuer' },
   { label: 'Customer Group', value: 'customer_group' },
