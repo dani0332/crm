@@ -219,15 +219,12 @@ class PqaLeadAllocationController extends Controller
                 ->leftJoin('quote_type as qt', 'qt.id', '=', 'la.quote_type_id')
                 ->leftJoin('user_products as up_lob', function ($join) use ($businessQuoteTypeId) {
                     $join->on('up_lob.user_id', '=', 'users.id')
-                        ->whereRaw("la.quote_type_id = {$businessQuoteTypeId}");
+                        ->whereRaw('la.quote_type_id = ?', [$businessQuoteTypeId]);
                 })
                 ->leftJoin('teams as t_lob', function ($join) use ($productType, $corplineName, $groupMedicalName) {
                     $join->on('t_lob.id', '=', 'up_lob.product_id')
                         ->where('t_lob.type', $productType)
-                        ->whereRaw("(
-                             UPPER(t_lob.name) IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}'))
-                             OR UPPER(t_lob.name) = UPPER(qt.code)
-                         )");
+                        ->whereRaw('(UPPER(t_lob.name) IN (UPPER(?), UPPER(?)) OR UPPER(t_lob.name) = UPPER(qt.code))', [$corplineName, $groupMedicalName]);
                 })
                 ->where('mhr.model_type', User::class)
                 ->where('r.name', RolesEnum::PreQualificationAdvisor)
@@ -241,13 +238,13 @@ class PqaLeadAllocationController extends Controller
                         ->join('teams as t_m', 't_m.id', '=', 'up_m.product_id')
                         ->whereColumn('up_m.user_id', 'users.id')
                         ->where('t_m.type', $productType)
-                        ->whereRaw("(
-                            (UPPER(t_m.name) IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}')) AND la.quote_type_id = {$businessQuoteTypeId})
+                        ->whereRaw('(
+                            (UPPER(t_m.name) IN (UPPER(?), UPPER(?)) AND la.quote_type_id = ?)
                             OR
-                            (UPPER(t_m.name) NOT IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}')) AND la.quote_type_id = (
+                            (UPPER(t_m.name) NOT IN (UPPER(?), UPPER(?)) AND la.quote_type_id = (
                                 SELECT qt_m.id FROM quote_type qt_m WHERE UPPER(qt_m.code) = UPPER(t_m.name) LIMIT 1
                             ))
-                        )");
+                        )', [$corplineName, $groupMedicalName, $businessQuoteTypeId, $corplineName, $groupMedicalName]);
                 })
                 ->groupBy(
                     'users.name',

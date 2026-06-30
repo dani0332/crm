@@ -54,4 +54,11 @@ class PqaAllocationBackupJob implements ShouldQueue
     {
         return [(new WithoutOverlapping($this->quoteType->value))->dontRelease()];
     }
+
+    public function failed(\Throwable $e): void
+    {
+        LoggerService::error(self::class.'::failed - PQA backup allocation job exhausted retries', [
+            'quote_type' => $this->quoteType->value,
+        ], $e);
+    }
 }

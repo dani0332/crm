@@ -36,4 +36,9 @@ class ResetPqaAllocationCountJob implements ShouldQueue
 
         LoggerService::info(self::class.'::handle - PQA allocation counts reset completed');
     }
+
+    public function failed(\Throwable $e): void
+    {
+        LoggerService::error(self::class.'::failed - PQA allocation count reset job exhausted retries', exception: $e);
+    }
 }

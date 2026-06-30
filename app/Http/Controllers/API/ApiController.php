@@ -173,15 +173,6 @@ class ApiController extends Controller
 
             return app(PqaAllocationService::class)->processPqaAllocation($request);
 
-        } catch (\Exception $e) {
-            LoggerService::warning(self::class.': PQA allocation failed with error', exception: $e);
-
-            $statusCode = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : Response::HTTP_UNPROCESSABLE_ENTITY;
-
-            return apiResponse([
-                'error' => true,
-                'message' => $e->getMessage(),
-            ], $statusCode);
         } catch (ValidationException $e) {
             LoggerService::warning(self::class.': PQA allocation failed due to validation errors', extra: [
                 'errors' => $e->errors(),
@@ -192,6 +183,15 @@ class ApiController extends Controller
                 'message' => $e->getMessage(),
                 'errors' => $e->errors(),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            LoggerService::warning(self::class.': PQA allocation failed with error', exception: $e);
+
+            $statusCode = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : Response::HTTP_UNPROCESSABLE_ENTITY;
+
+            return apiResponse([
+                'error' => true,
+                'message' => $e->getMessage(),
+            ], $statusCode);
         }
     }
 
