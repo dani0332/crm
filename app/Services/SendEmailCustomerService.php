@@ -27,6 +27,7 @@ use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -1834,29 +1835,29 @@ class SendEmailCustomerService extends BaseService
 
         $advisor = User::where('id', $advisorId)->first();
         $payload = [
+            'customerId' => $quote->customer_id ?? $quote->email,
+            'firstName' => $quote->first_name ?? '',
+            'lastName' => $quote->last_name ?? '',
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,
-            'customerMobile' => (! empty($quote->mobile_no) ? formatMobileNo($quote->mobile_no) : ''),
+            'customerMobile' => ! empty($quote->mobile_no) ? '+'.formatMobileNoWithoutPlus($quote->mobile_no) : '',
+            'quoteUID' => $quote->uuid,
             'advisor' => $advisor ?? null,
             'advisorName' => $advisor?->name ?? '',
             'advisorEmail' => $advisor?->email ?? '',
-            'advisorLandLine' => (! empty($advisor?->landline_no) ? $advisor->landline_no : ''),
-            'advisorMobilePhone' => (! empty($advisor?->mobile_no) ? $advisor->mobile_no : ''),
+            'advisorLandLine' => ! empty($advisor?->landline_no) ? $advisor->landline_no : '',
+            'advisorMobilePhone' => ! empty($advisor?->mobile_no) ? $advisor->mobile_no : '',
             'advisorWhatsAppNumber' => ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
-            'advisorMobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
-            'quoteUID' => $quote->uuid,
+            'advisorMobileNoWithoutSpaces' => ! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : '',
             'refID' => $quote->code,
+            'uniqueId' => (string) Str::ulid(),
             'CarMake' => $quote->carMake->text ?? null,
             'CarModel' => $quote->carModel->text ?? null,
             'workflowType' => WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
         ];
-        $customerWANotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW);
-        if (! empty($customerWANotificationWorkflow)) {
-            app(BirdService::class)->triggerWebHookRequest($customerWANotificationWorkflow, (object) $payload);
-            LoggerService::info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$customerWANotificationWorkflow.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
-        } else {
-            LoggerService::info('sendWhatsappNotificationToCustomer - Webhook URL not found in storage with Ref-ID:'.$quote->uuid.' | Time:'.now());
-        }
+
+        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS, $payload);
+        LoggerService::info('sendWhatsappNotificationToCustomer - WebEngage event triggered with Ref-ID: '.$quote->uuid.' | Time:'.now());
     }
 
     public function getBccAdditionalEmails(QuoteTypes $quoteType): array
@@ -1905,6 +1906,7 @@ class SendEmailCustomerService extends BaseService
 
         $bccEmails = $this->getBCCEmails($quoteType, $quote->source);
         $payload = [
+            'uniqueId' => (string) Str::ulid(),
             'customerId' => $quote->customer_id ?? $quote->email,
             'firstName' => $quote->first_name ?? '',
             'lastName' => $quote->last_name ?? '',

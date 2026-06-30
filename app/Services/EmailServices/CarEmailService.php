@@ -34,6 +34,7 @@ use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CarEmailService extends BaseService
 {
@@ -919,6 +920,7 @@ class CarEmailService extends BaseService
             : '';
         $emailData->refID = $carQuote->code;
         $emailData->quoteUID = $carQuote->uuid;
+        $emailData->uniqueId = (string) Str::ulid();
 
         return $emailData;
     }
