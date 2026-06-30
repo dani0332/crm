@@ -107,6 +107,11 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     // !! Do not remove this route, it is used for debugging purposes and do not enable it in production without approval from the team !!.
     // Route::post('/imcrm/re-trigger-revival-followups', [ApiController::class, 'reTriggerRevivalFollowups'])->name('reTriggerRevivalFollowups');
     Route::post('/imcrm/re-trigger-revival-followups-with-date', [ApiController::class, 'reTriggerRevivalFollowupsWithDate'])->name('reTriggerRevivalFollowupsWithDate');
+    // pre qualification advisor allocation
+    Route::prefix('pqa')->group(function () {
+        Route::post('/allocation', [ApiController::class, 'preQualificationAdvisorAllocation'])->name('preQualificationAdvisorAllocation');
+    });
+
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');

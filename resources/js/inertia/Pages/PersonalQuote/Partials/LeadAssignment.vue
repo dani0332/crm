@@ -25,6 +25,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  pqaAdvisors: {
+    type: Array,
+    default: () => [],
+  },
+  canAssignPqa: {
+    type: Boolean,
+    default: false,
+  },
 });
 const page = usePage();
 const emit = defineEmits(['success', 'error']);
@@ -54,6 +62,12 @@ const assignForm = useForm({
 
 const supportAssignForm = useForm({
   support_user_id: null,
+  assigned_lead_id: '',
+  modelType: props.quoteType,
+});
+
+const pqaAssignForm = useForm({
+  pq_advisor_id: null,
   assigned_lead_id: '',
   modelType: props.quoteType,
 });
@@ -105,6 +119,30 @@ function onAssignSupportUser(isValid) {
         ...data,
         assigned_lead_id: `${props.selected}`,
         support_user_id: supportAssignForm.support_user_id,
+        modelType: props.quoteType,
+      }))
+      .post(postUrl, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          emit('success');
+        },
+        onError: () => {
+          emit('error');
+        },
+      });
+  }
+}
+
+function onAssignPreQualificationAdvisor(isValid) {
+  const postUrl = route('assign-pre-qualification-advisor');
+
+  if (isValid) {
+    pqaAssignForm
+      .transform(data => ({
+        ...data,
+        assigned_lead_id: `${props.selected}`,
+        pq_advisor_id: pqaAssignForm.pq_advisor_id,
         modelType: props.quoteType,
       }))
       .post(postUrl, {
@@ -211,6 +249,54 @@ onMounted(() => {
                 size="sm"
                 type="submit"
                 :loading="supportAssignForm.processing"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Assign
+              </x-button>
+            </div>
+          </div>
+        </x-form>
+      </div>
+
+      <div
+        v-if="
+          (props.quoteType === 'business' ||
+            props.quoteType === 'health' ||
+            props.quoteType === 'group_medical') &&
+          props.canAssignPqa &&
+          props.pqaAdvisors &&
+          props.pqaAdvisors.length > 0
+        "
+        class="mt-4"
+      >
+        <x-form @submit="onAssignPreQualificationAdvisor" :auto-focus="false">
+          <div class="w-full flex flex-col md:flex-row gap-4">
+            <div v-if="readOnlyMode.isDisable === true" class="flex-1 w-auto">
+              <x-tooltip position="top">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-1 block"
+                >
+                  Assign Pre‑Qualification Advisor
+                </label>
+                <template #tooltip>
+                  <span>Pre‑Qualification Advisor (PQA) assignment</span>
+                </template>
+              </x-tooltip>
+              <x-select
+                v-model="pqaAssignForm.pq_advisor_id"
+                :options="pqaAdvisors"
+                placeholder="Select Pre‑Qualification Advisor"
+                class="w-full"
+                filterable
+                single
+              />
+            </div>
+            <div class="mb-3 md:pt-6">
+              <x-button
+                color="orange"
+                size="sm"
+                type="submit"
+                :loading="pqaAssignForm.processing"
                 v-if="readOnlyMode.isDisable === true"
               >
                 Assign

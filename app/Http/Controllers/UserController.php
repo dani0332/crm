@@ -19,6 +19,7 @@ use App\Services\ClaimAllocation\ClaimAllocationService;
 use App\Services\DepartmentService;
 use App\Services\LeadAllocationService;
 use App\Services\LookupService;
+use App\Services\PqaAllocation\PqaLeadAllocationService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -197,6 +198,7 @@ class UserController extends Controller
         if (! empty($request->products)) {
             $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
             if (! empty($products_types)) {
+
                 foreach ($products_types as $key => $type) {
                     if (in_array(ucfirst($type->name), [QuoteTypes::CORPLINE->value, QuoteTypes::GROUP_MEDICAL->value])) {
                         $quoteTypeName = $this->getBusinessQuoteType(ucfirst($type->name));
@@ -211,6 +213,9 @@ class UserController extends Controller
                         }
                         if ($user->hasAnyRole($this->assignsClaimManagerRole())) {
                             app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                        }
+                        if ($user->hasAnyRole([RolesEnum::PreQualificationAdvisor])) {
+                            app(PqaLeadAllocationService::class)->syncPqaAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
                         }
                     }
                 }
@@ -386,6 +391,7 @@ class UserController extends Controller
             if (! empty($request->products)) {
                 $products_types = collect($products)->whereIn('id', $request->products)->values()->all();
                 if (! empty($products_types)) {
+
                     foreach ($products_types as $key => $type) {
                         if (in_array(ucfirst($type->name), [QuoteTypes::CORPLINE->value, QuoteTypes::GROUP_MEDICAL->value])) {
                             $quoteTypeName = $this->getBusinessQuoteType(ucfirst($type->name));
@@ -400,6 +406,9 @@ class UserController extends Controller
                             }
                             if ($user->hasAnyRole($this->assignsClaimManagerRole())) {
                                 app(ClaimAllocationService::class)->syncClaimAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId]);
+                            }
+                            if ($user->hasAnyRole([RolesEnum::PreQualificationAdvisor])) {
+                                app(PqaLeadAllocationService::class)->syncPqaAllocationConfig($user->id, (object) ['quoteTypeId' => $quoteTypeId, 'quote_type' => $quoteTypeName]);
                             }
                         }
                     }

@@ -20,6 +20,14 @@ defineProps({
     type: Array,
     default: () => [],
   },
+  canAssignPreQualificationAdvisor: {
+    type: Boolean,
+    default: false,
+  },
+  preQualificationAdvisors: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const canExport = ref(false);
@@ -124,6 +132,14 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const pqaAdvisorOptions = computed(() => {
+  const list = Array.isArray(page.props.preQualificationAdvisors)
+    ? page.props.preQualificationAdvisors
+    : [];
+  const options = list.map(user => ({ value: user.id, label: user.name }));
+  return options;
+});
+
 const supportUserOptions = computed(() => {
   return page.props.supportUsers.map(advisor => ({
     value: advisor.id,
@@ -159,6 +175,10 @@ const tableHeader = [
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
+  {
+    text: 'PRE-QUALIFICATION ADVISOR',
+    value: 'pre_qualification_advisor_name',
+  },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
@@ -791,6 +811,29 @@ const insurerAMLStatusOption = computed(() => {
         </x-select>
 
         <x-select
+          v-model="filters.pq_advisor_id"
+          name="pq_advisor_id"
+          placeholder="Search by PQA"
+          :options="pqaAdvisorOptions"
+          class="w-full"
+          filterable
+          label="Pre-Qualification Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.pq_advisor_id = pqaAdvisorOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.pq_advisor_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
           v-model="filters.support_user_id"
           name="support_user_id"
           placeholder="Search by OE / AE"
@@ -963,6 +1006,8 @@ const insurerAMLStatusOption = computed(() => {
             :supportUsers="assignableSupportUserOptions"
             :canAssignClientSupport="canAssignClientSupport"
             :canAssignLeadAdvisor="canAssignLeadAdvisor"
+            :pqaAdvisors="pqaAdvisorOptions"
+            :canAssignPqa="$page.props.canAssignPreQualificationAdvisor"
             quoteType="business"
             @success="manualAssignmentSuccess"
           />

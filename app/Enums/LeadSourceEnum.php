@@ -83,4 +83,5 @@ final class LeadSourceEnum extends Enum
 
     // second source for car 24 leads
     const CARS24 = 'cars24';
+    const EA_IMCRM = 'EA_IMCRM';
 }

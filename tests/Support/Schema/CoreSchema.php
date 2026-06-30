@@ -712,6 +712,19 @@ class CoreSchema
                 $table->integer('max_capacity')->default(0);
                 $table->timestamps();
             },
+            'pqa_lead_allocation_config' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->unsignedInteger('max_capacity')->default(100);
+                $table->unsignedInteger('allocation_count')->default(0);
+                $table->unsignedInteger('auto_assignment_count')->default(0);
+                $table->unsignedInteger('manual_assignment_count')->default(0);
+                $table->unsignedBigInteger('last_allocated')->nullable();
+                $table->unsignedTinyInteger('reset_cap')->default(0);
+                $table->timestamps();
+                $table->unique(['user_id', 'quote_type_id']);
+            },
             'vehicle_driver_details' => function (Blueprint $table) {
                 $table->id();
                 $table->morphs('quoteable'); // Creates quoteable_id and quoteable_type
@@ -786,6 +799,7 @@ class CoreSchema
                 $table->string('source')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('support_user_id')->nullable();
+                $table->unsignedBigInteger('pq_advisor_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->unsignedBigInteger('customer_id')->nullable();
