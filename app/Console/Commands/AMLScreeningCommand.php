@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -52,32 +53,37 @@ class AMLScreeningCommand extends Command
     public function handle(): void
     {
         LoggerService::info($this->className.' - handle() invoked', extra: [
-            'quote_type_option' => $this->option('quote-type') ?? 'all',
+            'quote_type_option' => $this->option('quote-type'),
         ]);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::AML_SCREENING);
 
-        $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
-        if (! $isAmlAutomationEnabled) {
-            LoggerService::info($this->className.' is not enabled from cms');
+        try {
+            $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
+            if (! $isAmlAutomationEnabled) {
+                LoggerService::info($this->className.' is not enabled from cms');
 
-            return;
-        }
+                return;
+            }
 
-        $quoteTypesToProcess = $this->resolveQuoteTypes($this->option('quote-type'));
-        if (empty($quoteTypesToProcess)) {
-            LoggerService::info($this->className.' - no valid quote types resolved, aborting');
+            $quoteTypesToProcess = $this->resolveQuoteTypes($this->option('quote-type'));
+            if (empty($quoteTypesToProcess)) {
+                LoggerService::info($this->className.' - no valid quote types resolved, aborting');
 
-            return;
-        }
+                return;
+            }
 
-        LoggerService::info($this->className.' - resolved quote types to process', extra: [
-            'quote_types' => array_map(fn ($qt) => $qt->value, $quoteTypesToProcess),
-        ]);
-
-        foreach ($quoteTypesToProcess as $quoteType) {
-            LoggerService::info($this->className.' - processing all quotes of type: '.$quoteType->value, extra: [
-                'quote_type' => $quoteType->value,
+            LoggerService::info($this->className.' - resolved quote types to process', extra: [
+                'quote_types' => array_map(fn ($qt) => $qt->value, $quoteTypesToProcess),
             ]);
-            $this->processQuoteType($quoteType);
+
+            foreach ($quoteTypesToProcess as $quoteType) {
+                LoggerService::info($this->className.' - processing all quotes of type: '.$quoteType->value, extra: [
+                    'quote_type' => $quoteType->value,
+                ]);
+                $this->processQuoteType($quoteType);
+            }
+        } catch (\Throwable $e) {
+            LoggerService::error($this->className.' - handle() failed with unexpected exception', exception: $e);
         }
     }
 
@@ -175,7 +181,7 @@ class AMLScreeningCommand extends Command
                 // Load insurance provider once — eligibility checks read it without extra queries.
                 $quote->loadMissing('insuranceProvider');
 
-                $eligibility = $this->eligibilityService->check($quoteType, $quote);
+                $eligibility = $this->eligibilityService->eligibilityCheck($quoteType, $quote);
 
                 if (! $eligibility->isEligible()) {
                     LoggerService::info($this->className.' - Quote ineligible for AML automation', extra: array_merge($quoteContext, [
