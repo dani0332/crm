@@ -100,6 +100,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
         $groupByColumn = match ($this->groupByColumn) {
             'support_user' => 'OE/AE',
             'branch_name' => 'branch',
+            'pqa' => 'Pre-Qualification Advisor',
             default => $this->groupByColumn,
         };
         $headings = [

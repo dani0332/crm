@@ -156,6 +156,7 @@ final class PermissionsEnum extends Enum
     public const GMQuotesList = 'gm-quotes-list';
     public const GMQuotesCreate = 'gm-quotes-create';
     public const GMQuotesEdit = 'gm-quotes-edit';
+    public const GMQuoteCopyLink = 'gm-quote-copylink';
     public const CorpLineQuotesList = 'corpline-quotes-list';
     public const CorpLineQuotesCreate = 'corpline-quotes-create';
     public const CorpLineQuotesEdit = 'corpline-quotes-edit';

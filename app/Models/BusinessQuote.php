@@ -27,6 +27,15 @@ class BusinessQuote extends Model implements AuditableContract
 
     protected $table = 'business_quote_request';
     protected $guarded = [];
+
+    protected function casts(): array
+    {
+        return [
+            'gm_category_intake' => 'array',
+            'has_existing_group_health_insurance' => 'boolean',
+        ];
+    }
+
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
@@ -127,6 +136,16 @@ class BusinessQuote extends Model implements AuditableContract
     public function groupMedicalType()
     {
         return $this->belongsTo(GroupMedicalType::class, 'group_medical_type_id');
+    }
+
+    public function healthPlanType(): BelongsTo
+    {
+        return $this->belongsTo(HealthPlanType::class, 'health_plan_type_id');
+    }
+
+    public function natureOfCompanyActivity(): BelongsTo
+    {
+        return $this->belongsTo(CompanyActivityType::class, 'nature_of_company_activity_id');
     }
 
     public function insuranceProvider()
@@ -256,6 +275,11 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
     }
 
+    public function businessActivity(): BelongsTo
+    {
+        return $this->belongsTo(BusinessActivity::class);
+    }
+
     /**
      * Check if quote can be updated to transaction approved status
      * Only allowed if quote has both payment link sent and initiated status in history
@@ -382,5 +406,12 @@ class BusinessQuote extends Model implements AuditableContract
     public function emirate()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
+    }
+
+    public function groupMedicalCategories()
+    {
+
+        return $this->hasMany(GroupMedicalQuoteCategory::class, 'business_quote_request_id', 'id')
+            ->orderBy('sort_order');
     }
 }
