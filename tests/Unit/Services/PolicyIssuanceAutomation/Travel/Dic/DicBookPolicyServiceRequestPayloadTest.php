@@ -92,7 +92,7 @@ test('SendBookPolicyDocumentsJob dispatch passes advisor_id quote_uuid and Trave
     $contents = file_get_contents($filename);
     expect($contents)->toBeString();
 
-    expect($contents)->toContain("'advisorId' => \$quote->advisor_id,");
+    expect($contents)->toContain("'advisorId' => \$quote?->advisor_id ?? null,");
     expect($contents)->toContain("'model_type' => quoteTypeCode::Travel,");
     expect($contents)->toContain("'quote_id' => \$quote->uuid,");
     expect($contents)->toContain('SendBookPolicyDocumentsJob::dispatch($data, $quote->uuid);');
