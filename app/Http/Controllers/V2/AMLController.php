@@ -41,6 +41,7 @@ use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\QuoteTypeRepository;
+use App\Services\AML\AMLAutomationService;
 use App\Services\AML\AMLDisplayService;
 use App\Services\AML\AMLEntityService;
 use App\Services\AML\AMLExportService;
@@ -872,11 +873,11 @@ class AMLController extends Controller
     /**
      * IMCRM: trigger AML screening automation for an allowed LOB by quote UUID and explicit {@see QuoteTypes} value.
      */
-    public function automateQuoteAmlScreening(AutomateQuoteAmlScreeningRequest $request): JsonResponse
+    public function automateQuoteAmlScreening(AutomateQuoteAmlScreeningRequest $request, AMLAutomationService $amlAutomationService): JsonResponse
     {
         $validated = $request->validated();
 
-        $result = app(AMLService::class)->initiateAutomatedAmlByQuoteUuid(
+        $result = $amlAutomationService->initiateAutomatedAmlByQuoteUuid(
             $validated['quoteUuid'],
             $request->validatedQuoteType(),
         );
@@ -887,4 +888,5 @@ class AMLController extends Controller
             'data' => $result['data'] ?? null,
         ], $result['http_status']);
     }
+
 }

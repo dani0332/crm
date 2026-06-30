@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Mail\EpFailureNotification;
+use App\Mail\EpReversalFailureNotification;
 use App\Mail\SukoonMedexEPFailureNotification;
 use App\Models\EmbeddedTransaction;
 use App\Services\Logger\LoggerService;
@@ -86,6 +87,23 @@ trait SendsEpFailureEmail
             ]);
         } catch (Throwable $e) {
             LoggerService::error("{$logPrefix} Failed to send Embedded Product failure email: ".$e->getMessage(), extra: [
+                'etId' => $etId,
+            ]);
+        }
+    }
+
+    /**
+     * Notify finance/engineering when Sage EP booking reversal exhausts retries or the job fails.
+     */
+    protected function sendEpReversalFailureEmail(int $quoteId, int $quoteTypeId, int $etId, string $logPrefix): void
+    {
+        try {
+            Mail::send(new EpReversalFailureNotification($quoteId, $quoteTypeId, $etId));
+            LoggerService::info("{$logPrefix} EP Sage reversal failure email sent", extra: [
+                'etId' => $etId,
+            ]);
+        } catch (Throwable $e) {
+            LoggerService::error("{$logPrefix} Failed to send EP Sage reversal failure email: ".$e->getMessage(), extra: [
                 'etId' => $etId,
             ]);
         }

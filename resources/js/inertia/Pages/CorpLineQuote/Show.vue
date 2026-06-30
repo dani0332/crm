@@ -1149,6 +1149,28 @@ const onLeadTypeUpdate = () => {
                   <dd>{{ quote.utm_term }}</dd>
                 </div>
               </template>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LEAD TYPE</dt>
+                <dd>
+                  <div class="flex items-center gap-2">
+                    <x-select
+                      v-model="leadTypeForm.lead_type"
+                      :options="leadTypeOptions"
+                      class="w-full"
+                      placeholder="Select Lead Type"
+                    />
+                    <x-button
+                      size="xs"
+                      color="emerald"
+                      :loading="leadTypeForm.processing"
+                      @click.prevent="onLeadTypeUpdate"
+                      v-if="readOnlyMode.isDisable === true"
+                    >
+                      Save
+                    </x-button>
+                  </div>
+                </dd>
+              </div>
             </dl>
           </div>
         </template>
