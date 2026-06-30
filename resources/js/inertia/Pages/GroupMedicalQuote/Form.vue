@@ -938,7 +938,6 @@ function onSubmit(isValid) {
                       :options="tpaOptionsForRow(idx)"
                       class="w-full min-w-[10rem]"
                       :placeholder="row.insurance_provider_id ? 'Select TPA' : 'Select insurer first'"
-                      :disabled="!row.insurance_provider_id"
                       filterable
                       :disabled="isExistingInsuranceNo"
                       :error="
