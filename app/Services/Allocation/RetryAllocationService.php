@@ -403,8 +403,8 @@ class RetryAllocationService
                 $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
                     ->whereNotNull('health_plan_type_id')
                     ->whereNotNull('number_of_employees')
-                    // ->whereIn('quote_status_id', [QuoteStatusEnum::Qualified,QuoteStatusEnum::Duplicate]);
-                    ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Lost]);
+                    ->whereIn('quote_status_id', [QuoteStatusEnum::Qualified, QuoteStatusEnum::Duplicate]);
+                // ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Lost]);
             }, function ($q) {
                 $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost]);
 
