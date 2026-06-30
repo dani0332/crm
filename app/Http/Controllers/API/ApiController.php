@@ -155,14 +155,14 @@ class ApiController extends Controller
             }
 
             return $this->apiService->processAssignLead($request);
-        } catch (\Exception $e) {
-            LoggerService::error(self::class.': Lead allocation failed with error', exception: $e);
-
-            return apiResponse($e, Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (ValidationException $e) {
             LoggerService::error(self::class.': Lead allocation failed due to validation errors', exception: $e);
 
             return apiResponse($e, Response::HTTP_BAD_REQUEST);
+        } catch (\Exception $e) {
+            LoggerService::error(self::class.': Lead allocation failed with error', exception: $e);
+
+            return apiResponse($e, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -189,12 +189,10 @@ class ApiController extends Controller
         } catch (\Exception $e) {
             LoggerService::warning(self::class.': PQA allocation failed with error', exception: $e);
 
-            $statusCode = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : Response::HTTP_UNPROCESSABLE_ENTITY;
-
             return apiResponse([
                 'error' => true,
                 'message' => $e->getMessage(),
-            ], $statusCode);
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
     public function quotePaymentStatusUpdated(PaymentNotificationRequest $request)

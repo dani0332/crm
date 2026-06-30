@@ -219,7 +219,7 @@ class PqaLeadAllocationController extends Controller
                 ->leftJoin('quote_type as qt', 'qt.id', '=', 'la.quote_type_id')
                 ->leftJoin('user_products as up_lob', function ($join) use ($businessQuoteTypeId) {
                     $join->on('up_lob.user_id', '=', 'users.id')
-                        ->whereRaw("la.quote_type_id = {$businessQuoteTypeId}");
+                        ->whereRaw('la.quote_type_id = ?', [$businessQuoteTypeId]);
                 })
                 ->leftJoin('teams as t_lob', function ($join) use ($productType, $corplineName, $groupMedicalName) {
                     $join->on('t_lob.id', '=', 'up_lob.product_id')
