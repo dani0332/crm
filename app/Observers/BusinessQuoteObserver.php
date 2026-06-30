@@ -211,7 +211,7 @@ class BusinessQuoteObserver
             $businessQuote->pq_advisor_id === null
         ) {
             try {
-                DispatchPqaAllocationJob::dispatch($businessQuote->uuid, QuoteTypes::CORPLINE);
+                DispatchPqaAllocationJob::dispatch($businessQuote->uuid, QuoteTypes::CORPLINE)->afterCommit();
 
                 activity()
                     ->performedOn($businessQuote)
@@ -231,7 +231,7 @@ class BusinessQuoteObserver
             $businessQuote->advisor_id === null
         ) {
             try {
-                DispatchIlaAllocationJob::dispatch($businessQuote->uuid, QuoteTypes::CORPLINE);
+                DispatchIlaAllocationJob::dispatch($businessQuote->uuid, QuoteTypes::CORPLINE)->afterCommit();
             } catch (Exception $e) {
                 LoggerService::error('BusinessQuoteObserver - ILA dispatch on Qualified failed', [
                     'uuid' => $businessQuote->uuid,

@@ -240,7 +240,7 @@ class HealthQuoteObserver
             ])
         ) {
             try {
-                DispatchPqaAllocationJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH);
+                DispatchPqaAllocationJob::dispatch($healthQuote->uuid, QuoteTypes::HEALTH)->afterCommit();
 
                 activity()
                     ->performedOn($healthQuote)
