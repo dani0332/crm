@@ -149,10 +149,12 @@ const onCopyGmEcommerceJourneyLink = () => {
       .then(onCopySuccess)
       .catch(() => {});
   } else {
-    fetchUrl().then(url => {
-      copy(url);
-      onCopySuccess();
-    }).catch(onCopyError);
+    fetchUrl()
+      .then(url => {
+        copy(url);
+        onCopySuccess();
+      })
+      .catch(onCopyError);
   }
 };
 
@@ -1168,50 +1170,64 @@ function handleOcrNotification(event) {
                   </div>
                 </div>
                 <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-                  
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium"><x-tooltip placement="bottom">
-                      <span class="cursor-help underline decoration-dotted decoration-primary-700">
-                        NATURE OF COMPANY'S ACTIVITY
-                      </span>
-                      <template #tooltip>
-                        Select the main business activity of the company. This
-                        helps assess the risk profile for the group health
-                        insurance.
-                      </template>
-                    </x-tooltip></dt>
-                  <dd>{{ natureOfCompanyActivityText }}</dd>
-                </div>
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">
+                      <x-tooltip placement="bottom">
+                        <span
+                          class="cursor-help underline decoration-dotted decoration-primary-700"
+                        >
+                          NATURE OF COMPANY'S ACTIVITY
+                        </span>
+                        <template #tooltip>
+                          Select the main business activity of the company. This
+                          helps assess the risk profile for the group health
+                          insurance.
+                        </template>
+                      </x-tooltip>
+                    </dt>
+                    <dd>{{ natureOfCompanyActivityText }}</dd>
+                  </div>
 
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium"> <x-tooltip placement="bottom">
-                        <span class="cursor-help underline decoration-dotted decoration-primary-700">
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">
+                      <x-tooltip placement="bottom">
+                        <span
+                          class="cursor-help underline decoration-dotted decoration-primary-700"
+                        >
                           WITH EXISTING GROUP HEALTH INSURANCE POLICY
                         </span>
                         <template #tooltip>
                           Indicate if the company currently has a group health
                           insurance policy in place with any provider
                         </template>
-                      </x-tooltip></dt>
-                  <dd>{{hasExistingGroupHealthInsurancePolicyText  }}</dd>
-                </div>
+                      </x-tooltip>
+                    </dt>
+                    <dd>{{ hasExistingGroupHealthInsurancePolicyText }}</dd>
+                  </div>
 
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">  <x-tooltip placement="bottom">
-                        <span class="cursor-help underline decoration-dotted decoration-primary-700">
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">
+                      <x-tooltip placement="bottom">
+                        <span
+                          class="cursor-help underline decoration-dotted decoration-primary-700"
+                        >
                           NUMBER OF CATEGORIES
                         </span>
                         <template #tooltip>
-                          Enter how many employee categories the group has. Categories usually differ by Benefits or salary band.
+                          Enter how many employee categories the group has.
+                          Categories usually differ by Benefits or salary band.
                         </template>
-                      </x-tooltip></dt>
+                      </x-tooltip>
+                    </dt>
                     <dd>{{ numberOfCategoriesDisplay }}</dd>
                   </div>
 
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">
-                    <x-tooltip placement="bottom">
-                        <span class="cursor-help underline decoration-dotted decoration-primary-700">
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">
+                      <x-tooltip placement="bottom">
+                        <span
+                          class="cursor-help underline decoration-dotted decoration-primary-700"
+                        >
                           PLAN TYPE
                         </span>
                         <template #tooltip>
@@ -1219,9 +1235,9 @@ function handleOcrNotification(event) {
                           for this group or category.
                         </template>
                       </x-tooltip>
-                  </dt>
-                  <dd>{{ quotePlanTypeDisplay }}</dd>
-                </div>    
+                    </dt>
+                    <dd>{{ quotePlanTypeDisplay }}</dd>
+                  </div>
                 </dl>
               </section>
 

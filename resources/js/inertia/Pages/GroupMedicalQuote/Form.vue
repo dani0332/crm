@@ -15,7 +15,7 @@ const props = defineProps({
   healthThirdPartyAdministrators: { type: Array, default: () => [] },
   groupMedicalNetworks: { type: Array, default: () => [] },
   groupMedicalCategories: { type: Array, default: () => [] },
-  categoryCount: { type: Number }
+  categoryCount: { type: Number },
 });
 
 const notification = useToast();
@@ -47,7 +47,8 @@ const yesNoOptions = [
 ];
 
 const emptyCategoryRow = (idx = null) => ({
-  groupMedicalCategoryId: idx !== null ? (props.groupMedicalCategories[idx]?.id ?? null) : null,
+  groupMedicalCategoryId:
+    idx !== null ? (props.groupMedicalCategories[idx]?.id ?? null) : null,
   insuranceProviderId: null,
   healthTpaId: null,
   groupMedicalNetworkId: null,
@@ -196,8 +197,7 @@ const quoteForm = useForm({
         props.leadSourceParams?.subSourceOption ||
         0,
     ) || null,
-    nature_of_company_activity_id:
-    props.quote?.business_activity_id ?? null,
+  nature_of_company_activity_id: props.quote?.business_activity_id ?? null,
   has_existing_group_health_insurance:
     props.quote?.has_existing_group_policy === undefined ||
     props.quote?.has_existing_group_policy === null
@@ -282,7 +282,9 @@ watch(
     const current = quoteForm.categories.length;
     if (n > current) {
       for (let i = current; i < n; i++) {
-        quoteForm.categories.push(initialGmRows[i] ? { ...initialGmRows[i] } : emptyCategoryRow(i));
+        quoteForm.categories.push(
+          initialGmRows[i] ? { ...initialGmRows[i] } : emptyCategoryRow(i),
+        );
       }
     } else if (n < current) {
       quoteForm.categories.splice(n);
@@ -393,7 +395,10 @@ watch(selectedEmirateId, (newEmirate, oldEmirate) => {
 });
 
 watch(
-  () => quoteForm.categories.map(row => row.health_third_party_administrator_id ?? row.healthTpaId),
+  () =>
+    quoteForm.categories.map(
+      row => row.health_third_party_administrator_id ?? row.healthTpaId,
+    ),
   (newTpaIds, oldTpaIds) => {
     newTpaIds.forEach((tpaId, idx) => {
       const oldTpaId = oldTpaIds?.[idx];
@@ -407,7 +412,9 @@ watch(
   },
 );
 
-const isExistingInsuranceNo = computed(() => quoteForm.has_existing_group_health_insurance === 0);
+const isExistingInsuranceNo = computed(
+  () => quoteForm.has_existing_group_health_insurance === 0,
+);
 
 watch(isExistingInsuranceNo, isNo => {
   if (isNo) {
@@ -424,7 +431,10 @@ onMounted(() => {
   const uniqueTpaIds = [
     ...new Set(
       quoteForm.categories
-        .flatMap(row => [row.health_third_party_administrator_id, row.healthTpaId])
+        .flatMap(row => [
+          row.health_third_party_administrator_id,
+          row.healthTpaId,
+        ])
         .filter(id => !!id),
     ),
   ];
@@ -467,7 +477,9 @@ async function onEmirateChange(value) {
   quoteForm.emirate_of_registration_id = value;
 
   try {
-    const { data } = await axios.get(route('planTypesByEmirates', { emirateId: value }));
+    const { data } = await axios.get(
+      route('planTypesByEmirates', { emirateId: value }),
+    );
     fetchedHealthPlanTypes.value = (data.data ?? []).map(item => ({
       value: item.id,
       label: item.text,
@@ -479,13 +491,17 @@ async function onEmirateChange(value) {
 
 async function onInsuranceProviderChange(value, idx) {
   try {
-    const { data } = await axios.get(route('tpaByInsuranceProvider', { insuranceProviderId: value }));
+    const { data } = await axios.get(
+      route('tpaByInsuranceProvider', { insuranceProviderId: value }),
+    );
     tpaCache.value[idx] = (data.data ?? []).map(item => ({
       value: item.id,
       label: item.text,
     }));
   } catch (error) {
-    const message = error?.response?.data?.message ?? 'Something went wrong while fetching TPAs.';
+    const message =
+      error?.response?.data?.message ??
+      'Something went wrong while fetching TPAs.';
     notification.error({ title: message, position: 'top' });
   }
 }
@@ -508,7 +524,10 @@ function onSubmit(isValid) {
     },
     onSuccess: page => {
       notification.success(
-        page?.props?.flash?.message ?? (isEdit.value ? 'Quote updated successfully.' : 'Quote created successfully.'),
+        page?.props?.flash?.message ??
+          (isEdit.value
+            ? 'Quote updated successfully.'
+            : 'Quote created successfully.'),
       );
     },
     onError: errors => {
@@ -524,12 +543,26 @@ function onSubmit(isValid) {
     .transform(data => ({
       ...data,
       categories: data.categories.map(row => ({
-        groupMedicalCategoryId: row.group_medical_category_id ?? row.groupMedicalCategoryId ?? null,
-        insuranceProviderId: row.insurance_provider_id ?? row.insuranceProviderId ?? null,
-        healthTpaId: row.health_third_party_administrator_id ?? row.healthTpaId ?? null,
-        healthNetworkId: row.health_network_id ?? row.group_medical_network_id ?? row.groupMedicalNetworkId ?? null,
+        groupMedicalCategoryId:
+          row.group_medical_category_id ?? row.groupMedicalCategoryId ?? null,
+        insuranceProviderId:
+          row.insurance_provider_id ?? row.insuranceProviderId ?? null,
+        healthTpaId:
+          row.health_third_party_administrator_id ?? row.healthTpaId ?? null,
+        healthNetworkId:
+          row.health_network_id ??
+          row.group_medical_network_id ??
+          row.groupMedicalNetworkId ??
+          null,
         renewalDate: row.renewal_date ?? row.renewalDate ?? null,
-        numberOfPeople: (() => { const v = row.no_of_people ?? row.number_of_people ?? row.numberOfPeople ?? null; return v !== null && v !== '' ? parseInt(v, 10) : null; })(),
+        numberOfPeople: (() => {
+          const v =
+            row.no_of_people ??
+            row.number_of_people ??
+            row.numberOfPeople ??
+            null;
+          return v !== null && v !== '' ? parseInt(v, 10) : null;
+        })(),
       })),
     }))
     .submit(method, url, options);
@@ -732,7 +765,11 @@ function onSubmit(isValid) {
           class="w-full"
           label="WITH EXISTING GROUP HEALTH INSURANCE POLICY"
           placeholder="Select"
-          :rules="[v => v !== null && v !== undefined && v !== '' || 'This field is required']"
+          :rules="[
+            v =>
+              (v !== null && v !== undefined && v !== '') ||
+              'This field is required',
+          ]"
           required
           :error="quoteForm.errors.has_existing_group_health_insurance"
         />
@@ -754,9 +791,9 @@ function onSubmit(isValid) {
           :required="!isHealthPlanTypeSelectDisabled"
           :error="quoteForm.errors.health_plan_type_id"
           tooltip="Plan types are filtered by the selected emirate of registration."
-      />
+        />
 
-      <x-select
+        <x-select
           v-model="quoteForm.number_of_categories"
           :options="[1, 2, 3, 4, 5].map(n => ({ value: n, label: String(n) }))"
           class="w-full"
@@ -778,7 +815,8 @@ function onSubmit(isValid) {
                 id="gm-category-intake-help"
                 class="mt-1 max-w-2xl text-xs leading-relaxed text-gray-500"
               >
-                Please provide the number of people to be insured for each category.
+                Please provide the number of people to be insured for each
+                category.
               </p>
             </div>
             <div
@@ -837,31 +875,14 @@ function onSubmit(isValid) {
                     class="min-w-[12rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                     <x-tooltip placement="bottom">
-                      <span class="cursor-default underline decoration-dotted decoration-white">CATEGORY</span>
+                      <span
+                        class="cursor-default underline decoration-dotted decoration-white"
+                        >CATEGORY</span
+                      >
                       <template #tooltip>
-                        Choose the specific employee category this record refers to. Each category may have different plan Benefits and limits.
-                      </template>
-                    </x-tooltip>
-                  </th>
-                  <th
-                    scope="col"
-                    class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
-                  >
-                   <x-tooltip placement="bottom">
-                      <span class="cursor-default underline decoration-dotted decoration-white">EXISTING INSURANCE PROVIDER</span>
-                      <template #tooltip>
-                        Select the current health insurance provider for this group.
-                      </template>
-                    </x-tooltip>
-                  </th>
-                  <th
-                    scope="col"
-                    class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
-                  >
-                    <x-tooltip placement="bottom">
-                      <span class="cursor-default underline decoration-dotted decoration-white">EXISTING THIRD PARTY ADMINISTRATOR</span>
-                      <template #tooltip>
-                        Select the current TPA (Third Party Administrator) managing claims and approvals for the existing policy.
+                        Choose the specific employee category this record refers
+                        to. Each category may have different plan Benefits and
+                        limits.
                       </template>
                     </x-tooltip>
                   </th>
@@ -870,9 +891,43 @@ function onSubmit(isValid) {
                     class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                     <x-tooltip placement="bottom">
-                      <span class="cursor-default underline decoration-dotted decoration-white">EXISTING NETWORK</span>
+                      <span
+                        class="cursor-default underline decoration-dotted decoration-white"
+                        >EXISTING INSURANCE PROVIDER</span
+                      >
                       <template #tooltip>
-                        Select the current medical provider network name/level under the existing policy.
+                        Select the current health insurance provider for this
+                        group.
+                      </template>
+                    </x-tooltip>
+                  </th>
+                  <th
+                    scope="col"
+                    class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
+                  >
+                    <x-tooltip placement="bottom">
+                      <span
+                        class="cursor-default underline decoration-dotted decoration-white"
+                        >EXISTING THIRD PARTY ADMINISTRATOR</span
+                      >
+                      <template #tooltip>
+                        Select the current TPA (Third Party Administrator)
+                        managing claims and approvals for the existing policy.
+                      </template>
+                    </x-tooltip>
+                  </th>
+                  <th
+                    scope="col"
+                    class="min-w-[11.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
+                  >
+                    <x-tooltip placement="bottom">
+                      <span
+                        class="cursor-default underline decoration-dotted decoration-white"
+                        >EXISTING NETWORK</span
+                      >
+                      <template #tooltip>
+                        Select the current medical provider network name/level
+                        under the existing policy.
                       </template>
                     </x-tooltip>
                   </th>
@@ -881,9 +936,13 @@ function onSubmit(isValid) {
                     class="min-w-[10.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                     <x-tooltip placement="bottom">
-                      <span class="cursor-default underline decoration-dotted decoration-white">EXISTING POLICY RENEWAL DATE</span>
+                      <span
+                        class="cursor-default underline decoration-dotted decoration-white"
+                        >EXISTING POLICY RENEWAL DATE</span
+                      >
                       <template #tooltip>
-                        Enter the expiry date of the client’s current group health insurance policy as shown on the policy schedule.
+                        Enter the expiry date of the client’s current group
+                        health insurance policy as shown on the policy schedule.
                       </template>
                     </x-tooltip>
                   </th>
@@ -892,9 +951,14 @@ function onSubmit(isValid) {
                     class="min-w-[8.5rem] whitespace-nowrap border-r border-primary-500/40 px-3 py-3.5"
                   >
                     <x-tooltip placement="bottom">
-                      <span class="cursor-default underline decoration-dotted decoration-white">NUMBER OF PEOPLE</span>
+                      <span
+                        class="cursor-default underline decoration-dotted decoration-white"
+                        >NUMBER OF PEOPLE</span
+                      >
                       <template #tooltip>
-                        Enter the total number of insured members in this group/category (including employees and, if applicable, their dependents.
+                        Enter the total number of insured members in this
+                        group/category (including employees and, if applicable,
+                        their dependents.
                       </template>
                     </x-tooltip>
                   </th>
@@ -929,7 +993,9 @@ function onSubmit(isValid) {
                           `categories.${idx}.insuranceProviderId`
                         ]
                       "
-                      @update:modelValue="value => onInsuranceProviderChange(value, idx)"
+                      @update:modelValue="
+                        value => onInsuranceProviderChange(value, idx)
+                      "
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
@@ -937,21 +1003,25 @@ function onSubmit(isValid) {
                       v-model="row.health_third_party_administrator_id"
                       :options="tpaOptionsForRow(idx)"
                       class="w-full min-w-[10rem]"
-                      :placeholder="row.insurance_provider_id ? 'Select TPA' : 'Select insurer first'"
+                      :placeholder="
+                        row.insurance_provider_id
+                          ? 'Select TPA'
+                          : 'Select insurer first'
+                      "
                       filterable
                       :disabled="isExistingInsuranceNo"
-                      :error="
-                        quoteForm.errors[
-                          `categories.${idx}.healthTpaId`
-                        ]
-                      "
+                      :error="quoteForm.errors[`categories.${idx}.healthTpaId`]"
                     />
                   </td>
                   <td class="border-r border-gray-100 px-3 py-3">
                     <x-select
                       v-model="row.health_network_id"
                       :options="networkOptionsForRow(idx)"
-                      :disabled="isExistingInsuranceNo || !tpaIdForRow(idx) || isNetworkLoadingForRow(idx)"
+                      :disabled="
+                        isExistingInsuranceNo ||
+                        !tpaIdForRow(idx) ||
+                        isNetworkLoadingForRow(idx)
+                      "
                       :placeholder="
                         isNetworkLoadingForRow(idx)
                           ? 'Loading...'
@@ -962,9 +1032,7 @@ function onSubmit(isValid) {
                       class="w-full min-w-[10rem]"
                       filterable
                       :error="
-                        quoteForm.errors[
-                          `categories.${idx}.healthNetworkId`
-                        ]
+                        quoteForm.errors[`categories.${idx}.healthNetworkId`]
                       "
                     />
                   </td>
@@ -986,7 +1054,14 @@ function onSubmit(isValid) {
                       type="number"
                       class="w-full min-w-[7.5rem]"
                       size="sm"
-                      :rules="[isRequired, isNumber, v => Number.isInteger(Number(v)) || 'Must be a whole number.', maxValidation(2147483645)]"
+                      :rules="[
+                        isRequired,
+                        isNumber,
+                        v =>
+                          Number.isInteger(Number(v)) ||
+                          'Must be a whole number.',
+                        maxValidation(2147483645),
+                      ]"
                       :error="
                         quoteForm.errors[`categories.${idx}.numberOfPeople`]
                       "

@@ -103,7 +103,7 @@ export function useAllocationForm(props, errorHandling) {
     }
   };
 
-  const fetchPlanTypes = async (quoteType) => {
+  const fetchPlanTypes = async quoteType => {
     planTypeOptions.value = [];
 
     try {
