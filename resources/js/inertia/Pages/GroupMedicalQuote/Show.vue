@@ -94,7 +94,7 @@ const dateFormat = date =>
 const dateFormatYMD = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
 
-const { copy } = useClipboard();
+const { copy } = useClipboard({ legacy: true });
 
 const gmEcommerceCopyLink = computed(
   () => page.props.gmEcommerceCopyLink ?? { enabled: false },
@@ -109,28 +109,51 @@ const onCopyGmEcommerceJourneyLink = () => {
     return;
   }
   gmEcommerceCopyLinkLoading.value = true;
-  axios
-    .post(route('amt.ecommerce-copy-link', page.props.quote.uuid))
-    .then(res => {
-      copy(res.data.url);
-      notification.success({
-        title:
-          'Link copied to clipboard. Share it with the customer so they can continue their journey.',
-        position: 'top',
+
+  const fetchUrl = () =>
+    axios
+      .post(route('amt.ecommerce-copy-link', page.props.quote.uuid))
+      .then(res => res.data.url)
+      .finally(() => {
+        gmEcommerceCopyLinkLoading.value = false;
       });
-    })
-    .catch(err => {
-      const message =
-        err.response?.data?.message ??
-        'Could not copy the ecommerce link. Please try again.';
-      notification.error({
-        title: message,
-        position: 'top',
-      });
-    })
-    .finally(() => {
-      gmEcommerceCopyLinkLoading.value = false;
+
+  const onCopySuccess = () => {
+    notification.success({
+      title:
+        'Link copied to clipboard. Share it with the customer so they can continue their journey.',
+      position: 'top',
     });
+  };
+
+  const onCopyError = err => {
+    const message =
+      err.response?.data?.message ??
+      'Could not copy the ecommerce link. Please try again.';
+    notification.error({ title: message, position: 'top' });
+  };
+
+  // Safari requires clipboard.write() to be called synchronously within the user gesture.
+  // Passing a Promise to ClipboardItem lets the fetch happen async while keeping the
+  // gesture context alive — the only pattern that works on Safari.
+  if (navigator.clipboard && window.ClipboardItem) {
+    const blobPromise = fetchUrl()
+      .then(url => new Blob([url], { type: 'text/plain' }))
+      .catch(err => {
+        onCopyError(err);
+        throw err;
+      });
+
+    navigator.clipboard
+      .write([new ClipboardItem({ 'text/plain': blobPromise })])
+      .then(onCopySuccess)
+      .catch(() => {});
+  } else {
+    fetchUrl().then(url => {
+      copy(url);
+      onCopySuccess();
+    }).catch(onCopyError);
+  }
 };
 
 const natureOfCompanyActivityText = computed(
