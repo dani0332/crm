@@ -80,6 +80,7 @@ class DatabaseSeeder extends Seeder
             VisaCategorySeeder::class,
             SalaryBandSeeder::class,
             MaritalStatusSeeder::class,
+            PqaLeadAllocationPermissionSeeder::class,
         ]);
     }
 }
