@@ -433,7 +433,7 @@ onMounted(() => {
       <template #item-quoteTypeCode="{ quoteTypeCode, lobs }">
         <div class="flex flex-wrap gap-1">
           <span
-            v-for="lob in (lobs ?? [quoteTypeCode])"
+            v-for="lob in lobs ?? [quoteTypeCode]"
             :key="lob"
             class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700"
           >

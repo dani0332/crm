@@ -138,7 +138,7 @@ const advisorOptions = computed(() => {
 const pqaOptions = computed(() => {
   return page.props.pqas.map(advisor => ({
     value: advisor.id,
-    label: advisor.name
+    label: advisor.name,
   }));
 });
 const pqaAdvisorOptions = computed(() => {
