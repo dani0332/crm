@@ -9,6 +9,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\SendPolicyTypeEnum;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\SendBookPolicyRequest;
+use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\PolicyIssuance;
 use App\Models\TravelQuote;
 use App\Services\CentralService;
@@ -121,9 +122,20 @@ final class DicBookPolicyService
                         $response['status'] = true;
                         $response['completed_step'] = PolicyIssuanceEnum::DIC_TRAVEL_BOOK_POLICY;
                         $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
+
+                        $data = (object) [
+                            'advisorId' => $quote->advisor_id,
+                            'model_type' => quoteTypeCode::Travel,
+                            'quote_id' => $quote->id,
+                        ];
+                        LoggerService::info('DIC Travel: BookPolicy dispatching SendBookPolicyDocumentsJob', [
+                            'quote_code' => $quote->code,
+                            'advisor_id' => $quote->advisor_id,
+                        ]);
+                        SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
                     }
                 } catch (Exception $e) {
-                    LoggerService::error('DIC Travel: BookPolicy exception', [
+                    LoggerService::warning('DIC Travel: BookPolicy exception', [
                         'quote_code' => $quote->code,
                     ], exception: $e);
                     $response['error'] = 'Book policy failed: '.$e->getMessage();
