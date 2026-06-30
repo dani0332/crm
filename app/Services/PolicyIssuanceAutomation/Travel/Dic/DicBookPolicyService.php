@@ -126,13 +126,13 @@ final class DicBookPolicyService
                         $data = (object) [
                             'advisorId' => $quote->advisor_id,
                             'model_type' => quoteTypeCode::Travel,
-                            'quote_id' => $quote->id,
+                            'quote_id' => $quote->uuid,
                         ];
                         LoggerService::info('DIC Travel: BookPolicy dispatching SendBookPolicyDocumentsJob', [
                             'quote_code' => $quote->code,
                             'advisor_id' => $quote->advisor_id,
                         ]);
-                        SendBookPolicyDocumentsJob::dispatch($data, $quote->code);
+                        SendBookPolicyDocumentsJob::dispatch($data, $quote->uuid);
                     }
                 } catch (Exception $e) {
                     LoggerService::warning('DIC Travel: BookPolicy exception', [

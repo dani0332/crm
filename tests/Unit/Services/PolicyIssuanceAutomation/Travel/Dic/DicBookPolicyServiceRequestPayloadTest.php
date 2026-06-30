@@ -87,13 +87,13 @@ test('SendBookPolicyDocumentsJob dispatch is inside the Sage success branch only
     expect($dispatchFound)->toBeTrue();
 });
 
-test('SendBookPolicyDocumentsJob dispatch passes advisor_id quote_id and Travel model_type', function (): void {
+test('SendBookPolicyDocumentsJob dispatch passes advisor_id quote_uuid and Travel model_type', function (): void {
     $filename = (new ReflectionClass(DicBookPolicyService::class))->getFileName();
     $contents = file_get_contents($filename);
     expect($contents)->toBeString();
 
     expect($contents)->toContain("'advisorId' => \$quote->advisor_id,");
     expect($contents)->toContain("'model_type' => quoteTypeCode::Travel,");
-    expect($contents)->toContain("'quote_id' => \$quote->id,");
-    expect($contents)->toContain('SendBookPolicyDocumentsJob::dispatch($data, $quote->code);');
+    expect($contents)->toContain("'quote_id' => \$quote->uuid,");
+    expect($contents)->toContain('SendBookPolicyDocumentsJob::dispatch($data, $quote->uuid);');
 });
