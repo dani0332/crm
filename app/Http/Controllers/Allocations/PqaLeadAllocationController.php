@@ -12,6 +12,8 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PqaAllocationAvailabilityRequest;
+use App\Models\BusinessQuote;
+use App\Models\HealthQuote;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\PqaAllocation\PqaLeadAllocationService;
@@ -75,14 +77,14 @@ class PqaLeadAllocationController extends Controller
         $groupMedicalTypeId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
         $today = now()->toDateString();
 
-        $healthCount = DB::table('health_quote_request')
+        $healthCount = HealthQuote::query()
             ->whereNotNull('pq_advisor_id')
             // ->where('quote_status_id', $healthNewLeadStatus)
             ->whereDate('pq_assigned_at', $today)
             ->whereDate('created_at', $today)
             ->count();
 
-        $corplineCount = DB::table('business_quote_request')
+        $corplineCount = BusinessQuote::query()
             ->whereNotNull('pq_advisor_id')
             // ->where('quote_status_id', $corplineQualPendingStatus)
             ->where('business_type_of_insurance_id', '!=', $groupMedicalTypeId)
@@ -90,7 +92,7 @@ class PqaLeadAllocationController extends Controller
             ->whereDate('created_at', $today)
             ->count();
 
-        $groupMedicalCount = DB::table('business_quote_request')
+        $groupMedicalCount = BusinessQuote::query()
             ->whereNotNull('pq_advisor_id')
             ->where('business_type_of_insurance_id', $groupMedicalTypeId)
             ->whereDate('pq_assigned_at', $today)
@@ -118,20 +120,20 @@ class PqaLeadAllocationController extends Controller
 
         $today = now()->toDateString();
 
-        $healthCount = DB::table('health_quote_request')
+        $healthCount = HealthQuote::query()
             ->whereNull('pq_advisor_id')
             // ->where('quote_status_id', $healthNewLeadStatus)
             ->whereDate('created_at', $today)
             ->count();
 
-        $corplineCount = DB::table('business_quote_request')
+        $corplineCount = BusinessQuote::query()
             ->whereNull('pq_advisor_id')
             // ->where('quote_status_id', $corplineQualPendingStatus)
             ->where('business_type_of_insurance_id', '!=', $groupMedicalTypeId)
             ->whereDate('created_at', $today)
             ->count();
 
-        $groupMedicalCount = DB::table('business_quote_request')
+        $groupMedicalCount = BusinessQuote::query()
             ->whereNull('pq_advisor_id')
             ->where('business_type_of_insurance_id', $groupMedicalTypeId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake])
@@ -222,10 +224,7 @@ class PqaLeadAllocationController extends Controller
                 ->leftJoin('teams as t_lob', function ($join) use ($productType, $corplineName, $groupMedicalName) {
                     $join->on('t_lob.id', '=', 'up_lob.product_id')
                         ->where('t_lob.type', $productType)
-                        ->whereRaw("(
-                             UPPER(t_lob.name) IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}'))
-                             OR UPPER(t_lob.name) = UPPER(qt.code)
-                         )");
+                        ->whereRaw('(UPPER(t_lob.name) IN (UPPER(?), UPPER(?)) OR UPPER(t_lob.name) = UPPER(qt.code))', [$corplineName, $groupMedicalName]);
                 })
                 ->where('mhr.model_type', User::class)
                 ->where('r.name', RolesEnum::PreQualificationAdvisor)
@@ -239,13 +238,14 @@ class PqaLeadAllocationController extends Controller
                         ->join('teams as t_m', 't_m.id', '=', 'up_m.product_id')
                         ->whereColumn('up_m.user_id', 'users.id')
                         ->where('t_m.type', $productType)
-                        ->whereRaw("(
-                            (UPPER(t_m.name) IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}')) AND la.quote_type_id = {$businessQuoteTypeId})
+                        ->whereRaw('(
+                            (UPPER(t_m.name) IN (UPPER(?), UPPER(?)) AND la.quote_type_id = ?)
                             OR
-                            (UPPER(t_m.name) NOT IN (UPPER('{$corplineName}'), UPPER('{$groupMedicalName}')) AND la.quote_type_id = (
+                            (UPPER(t_m.name) NOT IN (UPPER(?), UPPER(?)) AND la.quote_type_id = (
                                 SELECT qt_m.id FROM quote_type qt_m WHERE UPPER(qt_m.code) = UPPER(t_m.name) LIMIT 1
                             ))
-                        )");
+                        )', [$corplineName, $groupMedicalName, $businessQuoteTypeId, $corplineName, $groupMedicalName]);
+
                 })
                 ->groupBy(
                     'users.name',
