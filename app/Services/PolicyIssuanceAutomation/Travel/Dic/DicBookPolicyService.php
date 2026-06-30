@@ -124,13 +124,13 @@ final class DicBookPolicyService
                         $response['message'] = 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!';
 
                         $data = (object) [
-                            'advisorId' => $quote->advisor_id,
+                            'advisorId' => $quote?->advisor_id ?? null,
                             'model_type' => quoteTypeCode::Travel,
                             'quote_id' => $quote->uuid,
                         ];
                         LoggerService::info('DIC Travel: BookPolicy dispatching SendBookPolicyDocumentsJob', [
                             'quote_code' => $quote->code,
-                            'advisor_id' => $quote->advisor_id,
+                            'advisor_id' => $quote?->advisor_id ?? null,
                         ]);
                         SendBookPolicyDocumentsJob::dispatch($data, $quote->uuid);
                     }
