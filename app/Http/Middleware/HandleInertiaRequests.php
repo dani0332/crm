@@ -454,6 +454,22 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::PQA_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::PQA_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::PQA_LEAD_ALLOCATION_EDIT,
+        ])) {
+            $nav = $nav->add('Prospect Allocation', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        true,
+                        'Pre Qualification',
+                        route('pqa-lead-allocation-dashboard'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
+            });
+        }
+
         if (auth()->user()->can(PermissionsEnum::BUY_LEADS)) {
             $nav = $nav->add('Buy Leads', '', function (Section $section) {
                 $section
