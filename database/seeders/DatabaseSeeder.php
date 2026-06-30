@@ -36,7 +36,7 @@ class DatabaseSeeder extends Seeder
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
-            GroupMedicalQuoteCopyLinkPermissionSeeder::class,
+            // GroupMedicalQuoteCopyLinkPermissionSeeder::class,
             // AiAdvisorSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
@@ -77,6 +77,7 @@ class DatabaseSeeder extends Seeder
             VisaCategorySeeder::class,
             SalaryBandSeeder::class,
             MaritalStatusSeeder::class,
+            PqaLeadAllocationPermissionSeeder::class,
         ]);
     }
 }
