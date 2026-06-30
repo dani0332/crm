@@ -15,12 +15,10 @@ use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Jobs\SendAutomatedTravelFollowup;
 use App\Jobs\SendAutomatedTravelRenewalFollowup;
 use App\Jobs\SICFollowupEmailJob;
-use App\Models\ApplicationStorage;
 use App\Models\QuoteFlowDetails;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\BaseService;
-use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
@@ -368,35 +366,22 @@ class TravelEmailService extends BaseService
      */
     public function sendAutomatedTravelRenewalFollowup(TravelQuote $travelQuote)
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS)->first();
-
         LoggerService::info('sendAutomatedTravelRenewalFollowup - Initiating process for Travel renewal quote');
 
-        if ($workflowUrl && ! empty($workflowUrl->value)) {
-            // Fetch the advisor
-            $advisor = User::find($travelQuote->advisor_id);
-            if (! $advisor) {
-                LoggerService::info("sendAutomatedTravelRenewalFollowup - Advisor not found for travel renewal quote: {$travelQuote->uuid}");
+        $advisor = User::find($travelQuote->advisor_id);
+        if (! $advisor) {
+            LoggerService::info("sendAutomatedTravelRenewalFollowup - Advisor not found for travel renewal quote: {$travelQuote->uuid}");
 
-                return;
-            }
-
-            // Build email data for automated follow-ups using common email data builder
-            $emailData = $this->buildCommonEmailData($travelQuote, $advisor, null, WorkflowTypeEnum::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS);
-
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-
-            LoggerService::info('sendAutomatedTravelRenewalFollowup - Response: '.json_encode($response));
-
-            if ($response && in_array($response->status_code, [200, 201])) {
-                app(BirdService::class)->createQuoteWorkFlowDetails($travelQuote, $response, QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::TRAVEL->id());
-                LoggerService::info('sendAutomatedTravelRenewalFollowup - Successfully triggered automated follow-up workflow');
-            } else {
-                LoggerService::info("sendAutomatedTravelRenewalFollowup - Error triggering event having response status code: {$response?->status_code}");
-            }
-        } else {
-            LoggerService::info(self::class." - Automated Travel Renewal Followup workflow url not found for quote: {$travelQuote->uuid}");
+            return;
         }
+
+        $emailData = $this->buildCommonEmailData($travelQuote, $advisor, null, WorkflowTypeEnum::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS);
+
+        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS, (array) $emailData);
+
+        LoggerService::info('sendAutomatedTravelRenewalFollowup - Successfully triggered automated follow-up workflow');
+
+        app(WebEngageService::class)->createQuoteWorkFlowDetails($travelQuote->uuid, QuoteFlowType::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::TRAVEL->id());
     }
 
     public function sendTravelQatarFailedAllocationEmail($lead)
@@ -503,34 +488,20 @@ class TravelEmailService extends BaseService
      */
     public function sendAutomatedTravelFollowup(TravelQuote $travelQuote)
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_AUTOMATED_FOLLOWUPS)->first();
-
         LoggerService::info('sendAutomatedTravelFollowup - Initiating process for Travel quote');
 
-        if ($workflowUrl && ! empty($workflowUrl->value)) {
-            // Fetch the advisor
-            $advisor = User::find($travelQuote->advisor_id);
-            if (! $advisor) {
-                LoggerService::info("sendAutomatedTravelFollowup - Advisor not found for travel quote: {$travelQuote->uuid}");
-            }
-
-            // Build email data for automated follow-ups (Bird will fetch PDF via API when needed)
-            $emailData = $this->buildCommonEmailData($travelQuote, $advisor, null, 'travel_automated_followups');
-
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-
-            LoggerService::info('sendAutomatedTravelFollowup - Response: '.json_encode($response));
-
-            if ($response && $response->status_code === 200) {
-
-                app(BirdService::class)->createQuoteWorkFlowDetails($travelQuote, $response, QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::TRAVEL->id());
-                LoggerService::info('sendAutomatedTravelFollowup - Successfully triggered automated follow-up workflow');
-            } else {
-                LoggerService::info("sendAutomatedTravelFollowup - Error triggering event having response status code: {$response?->status_code}");
-            }
-        } else {
-            LoggerService::info(self::class." - Automated Travel Followup workflow url not found for quote: {$travelQuote->uuid}");
+        $advisor = User::find($travelQuote->advisor_id);
+        if (! $advisor) {
+            LoggerService::info("sendAutomatedTravelFollowup - Advisor not found for travel quote: {$travelQuote->uuid}");
         }
+
+        $emailData = $this->buildCommonEmailData($travelQuote, $advisor, null, WorkflowTypeEnum::TRAVEL_AUTOMATED_FOLLOWUPS);
+
+        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::TRAVEL_AUTOMATED_FOLLOWUPS, (array) $emailData);
+
+        LoggerService::info('sendAutomatedTravelFollowup - Successfully triggered automated follow-up workflow');
+
+        app(WebEngageService::class)->createQuoteWorkFlowDetails($travelQuote->uuid, QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::TRAVEL->id());
     }
 
     /**
@@ -540,7 +511,7 @@ class TravelEmailService extends BaseService
     {
         try {
             // Check if automated follow-up is already executed to prevent duplicates
-            $isFollowupExecuted = app(BirdService::class)
+            $isFollowupExecuted = app(WebEngageService::class)
                 ->isFollowupExecuted($travelQuote->uuid, QuoteTypes::TRAVEL->id(), QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS->value);
 
             if ($isFollowupExecuted) {
