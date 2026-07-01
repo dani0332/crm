@@ -15,6 +15,8 @@ use App\Models\HealthRateControl;
 use App\Models\RateCoverageProcess;
 use App\Models\RateCoverageUpload;
 use App\Services\Logger\LoggerService;
+use App\Support\HealthPlanVersionHelper;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -247,12 +249,12 @@ class RateCoverageUploadService
                 // Get first plan code to validate from database
                 $rowAssoc = array_combine($headers, $rows[1]);
                 if (empty($rowAssoc['plan_code'])) {
-                    throw new \Exception('Plan code is required.');
+                    $this->throwValidationError('Plan code is required.');
                 }
 
                 $plans = $this->healthPlanService->getPlanByCode($rowAssoc['plan_code']);
                 if ($plans->isEmpty()) {
-                    throw new \Exception('Plan not found.');
+                    $this->throwValidationError('Plan not found.');
                 }
 
                 // Filter draft plan if exists
@@ -286,7 +288,7 @@ class RateCoverageUploadService
                         empty($copaymentCode) ||
                         empty($emirateType)
                     ) {
-                        throw new \Exception("All fields (plan_code, min_age, max_age, premium, copayment_code, emirate_type) are required. Please check row {$i}");
+                        $this->throwValidationError("All fields (plan_code, min_age, max_age, premium, copayment_code, emirate_type) are required. Please check row {$i}");
                     }
 
                     // Validate plan code is the same as the first plan code
@@ -294,46 +296,45 @@ class RateCoverageUploadService
                     if ($i > 1) {
                         $prevRowAssoc = array_combine($headers, $rows[$i - 1]);
                         if ($planCode !== $prevRowAssoc['plan_code']) {
-                            throw new \Exception('All plan codes must be the same. Please check plan code at row '.($i + 1));
+                            $this->throwValidationError('All plan codes must be the same. Please check plan code at row '.($i + 1));
                         }
                     }
 
                     // Validate min age as integers
                     if (! ctype_digit(strval($minAge))) {
-                        throw new \Exception('All min ages values must be integers.');
+                        $this->throwValidationError('All min ages values must be integers.');
                     }
 
                     // Validate max age as integers
                     if (! ctype_digit(strval($maxAge))) {
-                        throw new \Exception('All max ages values must be integers.');
+                        $this->throwValidationError('All max ages values must be integers.');
                     }
 
                     // Validate premium as integers
                     if (! preg_match('/^\d+(\.\d{1,2})?$/', strval($premium))) {
-
-                        throw new \Exception('All premiums can be a decimal upto 2 digits. Please check row '.($i + 1).'.');
+                        $this->throwValidationError('All premiums can be a decimal upto 2 digits. Please check row '.($i + 1).'.');
                     }
 
                     // Validate gender based on plan gender enabled
                     if ($plan->gender_enabled) {
                         if (empty($gender)) {
-                            throw new \Exception('Gender is required when plan gender is enabled.');
+                            $this->throwValidationError('Gender is required when plan gender is enabled.');
                         }
 
                         $allowedGenders = ['male', 'female'];
                         if (! in_array(strtolower($gender), $allowedGenders, true)) {
-                            throw new \Exception('Gender ('.$gender.') value must be either "male" or "female" at row '.($i + 1));
+                            $this->throwValidationError('Gender ('.$gender.') value must be either "male" or "female" at row '.($i + 1));
                         }
                     }
 
                     // Validate cohort based on plan cohort enabled
                     if ($plan->cohort_enabled) {
                         if (empty($cohort)) {
-                            throw new \Exception('Cohort is required when plan cohort is enabled.');
+                            $this->throwValidationError('Cohort is required when plan cohort is enabled.');
                         }
 
                         if (! in_array(strtoupper($cohort), $allCohorts, true)) {
-                            throw new \Exception('Invalid cohort value.');
+                            $this->throwValidationError('Invalid cohort value.');
                         }
                     }
 
@@ -341,27 +342,27 @@ class RateCoverageUploadService
                     if ($plan->marital_status_enabled) {
                         // Plan gender must be enabled if marital status is enabled, other throw error
                         if (! $plan->gender_enabled) {
-                            throw new \Exception('Gender must be enabled when marital status is enabled.');
+                            $this->throwValidationError('Gender must be enabled when marital status is enabled.');
                         }
 
                         if (empty($maritalStatus) && strtolower($gender) == strtolower(GenderEnum::FEMALE->value)) {
-                            throw new \Exception('Marital status is required when gender is female and plan marital status is enabled.');
+                            $this->throwValidationError('Marital status is required when gender is female and plan marital status is enabled.');
                         }
 
                         $allowedMaritalStatuses = ['single', 'married'];
                         if (! empty($maritalStatus) && ! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true)) {
-                            throw new \Exception('Marital status value must be either "single" or "married".');
+                            $this->throwValidationError('Marital status value must be either "single" or "married".');
                         }
                     }
 
                     // Validate if copayment code is in the list of all co payments
                     if ($copaymentCode && ! in_array($copaymentCode, $allCoPayments, true)) {
-                        throw new \Exception('Invalid copayment code value.');
+                        $this->throwValidationError('Invalid copayment code value.');
                     }
 
                     // Validate emirate type
                     if (! in_array($emirateType, EmirateTypeEnum::labels(), true)) {
-                        throw new \Exception('Invalid emirate type value.');
+                        $this->throwValidationError('Invalid emirate type value.');
                     }
 
                     // Apply unique combination
@@ -380,7 +381,7 @@ class RateCoverageUploadService
                             if (
                                 ($minAge <= $seenAgeRange['max_age'] && $maxAge >= $seenAgeRange['min_age'])
                             ) {
-                                throw new \Exception('Duplicate row detected at row '.($i + 1));
+                                $this->throwValidationError('Duplicate row detected at row '.($i + 1));
                             }
                         }
                         // If no overlap, add the new age range to the combination
@@ -407,7 +408,7 @@ class RateCoverageUploadService
                 });
 
             } else {
-                throw new \Exception('No data found in the file.');
+                $this->throwValidationError('No data found in the file.');
             }
         }
     }
@@ -424,7 +425,7 @@ class RateCoverageUploadService
         $draftVersion = $this->healthRateControlService->getByPlanIdAndStatus($planId, [HealthPlanRateSheetStatusEnum::DRAFT->value, HealthPlanRateSheetStatusEnum::SCHEDULED->value]);
 
         if ($draftVersion) {
-            throw new \Exception("Upload rejected. A pending rate sheet already exists for plan {$planCode}. Please delete the existing Draft/Scheduled rate sheet before uploading a new one");
+            $this->throwValidationError("Upload rejected. A pending rate sheet already exists for plan {$planCode}. Please delete the existing Draft/Scheduled rate sheet before uploading a new one");
         }
 
         // Derive plan versiob
@@ -501,12 +502,10 @@ class RateCoverageUploadService
             ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE)
             ->first();
 
-        // If active version exists, return next minor version for draft
         if ($plan) {
-            return $plan->version + 0.1;
+            return HealthPlanVersionHelper::nextMinorVersion($plan->version);
         }
 
-        // If no active version exists, return 1.0
         return 1.0;
     }
 
@@ -641,6 +640,13 @@ class RateCoverageUploadService
         return RateCoverageProcess::where('rate_coverage_id', $id)
             ->whereNotNull('validation_errors')
             ->get(['data', 'validation_errors']);
+    }
+
+    private function throwValidationError(string $message): never
+    {
+        throw new HttpResponseException(
+            response()->json(['message' => $message], 422)
+        );
     }
 
 }

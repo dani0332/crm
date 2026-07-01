@@ -7,6 +7,7 @@ use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Models\HealthPlan;
 use App\Models\HealthRate;
 use App\Models\HealthRateControl;
+use App\Support\HealthPlanVersionHelper;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -152,14 +153,12 @@ class HealthRateService extends BaseService
 
     private function deriveVersion(array $planIds): float
     {
-        // Get active rate sheet version
         $activeRateSheet = HealthRateControl::whereIn('health_plan_id', $planIds)
             ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
             ->first();
 
-        // If found, return next version
         if ($activeRateSheet) {
-            return $activeRateSheet->version + 0.1;
+            return HealthPlanVersionHelper::nextMinorVersion($activeRateSheet->version);
         }
 
         return 1.0;

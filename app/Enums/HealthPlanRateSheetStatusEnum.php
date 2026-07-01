@@ -9,4 +9,9 @@ enum HealthPlanRateSheetStatusEnum: string
     case ARCHIVED = 'archived';
     case ACTIVE = 'active';
     case SCHEDULED = 'scheduled';
+
+    public function label(): string
+    {
+        return ucfirst($this->value);
+    }
 }

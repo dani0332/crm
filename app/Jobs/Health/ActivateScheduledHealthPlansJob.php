@@ -7,6 +7,7 @@ use App\Models\HealthPlan;
 use App\Models\HealthRate;
 use App\Models\HealthRateControl;
 use App\Services\Logger\LoggerService;
+use App\Support\HealthPlanVersionHelper;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -161,6 +162,6 @@ class ActivateScheduledHealthPlansJob implements ShouldQueue
 
     private function deriveMajorVersion(float $version): float
     {
-        return (float) (ceil($version).'.0');
+        return HealthPlanVersionHelper::nextMajorVersion($version);
     }
 }

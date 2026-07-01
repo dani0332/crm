@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Models\HealthPlan;
 use App\Models\HealthRateControl;
+use App\Support\HealthPlanVersionHelper;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -148,25 +149,20 @@ class HealthPlanService extends BaseService
 
     private function deriveVersion(HealthPlan $plan): float
     {
-        // When we edit active version, get next draft version
         if ($plan->status == HealthPlanRateSheetStatusEnum::ACTIVE->value) {
-            return $plan->version + 0.1;
+            return HealthPlanVersionHelper::nextMinorVersion($plan->version);
         }
 
-        // When we publish draft version
         if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
-            $version = ceil($plan->version).'.0';
-
-            return (float) $version;
+            return HealthPlanVersionHelper::nextMajorVersion($plan->version);
         }
 
-        // Else editing archived version, Get active version and return next draft version
         $activeVersion = HealthPlan::where('id', $plan->parent_id)
             ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE->value)
             ->first();
 
         if ($activeVersion) {
-            return $activeVersion->version + 0.1;
+            return HealthPlanVersionHelper::nextMinorVersion($activeVersion->version);
         }
 
         return 1.0;

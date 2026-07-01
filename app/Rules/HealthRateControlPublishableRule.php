@@ -22,7 +22,7 @@ class HealthRateControlPublishableRule implements ValidationRule
             return;
         }
 
-        if (strtolower($rateControl->status) !== strtolower(HealthPlanRateSheetStatusEnum::DRAFT->value)) {
+        if ($rateControl->status !== HealthPlanRateSheetStatusEnum::DRAFT) {
             $fail('Only draft rate sheets can be published.');
 
             return;
