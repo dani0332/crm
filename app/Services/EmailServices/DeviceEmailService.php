@@ -2,50 +2,43 @@
 
 namespace App\Services\EmailServices;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\SendDeviceAutomatedFollowupJob;
-use App\Models\ApplicationStorage;
 use App\Models\User;
 use App\Services\BaseService;
-use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 
 class DeviceEmailService extends BaseService
 {
     public function sendDeviceOCBIntroEmail($lead)
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_DEVICE_OCB_INTRO_EMAIL)->first();
 
         LoggerService::info('| sendDeviceOCBIntroEmail - Initiating process');
-        $advisor = null;
-        if ($workflowUrl && ! empty($workflowUrl->value)) {
-            // Fetch the advisor
-            $advisor = User::find($lead->advisor_id);
-        }
+
+        // Fetch the advisor
+        $advisor = User::find($lead->advisor_id);
 
         if (empty($advisor)) {
             LoggerService::info('sendDeviceOCBIntroEmail - Advisor not found');
         }
 
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::DEVICE_OCB_INTRO_EMAIL);
+        $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::DEVICE_OCB_INTRO_EMAIL, (array) $emailData);
 
-        $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-
-        if ($response && $response->status_code === 200) {
+        if ($response) {
             LoggerService::info('sendDeviceOCBIntroEmail - Successfully triggered event');
-            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::DEVICE->id(), QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS->value);
+            $isFollowupExecuted = app(WebEngageService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::DEVICE->id(), QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS->value);
             if (! $isFollowupExecuted) {
                 SendDeviceAutomatedFollowupJob::dispatch($lead->uuid)->delay(now()->addSeconds(10));
                 LoggerService::info('sendDeviceOCBIntroEmail - Successfully dispatched cyber automated followup job');
             }
 
-            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::DEVICE_OCB_INTRO_EMAIL->value, QuoteTypes::DEVICE->id());
+            app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, QuoteFlowType::DEVICE_OCB_INTRO_EMAIL->value, QuoteTypes::DEVICE->id());
             LoggerService::info('sendDeviceOCBIntroEmail - Successfully created quote flow details');
             if (getWhatsappConsent(QuoteTypes::DEVICE, $lead->uuid)) {
-                app(BirdService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::DEVICE_OCB_INTRO_WHATSAPP, QuoteTypes::DEVICE->id());
+                app(WebEngageService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::DEVICE_OCB_INTRO_WHATSAPP, QuoteTypes::DEVICE->id());
                 LoggerService::info('sendDeviceOCBIntroEmail - Successfully created quote whatsapp flow details');
             }
         }
@@ -54,9 +47,12 @@ class DeviceEmailService extends BaseService
 
     private function buildEmailData($lead, $advisor, $workflowType)
     {
-        $isFlowExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::DEVICE->id(), QuoteFlowType::DEVICE_OCB_INTRO_EMAIL->value);
+        $isFlowExecuted = app(WebEngageService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::DEVICE->id(), QuoteFlowType::DEVICE_OCB_INTRO_EMAIL->value);
 
         return [
+            'customerId' => $lead->customer_id ?? '',
+            'firstName' => $lead->first_name ?? '',
+            'lastName' => $lead->last_name ?? '',
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorLandLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
             'advisorMobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
@@ -78,33 +74,29 @@ class DeviceEmailService extends BaseService
 
     public function sendDeviceAutomatedFollowups($lead)
     {
-        $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::DEVICE->id(), QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS->value);
+        $isFollowupExecuted = app(WebEngageService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::DEVICE->id(), QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS->value);
         if ($isFollowupExecuted) {
             LoggerService::info('sendDeviceAutomatedFollowups - Followup already executed');
 
             return;
         }
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_DEVICE_OCB_INTRO_EMAIL)->first();
 
         LoggerService::info('| sendDeviceAutomatedFollowups - Initiating process');
 
-        if ($workflowUrl && ! empty($workflowUrl->value)) {
-            // Fetch the advisor
-            $advisor = User::find($lead->advisor_id);
-        }
-
+        // Fetch the advisor
+        $advisor = User::find($lead->advisor_id);
         if (! $advisor) {
             LoggerService::info('sendDeviceAutomatedFollowups - Advisor not found');
         }
 
         $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::DEVICE_AUTOMATED_FOLLOWUPS);
 
-        $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+        $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::DEVICE_AUTOMATED_FOLLOWUPS, (array) $emailData);
 
-        if ($response && $response->status_code === 200) {
+        if ($response) {
             LoggerService::info('sendDeviceAutomatedFollowups - Successfully triggered event');
-            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS->value, QuoteTypes::DEVICE->id());
-            LoggerService::info('sendDeviceAutomatedFollowups - Successfully created quote flow details');
+            app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, QuoteFlowType::DEVICE_AUTOMATED_FOLLOWUPS->value, QuoteTypes::DEVICE->id());
+            LoggerService::info('sendDeviceAutomatedFollowups - Successfully created quote flow details ');
         } else {
             LoggerService::info("sendDeviceAutomatedFollowups - Error triggering event having response status code: {$response?->status_code}");
         }
@@ -115,15 +107,9 @@ class DeviceEmailService extends BaseService
         try {
 
             $advisor = User::find($lead->advisor_id);
-            $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_DEVICE_OCB_INTRO_EMAIL)->first();
-            if (! $workflowUrl) {
-                return [
-                    'success' => false,
-                    'message' => 'Workflow URL not found',
-                ];
-            }
+
             $emailData = $this->buildEmailData($lead, $advisor, WorkflowTypeEnum::DEVICE_ZERO_PLANS_EMAIL);
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::DEVICE_ZERO_PLANS_EMAIL, (array) $emailData);
 
             if ($response) {
                 return [

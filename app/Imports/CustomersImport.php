@@ -2,94 +2,133 @@
 
 namespace App\Imports;
 
-use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\SyncCustomerJob;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
 use App\Services\BerlinService;
-use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Maatwebsite\Excel\Concerns\OnEachRow;
-use Maatwebsite\Excel\Row;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class CustomersImport implements OnEachRow
+class CustomersImport implements ToCollection, WithChunkReading, WithHeadingRow
 {
-    public $myalfredExpiryDate;
-    public $CDBId;
-    public $inviatationEmail;
-    public $sendEmailCustomerService;
-    public $berlinService;
+    public int $rowCount = 0;
+
+    /** @var array<int, object> */
+    public array $customersToExtend = [];
 
     public function __construct(
-        $myalfredExpiryDate,
-        $cdbId,
-        $inviatationEmail,
-        SendEmailCustomerService $sendEmailCustomerService,
-        BerlinService $berlinService,
-    ) {
-        $this->myalfredExpiryDate = $myalfredExpiryDate;
-        $this->CDBId = $cdbId;
-        $this->inviatationEmail = $inviatationEmail;
-        $this->sendEmailCustomerService = $sendEmailCustomerService;
-        $this->berlinService = $berlinService;
+        public string $myalfredExpiryDate,
+        public string $cdbId,
+        public bool $invitationEmail,
+        public SendEmailCustomerService $sendEmailCustomerService,
+        public BerlinService $berlinService,
+    ) {}
+
+    public function collection(Collection $rows): void
+    {
+        $expiryDate = date('Y-m-d H:i:s', strtotime(str_replace('"', '', $this->myalfredExpiryDate)));
+        $now = now()->toDateTimeString();
+
+        $validRows = $rows->filter(
+            fn ($row) => ! empty(trim((string) ($row['email'] ?? ''))) && isValidEmail(trim((string) $row['email']))
+        );
+
+        if ($validRows->isEmpty()) {
+            return;
+        }
+
+        $emails = $validRows->map(fn ($row) => strtolower(trim((string) $row['email'])))->values();
+
+        $existingByEmail = Customer::whereIn('email', $emails)
+            ->select('email', 'myalfred_expiry_date')
+            ->get()
+            ->keyBy('email');
+
+        $upsertData = $validRows->map(function ($row) use ($expiryDate, $existingByEmail, $now) {
+            $email = strtolower(trim((string) $row['email']));
+            $existing = $existingByEmail->get($email);
+            $nameParts = explode(' ', $this->resolveNameFromRow($row), 2);
+
+            return [
+                'uuid' => Str::uuid()->toString(),
+                'email' => $email,
+                'first_name' => $nameParts[0],
+                'last_name' => $nameParts[1] ?? '',
+                'has_alfred_access' => true,
+                'has_reward_access' => true,
+                'myalfred_expiry_date' => ($existing && $existing->myalfred_expiry_date >= $expiryDate)
+                    ? $existing->myalfred_expiry_date
+                    : $expiryDate,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        })->values()->all();
+
+        Customer::upsert(
+            $upsertData,
+            ['email'],
+            ['first_name', 'last_name', 'myalfred_expiry_date', 'updated_at']
+        );
+
+        $customers = Customer::whereIn('email', $emails->all())->select('id', 'email')->get();
+
+        $this->rowCount += $customers->count();
+
+        $existingCustomerIds = QuoteCustomer::where('cdb_id', $this->cdbId)
+            ->whereIn('customer_id', $customers->pluck('id')->all())
+            ->pluck('customer_id')
+            ->all();
+
+        $newRows = $customers
+            ->filter(fn ($c) => ! in_array($c->id, $existingCustomerIds))
+            ->map(fn ($c) => [
+                'cdb_id' => $this->cdbId,
+                'customer_id' => $c->id,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])
+            ->all();
+
+        if (! empty($newRows)) {
+            QuoteCustomer::insert($newRows);
+        }
+
+        $newCustomers = $customers->filter(fn ($c) => ! $existingByEmail->has($c->email));
+        foreach ($newCustomers as $customer) {
+            SyncCustomerJob::dispatch($customer->id, $customer->email);
+        }
+
+        Log::info('CustomerImport: chunk processed', [
+            'count' => $customers->count(),
+            'cdb_id' => $this->cdbId,
+        ]);
+
+        foreach ($customers as $customer) {
+            $this->customersToExtend[] = (object) ['id' => $customer->id, 'email' => $customer->email];
+        }
     }
 
-    /**
-     * @param  array  $row
-     * @return Model|null
-     */
-    public function onRow(Row $row)
+    public function chunkSize(): int
     {
-        if ($row->getIndex() == 1) {
-            return null;
+        return 500;
+    }
+
+    /** Resolve the customer name from a row regardless of header casing or spacing. */
+    private function resolveNameFromRow(mixed $row): string
+    {
+        // WithHeadingRow slugifies headers: "Full Name" → "full_name", "name" → "name"
+        foreach (['name', 'full_name', 'customer_name'] as $key) {
+            $value = trim((string) ($row[$key] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
         }
 
-        $row = $row->toArray();
-
-        $email = $row[1];
-
-        if ($email != null && isValidEmail($email)) {
-            $customerId = 0;
-            $myalfredExpiryDate = date('Y-m-d H:i:s', strtotime(str_replace('"', '', $this->myalfredExpiryDate)));
-            $customerName = explode(' ', $row[0], 2);
-            $lastName = '';
-            if (! empty($customerName[1])) {
-                $firstName = $customerName[0];
-                $lastName = $customerName[1];
-            } else {
-                $firstName = $row[0];
-                $lastName = '';
-            }
-
-            $updateCustomer = CustomerService::getCustomerByEmail($email);
-            if ($updateCustomer) {
-                $updateCustomer->first_name = $firstName;
-                $updateCustomer->last_name = $lastName;
-                $updateCustomer->has_alfred_access = true;
-                $updateCustomer->has_reward_access = true;
-                if ($updateCustomer->myalfred_expiry_date < $myalfredExpiryDate) {
-                    $updateCustomer->myalfred_expiry_date = $myalfredExpiryDate;
-                }
-                $updateCustomer->save();
-            } else {
-                $updateCustomer = new Customer([
-                    'first_name' => $firstName,
-                    'last_name' => $lastName,
-                    'email' => strtolower(trim($email)),
-                    'has_alfred_access' => true,
-                    'has_reward_access' => true,
-                    'myalfred_expiry_date' => $myalfredExpiryDate,
-                ]);
-                $updateCustomer->save();
-            }
-            ExtendCustomerSubscriptionViaSQS::dispatch($updateCustomer, 'CORPORATE', 'corporate-myalfred-we');
-
-            $newQuoteCustomer = new QuoteCustomer;
-            $newQuoteCustomer->cdb_id = $this->CDBId;
-            $newQuoteCustomer->customer_id = $customerId;
-            $newQuoteCustomer->save();
-            Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , Ref-ID ->'.$this->CDBId);
-        }
+        return '';
     }
 }
