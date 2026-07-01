@@ -1439,6 +1439,13 @@ class CoreSchema
                 $table->id();
                 $table->string('name')->nullable();
                 $table->tinyInteger('status')->default(1);
+                $table->integer('sort_order')->nullable();
+                $table->timestamps();
+            },
+            'business_activity_quote_type_mapping' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('business_activity_id');
+                $table->unsignedBigInteger('quote_type_id');
                 $table->timestamps();
             },
             'company_activity_type' => function (Blueprint $table) {
@@ -1466,6 +1473,12 @@ class CoreSchema
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },
+        ]);
+
+        SchemaUtils::ensureColumns([
+            'business_activities' => [
+                'sort_order' => fn (Blueprint $table) => $table->integer('sort_order')->nullable(),
+            ],
         ]);
     }
 
