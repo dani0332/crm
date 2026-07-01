@@ -15,7 +15,7 @@ class GroupMedicalQuoteCategory extends Model
         'group_medical_category_id',
         'number_of_people',
         'insurance_provider_id',
-        'group_medical_third_party_administrator_id',
+        'health_third_party_administrator_id',
         'health_network_id',
         'renewal_date',
         'sort_order',

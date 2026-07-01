@@ -873,7 +873,7 @@ class AmtController extends Controller
             ],
             // 'categories.*.groupMedicalCategoryId' => ['required', 'integer', 'exists:group_medical_category,id'],
             'categories.*.insuranceProviderId' => ['nullable', 'exists:insurance_provider,id'],
-            'categories.*.healthTpaId' => ['nullable', 'exists:group_medical_third_party_administrator,id'],
+            'categories.*.healthTpaId' => ['nullable', 'exists:health_third_party_administrator,id'],
             'categories.*.healthNetworkId' => ['nullable', 'exists:health_networks,id'],
             'categories.*.renewalDate' => ['nullable', 'date'],
             'categories.*.numberOfPeople' => ['required', 'integer', 'min:1', 'max:2147483645'],
