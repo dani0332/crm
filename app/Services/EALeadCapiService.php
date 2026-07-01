@@ -35,6 +35,7 @@ class EALeadCapiService
         // ── [4b] Payload build ──────────────────────────────────────────────────
         $payload = $this->buildPayload($request, $quoteTypeId, $isCollaborate);
 
+        // TODO: [PII] Remove 'payload' (contains email, mobile, name) from this log after 2 weeks in production.
         LoggerService::info(self::class.' [4b] CAPI request payload', extra: [
             'endpoint' => $endpoint,
             'quote_type_id' => $quoteTypeId,
@@ -51,6 +52,7 @@ class EALeadCapiService
 
         // ── [4d] Raw CAPI response ──────────────────────────────────────────────
         $responseArray = is_object($response) ? (array) $response : (array) $response;
+        // TODO: [PII] Remove 'full_response' (may contain PII from CAPI) from this log after 2 weeks in production.
         LoggerService::info(self::class.' [4d] CAPI raw response', extra: [
             'endpoint' => $endpoint,
             'quote_type_id' => $quoteTypeId,
@@ -87,6 +89,7 @@ class EALeadCapiService
             $fallback = $this->findRecentlyCreatedLead($request->email, $quoteTypeId);
 
             if ($fallback) {
+                // TODO: [PII] Remove email and original_capi_response from this log after 2 weeks in production.
                 LoggerService::info(self::class.' [4f] CAPI silent-creation detected — recovered quoteUID from IMCRM fallback lookup', extra: [
                     'quote_type_id' => $quoteTypeId,
                     'email' => $request->email,
@@ -96,6 +99,7 @@ class EALeadCapiService
                 ]);
                 $response = (object) ['quoteUID' => $fallback->uuid];
             } else {
+                // TODO: [PII] Remove email from this log after 2 weeks in production.
                 LoggerService::warning(self::class.' [4f] CAPI silent-creation fallback found nothing in IMCRM', extra: [
                     'quote_type_id' => $quoteTypeId,
                     'email' => $request->email,

@@ -26,6 +26,7 @@ class EALeadController extends Controller
         $mobileNo = $request->mobile_no;
 
         // ── [1] Request received ────────────────────────────────────────────────
+        // TODO: [PII] Remove email, mobile_no, first_name, last_name from this log after 2 weeks in production.
         LoggerService::info(self::class.' [1/7] EA lead creation request received', extra: [
             'quote_type_id' => $quoteTypeId,
             'ea_model' => $request->ea_model,
@@ -38,6 +39,7 @@ class EALeadController extends Controller
         ]);
 
         // ── [2] Renewal expiry duplicate check ──────────────────────────────────
+        // TODO: [PII] Remove email, mobile_no from this log after 2 weeks in production.
         LoggerService::info(self::class.' [2/7] Checking renewal expiry duplicate', extra: [
             'email' => $email,
             'mobile_no' => $mobileNo,
@@ -57,6 +59,7 @@ class EALeadController extends Controller
         }
 
         // ── [3] 60-day duplicate check ──────────────────────────────────────────
+        // TODO: [PII] Remove email, mobile_no from this log after 2 weeks in production.
         LoggerService::info(self::class.' [3/7] Checking 60-day duplicate', extra: [
             'email' => $email,
             'mobile_no' => $mobileNo,
@@ -102,6 +105,7 @@ class EALeadController extends Controller
             $decoded = json_decode($body, true);
             $capiMessage = $decoded['message'] ?? null;
 
+            // TODO: [PII] Remove email and response_body (may contain PII) from this log after 2 weeks in production.
             LoggerService::error(self::class.' [4/7] CAPI HTTP error (RequestException)', extra: [
                 'quote_type_id' => $quoteTypeId,
                 'ea_model' => $request->ea_model,
@@ -115,6 +119,7 @@ class EALeadController extends Controller
         }
 
         // ── [5] Validate CAPI response ──────────────────────────────────────────
+        // TODO: [PII] Remove email from this log after 2 weeks in production.
         LoggerService::info(self::class.' [5/7] Validating CAPI response for quoteUID', extra: [
             'quote_type_id' => $quoteTypeId,
             'email' => $email,
@@ -153,6 +158,7 @@ class EALeadController extends Controller
             $quote = $quoteModelClass ? $quoteModelClass::query()->where('uuid', $capiResponse->quoteUID)->first() : null;
         }
         if (! $quote) {
+            // TODO: [PII] Remove email from this log after 2 weeks in production.
             LoggerService::error(self::class.' [6/7] FAILED — quote not found in IMCRM after CAPI creation', extra: [
                 'quote_type_id' => $quoteTypeId,
                 'quote_type_enum' => $quoteTypeEnum?->value,
@@ -192,6 +198,7 @@ class EALeadController extends Controller
 
         SendEALeadSubmittedEmailJob::dispatch($quote, $quoteTypeName)->delay(now()->addMinutes(1));
 
+        // TODO: [PII] Remove email from this log after 2 weeks in production.
         LoggerService::info(self::class.' [7/7] EA lead creation completed successfully', extra: [
             'quote_type_id' => $quoteTypeId,
             'ea_model' => $request->ea_model,

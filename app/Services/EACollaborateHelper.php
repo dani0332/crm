@@ -19,6 +19,7 @@ class EACollaborateHelper
             return;
         }
 
+        // TODO: [PII] Remove email from this log after 2 weeks in production.
         LoggerService::info('EACollaborateHelper: EA model detected on lead creation', [
             'ea_model' => $eaModel,
             'user_id' => Auth::id(),
