@@ -6,6 +6,7 @@ use App\Enums\EmbeddedProductEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\GetEpWorkflowDataRequest;
+use App\Http\Requests\Api\TriggerEpRetargetingEmailRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Jobs\AddressReminderJob;
 use App\Jobs\EP\SendEPJob;
@@ -53,6 +54,17 @@ class EmbeddedProductController extends Controller
             (int) $request->quoteId,
             (int) $request->quoteTypeId,
             $request->embeddedTransactionCode,
+        );
+    }
+
+    public function triggerEpRetargetingEmail(TriggerEpRetargetingEmailRequest $request): JsonResponse
+    {
+        $quoteId = $request->integer('params.quoteId');
+        $quoteTypeId = $request->integer('params.quoteTypeId');
+        $embeddedTransactionCode = $request->str('params.embeddedTransactionCode')->value();
+
+        return response()->json(
+            $this->embeddedTransactionService->handleTriggerEpRetargetingEmail($quoteId, $quoteTypeId, $embeddedTransactionCode)
         );
     }
 }

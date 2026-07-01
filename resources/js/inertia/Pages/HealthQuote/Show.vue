@@ -1631,7 +1631,8 @@ onMounted(() => {
       const memberSalaryMissing = policyHolder.salary_band_id === null;
       if (quoteSalaryMissing || memberSalaryMissing) {
         notification.error({
-          title: 'Salary band information is missing for the insured policyholder. Please fill in the missing customer details to recalculate the plans.',
+          title:
+            'Salary band information is missing for the insured policyholder. Please fill in the missing customer details to recalculate the plans.',
           position: 'top',
         });
       }
@@ -2382,6 +2383,28 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
+              <template v-if="can(permissionEnum.VIEW_UTM_SECTION)">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM SOURCE</dt>
+                  <dd>{{ quote.utm_source }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM MEDIUM</dt>
+                  <dd>{{ quote.utm_medium }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CAMPAIGN</dt>
+                  <dd>{{ quote.utm_campaign }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM CONTENT</dt>
+                  <dd>{{ quote.utm_content }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UTM TERM</dt>
+                  <dd>{{ quote.utm_term }}</dd>
+                </div>
+              </template>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ENQUIRY COUNT</dt>
                 <dd>{{ quote.enquiry_count }}</dd>
@@ -2556,11 +2579,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATE OF VISA</dt>
                   <dd>
-                    {{
-                      !isMigrated || (isMigrated && showAdditionalFields)
-                        ? quote.emirate_of_your_visa_id_text
-                        : '-'
-                    }}
+                    {{ quote.emirate_of_your_visa_id_text }}
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">

@@ -41,6 +41,7 @@ use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\QuoteTypeRepository;
+use App\Services\AML\AMLAutomationService;
 use App\Services\AML\AMLDisplayService;
 use App\Services\AML\AMLEntityService;
 use App\Services\AML\AMLExportService;
@@ -93,9 +94,12 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId, AMLQuoteDetailsService $amlQuoteDetailsService)
     {
+        $resolvedId = $amlQuoteDetailsService->resolveQuoteRequestId($quoteTypeId, $quoteRequestId);
+        abort_if($resolvedId === 0, 404);
+
         $data = $amlQuoteDetailsService->prepareQuoteDetailsData(
-            $quoteTypeId,
-            $quoteRequestId
+            (int) $quoteTypeId,
+            $resolvedId
         );
 
         return inertia('Aml/DetailPage', $data);
@@ -183,7 +187,7 @@ class AMLController extends Controller
                     auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)
                 ) {
-                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
+                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteObject->id, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
                     if (! empty(request()->complianceComponent)) {
                         app(AMLService::class)->saveKYCComplianceQuestions(request()->complianceComponent);
                     }
@@ -869,11 +873,11 @@ class AMLController extends Controller
     /**
      * IMCRM: trigger AML screening automation for an allowed LOB by quote UUID and explicit {@see QuoteTypes} value.
      */
-    public function automateQuoteAmlScreening(AutomateQuoteAmlScreeningRequest $request): JsonResponse
+    public function automateQuoteAmlScreening(AutomateQuoteAmlScreeningRequest $request, AMLAutomationService $amlAutomationService): JsonResponse
     {
         $validated = $request->validated();
 
-        $result = app(AMLService::class)->initiateAutomatedAmlByQuoteUuid(
+        $result = $amlAutomationService->initiateAutomatedAmlByQuoteUuid(
             $validated['quoteUuid'],
             $request->validatedQuoteType(),
         );
@@ -884,4 +888,5 @@ class AMLController extends Controller
             'data' => $result['data'] ?? null,
         ], $result['http_status']);
     }
+
 }

@@ -9,6 +9,7 @@ use App\Exceptions\PolicyIssuanceProcessNotFoundException;
 use App\Models\PolicyIssuance;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Services\PolicyIssuanceAutomation\Travel\Dic\DicPolicyIssuanceAsyncBootstrap;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -279,6 +280,12 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
             'quote_code' => $quoteCode,
             'provider' => $insuranceProvider->text,
         ]);
+
+        if (DicPolicyIssuanceAsyncBootstrap::isTravelDic($quoteType, $insuranceProvider->code)) {
+            app(DicPolicyIssuanceAsyncBootstrap::class)->dispatchInitialStepFromOrchestratorJob($this->process);
+
+            return;
+        }
 
         $response = $automation->executeSteps($this->process);
 

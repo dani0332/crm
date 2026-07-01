@@ -30,7 +30,7 @@ final class PersonalQuoteAmlAutomationCustomerService
                 'pq.gender',
                 'pq.first_name',
                 'pq.last_name',
-                'pq.dob',
+                'i.dob',
                 'pq.nationality_id',
                 'i.id_type',
                 'i.id_number'

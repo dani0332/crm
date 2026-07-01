@@ -68,6 +68,15 @@ class EmbeddedTransactionRepository extends BaseRepository
                     'quoteRequest.plan:id,provider_id,repair_type',
                     'quoteRequest.plan.insuranceProvider:id,code',
                 ]);
+            } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
+                $withQuoteRequest .= ',advisor_id,plan_id';
+                $with = array_merge($with, [
+                    'quoteRequest.bikeQuote.bikeMake:id,text,code',
+                    'quoteRequest.bikeQuote.bikeModel:id,text,code',
+                    'quoteRequest.advisor:id,email',
+                    'quoteRequest.carPlan:id,provider_id,repair_type',
+                    'quoteRequest.carPlan.insuranceProvider:id,code',
+                ]);
             }
             array_push($with, $withQuoteRequest);
         }

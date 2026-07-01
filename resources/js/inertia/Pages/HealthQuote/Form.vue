@@ -156,6 +156,11 @@ const initialMobile = parseMobileNoForInitial(
   isEdit.value ? props.quote?.mobile_no : null,
 );
 
+const noLeadingZero = v => {
+  if (v == null || v === '') return true;
+  return String(v)[0] !== '0' || 'Phone number must not start with 0';
+};
+
 const isMobileNationalPartLength = v => {
   if (v == null || v === '') {
     return true;
@@ -439,7 +444,10 @@ watch(showAdditionalFields, isInsured => {
     if (quoteForm.visa_category_id === visaCategoryEnum.DEPENDENT_FAMILY) {
       quoteForm.visa_category_id = null;
     }
-    if (quoteForm.salary_band_id === salaryBandEnum.NO_SALARY_DEPENDENTS_OR_CHILDREN) {
+    if (
+      quoteForm.salary_band_id ===
+      salaryBandEnum.NO_SALARY_DEPENDENTS_OR_CHILDREN
+    ) {
       quoteForm.salary_band_id = null;
     }
   }
@@ -1032,7 +1040,10 @@ watch(categoryChangeConfirmOpen, isOpen => {
                         item.health_cover_for_id ===
                           healthCoverForEnum.INDIVIDUAL_AND_FAMILIES &&
                         item.id !== visaCategoryEnum.NEWBORN_BORN_IN_UAE &&
-                        !(showAdditionalFields && item.id === visaCategoryEnum.DEPENDENT_FAMILY),
+                        !(
+                          showAdditionalFields &&
+                          item.id === visaCategoryEnum.DEPENDENT_FAMILY
+                        ),
                     )
                     .map(item => ({
                       value: item.id,
@@ -1050,7 +1061,11 @@ watch(categoryChangeConfirmOpen, isOpen => {
                 :options="
                   salaryBandsOptions.filter(
                     item =>
-                      !(showAdditionalFields && item.value === salaryBandEnum.NO_SALARY_DEPENDENTS_OR_CHILDREN),
+                      !(
+                        showAdditionalFields &&
+                        item.value ===
+                          salaryBandEnum.NO_SALARY_DEPENDENTS_OR_CHILDREN
+                      ),
                   )
                 "
                 class="w-full"
@@ -1087,7 +1102,12 @@ watch(categoryChangeConfirmOpen, isOpen => {
                     v-model="quoteForm.mobile_national_no"
                     type="text"
                     maxLength="10"
-                    :rules="[isRequired, isNumber, isMobileNationalPartLength]"
+                    :rules="[
+                      isRequired,
+                      isNumber,
+                      noLeadingZero,
+                      isMobileNationalPartLength,
+                    ]"
                     class="flex-1 min-w-0"
                     :disabled="isEdit"
                     :error="quoteForm.errors.mobile_national_no"

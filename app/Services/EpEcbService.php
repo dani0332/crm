@@ -17,6 +17,7 @@ use App\Models\DocumentType;
 use App\Models\InsurerRequestResponse;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 use Error;
 use Exception;
 use Illuminate\Support\Facades\Cache;
@@ -654,6 +655,15 @@ class EpEcbService extends EpBookingService
             'tax_invoice_no' => $policyDetailResponse['premium_inv_no'] ?? '',
             'tax_invoice_buyer_no' => $policyDetailResponse['commision_inv_no'] ?? '',
             'policy_price' => $policyPrice,
+            'collection_amount' => $policyDetailResponse['policy_premium_with_tax'] ?? null,
+            'premium_without_tax' => $policyDetailResponse['policy_premium_without_tax'] ?? null,
+            'premium_tax_amount' => $policyDetailResponse['policy_premium_tax'] ?? null,
+            'policy_start_date' => isset($policyDetailResponse['policy_start_dt'])
+                ? Carbon::parse($policyDetailResponse['policy_start_dt'])->toDateString()
+                : null,
+            'policy_end_date' => isset($policyDetailResponse['policy_end_dt'])
+                ? Carbon::parse($policyDetailResponse['policy_end_dt'])->toDateString()
+                : null,
             'commission_with_vat' => $policyDetailResponse['policy_commision_with_tax'] ?? 0,
             'commission_without_vat' => $policyDetailResponse['policy_commision_without_tax'] ?? 0,
             'credit_note_buyer_no' => $policyDetailResponse['credit_note_buyer_no'] ?? '',

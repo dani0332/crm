@@ -264,6 +264,10 @@ class FailedILAEmailService
         return $this->getBaseQuery($quoteType)
             ->where('quote_type_id', $quoteType->id())
             ->isNonSICLead($quoteType)
+            ->when(
+                $quoteType === QuoteTypes::HOME,
+                fn ($query) => $query->whereNotIn('source', [LeadSourceEnum::REVIVAL_SHORT, LeadSourceEnum::REVIVAL_ANNUAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID]),
+            )
             ->select('id', 'code', 'uuid', 'first_name', 'last_name', 'created_at', 'quote_status_id', 'paid_at', 'lead_allocation_failed_at')
             ->when(
                 $justCount,
