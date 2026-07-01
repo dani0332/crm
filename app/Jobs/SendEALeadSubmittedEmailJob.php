@@ -100,6 +100,16 @@ class SendEALeadSubmittedEmailJob implements ShouldQueue
             'body' => $response->json(),
         ]);
 
+        if ($response->failed()) {
+            LoggerService::warning('SendEALeadSubmittedEmailJob: Brevo returned non-2xx — will retry', [
+                'ref_id' => $this->quote->code,
+                'uuid' => $this->quote->uuid,
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+            $response->throw();
+        }
+
         LoggerService::info('SendEALeadSubmittedEmailJob: Sent via Brevo', ['ref_id' => $this->quote->code]);
     }
 
