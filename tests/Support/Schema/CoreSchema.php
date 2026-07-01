@@ -33,6 +33,7 @@ class CoreSchema
         $this->ensureEPLogsTables();
         $this->ensureHealthPricingTables();
         $this->ensureEmailStatusTables();
+        $this->ensureGroupMedicalFormDropdownTables();
     }
 
     private function ensureAuditTables(): void
@@ -602,6 +603,8 @@ class CoreSchema
             'health_plan_type' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text')->nullable();
+                $table->string('type')->nullable();
+                $table->unsignedBigInteger('emirates_id')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },
@@ -693,6 +696,19 @@ class CoreSchema
                 $table->integer('max_capacity')->default(0);
                 $table->timestamps();
             },
+            'pqa_lead_allocation_config' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->unsignedBigInteger('quote_type_id');
+                $table->unsignedInteger('max_capacity')->default(100);
+                $table->unsignedInteger('allocation_count')->default(0);
+                $table->unsignedInteger('auto_assignment_count')->default(0);
+                $table->unsignedInteger('manual_assignment_count')->default(0);
+                $table->unsignedBigInteger('last_allocated')->nullable();
+                $table->unsignedTinyInteger('reset_cap')->default(0);
+                $table->timestamps();
+                $table->unique(['user_id', 'quote_type_id']);
+            },
             'vehicle_driver_details' => function (Blueprint $table) {
                 $table->id();
                 $table->morphs('quoteable'); // Creates quoteable_id and quoteable_type
@@ -767,6 +783,7 @@ class CoreSchema
                 $table->string('source')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->unsignedBigInteger('support_user_id')->nullable();
+                $table->unsignedBigInteger('pq_advisor_id')->nullable();
                 $table->unsignedBigInteger('quote_status_id')->nullable();
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->unsignedBigInteger('customer_id')->nullable();
@@ -1388,6 +1405,37 @@ class CoreSchema
                 $table->id();
                 $table->string('code')->nullable();
                 $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureGroupMedicalFormDropdownTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'company_activity_type' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'health_third_party_administrator' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'group_medical_networks' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'group_medical_category' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text');
+                $table->unsignedInteger('sort_order')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },

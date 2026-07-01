@@ -18,6 +18,7 @@ class GroupMedicalExport implements CsvExportableInterface
 
     public function collection(array $requestParams = []): Collection
     {
+
         return BusinessQuoteRepository::getData(QuoteTypes::GROUP_MEDICAL->value, true, requestParams: $requestParams)->get();
     }
 
@@ -37,6 +38,7 @@ class GroupMedicalExport implements CsvExportableInterface
             'FIRST NAME',
             'LAST NAME',
             'LEAD STATUS',
+            'PRE-QUALIFICATION ADVISOR',
             'ADVISOR',
             'OE / AE',
             'BRANCH',
@@ -71,6 +73,7 @@ class GroupMedicalExport implements CsvExportableInterface
             $quote->first_name,
             $quote->last_name,
             optional($quote->quoteStatus)->text,
+            optional($quote->preQualificationAdvisor)->name ?? '',
             optional($quote->advisor)->name,
             optional($quote->supportUser)->name,
             $branch,
