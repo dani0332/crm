@@ -186,9 +186,11 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedMotorRevivalWorkflow();
         $this->seedHighRiskScoreBirdNotificationWorkflowUrl();
         $this->seedAmlAutomationOutcomeWorkflowUrl();
+        $this->seedTravelAmlRetrigger();
         $this->seedDttLifeEnabled();
         $this->seedOcrPlanValidation();
         $this->seedDttHomeEnabled();
+        $this->seedAllianceBrandSwitchDate();
         $this->seedEAEmailTemplates();
     }
 
@@ -710,6 +712,19 @@ class ApplicationStorageSeeder extends Seeder
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedTravelAmlRetrigger()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_AML_RETRIGGER_ENABLED],
             [
                 'value' => 0,
                 'created_at' => now(),
@@ -1828,6 +1843,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MISREPORT_RECIPIENT_EMAIL],
+            [
+                'value' => 'vishal.bhatt@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedOcrUtilEnabled()
@@ -2028,7 +2053,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::DIC_COMMISSION_PERCENTAGE],
             [
-                'value' => 0.56,
+                'value' => 56,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -2082,6 +2107,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::OCR_SAVINGS_PASSPORT_ELIGIBLE_PLAN_CODES],
             [
                 'value' => '',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAllianceBrandSwitchDate(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ALLIANCE_BRAND_SWITCH_DATE],
+            [
+                'value' => '2026-05-25',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

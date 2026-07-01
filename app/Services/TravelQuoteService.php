@@ -212,6 +212,7 @@ class TravelQuoteService extends BaseService
             'b.name as lead_branch_name',
             'b.id as lead_branch_id',
             'tqr.is_branch_applicable',
+            'tqr.quote_status_date',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -295,7 +296,7 @@ class TravelQuoteService extends BaseService
     public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest): array
     {
         $message = '';
-        $requiredProperty = collect(['first_name', 'dob', 'nationality_id', 'passport']);
+        $requiredProperty = collect(['first_name', 'dob', 'nationality_id']);
 
         $missingDetails = [];
         foreach ($requiredProperty as $value) {
@@ -308,6 +309,10 @@ class TravelQuoteService extends BaseService
                 };
                 array_push($missingDetails, ucwords($propertyName));
             }
+        }
+
+        if (($travelQuoteRequest['id_type'] ?? null) === 'passport' && empty($travelQuoteRequest['id_number'])) {
+            $missingDetails[] = 'Passport';
         }
 
         $missingDetailCount = count($missingDetails);

@@ -33,13 +33,14 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-        $this->assertIsString($result->fileDownloadUrl);
-        $this->assertNotEmpty($result->fileDownloadUrl);
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
+        $this->assertIsString($result['fileDownloadUrl']);
+        $this->assertNotEmpty($result['fileDownloadUrl']);
     }
+
     public function test_build_failed_ila_email_car_data()
     {
         $quoteType = QuoteTypes::CAR;
@@ -47,13 +48,14 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-        $this->assertIsString($result->fileDownloadUrl);
-        $this->assertNotEmpty($result->fileDownloadUrl);
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
+        $this->assertIsString($result['fileDownloadUrl']);
+        $this->assertNotEmpty($result['fileDownloadUrl']);
     }
+
     public function test_build_failed_ila_email_bike_data()
     {
         $quoteType = QuoteTypes::BIKE;
@@ -61,12 +63,12 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-        $this->assertIsString($result->fileDownloadUrl);
-        $this->assertNotEmpty($result->fileDownloadUrl);
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
+        $this->assertIsString($result['fileDownloadUrl']);
+        $this->assertNotEmpty($result['fileDownloadUrl']);
     }
 
     public function test_build_failed_ila_email_health_data()
@@ -76,13 +78,14 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-        $this->assertIsString($result->fileDownloadUrl);
-        $this->assertNotEmpty($result->fileDownloadUrl);
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
+        $this->assertIsString($result['fileDownloadUrl']);
+        $this->assertNotEmpty($result['fileDownloadUrl']);
     }
+
     public function test_build_failed_ila_email_life_data()
     {
         $quoteType = QuoteTypes::LIFE;
@@ -90,12 +93,12 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-        $this->assertIsString($result->fileDownloadUrl);
-        $this->assertNotEmpty($result->fileDownloadUrl);
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
+        $this->assertIsString($result['fileDownloadUrl']);
+        $this->assertNotEmpty($result['fileDownloadUrl']);
     }
 
     public function test_build_failed_ila_email_pet_data()
@@ -105,13 +108,14 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-        $this->assertIsString($result->fileDownloadUrl);
-        $this->assertNotEmpty($result->fileDownloadUrl);
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
+        $this->assertIsString($result['fileDownloadUrl']);
+        $this->assertNotEmpty($result['fileDownloadUrl']);
     }
+
     public function test_build_failed_ila_email_cycle_data()
     {
         $quoteType = QuoteTypes::CYCLE;
@@ -119,50 +123,55 @@ class FailedILAEmailServiceTest extends TestCase
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
 
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
     }
+
     public function test_build_failed_ila_email_corpline_data()
     {
         $quoteType = QuoteTypes::GROUP_MEDICAL;
         $managerEmails = ['manager1@test.com', 'manager2@test.com'];
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-        $this->assertIsString($result->fileDownloadUrl);
-        $this->assertNotEmpty($result->fileDownloadUrl);
+
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
+        $this->assertIsString($result['fileDownloadUrl']);
+        $this->assertNotEmpty($result['fileDownloadUrl']);
     }
+
     public function test_build_failed_ila_email_yacht_data()
     {
         $quoteType = QuoteTypes::YACHT;
         $managerEmails = ['manager1@test.com', 'manager2@test.com'];
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-        $this->assertIsString($result->fileDownloadUrl);
-        $this->assertNotEmpty($result->fileDownloadUrl);
+
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
+        $this->assertIsString($result['fileDownloadUrl']);
+        $this->assertNotEmpty($result['fileDownloadUrl']);
     }
+
     public function test_build_failed_ila_email_group_medical_data()
     {
         $quoteType = QuoteTypes::GROUP_MEDICAL;
         $managerEmails = ['manager1@test.com', 'manager2@test.com'];
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-        $this->assertIsString($result->fileDownloadUrl);
-        $this->assertNotEmpty($result->fileDownloadUrl);
+
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
+        $this->assertIsString($result['fileDownloadUrl']);
+        $this->assertNotEmpty($result['fileDownloadUrl']);
     }
 
     public function test_build_failed_ila_email_jetski_data()
@@ -171,12 +180,13 @@ class FailedILAEmailServiceTest extends TestCase
         $managerEmails = ['manager1@test.com', 'manager2@test.com'];
 
         $result = $this->service->buildFailedIlaEmailData($quoteType, $managerEmails);
-        $this->assertIsObject($result);
-        $this->assertEquals($quoteType, $result->quoteType);
-        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result->workflowType);
-        $this->assertEquals(now()->format('Y-m-d'), $result->dateOfAttempt);
-        $this->assertIsString($result->fileDownloadUrl);
-        $this->assertNotEmpty($result->fileDownloadUrl);
+
+        $this->assertIsArray($result);
+        $this->assertEquals($quoteType, $result['quoteType']);
+        $this->assertEquals(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $result['workflowType']);
+        $this->assertEquals(now()->format('Y-m-d'), $result['dateOfAttempt']);
+        $this->assertIsString($result['fileDownloadUrl']);
+        $this->assertNotEmpty($result['fileDownloadUrl']);
     }
 
 }

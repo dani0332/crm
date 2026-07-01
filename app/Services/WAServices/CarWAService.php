@@ -2,14 +2,13 @@
 
 namespace App\Services\WAServices;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\CarQuote;
 use App\Models\User;
 use App\Services\BaseService;
-use App\Services\BirdService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 
 class CarWAService extends BaseService
@@ -18,6 +17,9 @@ class CarWAService extends BaseService
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
         $payload = [
+            'customerId' => $carQuote->customer_id ?? '',
+            'firstName' => $carQuote->first_name ?? '',
+            'lastName' => $carQuote->last_name ?? '',
             'customerEmail' => $carQuote->email,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerMobile' => (! empty($carQuote->mobile_no) ? formatMobileNo($carQuote->mobile_no) : ''),
@@ -34,29 +36,12 @@ class CarWAService extends BaseService
             'CarModel' => $carQuote->carModel->text ?? null,
             'workflowType' => WorkflowTypeEnum::CAR_MISSING_DOC_REMINDER,
         ];
-        $carMissingDocReminderWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CAR_MISSING_DOC_REMINDER_WORKFLOW);
-        if (! empty($carMissingDocReminderWorkflow)) {
-            $response = app(BirdService::class)->triggerWebHookRequest($carMissingDocReminderWorkflow, (object) $payload);
-            LoggerService::info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$carMissingDocReminderWorkflow.' with Ref-ID: '.$carQuote->uuid);
+        $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::CAR_MISSING_DOC_REMINDER, (array) $payload);
 
-            $runId = '';
-            if (isset($response->headers['Run-Id'])) {
-                $runId = is_array($response->headers['Run-Id'])
-                    ? collect($response->headers['Run-Id'])->first()
-                    : $response->headers['Run-Id'];
-            } elseif (isset($response->headers['run-id'])) {
-                $runId = is_array($response->headers['run-id'])
-                    ? collect($response->headers['run-id'])->first()
-                    : $response->headers['run-id'];
-            }
-            LoggerService::info(self::class." - runId found: {$runId} for quote: {$carQuote->uuid}");
-            if (! empty($runId)) {
-                app(BirdService::class)->createQuoteWorkFlowDetails($carQuote, $response, QuoteFlowType::CAR_MISSING_DOC_REMINDER, QuoteTypeId::Car);
-                LoggerService::info('Car Missing Doc Reminder WA Run-Id found and created quote flow details');
-            }
-        } else {
-            LoggerService::info('sendWhatsappNotificationToCustomer - Webhook URL not found in storage with Ref-ID:'.$carQuote->uuid);
-        }
+        LoggerService::info('sendWhatsappNotificationToCustomer - Webhook request sent  with Ref-ID: '.$carQuote->uuid);
+        app(WebEngageService::class)->createQuoteWorkFlowDetails($carQuote->uuid, QuoteFlowType::CAR_MISSING_DOC_REMINDER, QuoteTypeId::Car);
+        LoggerService::info('Car Missing Doc Reminder WA Run-Id found and created quote flow details');
+
     }
 
 }
