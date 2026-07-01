@@ -189,10 +189,6 @@ const tableHeader = [
     value: 'pre_qualification_advisor_name',
   },
   { text: 'ADVISOR', value: 'advisor_id_text' },
-  {
-    text: 'PRE‑QUALIFICATION ADVISOR',
-    value: 'pre_qualification_advisor_name',
-  },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
