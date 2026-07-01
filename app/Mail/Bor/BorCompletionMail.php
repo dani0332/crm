@@ -2,13 +2,11 @@
 
 namespace App\Mail\Bor;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\ApplicationStorage;
 use App\Models\BorLog;
-use App\Services\BirdService;
 use App\Services\Bor\BorPdfService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -41,34 +39,22 @@ class BorCompletionMail extends Mailable
     }
 
     /**
-     * Send BOR completion email via Bird service
+     * Send BOR completion email via WebEngage
      */
     public function sendViaBird()
     {
         try {
-            $birdData = $this->buildBirdEmailData();
-            $workflowUrl = $this->getBirdWorkflowUrl();
+            $payload = $this->buildBirdEmailData();
 
-            if (! $workflowUrl) {
-                LoggerService::error('BOR Completion Email: Bird workflow URL not configured', [
-                    'bor_log_id' => $this->borLog->id,
-                    'personal_quote_id' => $this->borLog->personal_quote_id,
-                ]);
+            app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::BOR_UPLOAD, $payload);
 
-                return false;
-            }
-
-            $birdService = app(BirdService::class);
-            $response = $birdService->triggerWebHookRequest($workflowUrl, $birdData);
-
-            LoggerService::info('BOR Completion Email sent via Bird', [
+            LoggerService::info('BOR Completion Email sent via WebEngage', [
                 'bor_log_id' => $this->borLog->id,
                 'personal_quote_id' => $this->borLog->personal_quote_id,
                 'customer_email' => $this->customerData['email'],
-                'response_status' => $response->status_code,
             ]);
 
-            return $response->status_code >= 200 && $response->status_code < 300;
+            return true;
 
         } catch (\Exception $e) {
             LoggerService::error('BOR Completion Email failed', [
@@ -93,11 +79,16 @@ class BorCompletionMail extends Mailable
         $quoteType = strtolower(QuoteTypes::getName($personalQuote->quote_type_id)->value).'-insurance';
 
         return [
+            'customerId' => $personalQuote->customer_id ?? $this->customerData['email'] ?? '',
+            'firstName' => $this->customerData['first_name'] ?? '',
+            'lastName' => $this->customerData['last_name'] ?? '',
+            'customerEmail' => $this->customerData['email'] ?? '',
+            'customerMobile' => ! empty($this->customerData['mobile']) ? '+'.formatMobileNoWithoutPlus($this->customerData['mobile']) : '',
+            'quoteUID' => $personalQuote->uuid ?? '',
             'uuid' => $personalQuote->uuid ?? '',
             'ref_id' => $personalQuote->code ?? '',
             'quote_type' => $quoteType ?? '',
             'workflow_type' => WorkflowTypeEnum::BOR_UPLOAD ?? '',
-            'quote_link' => $quoteLink ?? '',
             'customer_name' => $this->getCustomerName(true) ?? '',
             'subject_line' => $this->getSubjectLine($personalQuote) ?? '',
             'customer' => [
@@ -122,15 +113,5 @@ class BorCompletionMail extends Mailable
             ],
             'attachPdf' => app(BorPdfService::class)->generateTemporaryBorPdf($this->borLog),
         ];
-    }
-
-    /**
-     * Get Bird workflow URL for BOR completion emails
-     */
-    private function getBirdWorkflowUrl()
-    {
-        $workflowConfig = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_BOR_WORKFLOW_URL)->first();
-
-        return $workflowConfig ? $workflowConfig->value : null;
     }
 }

@@ -56,4 +56,14 @@ class QuoteType extends Model
     {
         return $this->belongsToMany(InsuranceProvider::class, 'insurance_provider_quote_type');
     }
+
+    public function businessActivities()
+    {
+        return $this->belongsToMany(
+            BusinessActivity::class,
+            'business_activity_quote_type_mapping',
+            'quote_type_id',
+            'business_activity_id'
+        );
+    }
 }
