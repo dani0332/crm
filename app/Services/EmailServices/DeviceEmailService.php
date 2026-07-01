@@ -9,6 +9,7 @@ use App\Jobs\SendDeviceAutomatedFollowupJob;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Str;
 
 class DeviceEmailService extends BaseService
 {
@@ -42,7 +43,6 @@ class DeviceEmailService extends BaseService
                 LoggerService::info('sendDeviceOCBIntroEmail - Successfully created quote whatsapp flow details');
             }
         }
-
     }
 
     private function buildEmailData($lead, $advisor, $workflowType)
