@@ -127,6 +127,7 @@ class EmbeddedTransactionService extends BaseService
             'firstName' => $quote->first_name ?? '',
             'lastName' => $quote->last_name ?? '',
             'customerEmail' => $quote->email,
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'embeddedTransactionCode' => $epTransaction->code,
             'workflowType' => WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER,
             'getRetargetingEpReminderUrl' => $getRetargetingEpReminderUrl,
