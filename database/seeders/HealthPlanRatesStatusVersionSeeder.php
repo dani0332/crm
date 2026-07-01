@@ -16,7 +16,7 @@ class HealthPlanRatesStatusVersionSeeder extends Seeder
     public function run(): void
     {
         // Fetch all existing plans (without version)
-        $healthPlans = HealthPlan::where('version', null)->get();
+        $healthPlans = HealthPlan::whereNull('version')->get();
 
         foreach ($healthPlans as $healthPlan) {
             // If no rates

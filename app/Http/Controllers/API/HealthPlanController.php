@@ -38,7 +38,7 @@ class HealthPlanController extends Controller
 
     public function getStatusVersions(GetStatusVersionHealthPlanRequest $request): JsonResponse
     {
-        $plans = $this->healthPlanService->getStatusVersions($request->parentId, $request->status);
+        $plans = $this->healthPlanService->getStatusVersions($request->validated('parent_id'), $request->validated('status'));
 
         return response()->json([
             'status' => 'success',

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\EmirateTypeEnum;
 use App\Enums\GenderEnum;
 use App\Enums\HealthPlanRateSheetStatusEnum;
+use App\Enums\MaritalStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\RateCoverageEnum;
 use App\Imports\CoveragesImport;
@@ -276,7 +277,7 @@ class RateCoverageUploadService
                     $gender = $plan->gender_enabled ? (trim($rowAssoc['gender'] ?? '') ?: null) : null;
                     $maritalStatus = $plan->marital_status_enabled
                         && ! empty($gender)
-                        && strtolower($gender) == strtolower(GenderEnum::FEMALE->value) ? (trim($rowAssoc['marital_status'] ?? '') ?: null) : null;
+                        && strtolower($gender) === GenderEnum::FEMALE->value ? (trim($rowAssoc['marital_status'] ?? '') ?: null) : null;
                     $cohort = $plan->cohort_enabled ? (trim($rowAssoc['cohort'] ?? '') ?: null) : null;
 
                     // Throw error if any required value is empty
@@ -321,7 +322,7 @@ class RateCoverageUploadService
                             $this->throwValidationError('Gender is required when plan gender is enabled.');
                         }
 
-                        $allowedGenders = ['male', 'female'];
+                        $allowedGenders = array_column(GenderEnum::cases(), 'value');
                         if (! in_array(strtolower($gender), $allowedGenders, true)) {
                             $this->throwValidationError('Gender ('.$gender.') value must be either "male" or "female" at row '.($i + 1));
                         }
@@ -345,11 +346,11 @@ class RateCoverageUploadService
                             $this->throwValidationError('Gender must be enabled when marital status is enabled.');
                         }
 
-                        if (empty($maritalStatus) && strtolower($gender) == strtolower(GenderEnum::FEMALE->value)) {
+                        if (empty($maritalStatus) && strtolower($gender) === GenderEnum::FEMALE->value) {
                             $this->throwValidationError('Marital status is required when gender is female and plan marital status is enabled.');
                         }
 
-                        $allowedMaritalStatuses = ['single', 'married'];
+                        $allowedMaritalStatuses = array_column(MaritalStatusEnum::cases(), 'value');
                         if (! empty($maritalStatus) && ! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true)) {
                             $this->throwValidationError('Marital status value must be either "single" or "married".');
                         }
@@ -439,7 +440,7 @@ class RateCoverageUploadService
             'effective_to' => $effectiveTo,
             'total_records' => $totalRecords,
             'created_by' => auth()->user()->id,
-            'status' => HealthPlanRateSheetStatusEnum::DRAFT,
+            'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
         ];
 
         $healthRateControl = HealthRateControl::create($uploadLeadData);
@@ -486,10 +487,10 @@ class RateCoverageUploadService
                 'gender' => $plan->gender_enabled ? $rowAssoc['gender'] : null,
                 'marital_status' => $plan->marital_status_enabled
                         && ! empty($rowAssoc['gender'])
-                        && strtolower($rowAssoc['gender']) == strtolower(GenderEnum::FEMALE->value) ? $rowAssoc['marital_status'] : null,
+                        && strtolower($rowAssoc['gender']) === GenderEnum::FEMALE->value ? $rowAssoc['marital_status'] : null,
                 'cohort' => $plan->cohort_enabled ? $rowAssoc['cohort'] : null,
                 'premium' => $rowAssoc['premium'],
-                'status' => HealthPlanRateSheetStatusEnum::DRAFT,
+                'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
                 'is_active' => 0,
             ]);
         }

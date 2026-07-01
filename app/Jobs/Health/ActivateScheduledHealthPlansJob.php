@@ -10,6 +10,7 @@ use App\Services\Logger\LoggerService;
 use App\Support\HealthPlanVersionHelper;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -17,13 +18,13 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class ActivateScheduledHealthPlansJob implements ShouldQueue
+class ActivateScheduledHealthPlansJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
-    public $timeout = 60;
-    public $backoff = 300;
+    public int $tries = 3;
+    public int $timeout = 60;
+    public int $backoff = 300;
 
     public function handle(): void
     {

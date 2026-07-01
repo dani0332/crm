@@ -3,8 +3,10 @@
 use App\Enums\HealthBusinessTypeEnum;
 use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Models\HealthPlan;
+use App\Models\HealthRate;
+use App\Models\HealthRateControl;
+use App\Models\User;
 use App\Services\HealthPlanService;
-use Illuminate\Support\Facades\DB;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
@@ -29,12 +31,12 @@ it('creates a health plan with the given attributes', function () {
         ->and($plan->code)->toBe($code)
         ->and($plan->text)->toBe('Service create test');
 
-    expect(DB::table('health_plan')->where([
+    $this->assertDatabaseHas('health_plan', [
         'id' => $plan->id,
         'code' => $code,
         'health_business_type' => HealthBusinessTypeEnum::EBP->value,
         'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
-    ])->exists())->toBeTrue();
+    ]);
 });
 
 it('updates a draft health plan in place', function () {
@@ -63,16 +65,16 @@ it('updates a draft health plan in place', function () {
         ->and($updated->text_ar)->toBe('محدث')
         ->and($updated->health_business_type)->toBe(HealthBusinessTypeEnum::RM->value);
 
-    expect(DB::table('health_plan')->where([
+    $this->assertDatabaseHas('health_plan', [
         'id' => $plan->id,
         'code' => $code,
         'text' => 'Updated text',
         'text_ar' => 'محدث',
         'health_business_type' => HealthBusinessTypeEnum::RM->value,
         'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
-    ])->exists())->toBeTrue();
+    ]);
 
-    expect(DB::table('health_plan')->where('code', $code)->count())->toBe(1);
+    expect(HealthPlan::where('code', $code)->count())->toBe(1);
 });
 
 it('publishes a draft health plan and schedules its draft rate sheet and rates', function () {
@@ -88,45 +90,36 @@ it('publishes a draft health plan and schedules its draft rate sheet and rates',
         'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
     ]);
 
-    $controlId = DB::table('health_rates_control')->insertGetId([
+    $control = HealthRateControl::factory()->create([
         'health_plan_id' => $plan->id,
         'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
         'effective_from' => now()->addDay()->toDateString(),
-        'created_at' => now(),
-        'updated_at' => now(),
     ]);
 
-    DB::table('health_rates')->insert([
+    HealthRate::factory()->create([
         'health_plan_id' => $plan->id,
-        'health_rate_control_id' => $controlId,
+        'health_rate_control_id' => $control->id,
         'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
-        'created_at' => now(),
-        'updated_at' => now(),
     ]);
 
-    $userId = DB::table('users')->insertGetId([
-        'name' => 'Publisher',
-        'email' => uniqid('pub_').'@example.com',
-        'password' => 'password',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    $user = User::factory()->create();
 
-    $service->publish($plan->id, $userId);
+    $service->publish($plan->id, $user->id);
 
-    expect(DB::table('health_plan')->where([
+    $this->assertDatabaseHas('health_plan', [
         'id' => $plan->id,
         'status' => HealthPlanRateSheetStatusEnum::SCHEDULED->value,
-    ])->exists())->toBeTrue();
+    ]);
 
-    $control = DB::table('health_rates_control')->where('id', $controlId)->first();
-
-    expect($control->status)->toBe(HealthPlanRateSheetStatusEnum::SCHEDULED->value)
-        ->and($control->published_by)->toBe($userId)
-        ->and($control->published_at)->toBe(now()->toDateString());
-
-    expect(DB::table('health_rates')->where([
-        'health_rate_control_id' => $controlId,
+    $this->assertDatabaseHas('health_rates_control', [
+        'id' => $control->id,
         'status' => HealthPlanRateSheetStatusEnum::SCHEDULED->value,
-    ])->exists())->toBeTrue();
+        'published_by' => $user->id,
+        'published_at' => now()->toDateString(),
+    ]);
+
+    $this->assertDatabaseHas('health_rates', [
+        'health_rate_control_id' => $control->id,
+        'status' => HealthPlanRateSheetStatusEnum::SCHEDULED->value,
+    ]);
 });

@@ -120,7 +120,7 @@ class HealthRateService extends BaseService
                 'gender' => $plan->gender_enabled ? $data['gender'] : null,
                 'cohort' => $plan->cohort_enabled ? $data['cohort'] : null,
                 'marital_status' => $plan->marital_status_enabled
-                    && strtolower($data['gender']) == strtolower(GenderEnum::FEMALE->value) ? $data['marital_status'] : null,
+                    && strtolower($data['gender']) === GenderEnum::FEMALE->value ? $data['marital_status'] : null,
             ]);
 
             return $healthRate;
@@ -183,7 +183,7 @@ class HealthRateService extends BaseService
             $matchingFields[] = 'gender';
         }
 
-        if ($plan->marital_status_enabled and ! empty($data['gender']) and strtolower($data['gender']) == strtolower(GenderEnum::FEMALE->value)) {
+        if ($plan->marital_status_enabled and ! empty($data['gender']) and strtolower($data['gender']) === GenderEnum::FEMALE->value) {
             $matchingFields[] = 'marital_status';
         }
 
@@ -236,7 +236,7 @@ class HealthRateService extends BaseService
         $plan = $rate->healthPlan;
 
         // If draft, update same version
-        if ($rate->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
+        if ($rate->status === HealthPlanRateSheetStatusEnum::DRAFT->value) {
             return DB::transaction(function () use ($data, $rate) {
                 // Get plan to validate cohort, gender
                 $plan = $rate->healthPlan; // $this->healthPlanService->getPlanById($rate->health_plan_id);
@@ -248,7 +248,7 @@ class HealthRateService extends BaseService
                 $data['cohort'] = $plan->cohort_enabled ? $data['cohort'] : null;
                 $data['gender'] = $plan->gender_enabled ? $data['gender'] : null;
                 $data['marital_status'] = $plan->marital_status_enabled && $plan->gender_enabled
-                    && strtolower($data['gender']) == strtolower(GenderEnum::FEMALE->value) ? $data['marital_status'] : null;
+                    && strtolower($data['gender']) === GenderEnum::FEMALE->value ? $data['marital_status'] : null;
 
                 $rate->fill($data);
                 $rate->save();
@@ -290,7 +290,7 @@ class HealthRateService extends BaseService
             $planId = $draftPlan->id;
         } else {
             // Get active plan in case of active/archive
-            $planId = $rate->status == HealthPlanRateSheetStatusEnum::ACTIVE->value ? $rate->health_plan_id : $plan->parent_id;
+            $planId = $rate->status === HealthPlanRateSheetStatusEnum::ACTIVE->value ? $rate->health_plan_id : $plan->parent_id;
         }
 
         // Check if scheduled exists
@@ -334,7 +334,7 @@ class HealthRateService extends BaseService
 
             // Check it associated plan is draft, if so, make it scheduled
             $plan = $rateControl->healthPlan;
-            if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
+            if ($plan->status === HealthPlanRateSheetStatusEnum::DRAFT->value) {
                 $plan->status = HealthPlanRateSheetStatusEnum::SCHEDULED->value;
                 $plan->save();
             }

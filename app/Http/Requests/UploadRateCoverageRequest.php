@@ -48,7 +48,7 @@ class UploadRateCoverageRequest extends FormRequest
             'file_name.required' => 'The file is required. Please choose a file.',
             'file_name.file' => 'The uploaded item must be a valid file.',
             'file_name.mimes' => 'The file must be an Excel file with .xls or .xlsx extension.',
-            'file_name.max' => 'The file size must not exceed 2MB.',
+            'file_name.max' => 'The file size must not exceed 5MB.',
         ];
     }
 }

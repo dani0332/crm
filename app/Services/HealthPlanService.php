@@ -26,14 +26,14 @@ class HealthPlanService extends BaseService
         $plan = HealthPlan::find($planId);
 
         // If draft, add parent id
-        if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
+        if ($plan->status === HealthPlanRateSheetStatusEnum::DRAFT->value) {
             $plan->parent_id && $ids[] = $plan->parent_id;
 
             return $ids;
         }
 
         // If active, add child plan id (only draft)
-        if ($plan->status == HealthPlanRateSheetStatusEnum::ACTIVE->value) {
+        if ($plan->status === HealthPlanRateSheetStatusEnum::ACTIVE->value) {
             $childPlan = HealthPlan::where('parent_id', $planId)
                 ->where('status', HealthPlanRateSheetStatusEnum::DRAFT->value)
                 ->first();
@@ -64,7 +64,7 @@ class HealthPlanService extends BaseService
         $currentPlan = HealthPlan::find($id);
 
         // Check if it's draft, update same version
-        if ($currentPlan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
+        if ($currentPlan->status === HealthPlanRateSheetStatusEnum::DRAFT->value) {
             $currentPlan->fill($data);
             $currentPlan->save();
 
@@ -76,7 +76,7 @@ class HealthPlanService extends BaseService
         // If archived plan, check against parent id
         $existingDraft = HealthPlan::where(
             'parent_id',
-            $currentPlan->status == HealthPlanRateSheetStatusEnum::ACTIVE->value ? $id : $currentPlan->parent_id
+            $currentPlan->status === HealthPlanRateSheetStatusEnum::ACTIVE->value ? $id : $currentPlan->parent_id
         )
             ->whereIn('status', [HealthPlanRateSheetStatusEnum::DRAFT->value, HealthPlanRateSheetStatusEnum::SCHEDULED->value])
             ->first();
@@ -95,7 +95,7 @@ class HealthPlanService extends BaseService
         // Otherwise create new draft version
         return DB::transaction(function () use ($data, $currentPlan, $id) {
             $data['version'] = $this->deriveVersion($currentPlan);
-            $data['parent_id'] = $currentPlan->status == HealthPlanRateSheetStatusEnum::ARCHIVED->value ? $currentPlan->parent_id : $id;
+            $data['parent_id'] = $currentPlan->status === HealthPlanRateSheetStatusEnum::ARCHIVED->value ? $currentPlan->parent_id : $id;
             $data['code'] = $currentPlan->code; // Keep current code
 
             $newDraftPlan = HealthPlan::create($data);
@@ -149,11 +149,11 @@ class HealthPlanService extends BaseService
 
     private function deriveVersion(HealthPlan $plan): float
     {
-        if ($plan->status == HealthPlanRateSheetStatusEnum::ACTIVE->value) {
+        if ($plan->status === HealthPlanRateSheetStatusEnum::ACTIVE->value) {
             return HealthPlanVersionHelper::nextMinorVersion($plan->version);
         }
 
-        if ($plan->status == HealthPlanRateSheetStatusEnum::DRAFT->value) {
+        if ($plan->status === HealthPlanRateSheetStatusEnum::DRAFT->value) {
             return HealthPlanVersionHelper::nextMajorVersion($plan->version);
         }
 
