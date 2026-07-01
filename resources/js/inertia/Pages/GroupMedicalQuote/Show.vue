@@ -960,11 +960,11 @@ function handleOcrNotification(event) {
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
 
-               <div class="grid sm:grid-cols-2">
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRE-QUALIFICATION ADVISOR</dt>
                 <dd>{{ quote?.pre_qualification_advisor?.name ?? '' }}</dd>
               </div>
-              
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ quote.created_at }}</dd>
