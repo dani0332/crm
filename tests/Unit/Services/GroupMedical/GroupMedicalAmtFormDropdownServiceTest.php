@@ -22,7 +22,7 @@ test('group health plan types are filtered to type group when column exists', fu
 
     expect($plans)->toHaveCount(2)
         ->and($plans->pluck('text')->all())->toEqual(['Group Plan A', 'Group Plan B'])
-        ->and($plans->every(fn ($plan) => property_exists($plan, 'emirates_id')))->toBeTrue();
+        ->and($plans->every(fn ($plan) => isset($plan->emirates_id)))->toBeTrue();
 });
 
 test('group health plan types expose emirates_id for frontend filtering', function () {
@@ -82,17 +82,34 @@ test('group medical categories are loaded from group_medical_category table', fu
         ->and($categories->first()->id)->toBe($categoryId);
 });
 
-test('form dropdown props include company activity types and gm networks', function () {
-    $activityId = DB::table('company_activity_type')->insertGetId([
+test('form dropdown props include company activity types', function () {
+    // Required for Schema::hasTable('company_activity_type') guard in companyActivityTypes()
+    DB::table('company_activity_type')->insert([
         'text' => 'Trading',
         'is_active' => 1,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
 
-    $networkId = DB::table('group_medical_networks')->insertGetId([
-        'text' => 'Network A',
+    DB::table('quote_type')->insert([
+        'id' => 102,
+        'text' => 'Group Medical',
         'is_active' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $activityId = DB::table('business_activities')->insertGetId([
+        'name' => 'Trading',
+        'status' => 1,
+        'sort_order' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    DB::table('business_activity_quote_type_mapping')->insert([
+        'business_activity_id' => $activityId,
+        'quote_type_id' => 102,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -105,8 +122,6 @@ test('form dropdown props include company activity types and gm networks', funct
         'insuranceProviders',
         'groupMedicalCategories',
         'healthThirdPartyAdministrators',
-        'groupMedicalNetworks',
     ])
-        ->and($props['companyActivityTypes']->pluck('id')->all())->toContain($activityId)
-        ->and($props['groupMedicalNetworks']->pluck('id')->all())->toContain($networkId);
+        ->and($props['companyActivityTypes']->pluck('id')->all())->toContain($activityId);
 });

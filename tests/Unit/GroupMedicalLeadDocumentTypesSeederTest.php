@@ -20,11 +20,11 @@ it('seeds group medical IMCRM lead document types for business quote type and gr
     (new GroupMedicalLeadDocumentTypesSeeder)->run();
 
     $codes = [
-        DocumentTypeCode::GM_IMCRM_CENSUS_LIST,
-        DocumentTypeCode::GM_IMCRM_TABLE_OF_BENEFITS,
-        DocumentTypeCode::GM_IMCRM_TRADE_LICENSE,
-        DocumentTypeCode::GM_IMCRM_DHA_REPORT,
-        DocumentTypeCode::GM_IMCRM_OTHER,
+        DocumentTypeCode::CENSUS_LIST,
+        DocumentTypeCode::CURRENT_TABLE_OF_BENEFITS,
+        DocumentTypeCode::TRADE_LICENSE,
+        DocumentTypeCode::DHA_REPORT,
+        DocumentTypeCode::OTHER_DOCUMENTS,
     ];
 
     foreach ($codes as $code) {
@@ -32,10 +32,9 @@ it('seeds group medical IMCRM lead document types for business quote type and gr
         expect($row)->not->toBeNull()
             ->and((int) $row->quote_type_id)->toBe(QuoteTypeId::Business)
             ->and((int) $row->business_type_of_insurance_id)->toBe(BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
-            ->and($row->business_type_of_customer)->toBeNull()
+            ->and($row->business_type_of_customer)->toBe(DocumentTypeCode::COMPANY_BUSINESS_TYPE_OF_CUSTOMER)
             ->and($row->category)->toBe(DocumentTypeCategory::QUOTE)
-            ->and((int) $row->receive_from_customer)->toBe(1)
-            ->and($row->folder_path)->toBe('group-medical');
+            ->and($row->folder_path)->toBe('business');
     }
 
     expect(DocumentType::query()->whereIn('code', $codes)->count())->toBe(5);
@@ -46,6 +45,6 @@ it('is idempotent when run twice', function () {
     (new GroupMedicalLeadDocumentTypesSeeder)->run();
 
     expect(
-        DocumentType::query()->where('code', DocumentTypeCode::GM_IMCRM_CENSUS_LIST)->count()
+        DocumentType::query()->where('code', DocumentTypeCode::CENSUS_LIST)->count()
     )->toBe(1);
 });

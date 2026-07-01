@@ -597,9 +597,31 @@ class TestDataSeeder
             ]);
         }
 
+        $businessActivityId = $db->table('business_activities')->value('id');
+        if (! $businessActivityId) {
+            $businessActivityId = $db->table('business_activities')->insertGetId([
+                'name' => 'Technology',
+                'status' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $healthPlanTypeId = $db->table('health_plan_type')->value('id');
+        if (! $healthPlanTypeId) {
+            $healthPlanTypeId = $db->table('health_plan_type')->insertGetId([
+                'text' => 'Standard',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         return [
             'emirate_of_registration_id' => (int) $emirateId,
             'business_type_of_insurance_id' => (int) $businessTypeId,
+            'nature_of_company_activity_id' => (int) $businessActivityId,
+            'health_plan_type_id' => (int) $healthPlanTypeId,
         ];
     }
 
