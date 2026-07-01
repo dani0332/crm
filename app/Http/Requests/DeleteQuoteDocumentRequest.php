@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
@@ -56,8 +57,14 @@ class DeleteQuoteDocumentRequest extends FormRequest
             // Resolve quote type from request so we support all quote models (PersonalQuote has quote_type_id;
             // CarQuote, HealthQuote, etc. do not). Skip payment validation for Savings and Health.
             $requestQuoteType = QuoteTypes::tryFrom(ucfirst(strtolower(request()->quoteType ?? '')));
+
             $skipPaymentValidation = $requestQuoteType
                 && in_array($requestQuoteType, [QuoteTypes::SAVINGS, QuoteTypes::HEALTH], true);
+
+            // For Business quotes, also check the lead-level business_type_of_insurance_id
+            if ($requestQuoteType === QuoteTypes::BUSINESS) {
+                $skipPaymentValidation = $quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+            }
 
             if ($metLifeValidator->shouldValidatePayment(request()->provider_code) && ! $skipPaymentValidation) {
                 // validate if payment is authorized

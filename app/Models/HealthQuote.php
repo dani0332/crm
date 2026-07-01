@@ -33,6 +33,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -226,6 +227,11 @@ class HealthQuote extends Model implements AuditableContract
     public function supportUser()
     {
         return $this->belongsTo(User::class, 'support_user_id');
+    }
+
+    public function preQualificationAdvisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pq_advisor_id', 'id');
     }
 
     public function getFullNameAttribute()
