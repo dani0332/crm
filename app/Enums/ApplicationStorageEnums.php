@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use App\Console\Commands\ReportsConversionOptimizationScheduledExportCommand;
+use App\Models\PolicyIssuanceLog;
 use App\Services\Reports\ConversionOptimizationReportService;
 use BenSampo\Enum\Enum;
 use Database\Seeders\ApplicationStorageSeeder;
@@ -86,6 +87,11 @@ final class ApplicationStorageEnums extends Enum
     public const CAR_BOOK_POLICY_TEMPLATE = 'CAR_BOOK_POLICY_TEMPLATE';
     public const TRAVEL_BOOK_POLICY_TEMPLATE = 'TRAVEL_BOOK_POLICY_TEMPLATE';
     public const BIKE_BOOK_POLICY_TEMPLATE = 'BIKE_BOOK_POLICY_TEMPLATE';
+    public const RDX_EP_RETARGETING_REMINDER_TEMPLATE = 'RDX_EP_RETARGETING_REMINDER_TEMPLATE';
+    public const RDX_EP_RETARGETING_REMINDER_FROM_EMAIL = 'RDX_EP_RETARGETING_REMINDER_FROM_EMAIL';
+    public const RDX_EP_RETARGETING_REMINDER_BCC_EMAIL = 'RDX_EP_RETARGETING_REMINDER_BCC_EMAIL';
+    public const RDX_EP_RETARGETING_REMINDER_EMAIL_SUBJECT = 'RDX_EP_RETARGETING_REMINDER_EMAIL_SUBJECT';
+    public const BREVO_BIKE_EP_RETARGETING_EVENT_NAME = 'BREVO_BIKE_EP_RETARGETING_EVENT_NAME';
     public const HEALTH_BOOK_POLICY_TEMPLATE = 'HEALTH_BOOK_POLICY_TEMPLATE';
     public const LIFE_BOOK_POLICY_TEMPLATE = 'LIFE_BOOK_POLICY_TEMPLATE';
     public const HOME_BOOK_POLICY_TEMPLATE = 'HOME_BOOK_POLICY_TEMPLATE';
@@ -197,6 +203,21 @@ final class ApplicationStorageEnums extends Enum
     public const CHIEF_DEPUTY_OFFICER_EMAIL_ID = 'CHIEF_DEPUTY_OFFICER_EMAIL_ID';
 
     /* Policy Issuance Automation */
+    public const ENABLE_DIC_TRAVEL_POLICY_ISSUANCE = 'ENABLE_DIC_TRAVEL_POLICY_ISSUANCE';
+
+    /**
+     * Max total API attempts per async DIC Travel step (including the first). One row is written to
+     * {@see PolicyIssuanceLog} per attempt; when attempt count reaches this value, the lead fails.
+     */
+    public const DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP = 'DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP';
+
+    /** Seconds to wait before retrying the same DIC API step after a failed attempt. */
+    public const DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS = 'DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS';
+
+    /** When enabled, automation batch includes {@see PolicyIssuanceEnum::TIMEOUT_STATUS} records for DIC Travel. */
+    public const ENABLE_RETRY_TIMEOUT_DIC_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_DIC_TRAVEL_POLICY_ISSUANCE';
+
+    public const DIC_COMMISSION_PERCENTAGE = 'DIC_COMMISSION_PERCENTAGE';
     public const ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE = 'ENABLE_QATAR_TRAVEL_POLICY_ISSUANCE';
     public const ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE = 'ENABLE_RETRY_TIMEOUT_QATAR_TRAVEL_POLICY_ISSUANCE';
     public const TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL = 'TRAVEL_QATAR_FAILED_ALLOCATION_EMAIL_EVENT_URL';
@@ -253,6 +274,7 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
     public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
     public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
+    public const TRAVEL_AML_RETRIGGER_ENABLED = 'TRAVEL_AML_RETRIGGER_ENABLED';
     public const BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL = 'BIRD_AML_AUTOMATION_OUTCOME_WORKFLOW_URL';
 
     /* BOR (Broker on Record) Workflow Integration */
@@ -409,6 +431,7 @@ final class ApplicationStorageEnums extends Enum
     // Branch Enum
     public const ENABLE_MISREPORT_JOB = 'ENABLE_MISREPORT_JOB';
     public const BIRD_MISREPORT_JOB_WORKFLOW = 'BIRD_MISREPORT_JOB_WORKFLOW';
+    public const MISREPORT_RECIPIENT_EMAIL = 'MISREPORT_RECIPIENT_EMAIL';
 
     // Failed ILA Email Switch
     public const SEND_FAILED_ILA_EMAILS_SWITCH = 'SEND_FAILED_ILA_EMAILS_SWITCH';
@@ -460,6 +483,9 @@ final class ApplicationStorageEnums extends Enum
 
     // Instant Alfred Export Workflow
     public const BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW = 'BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW';
+    public const BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL = 'BIRD_PARTNER_AUTOMATION_COMPLETED_WORKFLOW_URL';
+    public const AXA_POLICY_MANDATORY_DOCUMENTS = 'AXA_POLICY_MANDATORY_DOCUMENTS';
+    public const CARS24_SEND_POLICY_CC_EMAILS = 'CARS24_SEND_POLICY_CC_EMAILS';
 
     // Claims Module Toggle
     public const DISABLE_CLAIMS_MODULE = 'DISABLE_CLAIMS_MODULE';
@@ -483,4 +509,7 @@ final class ApplicationStorageEnums extends Enum
 
     // Home Revivals
     public const DTT_HOME_ENABLED = 'DTT_HOME_ENABLED';
+
+    // Alliance → Qatar Insurance brand switch
+    public const ALLIANCE_BRAND_SWITCH_DATE = 'ALLIANCE_BRAND_SWITCH_DATE';
 }

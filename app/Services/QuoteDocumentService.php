@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BorStatusEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeText;
@@ -17,6 +18,7 @@ use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\WatermarkDocTypesEnum;
 use App\Enums\WorkflowTypeEnum;
+use App\Exports\CensusListExcelExport;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BorLog;
@@ -43,6 +45,8 @@ use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use League\Flysystem\UnableToCheckExistence;
+use Maatwebsite\Excel\Excel as ExcelWriter;
+use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
 use Throwable;
@@ -67,7 +71,7 @@ class QuoteDocumentService extends BaseService
      *
      * @return mixed
      */
-    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null, $documentTypeCategory = null)
+    public function getQuoteDocumentsToReceive($quoteTypeId, $registrationType = null, $vehicleUse = null, $documentTypeCategory = null, $businessTypeOfInsuranceId = null)
     {
         return DocumentType::where([
             'is_active' => 1,
@@ -90,6 +94,9 @@ class QuoteDocumentService extends BaseService
                 });
 
                 return $query;
+            })
+            ->when($businessTypeOfInsuranceId == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL, function ($query) use ($businessTypeOfInsuranceId) {
+                $query->where('business_type_of_insurance_id', $businessTypeOfInsuranceId);
             })
             ->orderBy('sort_order')
             ->get()
@@ -1018,13 +1025,17 @@ class QuoteDocumentService extends BaseService
         return $result;
     }
 
-    public function isEnableUploadDocument($quoteStatusId)
+    public function isEnableDocumentUploadOrDelete($quoteStatusId, ?string $quoteType = null): array
     {
         if (in_array($quoteStatusId, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
-            return false;
+            if (in_array($quoteType, [quoteTypeCode::Business, quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical])) {
+                return ['upload' => true, 'delete' => false];
+            }
+
+            return ['upload' => false, 'delete' => false];
         }
 
-        return true;
+        return ['upload' => true, 'delete' => true];
     }
 
     public function getDocumentUrl($filePath, $storageDisk = 'azureIMPrivate', $expiryTimeInMinutes = 5): ?string
@@ -1495,6 +1506,79 @@ class QuoteDocumentService extends BaseService
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * Build an XLSX census list from member rows, upload to private Azure storage, and attach a {@see QuoteDocument}.
+     *
+     * @param  array<int, array<string, string>>  $members
+     */
+    public function generateCensusListExcelFromMembers($quote, array $members): ?QuoteDocument
+    {
+        $documentType = DocumentType::where('code', DocumentTypeCode::CENSUS_LIST)->first();
+
+        if (! $documentType) {
+            LoggerService::warning('Census list Excel: document type '.DocumentTypeCode::CENSUS_LIST.' not found');
+
+            return null;
+        }
+
+        $quoteUUID = $quote->uuid ?? $quote->quote_uuid;
+
+        try {
+            $binary = Excel::raw(
+                new CensusListExcelExport(collect($members)),
+                ExcelWriter::XLSX
+            );
+
+            $originalName = 'InsuranceMarket.ae™ Manually Added Members List.xlsx';
+            $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+            $fileMimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            $fileNameAzure = uniqid().'_'.$quoteUUID.'_'.$docName;
+            $folderPath = $documentType->folder_path ?: 'business';
+            $filePathAzure = 'documents/'.$folderPath.'/'.$fileNameAzure;
+
+            $uploaded = Storage::disk('azureIMPrivate')->put($filePathAzure, $binary);
+            if (! $uploaded) {
+                LoggerService::error('Census list Excel: Azure upload failed for quote UUID '.$quoteUUID);
+
+                return null;
+            }
+
+            $docUuid = uniqid();
+            while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
+                $docUuid = uniqid().rand(1, 100);
+            }
+
+            LoggerService::info('Census list Excel: creating quote document record');
+            $quoteDocument = $quote->documents()->create([
+                'doc_name' => 'original_'.$docName,
+                'original_name' => $originalName,
+                'doc_url' => $filePathAzure,
+                'doc_mime_type' => $fileMimeType,
+                'document_type_code' => $documentType->code,
+                'document_type_text' => $documentType->text,
+                'document_category' => $documentType->category,
+                'doc_uuid' => $docUuid,
+                'member_detail_id' => null,
+                'created_by_id' => auth()->id() ?? null,
+                'is_restricted_internal_document' => $documentType->is_restricted_internal_document,
+                'document_type_id' => $documentType->id,
+            ]);
+
+            $this->dispatchOCRJob($documentType, $quote, $filePathAzure, $fileMimeType, 0);
+
+            return $quoteDocument;
+        } catch (Throwable $exception) {
+            LoggerService::error(
+                'Census list Excel: generation or upload failed for quote UUID '.$quoteUUID,
+                [],
+                $exception
+            );
+
+            return null;
+        }
+
     }
 
 }

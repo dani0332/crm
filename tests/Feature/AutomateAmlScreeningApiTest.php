@@ -13,7 +13,7 @@ use App\Models\ApplicationStorage;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\PersonalQuote;
-use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
+use App\Services\AML\AMLAutomationService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Schema;
@@ -106,13 +106,15 @@ test('returns 422 when quoteType is not in the automatable LOB registry', functi
 
 test('returns 422 when personal quote aml row is missing last name', function () {
     $uuid = '01900000-0000-7000-8000-000000000006';
+    $firstName = 'A';
+    $lastName = '';
     $personalQuote = PersonalQuote::create([
         'uuid' => $uuid,
         'code' => 'SAV-NOLAST',
         'quote_type_id' => QuoteTypeId::Savings,
         'customer_id' => 1,
-        'first_name' => 'A',
-        'last_name' => '',
+        'first_name' => $firstName,
+        'last_name' => $lastName,
         'email' => 'c@example.com',
         'dob' => '1990-01-01',
         'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
@@ -123,8 +125,8 @@ test('returns 422 when personal quote aml row is missing last name', function ()
 
     $insured = Insured::create([
         'customer_type' => 'Individual',
-        'first_name' => 'A',
-        'last_name' => 'B',
+        'first_name' => $firstName,
+        'last_name' => $lastName,
         'dob' => '1990-01-01',
         'nationality_id' => 1,
         'gender' => 'male',
@@ -292,12 +294,13 @@ test('returns 422 when aml automation row blocks re-dispatch', function (string 
 
     Bus::assertNothingDispatched();
 })->with([
-    [AmlAutomationStatus::Complete->value, 'AML automation already completed or in progress'],
-    [AmlAutomationStatus::Processing->value, 'AML automation already completed or in progress'],
+    [AmlAutomationStatus::Complete->value, 'AML automation already completed.'],
+    [AmlAutomationStatus::Processing->value, 'AML automation already in progress'],
     [AmlAutomationStatus::Queue->value, 'AML automation already queued'],
 ]);
 
-test('aml automatable lob registry allows savings only', function () {
-    expect(AmlAutomatableLobRegistry::allows(QuoteTypes::SAVINGS))->toBeTrue();
-    expect(AmlAutomatableLobRegistry::allows(QuoteTypes::CAR))->toBeFalse();
+test('aml automatable lob registry allows savings only from API', function () {
+    expect(in_array(QuoteTypes::SAVINGS, AMLAutomationService::allowedLobsFromAPI()))->toBeTrue();
+    expect(in_array(QuoteTypes::DEVICE, AMLAutomationService::allowedLobsFromAPI()))->toBeFalse();
+    expect(in_array(QuoteTypes::CAR, AMLAutomationService::allowedLobsFromAPI()))->toBeFalse();
 });

@@ -1,6 +1,7 @@
 <script setup>
 import CreateLeadModal from '../../Components/CreateLeadModal.vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import { setQueryStringFilters as setQueryStringFiltersUtil } from '../../Composables/utilities.js';
 defineProps({
   quotes: Object,
   dropdownSource: Object,
@@ -8,6 +9,14 @@ defineProps({
   isManualAllocationAllowed: Boolean,
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
+  canAssignPreQualificationAdvisor: {
+    type: Boolean,
+    default: false,
+  },
+  preQualificationAdvisors: {
+    type: Array,
+    default: () => [],
+  },
   renewalBatches: Array,
   subSources: Array,
   totalCount: {
@@ -16,6 +25,7 @@ defineProps({
   },
   authorizedDays: Number,
   insurerAMLStatus: Array,
+  leadTypeOptions: Array,
 });
 
 const page = usePage();
@@ -76,6 +86,7 @@ const filters = reactive({
   quote_status_id: [],
   insurer_aml_status: [],
   advisor_id: [],
+  pq_advisor_id: [],
   support_user_id: [],
   business_type_of_insurance_id: [],
   company_name: '',
@@ -97,6 +108,7 @@ const filters = reactive({
   advisors: [],
   authorize_date: '',
   captured_date: '',
+  lead_type: [],
 });
 
 watch(
@@ -134,6 +146,15 @@ const advisorOptions = computed(() => {
     label: 'UnAssigned',
   });
 
+  return options;
+});
+
+const pqaAdvisorOptions = computed(() => {
+  const list = Array.isArray(page.props.preQualificationAdvisors)
+    ? page.props.preQualificationAdvisors
+    : [];
+  const options = list.map(user => ({ value: user.id, label: user.name }));
+  options.push({ value: '-1', label: 'UnAssigned' });
   return options;
 });
 
@@ -191,6 +212,11 @@ const tableHeader = ref([
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  {
+    text: 'PRE‑QUALIFICATION ADVISOR',
+    value: 'pre_qualification_advisor_name',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   { text: 'OE / AE', value: 'support_user_name', is_active: true },
   { text: 'BRANCH', value: 'branch_name', is_active: true },
@@ -256,6 +282,7 @@ const setIntialState = () => {
     created_at_end: new Date() || '',
     quote_status_id: [],
     advisor_id: [],
+    pq_advisor_id: [],
     business_type_of_insurance_id: [],
     company_name: '',
     page: 1,
@@ -270,6 +297,7 @@ const setIntialState = () => {
     policy_expiry_date_end: '',
     last_modified_date: null,
     advisor_assigned_date: '',
+    lead_type: [],
   });
   filtersCount.value = 0;
 };
@@ -456,25 +484,9 @@ const onDataExport = (exportType = 'download') => {
     });
 };
 
-function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (/date/i.test(key) && params[key]) {
-      filters[key] = useDateFormat(params[key], 'YYYY-MM-DD').value;
-    } else if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key].map(value =>
-        isNaN(parseInt(value)) ? value : parseInt(value),
-      );
-    } else {
-      filters[key] = isNaN(parseInt(params[key]))
-        ? params[key]
-        : parseInt(params[key]);
-    }
-  }
-}
-
 onMounted(() => {
   params = getSavedQueryParams() || params;
-  setQueryStringFilters();
+  setQueryStringFiltersUtil(params, filters);
 
   let filtersCleaned = cleanObj(filters);
 
@@ -616,6 +628,10 @@ const insurerAMLStatusOption = computed(() => {
     value: key,
     label: value,
   }));
+});
+
+const leadTypeSelectOptions = computed(() => {
+  return page.props.leadTypeOptions || [];
 });
 </script>
 
@@ -917,6 +933,29 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
+        <x-select
+          v-model="filters.pq_advisor_id"
+          name="pq_advisor_id"
+          placeholder="Search by PQA"
+          :options="pqaAdvisorOptions"
+          class="w-full"
+          filterable
+          label="Pre-Qualification Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.pq_advisor_id = pqaAdvisorOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.pq_advisor_id = []"
+            />
+          </template>
+        </x-select>
+
         <!-- <x-select
           v-if="
             !hasAnyRole([
@@ -1047,6 +1086,29 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+
+        <x-select
+          v-model="filters.lead_type"
+          name="lead_type"
+          placeholder="Search by Lead Type"
+          :options="leadTypeSelectOptions"
+          class="w-full"
+          filterable
+          label="Lead Type"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.lead_type = leadTypeSelectOptions.map(
+                  option => option.value,
+                )
+              "
+              @clear="filters.lead_type = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -1117,8 +1179,10 @@ const insurerAMLStatusOption = computed(() => {
             :selected="quotesSelected.map(e => e.id)"
             :advisors="advisorOptions"
             :supportUsers="assignableSupportUserOptions"
+            :pqaAdvisors="pqaAdvisorOptions"
             :canAssignClientSupport="canAssignClientSupport"
             :canAssignLeadAdvisor="canAssignLeadAdvisor"
+            :canAssignPqa="canAssignPreQualificationAdvisor"
             quoteType="business"
             @success="manualAssignmentSuccess"
           />

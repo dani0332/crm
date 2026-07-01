@@ -40,6 +40,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\AllianceHistoricalProviderService;
 use App\Services\AMLService;
 use App\Services\BranchAssignmentService;
 use App\Services\CentralService;
@@ -222,15 +223,6 @@ class TravelController extends Controller
         $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
         $record->departure_country_text = $record->departure_country_id ? Nationality::find($record->departure_country_id)->country_name : null;
 
-        $ecomDetails = [
-            'premium' => $record->premium,
-            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
-            'paymentStatus' => $record->payment_status_id_text,
-            'planName' => $record->plan_id_text,
-            'providerName' => $record->travel_plan_provider_text,
-            'paidAtPayment' => ($record->payment_paid_at) ? Carbon::parse($record->payment_paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
-        ];
-
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->travelQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($this->genericModel->modelType, $record->id);
@@ -286,8 +278,20 @@ class TravelController extends Controller
             $record->days_cover_for = (new QatarInsuranceService)->calculateCoverDaysForExpiryDate($record, $travelType);
         }
 
+        $insuranceProvider = (new AllianceHistoricalProviderService)->applyHistoricalProviderOverride($record, $payments, $paymentEntityModel, $insuranceProvider);
+
+        $ecomDetails = [
+            'premium' => $record->premium,
+            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
+            'paymentStatus' => $record->payment_status_id_text,
+            'planName' => $record->plan_id_text,
+            'providerName' => $record->travel_plan_provider_text,
+            'paidAtPayment' => ($record->payment_paid_at) ? Carbon::parse($record->payment_paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
+        ];
+
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
-        $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel));
+        $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel));
+        $isDicProvider = $insuranceProvider?->code === InsuranceProviderEnum::DIC->value;
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -369,6 +373,7 @@ class TravelController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'isQatarProvider' => $insuranceProvider?->code === InsuranceProviderEnum::QIC->value,
             'customerAddressData' => $customerAddressData,
+            'isDicProvider' => $isDicProvider,
         ]);
     }
 

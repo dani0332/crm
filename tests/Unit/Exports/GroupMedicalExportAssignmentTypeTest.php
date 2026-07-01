@@ -17,6 +17,7 @@ it('populates assignment type text in group medical export', function () {
     // Headings:
     // 0 REF-ID
     // ...
-    // 7 ASSIGNMENT TYPE
-    expect($row[7])->toBe('System Assigned');
+    // 7 BRANCH
+    // 8 ASSIGNMENT TYPE
+    expect($row[8])->toBe('System Assigned');
 });

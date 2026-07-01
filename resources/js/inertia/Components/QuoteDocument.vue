@@ -278,6 +278,12 @@ const isIssuingDocumentsTabDisabled = key => {
     key === documentTypeEnum.ISSUING_DOCUMENTS &&
     isPolicyLocked(quoteStatusId)
   ) {
+    if (
+      props.bookPolicyDetails?.isEnableDocumentUploadOrDelete?.upload === true
+    ) {
+      return false;
+    }
+
     let status = '';
     if (quoteStatusId === quoteStatusEnum.PolicyBooked) {
       status = 'booked';
@@ -428,7 +434,10 @@ const openDocumentInNewTab = async item => {
             <div v-if="canShowQuoteDocumentDelete(item)">
               <x-tooltip
                 placement="left"
-                v-if="bookPolicyDetails?.isEnableUploadDocument === false"
+                v-if="
+                  bookPolicyDetails?.isEnableDocumentUploadOrDelete?.delete ===
+                  false
+                "
               >
                 <x-button size="xs" color="error" outlined disabled="true">
                   Delete
@@ -492,7 +501,15 @@ const openDocumentInNewTab = async item => {
             >
               <div class="flex flex-col gap-1">
                 <h5 class="text-sm font-semibold">
-                  {{ documentType.text }}
+                  <x-tooltip v-if="documentType.description" placement="right">
+                    <span
+                      class="cursor-help underline decoration-dotted decoration-primary-700"
+                    >
+                      {{ documentType.text }}
+                    </span>
+                    <template #tooltip>{{ documentType.description }}</template>
+                  </x-tooltip>
+                  <template v-else>{{ documentType.text }}</template>
                   <span class="text-red-500">
                     {{ documentType.is_required ? '*' : '' }}</span
                   >

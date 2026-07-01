@@ -20,27 +20,55 @@ class InsuranceProviderRepository extends BaseRepository
         return $this->withActive()->orderBy($orderBy, $order)->get();
     }
 
-    public function fetchByQuoteTypeMapping($quoteTypeId)
+    public function fetchByQuoteTypeMapping(int $quoteTypeId, ?int $insuranceProviderId = null)
     {
-        LoggerService::info('fn:fetchByQuoteTypeMapping - Start - InsuranceProviderRepository');
+        LoggerService::info('fn:fetchByQuoteTypeMapping - Start - InsuranceProviderRepository', [
+            'quote_type_id' => $quoteTypeId,
+            'insurance_provider_id' => $insuranceProviderId,
+        ]);
 
-        return DB::table('insurance_provider_quote_type')
-            ->select([
+        // Base list: providers mapped for this quote type
+        $providers = DB::table('insurance_provider_quote_type')
+            ->join(
+                'insurance_provider',
+                'insurance_provider.id',
+                '=',
+                'insurance_provider_quote_type.insurance_provider_id'
+            )
+            ->where('insurance_provider_quote_type.quote_type_id', $quoteTypeId)
+            ->where('insurance_provider.is_active', 1)
+            ->where('insurance_provider.is_deleted', 0)
+            ->orderBy('insurance_provider.text')
+            ->get([
                 'insurance_provider.id',
                 'insurance_provider.code',
                 'insurance_provider.text',
                 'insurance_provider.text_lms',
                 'insurance_provider_quote_type.insurance_provider_id',
                 'insurance_provider_quote_type.quote_type_id',
-            ])
-            ->where('quote_type_id', $quoteTypeId)
-            ->where('insurance_provider.is_active', 1)
-            ->where('insurance_provider.is_deleted', 0)
-            ->join('insurance_provider', 'insurance_provider.id', '=', 'insurance_provider_quote_type.insurance_provider_id')
-            ->orderBy('text')
-            ->get();
-    }
+            ]);
 
+        // If a specific provider ID was requested but not present in the mapping result,
+        // fetch it directly from insurance_provider and append it.
+        if ($insuranceProviderId !== null && $providers->where('id', $insuranceProviderId)->isEmpty()) {
+            $missing = DB::table('insurance_provider')
+                ->where('id', $insuranceProviderId)
+                ->first([
+                    'id',
+                    'code',
+                    'text',
+                    'text_lms',
+                    DB::raw('id as insurance_provider_id'),
+                    DB::raw('NULL as quote_type_id'),
+                ]);
+
+            if ($missing) {
+                $providers->push($missing);
+            }
+        }
+
+        return $providers;
+    }
     public function fetchNetworksByInsuranceProviders($request)
     {
         $networks = [];

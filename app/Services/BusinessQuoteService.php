@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
@@ -18,6 +19,7 @@ use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Services\PqaAllocation\PqaLeadAllocationService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
@@ -132,26 +134,29 @@ class BusinessQuoteService extends BaseService
                 'bqr.policy_issuance_status_id',
                 'bqr.policy_issuance_status_other',
                 'bqr.policy_booking_date',
-                'policy_start_date',
-                'policy_issuance_date',
+                'bqr.policy_start_date',
+                'bqr.policy_issuance_date',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'ps.text AS payment_status_id_text',
                 'py.payment_status_id',
                 'bqr.insly_migrated',
                 'bqr.aml_status',
+                'bqr.lead_type',
                 DB::raw('
                     CASE
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
-                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
-                        ELSE insurer_aml_status
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN bqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN bqr.insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE bqr.insurer_aml_status
                     END AS insurer_aml_status_display
                 '),
                 'ub.branch_id as advisor_primary_branch_id',
                 'b.name as lead_branch_name',
                 'b.id as lead_branch_id',
                 'bqr.is_branch_applicable',
+                'bqr.pq_advisor_id',
+                'pqa_u.name as pre_qualification_advisor_name',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -186,7 +191,27 @@ class BusinessQuoteService extends BaseService
                     ->where('ub.is_primary', '=', 1)
                     ->where('ub.status', '=', 1);
             })
-            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id');
+            ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
+            ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id');
+    }
+
+    private function applyUtmJoin(): void
+    {
+        if (auth()->user()?->can(PermissionsEnum::VIEW_UTM_SECTION)) {
+            $this->query
+                ->leftJoin('personal_quotes as pq', function ($join) {
+                    $join->on('pq.uuid', '=', 'bqr.uuid')
+                        ->where('pq.quote_type_id', '=', QuoteTypeId::Business);
+                })
+                ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', '=', 'pq.id')
+                ->addSelect(
+                    'pqd.utm_source',
+                    'pqd.utm_medium',
+                    'pqd.utm_campaign',
+                    'pqd.utm_content',
+                    'pqd.utm_term',
+                );
+        }
     }
 
     public function postProcessBusinessQuotes($quotes)
@@ -200,6 +225,8 @@ class BusinessQuoteService extends BaseService
 
     public function getEntity($id)
     {
+        $this->applyUtmJoin();
+
         return $this->query->where('bqr.uuid', $id)->first();
     }
 
@@ -305,6 +332,7 @@ class BusinessQuoteService extends BaseService
             'subSourceOptionsId' => $request->sub_source_options_id ?? null,
             'additionalNotes' => $request->additional_notes ?? null,
             'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
+            'businessActivityId' => $request->nature_of_company_activity_id,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
 
@@ -314,6 +342,9 @@ class BusinessQuoteService extends BaseService
                 $dataArr['advisorId'] = Auth::user()->id;
             }
         }
+
+        $dataArr = array_merge($dataArr, $this->buildGroupMedicalCapiPayload($request));
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
         if (isset($response->quoteUID)) {
@@ -408,7 +439,9 @@ class BusinessQuoteService extends BaseService
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
             $this->query->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
-        if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
+        if (Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            $this->query->where('bqr.pq_advisor_id', Auth::id());
+        } elseif (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
@@ -497,6 +530,12 @@ class BusinessQuoteService extends BaseService
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
                     }
+                } elseif ($item == 'pq_advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    if (count($request[$item]) === 1 && $request[$item][0] == '-1') {
+                        $this->query->whereNull('bqr.pq_advisor_id');
+                    } else {
+                        $this->query->whereIn('bqr.pq_advisor_id', $request[$item]);
+                    }
                 } elseif ($item == 'business_type_of_insurance_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('bqr.business_type_of_insurance_id', $request[$item]);
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
@@ -523,6 +562,10 @@ class BusinessQuoteService extends BaseService
             $startDate = Carbon::parse($request->captured_date[0])->startOfDay();
             $endDate = Carbon::parse($request->captured_date[1])->endOfDay();
             $this->query->whereBetween('py.captured_at', [$startDate, $endDate]);
+        }
+
+        if (! empty($request->lead_type) && is_array($request->lead_type)) {
+            $this->query->whereIn('bqr.lead_type', $request->lead_type);
         }
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');
@@ -565,47 +608,147 @@ class BusinessQuoteService extends BaseService
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    protected function buildGroupMedicalCapiPayload(Request $request): array
+    {
+        if (! $this->isGroupMedicalBusinessRequest($request)) {
+            return [];
+        }
+
+        $payload = [];
+
+        $companyActivityTypeId = $request->input('nature_of_company_activity_id')
+            ?? $request->input('companyActivityTypeId');
+        if ($companyActivityTypeId !== null && $companyActivityTypeId !== '') {
+            $payload['companyActivityTypeId'] = (int) $companyActivityTypeId;
+        }
+
+        if ($request->has('has_existing_group_health_insurance') || $request->has('hasExistingGroupPolicy')) {
+            $payload['hasExistingGroupPolicy'] = $request->has('has_existing_group_health_insurance')
+                ? $request->boolean('has_existing_group_health_insurance')
+                : $request->boolean('hasExistingGroupPolicy');
+        }
+
+        $healthPlanTypeId = $request->input('health_plan_type_id') ?? $request->input('healthPlanTypeId');
+        if ($healthPlanTypeId !== null && $healthPlanTypeId !== '') {
+            $payload['healthPlanTypeId'] = (int) $healthPlanTypeId;
+        }
+
+        $categories = $this->resolveGroupMedicalCategoriesForCapi($request);
+        if ($categories !== null && $categories !== []) {
+            $payload['categories'] = $categories;
+        }
+
+        return $payload;
+    }
+
+    protected function isGroupMedicalBusinessRequest(Request $request): bool
+    {
+        $businessTypeId = $request->input('business_type_of_insurance_id')
+            ?? $request->input('businessTypeOfInsuranceId');
+
+        return $businessTypeId !== null
+            && (int) $businessTypeId === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+    }
+
+    /**
+     * @return list<array<string, int|string|bool|null>>|null
+     */
+    protected function resolveGroupMedicalCategoriesForCapi(Request $request): ?array
+    {
+        if ($request->has('gm_category_intake') && is_array($request->input('gm_category_intake'))) {
+            return array_values(array_map(
+                fn (array $row): array => $this->mapGroupMedicalCategoryRowForCapi($row),
+                $request->input('gm_category_intake'),
+            ));
+        }
+
+        if ($request->has('categories') && is_array($request->input('categories'))) {
+            return array_values(array_map(
+                fn (array $row): array => $this->mapGroupMedicalCategoryRowForCapi($row),
+                $request->input('categories'),
+            ));
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, int|string|null>
+     */
+    protected function mapGroupMedicalCategoryRowForCapi(array $row): array
+    {
+        $mapped = [
+            'groupMedicalCategoryId' => $row['member_category_id'] ?? $row['groupMedicalCategoryId'] ?? null,
+            'numberOfPeople' => $row['number_of_people'] ?? $row['numberOfPeople'] ?? null,
+            'insuranceProviderId' => $row['existing_insurance_provider_id'] ?? $row['insuranceProviderId'] ?? null,
+            'healthTpaId' => $row['existing_tpa_id'] ?? $row['healthTpaId'] ?? null,
+            'healthNetworkId' => $row['existing_network_id'] ?? $row['healthNetworkId'] ?? null,
+            'renewalDate' => $row['existing_policy_renewal_date'] ?? $row['renewalDate'] ?? null,
+        ];
+
+        return array_filter(
+            $mapped,
+            fn (mixed $value): bool => $value !== null && $value !== '',
+        );
+    }
+
+    /**
+     * Persist Group Medical lead intake (plan type, categories, per-category rows).
+     */
+    protected function syncGroupMedicalLeadIntakeFields(BusinessQuote $businessQuote, Request $request): void
+    {
+        if ($request->has('nature_of_company_activity_id')) {
+            $businessQuote->business_activity_id = $request->input('nature_of_company_activity_id');
+        }
+        if ($request->has('has_existing_group_health_insurance')) {
+            $businessQuote->has_existing_group_policy = $request->boolean('has_existing_group_health_insurance');
+        }
+        if ($request->has('health_plan_type_id')) {
+            $businessQuote->health_plan_type_id = $request->input('health_plan_type_id');
+        }
+        if ($request->has('number_of_categories')) {
+            $businessQuote->number_of_categories = $request->input('number_of_categories');
+        }
+        if ($request->has('gm_category_intake')) {
+            $businessQuote->gm_category_intake = $request->input('gm_category_intake');
+        }
+    }
+
     public function updateBusinessQuote(Request $request, $id)
     {
         $businessQuote = BusinessQuote::where('uuid', $id)->first();
-        if ($businessQuote) {
-            // Log sub-source parameters for updates
-            LoggerService::info('BusinessQuoteService update - Sub-source parameters', [
-                'uuid' => $id,
-                'sub_source_id' => $request->sub_source_id ?? null,
-                'sub_source_options_id' => $request->sub_source_options_id ?? null,
-            ]);
-            $businessQuote->first_name = $request->first_name;
-            $businessQuote->last_name = $request->last_name;
-            $businessQuote->company_name = $request->company_name;
-            $businessQuote->company_address = $request->company_address;
-            $businessQuote->gender = $request->gender;
-            $businessQuote->brief_details = $request->brief_details;
-            $businessQuote->premium = $request->premium;
-            $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
-            $businessQuote->number_of_employees = $request->number_of_employees;
-            // Persist sub-source fields locally on Business LOB
-            if ($request->has('sub_source_id')) {
-                $businessQuote->sub_source_id = $request->sub_source_id;
-            }
-            if ($request->has('sub_source_options_id')) {
-                $businessQuote->sub_source_options_id = $request->sub_source_options_id;
-            }
 
-            if ($request->has('additional_notes')) {
-                $businessQuote->additional_notes = $request->additional_notes;
-            }
-            if (isset($request->group_medical_type_id)) {
-                $businessQuote->group_medical_type_id = $request->group_medical_type_id;
-            }
-            $businessQuote->save();
-
-            if (isset($request->return_to_view)) {
-                return redirect('quote/business/'.$businessQuote->id)->with('success', 'Business Quote has been updated');
-            }
-        } else {
+        if (! $businessQuote) {
             return redirect('quote/business')->with('message', 'Business Quote not found');
         }
+
+        $capiPayload = array_merge(
+            [
+                'quoteUID' => $id,
+                'firstName' => $request->first_name,
+                'lastName' => $request->last_name,
+                'mobileNo' => $request->mobile_no,
+                'companyName' => $request->company_name,
+                'emirateOfRegistrationId' => $request->emirate_of_registration_id,
+                'businessActivityId' => $request->nature_of_company_activity_id,
+                'briefDetails' => $request->brief_details,
+                'premium' => $request->premium ?? 0,
+            ],
+            $this->buildGroupMedicalCapiPayload($request),
+        );
+
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-revise-group-medical-quote', $capiPayload);
+        LoggerService::info('Capi revise-group-medical-quote response', ['response' => $response]);
+
+        if (isset($request->return_to_view)) {
+            return redirect('quote/business/'.$businessQuote->id)->with('success', 'Business Quote has been updated');
+        }
+
+        return $response;
     }
 
     public function fillModelProperties()
@@ -881,5 +1024,82 @@ class BusinessQuoteService extends BaseService
         }
 
         return null;
+    }
+
+    /**
+     * Manually assign or reassign Pre‑Qualification Advisor on Corpline business quotes (IMCRM list).
+     *
+     * @param  array<int, string|int>  $leadIds
+     */
+    public function assignPreQualificationAdvisor(array $leadIds, int $preQualificationAdvisorUserId, string $modelType): ?string
+    {
+
+        $pqaService = app(PqaLeadAllocationService::class);
+        $quoteTypeId = (int) QuoteTypes::BUSINESS->id();
+
+        if (! $pqaService->userIsEligiblePreQualificationAdvisor($preQualificationAdvisorUserId, $quoteTypeId)) {
+
+            LoggerService::warning(self::class.'::assignPreQualificationAdvisor: ineligible PQA user '.$preQualificationAdvisorUserId);
+
+            return null;
+        }
+
+        $parsedIds = [];
+        foreach ($leadIds as $rawId) {
+            $id = (int) explode('|', (string) $rawId)[0];
+            if ($id > 0) {
+                $parsedIds[] = $id;
+            }
+        }
+
+        if ($parsedIds === []) {
+            return null;
+        }
+
+        $updatedLeadIds = [];
+        $messageModel = ucfirst($modelType);
+
+        DB::transaction(function () use ($parsedIds, $preQualificationAdvisorUserId, $pqaService, $quoteTypeId, &$updatedLeadIds, &$messageModel) {
+            foreach ($parsedIds as $id) {
+                $quote = $this->getEntityPlain($id);
+                // if ($quote === null || (int) $quote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                if ($quote === null) {
+                    continue;
+                }
+                if ($quote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+                    $messageModel = 'Group Medical';
+                } else {
+                    $messageModel = 'Corpline';
+
+                }
+
+                if ((int) $quote->pq_advisor_id === $preQualificationAdvisorUserId) {
+                    continue;
+                }
+
+                $previousId = $quote->pq_advisor_id !== null ? (int) $quote->pq_advisor_id : null;
+
+                $quote->pq_advisor_id = $preQualificationAdvisorUserId;
+                $quote->pq_assigned_at = now();
+                $quote->save();
+
+                $pqaService->recordManualPqaAssignment($preQualificationAdvisorUserId, $quoteTypeId, $previousId);
+
+                $updatedLeadIds[] = $id;
+            }
+        });
+
+        if ($updatedLeadIds === []) {
+            $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
+
+            return 'Selected leads already have '.$assigneeName.' as Pre‑Qualification Advisor.';
+        }
+
+        $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
+
+        // $displayModelType = strtolower($modelType) === 'group_medical' ? 'Group Medical' : $modelType;
+
+        // return $displayModelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
+        return $messageModel.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
     }
 }

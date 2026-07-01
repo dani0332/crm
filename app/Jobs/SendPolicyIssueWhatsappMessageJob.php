@@ -68,20 +68,11 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
             }
 
             LoggerService::info('Going to send Policy Issued Whatsapp Message');
-            $responseCode = (new CentralService)->sendPolicyIssuedWhatsappMessage($this->quote, $this->quoteTypeId);
-            LoggerService::info('Policy Issued Whatsapp Message Sent: '.$responseCode);
-
-            if (in_array($responseCode, [200, 201])) {
-                LoggerService::info(self::class." - Policy Issued Whatsapp Message Sent: {$responseCode} Customer Phone: {$this->quote?->mobile_no} Quote Code: {$this->quote?->code} , QuoteTypeId {$this->quoteTypeId}", extra: [
-                    'uuid' => $this->quoteUuid,
-                    'quoteTypeId' => $this->quoteTypeId,
-                ]);
-            } else {
-                LoggerService::error(self::class." - Policy Issued Whatsapp Message Not Sent: {$responseCode} Customer Phone: {$this->quote?->mobile_no} Quote Code: {$this->quote?->code} , QuoteTypeId {$this->quoteTypeId}", extra: [
-                    'uuid' => $this->quoteUuid,
-                    'quoteTypeId' => $this->quoteTypeId,
-                ]);
-            }
+            (new CentralService)->sendPolicyIssuedWhatsappMessage($this->quote, $this->quoteTypeId);
+            LoggerService::info(self::class." - Policy Issued Whatsapp Message Sent: Customer Phone: {$this->quote?->mobile_no} Quote Code: {$this->quote?->code} , QuoteTypeId {$this->quoteTypeId}", extra: [
+                'uuid' => $this->quoteUuid,
+                'quoteTypeId' => $this->quoteTypeId,
+            ]);
 
         } catch (Exception $e) {
             LoggerService::error(self::class." - Error: {$e->getMessage()} for Quote Code {$this->quote?->code} with stack trace {$e->getTraceAsString()}", extra: [

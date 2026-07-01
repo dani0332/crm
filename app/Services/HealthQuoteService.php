@@ -46,6 +46,7 @@ use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Services\PqaAllocation\PqaLeadAllocationService;
 use App\Services\SLA\SLAService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
@@ -213,17 +214,17 @@ class HealthQuoteService extends BaseService
             'hqr.insurance_provider_id',
             DB::raw('
                 CASE
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
-                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
-                    WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
-                    ELSE insurer_aml_status
+                    WHEN hqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                    WHEN hqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                    WHEN hqr.insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                    WHEN hqr.insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                    ELSE hqr.insurer_aml_status
                 END AS insurer_aml_status_display
             '),
             'c.pcp_tag',
             'hqr.pc_qualified',
             DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
-            DB::raw(HealthQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
+            DB::raw(HealthQuote::formattedPcQualifiedCase('hqr').' as pc_qualified_formatted'),
             // Sub-source fields
             'hqr.sub_source_id',
             'hqr.sub_source_options_id',
@@ -234,8 +235,8 @@ class HealthQuoteService extends BaseService
             'ub.branch_id as advisor_primary_branch_id',
             'b.name as lead_branch_name',
             'b.id as lead_branch_id',
-            'is_quote_locked',
-            'is_branch_applicable',
+            'hqr.is_quote_locked',
+            'hqr.is_branch_applicable',
             'hqr.api_issuance_status_id',
             'hqr.insurer_api_status_id',
             'hqr.policy_holder_category_code',
@@ -287,9 +288,30 @@ class HealthQuoteService extends BaseService
             ->leftJoin('branches as b', 'b.id', '=', 'hqr.branch_id');
     }
 
+    private function applyUtmJoin(): void
+    {
+        if (auth()->user()?->can(PermissionsEnum::VIEW_UTM_SECTION)) {
+            $this->query
+                ->leftJoin('personal_quotes as pq', function ($join) {
+                    $join->on('pq.uuid', '=', 'hqr.uuid')
+                        ->where('pq.quote_type_id', '=', QuoteTypeId::Health);
+                })
+                ->leftJoin('personal_quote_details as pqd', 'pqd.personal_quote_id', '=', 'pq.id')
+                ->addSelect(
+                    'pqd.utm_source',
+                    'pqd.utm_medium',
+                    'pqd.utm_campaign',
+                    'pqd.utm_content',
+                    'pqd.utm_term',
+                );
+        }
+    }
+
     public function getEntity($id)
     {
-        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
+        $this->applyUtmJoin();
+
+        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no', 'hqr.pq_advisor_id'])->where('hqr.uuid', $id)->first();
     }
 
     public function getLead($id): HealthQuote
@@ -436,7 +458,18 @@ class HealthQuoteService extends BaseService
     public function getGridData($model = null, $requestParams = [])
     {
         $query = $this->healthQuoteQueryBuilder->processGridData($requestParams);
-        $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health, user: $requestParams['user'] ?? null);
+        $codeParam = request()->input('code');
+        if (Auth::check() && Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            $query->where('health_quote_request.pq_advisor_id', Auth::id());
+            if (empty($codeParam)) {
+                $query->whereNull('health_quote_request.health_plan_type_id');
+            }
+        } elseif (Auth::check() && Auth::user()->hasRole(RolesEnum::PreQualificationLead)) {
+
+        } else {
+            $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health, user: $requestParams['user'] ?? null);
+        }
+
         $this->adjustQueryByDateFilters($query, 'health_quote_request', $requestParams);
 
         return $query;
@@ -2037,5 +2070,71 @@ class HealthQuoteService extends BaseService
         }
 
         $quote->save();
+    }
+
+    /**
+     * Manually assign or reassign Pre‑Qualification Advisor on Corpline business quotes (IMCRM list).
+     *
+     * @param  array<int, string|int>  $leadIds
+     */
+    public function assignPreQualificationAdvisor(array $leadIds, int $preQualificationAdvisorUserId, string $modelType): ?string
+    {
+
+        $pqaService = app(PqaLeadAllocationService::class);
+        $quoteTypeId = (int) QuoteTypes::HEALTH->id();
+
+        if (! $pqaService->userIsEligiblePreQualificationAdvisor($preQualificationAdvisorUserId, $quoteTypeId)) {
+
+            LoggerService::warning(self::class.'::assignPreQualificationAdvisor: ineligible PQA user '.$preQualificationAdvisorUserId);
+
+            return null;
+        }
+
+        $parsedIds = [];
+        foreach ($leadIds as $rawId) {
+            $id = (int) explode('|', (string) $rawId)[0];
+            if ($id > 0) {
+                $parsedIds[] = $id;
+            }
+        }
+
+        if ($parsedIds === []) {
+            return null;
+        }
+
+        $updatedLeadIds = [];
+
+        DB::transaction(function () use ($parsedIds, $preQualificationAdvisorUserId, $pqaService, $quoteTypeId, &$updatedLeadIds) {
+            foreach ($parsedIds as $id) {
+                $quote = $this->getEntityPlain($id);
+                if ($quote === null) {
+                    continue;
+                }
+
+                if ((int) $quote->pq_advisor_id === $preQualificationAdvisorUserId) {
+                    continue;
+                }
+
+                $previousId = $quote->pq_advisor_id !== null ? (int) $quote->pq_advisor_id : null;
+
+                $quote->pq_advisor_id = $preQualificationAdvisorUserId;
+                $quote->pq_assigned_at = now();
+                $quote->save();
+
+                $pqaService->recordManualPqaAssignment($preQualificationAdvisorUserId, $quoteTypeId, $previousId);
+
+                $updatedLeadIds[] = $id;
+            }
+        });
+
+        if ($updatedLeadIds === []) {
+            $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
+
+            return 'Selected leads already have '.$assigneeName.' as Pre‑Qualification Advisor.';
+        }
+
+        $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
+
+        return $modelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
     }
 }

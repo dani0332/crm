@@ -21,6 +21,7 @@ final class EmbeddedProductEnum extends Enum
     const SRC_CAR_EMBEDDED_PRODUCT = 'CAR_EMBEDDED_PRODUCT';
     const CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS = [
         self::MDX,
+        self::RDX,
         self::ECB,
     ];
 
@@ -38,6 +39,20 @@ final class EmbeddedProductEnum extends Enum
         return [
             self::MDX,
             self::RDX,
+        ];
+    }
+
+    /**
+     * EP short codes eligible for Sage booking reversal after IMCRM refund (MEDEX, RDX, Excess Cashback).
+     *
+     * @return array<int, string>
+     */
+    public static function getSageReversableEpShortCodes(): array
+    {
+        return [
+            self::MDX,
+            self::RDX,
+            self::ECB,
         ];
     }
 }

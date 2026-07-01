@@ -31,11 +31,15 @@ class DatabaseSeeder extends Seeder
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
             DocumentTypesSeeder::class,
+            GroupMedicalLeadDocumentTypesSeeder::class,
             // CommercialCarPlanSeeder::class,
             // RuleNameSeeder::class,
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
+            GroupMedicalQuoteCopyLinkPermissionSeeder::class,
+            PqaLeadAllocationPermissionSeeder::class,
+            PqaGroupMedicalQuotesListPermissionSeeder::class,
             // AiAdvisorSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
@@ -45,6 +49,7 @@ class DatabaseSeeder extends Seeder
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
             ManagerLeadAllocationRoleSeeder::class,
+
             VehicleColorSeeder::class,
             SendUpdateNotesSeeder::class,
             NonApiInsurerVehicleColorSeeder::class,
@@ -54,6 +59,7 @@ class DatabaseSeeder extends Seeder
             CarAdditionalDetailsForSukoonSeeder::class,
             QICTokioLookupSeeder::class,
             DeviceQuoteSeeder::class,
+            ActivateTravelDicDocumentTypesSeeder::class,
             DocRequiredForPolicySendSeeder::class,
             SendUpdateSeederForCyber::class,
             BranchSeeder::class,
@@ -66,6 +72,7 @@ class DatabaseSeeder extends Seeder
             HealthGroupNationalitySeeder::class,*/
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
+            PartnerSeeder::class,
             InsuranceProviderTransitionsSeeder::class,
             BackfillBusinessQuoteEmirateFromInsuredSeeder::class,
             ConverILAGroupMedicalConfigurationBranchWise::class,
@@ -74,6 +81,7 @@ class DatabaseSeeder extends Seeder
             VisaCategorySeeder::class,
             SalaryBandSeeder::class,
             MaritalStatusSeeder::class,
+            PqaLeadAllocationPermissionSeeder::class,
         ]);
     }
 }

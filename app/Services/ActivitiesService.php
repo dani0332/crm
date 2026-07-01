@@ -410,7 +410,7 @@ class ActivitiesService extends BaseService
         ));
     }
 
-    public function getActivity($entityUId)
+    public function getActivity($entityUId, $isModified = false)
     {
         if (empty($entityUId)) {
             return response()->json(['message' => 'Entity UUID Not Found'], 404);
@@ -421,7 +421,7 @@ class ActivitiesService extends BaseService
             ->latest()->first();
 
         if (! $activity) {
-            return response()->json(['message' => 'Activity Not Found'], 404);
+            return response()->json(['message' => 'Activity Not Found'], $isModified ? 200 : 404);
         }
 
         return response()->json([
