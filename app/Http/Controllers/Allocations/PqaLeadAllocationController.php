@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Allocations;
 
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -119,25 +120,43 @@ class PqaLeadAllocationController extends Controller
         $groupMedicalTypeId = BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
 
         $today = now()->toDateString();
+        $exlcude_source = [
+            LeadSourceEnum::IMCRM,
+            LeadSourceEnum::RENEWAL_UPLOAD,
+            LeadSourceEnum::EA_IMCRM,
+            LeadSourceEnum::REVIVAL,
+            LeadSourceEnum::REVIVAL_SHORT,
+            LeadSourceEnum::REVIVAL_ANNUAL,
+        ];
 
+        // pqa not assigned + plan type null + advisor not assigned
         $healthCount = HealthQuote::query()
             ->whereNull('pq_advisor_id')
-            // ->where('quote_status_id', $healthNewLeadStatus)
+            ->whereNull('advisor_id')
+            ->whereNull('health_plan_type_id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Lost])
+            ->whereNotIn('source', $exlcude_source)
             ->whereDate('created_at', $today)
             ->count();
 
+        // new lead + qualitification pending and no advisor and pqa null
         $corplineCount = BusinessQuote::query()
             ->whereNull('pq_advisor_id')
-            // ->where('quote_status_id', $corplineQualPendingStatus)
+            ->whereNull('advisor_id')
+            ->whereIn('quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::QualificationPending])
             ->where('business_type_of_insurance_id', '!=', $groupMedicalTypeId)
             ->whereDate('created_at', $today)
+            ->whereNotIn('source', $exlcude_source)
             ->count();
 
         $groupMedicalCount = BusinessQuote::query()
             ->whereNull('pq_advisor_id')
+            ->whereNull('advisor_id')
+            ->whereIn('quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::QualificationPending])
             ->where('business_type_of_insurance_id', $groupMedicalTypeId)
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake])
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Lost])
             ->whereDate('created_at', $today)
+            ->whereNotIn('source', $exlcude_source)
             ->count();
 
         return [

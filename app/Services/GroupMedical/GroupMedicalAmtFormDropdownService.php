@@ -37,10 +37,6 @@ final class GroupMedicalAmtFormDropdownService
      */
     public function companyActivityTypes(): Collection
     {
-        if (! Schema::hasTable('company_activity_type')) {
-            return collect();
-        }
-
         return QuoteType::find(QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL))
             ->businessActivities()
             ->active()
