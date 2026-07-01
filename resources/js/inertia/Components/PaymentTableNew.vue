@@ -40,6 +40,7 @@ const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentCaptureValidationEnum = page.props.paymentCaptureValidationEnum;
 const paymentMethodsEnums = page.props.paymentMethodsEnum;
+const genericRequestEnum = page.props.genericRequestEnum;
 
 const { filterCCPayments } = usePayment();
 const { isAmlVerified, isKycVerified } = useAMLKYC();
@@ -116,6 +117,10 @@ const props = defineProps({
   canBypassPlanLock: {
     type: Boolean,
     default: false,
+  },
+  investmentFrequency:{
+    type: String,
+    default: '',
   },
 });
 
@@ -210,16 +215,16 @@ const getInitalAmountForLifeLOB = () => {
 };
 
 const getInitalAmountForSavingsLOB = () => {
+  let paymentTerm = props.investmentFrequency == genericRequestEnum.LUMPSUM ? 1 : props.quoteRequest?.savings_quote?.payment_term;
   if (props.quoteRequest?.quote_customer_plan?.plan?.currency === 'AED') {
     return (
-      props.quoteRequest.premium *
-      props.quoteRequest?.savings_quote?.payment_term
+      props.quoteRequest.premium * paymentTerm      
     );
   }
   const premiumInAED =
     Math.round(props.quoteRequest.premium * savingExchangeRate.value * 100) /
     100;
-  return premiumInAED * props.quoteRequest?.savings_quote?.payment_term;
+  return premiumInAED * paymentTerm;
 };
 
 // Check quoteType and set initialAmount.value accordingly

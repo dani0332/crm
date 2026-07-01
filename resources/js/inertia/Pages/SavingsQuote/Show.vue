@@ -57,6 +57,7 @@ const props = defineProps({
   websiteURL: String,
   lookUpData: Object,
   localLookups: Object,
+  investmentFrequency: String,
 });
 
 const page = usePage();
@@ -1251,6 +1252,7 @@ const handlePlanSelected = plan => {
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :investmentFrequency="investmentFrequency"
     />
 
     <QuotePayments
