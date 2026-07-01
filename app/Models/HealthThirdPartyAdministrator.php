@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class HealthThirdPartyAdministrator extends Model
 {
-    protected $table = 'group_medical_third_party_administrator';
+    protected $table = 'health_third_party_administrator';
 
     public function scopeActive($query)
     {
