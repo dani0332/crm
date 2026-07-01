@@ -426,6 +426,7 @@ class TravelEmailService extends BaseService
     {
         return (object) [
             'customerId' => $lead->customer_id ?? '',
+            'uniqueId' => (string) Str::ulid(),
             'firstName' => $lead->first_name ?? '',
             'lastName' => $lead->last_name ?? '',
             'customerMobile' => ! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : '',

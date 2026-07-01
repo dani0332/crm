@@ -50,6 +50,7 @@ class DeviceEmailService extends BaseService
         $isFlowExecuted = app(WebEngageService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::DEVICE->id(), QuoteFlowType::DEVICE_OCB_INTRO_EMAIL->value);
 
         return [
+            'uniqueId' => (string) Str::ulid(),
             'customerId' => $lead->customer_id ?? '',
             'firstName' => $lead->first_name ?? '',
             'lastName' => $lead->last_name ?? '',
