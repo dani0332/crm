@@ -766,11 +766,27 @@ class CoreSchema
                 $table->timestamps();
             },
         ]);
+
+        SchemaUtils::ensureColumns([
+            'health_quote_request' => [
+                'pq_advisor_id' => fn (Blueprint $table) => $table->unsignedBigInteger('pq_advisor_id')->nullable(),
+                'pq_assigned_at' => fn (Blueprint $table) => $table->timestamp('pq_assigned_at')->nullable(),
+            ],
+        ]);
     }
 
     private function ensureBusinessQuoteTables(): void
     {
         SchemaUtils::ensureTables([
+            'business_quote_request_detail' => function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('business_quote_request_id');
+                $table->timestamp('advisor_assigned_date')->nullable();
+                $table->unsignedBigInteger('advisor_assigned_by_id')->nullable();
+                $table->unsignedBigInteger('lost_reason_id')->nullable();
+                $table->text('notes')->nullable();
+                $table->timestamps();
+            },
             'business_quote_request' => function (Blueprint $table) {
                 $table->id();
                 $table->string('uuid')->unique()->nullable();
@@ -809,6 +825,12 @@ class CoreSchema
                 $table->timestamps();
                 $table->softDeletes();
             },
+        ]);
+
+        SchemaUtils::ensureColumns([
+            'business_quote_request' => [
+                'pq_assigned_at' => fn (Blueprint $table) => $table->timestamp('pq_assigned_at')->nullable(),
+            ],
         ]);
     }
 
@@ -1413,6 +1435,12 @@ class CoreSchema
     private function ensureGroupMedicalFormDropdownTables(): void
     {
         SchemaUtils::ensureTables([
+            'business_activities' => function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->nullable();
+                $table->tinyInteger('status')->default(1);
+                $table->timestamps();
+            },
             'company_activity_type' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text');
