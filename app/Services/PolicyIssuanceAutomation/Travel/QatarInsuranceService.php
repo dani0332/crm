@@ -22,6 +22,7 @@ use App\Jobs\SendTravelQatarFailedAllocationEmailJob;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
+use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\PaymentRepository;
@@ -245,6 +246,25 @@ class QatarInsuranceService implements PolicyIssuanceInterface
             'mobile' => '971502245943', // will be static, as we dont share customer contact details outside organization
             'agency_reference' => 'asc',
         ];
+
+        $providerId = $quote->insuranceProvider->id;
+
+        $updateQuote = TravelInsurerRequestResponses::where('quote_uuid', $quote->uuid)
+            ->where('provider_id', $providerId)
+            ->orderBy('created_at', 'DESC')
+            ->first();
+
+        $updateQuoteRequest = json_decode($updateQuote->request, true);
+
+        if (
+            isset($updateQuoteRequest['data']['options']) &&
+            ! empty($updateQuoteRequest['data']['options'])
+        ) {
+            $selectedOptionIds = (object) array_fill_keys(array_map('strval', array_keys($updateQuoteRequest['data']['options'])), 1);
+
+            $payload = [...$payload, 'options' => $selectedOptionIds];
+        }
+
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
         $issuePolicy = $this->qatarHttpCall($endPoint, $payload);
