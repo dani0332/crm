@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\AMLStatusCode;
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\quoteTypeCode;
@@ -13,9 +12,9 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -23,6 +22,7 @@ use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class HomeRevivalService
 {
@@ -183,42 +183,26 @@ class HomeRevivalService
         }
 
         $payload = (object) [
-            'to' => [
-                [
-                    'email' => $quote->email,
-                    'name' => $quote->first_name.' '.$quote->last_name,
-                ],
-            ],
+            'uniqueId' => (string) Str::ulid(),
+            'customerId' => $quote->customer_id ?? '',
+            'firstName' => $quote->first_name ?? '',
+            'lastName' => $quote->last_name ?? '',
+            'customerEmail' => $quote->email ?? '',
+            'customerMobile' => ! empty($quote->mobile_no) ? '+'.formatMobileNoWithoutPlus($quote->mobile_no) : '',
             'workflowType' => WorkflowTypeEnum::HOME_REVIVAL_OCB,
             'quoteUID' => $quoteUuid,
-            'customerEmail' => $quote->email,
-            'customerName' => $quote->first_name.' '.$quote->last_name,
+            'customerName' => trim("{$quote->first_name} {$quote->last_name}"),
             'refID' => $quote->code,
-            'tag' => 'home-revival-email',
             'lob' => QuoteTypes::HOME->id(),
-            'isShort' => $quote->source === LeadSourceEnum::REVIVAL_SHORT ? true : false,
+            'isShort' => $quote->source === LeadSourceEnum::REVIVAL_SHORT,
         ];
 
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_OCB)->first();
-        if (! $workflowUrl || ! $workflowUrl->value) {
-            LoggerService::warning(self::class.' - Home revival email not sent since workflow URL not found');
+        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::HOME_REVIVAL_OCB, (array) $payload);
 
-            return null;
-        }
+        LoggerService::info(self::class.' - Home revival OCB event sent for Quote UUID: '.$quoteUuid);
 
-        $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $payload, 'post');
-
-        LoggerService::info(self::class.' - Home revival email sent for Quote UUID: '.$quoteUuid.' - Response: '.json_encode($response));
-
-        if (! in_array($response->status_code, [200, 201])) {
-            LoggerService::warning(self::class.' - Home revival email not sent for Quote UUID: '.$quoteUuid.' - Response: '.json_encode($response));
-
-            return null;
-        }
-
-        app(BirdService::class)->createQuoteWorkFlowDetails(
-            $quote,
-            $response,
+        app(WebEngageService::class)->createQuoteWorkFlowDetails(
+            $quote->uuid,
             QuoteFlowType::HOME_REVIVAL_OCB->value,
             (int) QuoteTypes::HOME->id()
         );

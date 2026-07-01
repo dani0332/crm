@@ -500,6 +500,7 @@ class HomeEmailService extends BaseService
             'quoteUID' => $personalQuote->uuid,
             'quoteUUID' => $personalQuote->uuid,
             'refID' => $personalQuote->code,
+            'uniqueId' => (string) Str::ulid(),
             'uuid' => $personalQuote->uuid,
             'customerEmail' => $personalQuote->email,
             'customerFullName' => trim("{$personalQuote->first_name} {$personalQuote->last_name}"),
@@ -534,34 +535,24 @@ class HomeEmailService extends BaseService
 
     public function sendAutomatedHomeRenewalFollowup(PersonalQuote $personalQuote)
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_AUTOMATED_FOLLOWUPS)->first();
-
         LoggerService::info('| sendAutomatedHomeRenewalFollowup - Initiating process for Home renewal quote');
 
-        if ($workflowUrl && ! empty($workflowUrl->value)) {
-            // Fetch the advisor
-            $advisor = User::find($personalQuote->advisor_id);
-            if (! $advisor) {
-                LoggerService::info("sendAutomatedHomeRenewalFollowup - Advisor not found for renewal quote: {$personalQuote->uuid}");
-            }
-            // ✅ Use NEW renewal-specific data builder
-            $emailData = $this->buildRenewalEmailData(
-                $personalQuote,
-                $advisor,
-                WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS,
-                $personalQuote->homeQuote
-            );
-
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-
-            if ($response && $response->status_code === 200) {
-                LoggerService::info("sendAutomatedHomeRenewalFollowup - Successfully triggered event for Home renewal quote: {$personalQuote->uuid}");
-                app(BirdService::class)->createQuoteWorkFlowDetails($personalQuote, $response, QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::HOME->id());
-            } else {
-                LoggerService::info("sendAutomatedHomeRenewalFollowup - Error triggering event having response status code: {$response?->status_code}");
-            }
-        } else {
-            LoggerService::info(self::class." - Automated Home Renewal Followup is not set workflow url not found for quote: {$personalQuote->uuid}");
+        $advisor = User::find($personalQuote->advisor_id);
+        if (! $advisor) {
+            LoggerService::info("sendAutomatedHomeRenewalFollowup - Advisor not found for renewal quote: {$personalQuote->uuid}");
         }
+
+        $emailData = $this->buildRenewalEmailData(
+            $personalQuote,
+            $advisor,
+            WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS,
+            $personalQuote->homeQuote
+        );
+
+        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS, (array) $emailData);
+
+        LoggerService::info("sendAutomatedHomeRenewalFollowup - Successfully triggered event for Home renewal quote: {$personalQuote->uuid}");
+
+        app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::HOME->id());
     }
 }

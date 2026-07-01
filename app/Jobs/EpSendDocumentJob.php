@@ -12,13 +12,14 @@ use App\Models\ApplicationStorage;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\User;
-use App\Services\BirdService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Str;
 use Throwable;
 
 class EpSendDocumentJob implements ShouldQueue
@@ -122,6 +123,7 @@ class EpSendDocumentJob implements ShouldQueue
         $attachments = $this->fetchAttachments();
 
         $emailData = [
+            'uniqueId' => (string) Str::ulid(),
             'Attachments' => $attachments,
             'Tags' => WorkflowTypeEnum::SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL,
             'workflowType' => WorkflowTypeEnum::SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL,
@@ -132,6 +134,11 @@ class EpSendDocumentJob implements ShouldQueue
             ...$advisorData,
             'attachingDocsEmail' => count($attachments) > 0 ? 'yes' : 'no',
             'DisplayName' => 'InsuranceMarket.ae',
+            'customerId' => $this->quote->customer_id,
+            'customerEmail' => $this->quote->email,
+            'firstName' => $this->quote->first_name ?? '',
+            'lastName' => $this->quote->last_name ?? '',
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             ...$policyContext,
         ];
 
@@ -183,15 +190,10 @@ class EpSendDocumentJob implements ShouldQueue
      */
     private function triggerBirdWorkflow(array $birdEmailData)
     {
-        $birdWorkflowUrl = $this->epEcbConfiguration[ApplicationStorageEnums::BIRD_EP_WORKFLOW_URL] ?? '';
-
-        if (empty($birdWorkflowUrl)) {
-            throw new \Exception('Bird EP workflow URL is not configured');
-        }
 
         LoggerService::info("{$this->logPrefix} triggerBirdWorkflow: ", extra: ['data' => $birdEmailData]);
 
-        app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::SEND_EP_ECB_POLICY_DOCUMENTS_EMAIL, (array) $birdEmailData);
     }
 
     public function fetchAttachments()

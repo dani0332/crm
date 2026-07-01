@@ -138,16 +138,6 @@ class AutomationFailedJob implements ShouldQueue
 
         $response = app(CentralService::class)->sendAutomationEmail($quote, $emailData, $this->quoteTypeId, $this->workflowType);
         LoggerService::info('job:AutomationFailedJob - Job Response ', extra: ['emailData' => json_encode($response)]);
-
-        if ($response == 200) {
-            LoggerService::info('job:AutomationFailedJob - email sent successfully - Insurer: '.$this->insurerName);
-        } else {
-            LoggerService::error('job:AutomationFailedJob - Job failed - Insurer: '.$this->insurerName, extra: [
-                'response' => json_encode($response),
-            ]);
-        }
-
-        LoggerService::info('job:AutomationFailedJob - Job completed - Quote Code: '.$quote->code);
     }
 
     public function failed(Exception $ex)
