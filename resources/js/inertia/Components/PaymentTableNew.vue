@@ -118,7 +118,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  investmentFrequency:{
+  investmentFrequency: {
     type: String,
     default: '',
   },
@@ -215,11 +215,12 @@ const getInitalAmountForLifeLOB = () => {
 };
 
 const getInitalAmountForSavingsLOB = () => {
-  let paymentTerm = props.investmentFrequency == genericRequestEnum.LUMPSUM ? 1 : props.quoteRequest?.savings_quote?.payment_term;
+  let paymentTerm =
+    props.investmentFrequency == genericRequestEnum.LUMPSUM
+      ? 1
+      : props.quoteRequest?.savings_quote?.payment_term;
   if (props.quoteRequest?.quote_customer_plan?.plan?.currency === 'AED') {
-    return (
-      props.quoteRequest.premium * paymentTerm      
-    );
+    return props.quoteRequest.premium * paymentTerm;
   }
   const premiumInAED =
     Math.round(props.quoteRequest.premium * savingExchangeRate.value * 100) /
