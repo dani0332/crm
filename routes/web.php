@@ -36,7 +36,9 @@ use App\Http\Controllers\EALeadController;
 use App\Http\Controllers\EAManagerController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
+use App\Http\Controllers\HealthPlanTypeController;
 use App\Http\Controllers\HealthQuoteController;
+use App\Http\Controllers\HealthThirdPartyAdministrator;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
@@ -899,7 +901,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
 
     Route::group(['prefix' => 'medical'], function () {
+        Route::post('amt/{uuid}/ecommerce-copy-link', [V2AmtController::class, 'copyEcommerceJourneyLink'])
+            ->name('amt.ecommerce-copy-link')
+            ->middleware('permission:'.PermissionsEnum::GMQuoteCopyLink);
         Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
+        Route::get('amt/networks', [V2AmtController::class, 'getNetworksByTpa'])->name('amt.networks');
         Route::resource('amt', V2AmtController::class);
     });
 
@@ -1037,8 +1043,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ->name('admin.allocation-configuration.update');
     Route::get('/teams', [AllocationConfigurationController::class, 'getTeams'])
         ->name('admin.allocation-configuration.teams');
-    Route::get('/api/plan-types', [AllocationConfigurationController::class, 'getPlanTypes'])
+    Route::get('/api/plan-types/{quoteType?}', [AllocationConfigurationController::class, 'getPlanTypes'])
         ->name('admin.allocation-configuration.plan-types');
+    Route::get('/plan-types-by-emirates/{emirateId}', [HealthPlanTypeController::class, 'getByEmirate'])->name('planTypesByEmirates');
+    Route::get('/tpa-by-insurance-provider/{insuranceProviderId}', [HealthThirdPartyAdministrator::class, 'getByInsuranceProvider'])->name('tpaByInsuranceProvider');
     Route::get('/api/business-types', [AllocationConfigurationController::class, 'getBusinessTypes'])
         ->name('admin.allocation-configuration.business-types');
     Route::get('/api/sub-areas', [AllocationConfigurationController::class, 'getSubAreas'])

@@ -245,6 +245,7 @@ class PqaLeadAllocationController extends Controller
                                 SELECT qt_m.id FROM quote_type qt_m WHERE UPPER(qt_m.code) = UPPER(t_m.name) LIMIT 1
                             ))
                         )', [$corplineName, $groupMedicalName, $businessQuoteTypeId, $corplineName, $groupMedicalName]);
+
                 })
                 ->groupBy(
                     'users.name',

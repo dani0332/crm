@@ -111,10 +111,12 @@ class AllocationConfigurationController extends Controller
         }
     }
 
-    public function getPlanTypes()
+    public function getPlanTypes(?string $quoteType)
     {
         try {
-            $planTypes = HealthPlanType::orderBy('text')->get(['id', 'text']);
+            $planTypes = HealthPlanType::active()
+                ->orderBy('text')
+                ->get(['id', 'text']);
 
             return response()->json([
                 'success' => true,

@@ -53,6 +53,17 @@ abstract class BasePqaAllocationPipe extends AllocationService
         return (int) $this->allocationRequest->getQuoteType()->id();
     }
 
+    protected function getbusinessQuoteTypeId(int $quoteTypeId)
+    {
+        switch ($quoteTypeId) {
+            case QuoteTypes::GROUP_MEDICAL->id():
+            case QuoteTypes::CORPLINE->id():
+                return QuoteTypes::BUSINESS->id();
+        }
+
+        return $quoteTypeId;
+    }
+
     /**
      * @return Builder<User>
      */

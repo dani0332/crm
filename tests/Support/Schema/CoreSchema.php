@@ -32,6 +32,7 @@ class CoreSchema
         $this->ensureCustomerAdditionalContactTables();
         $this->ensureEPLogsTables();
         $this->ensureEmailStatusTables();
+        $this->ensureGroupMedicalFormDropdownTables();
     }
 
     private function ensureAuditTables(): void
@@ -620,6 +621,8 @@ class CoreSchema
             'health_plan_type' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text')->nullable();
+                $table->string('type')->nullable();
+                $table->unsignedBigInteger('emirates_id')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },
@@ -1432,6 +1435,37 @@ class CoreSchema
                 $table->id();
                 $table->string('code')->nullable();
                 $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+        ]);
+    }
+
+    private function ensureGroupMedicalFormDropdownTables(): void
+    {
+        SchemaUtils::ensureTables([
+            'company_activity_type' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'health_third_party_administrator' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'group_medical_networks' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text');
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
+            'group_medical_category' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text');
+                $table->unsignedInteger('sort_order')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
             },

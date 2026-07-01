@@ -6,12 +6,21 @@ defineProps({
   model: String,
   leadStatuses: Array,
   advisors: Array,
+  pqas: Array,
   supportUsers: Array,
+  preQualificationAdvisors: {
+    type: Array,
+    default: () => [],
+  },
   isManagerORDeputy: Boolean,
   quotes: Object,
   isManualAllocationAllowed: Boolean,
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
+  canAssignPreQualificationAdvisor: {
+    type: Boolean,
+    default: false,
+  },
   authorizedDays: Number,
   insurerAMLStatus: Array,
   subSources: Array,
@@ -91,6 +100,7 @@ const filters = reactive({
   leadStatus: [],
   insurer_aml_status: [],
   advisor_id: '',
+  pq_advisor_id: '',
   support_user_id: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -132,6 +142,12 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const pqaOptions = computed(() => {
+  return page.props.pqas.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
 const pqaAdvisorOptions = computed(() => {
   const list = Array.isArray(page.props.preQualificationAdvisors)
     ? page.props.preQualificationAdvisors
@@ -180,6 +196,10 @@ const tableHeader = [
     value: 'pre_qualification_advisor_name',
   },
   { text: 'ADVISOR', value: 'advisor_id_text' },
+  {
+    text: 'PRE‑QUALIFICATION ADVISOR',
+    value: 'pre_qualification_advisor_name',
+  },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
@@ -905,6 +925,26 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+        <x-select
+          v-model="filters.pq_advisor_id"
+          name="pq_advisor_id"
+          placeholder="Search by Pre‑Qualification Advisor"
+          :options="pqaOptions"
+          class="w-full"
+          filterable
+          label="Pre‑Qualification Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.pq_advisor_id = pqaOptions.map(item => item.value)
+              "
+              @clear="filters.pq_advisor_id = []"
+            />
+          </template>
+        </x-select>
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_invoice_number"
