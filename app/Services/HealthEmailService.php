@@ -9,10 +9,9 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Facades\Ken;
-use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
-use App\Models\QuoteFlowDetails;
 use App\Models\User;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use App\Services\Pusher\PusherNotificationService;
 use Carbon\Carbon;
@@ -27,17 +26,13 @@ class HealthEmailService extends BaseService
         LoggerService::info("sic sendHealthOCBEmail - Ref ID: {$lead->uuid}| Time: ".now());
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
-                $advisor = User::where('id', $lead->advisor_id)->first();
+                $advisor = User::where('id', $lead->advisor_id)->activeUser()->first();
                 $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::HEALTH_SIC_FOLLOWUPS);
-                $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
-                if ($sicEvent) {
-                    $response = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
-                    $lead->sic_flow_enabled = true;
-                    $lead->save();
-                    LoggerService::info("SIC Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                } else {
-                    LoggerService::warning("SIC Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-                }
+                app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HEALTH_SIC_FOLLOWUPS, (array) $emailData);
+                $lead->sic_flow_enabled = true;
+                $lead->save();
+                LoggerService::info("SIC Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+
             } else {
                 LoggerService::info("SIC Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
             }
@@ -57,6 +52,10 @@ class HealthEmailService extends BaseService
             'uuid' => $lead->uuid,
             'customerFullName' => "{$lead->first_name} {$lead->last_name}",
             'customerName' => "{$lead->first_name} {$lead->last_name}",
+            'customerId' => $lead->customer_id ?? '',
+            'customerMobile' => (! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : ''),
+            'firstName' => $lead->first_name ?? '',
+            'lastName' => $lead->last_name ?? '',
             'advisorId' => $advisor?->id ?? null,
             'advisorName' => $advisor?->name ?? '',
             'advisorEmail' => $advisor?->email ?? '',
@@ -70,7 +69,6 @@ class HealthEmailService extends BaseService
             'whatsAppNumber' => ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'workflowType' => $workflowType,
-            'customerMobile' => (! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : ''),
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
             'numberOfMembersCovered' => $workflowType == WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA ? $lead->customerMembers->count() : null,
             'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
@@ -281,22 +279,15 @@ class HealthEmailService extends BaseService
 
         LoggerService::info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
-            $advisor = User::where('id', $lead->advisor_id)->first();
+            $advisor = User::where('id', $lead->advisor_id)->activeUser()->first();
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS);
-            $birdSicHealthWorkflowData = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
-            if ($birdSicHealthWorkflowData) {
-                $response = app(BirdService::class)->triggerWebHookRequest($birdSicHealthWorkflowData->value, $emailData);
-                $lead->oca_flow_enabled = true;
-                $lead->save();
-                LoggerService::info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                LoggerService::info("OCA Health workflow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
+            app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS, (array) $emailData);
+            $lead->oca_flow_enabled = true;
+            $lead->save();
+            LoggerService::info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+            LoggerService::info("OCA Health workflow response:  | Ref-ID: {$lead->uuid} |Time: ".now());
+            app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, QuoteFlowType::HEALTH_AUTOMATED_FOLLOWUPS, QuoteTypeId::Health);
 
-                if (! empty($response->headers['Run-Id'])) {
-                    $this->createQuoteFlowDetails($lead, $response);
-                }
-            } else {
-                LoggerService::warning("OCA Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-            }
         } else {
             LoggerService::info("OCA Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
         }
@@ -304,37 +295,14 @@ class HealthEmailService extends BaseService
         return $response ?? null;
     }
 
-    public function createQuoteFlowDetails($lead, $response)
-    {
-        try {
-            $runId = collect($response->headers['Run-Id'])->first();
-            if (! empty($runId)) {
-                QuoteFlowDetails::create([
-                    'quote_uuid' => $lead->uuid,
-                    'quote_type_id' => QuoteTypeId::Health,
-                    'flow_type' => QuoteFlowType::HEALTH_AUTOMATED_FOLLOWUPS->value,
-                    'flow_id' => $runId,
-                ]);
-                LoggerService::info("OCA Health workflow run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-            } else {
-                LoggerService::warning("OCA Health workflow run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-            }
-        } catch (\Throwable $th) {
-            $errorMessage = "Error while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
-            LoggerService::error($errorMessage);
-            LoggerService::error("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
-            throw $th;
-        }
-    }
-
     public function sendApplicationSubmittedEmail($healthQuote)
     {
         try {
             LoggerService::info(self::class." - Inside for UUID: {$healthQuote->uuid}");
             $emailData = $this->mapDataForFollowupEmail($healthQuote, $healthQuote->advisor, WorkflowTypeEnum::HEALTH_APPLICATION_SUBMITTED);
-            $workflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
             LoggerService::info(self::class." - Triggering Bird triggerWebHookRequest for UUID: {$healthQuote->uuid}");
-            $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HEALTH_APPLICATION_SUBMITTED, (array) $emailData);
+
             LoggerService::info("Application submitted email sent for lead uuid: {$healthQuote->uuid} | Time: ".now());
 
             return $response;
@@ -374,7 +342,7 @@ class HealthEmailService extends BaseService
             });
 
         try {
-            $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
+            $isFollowupExecuted = app(WebEngageService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
             if ($isFollowupExecuted) {
                 LoggerService::info('SIC Health Followups WA already executed');
 
@@ -384,11 +352,10 @@ class HealthEmailService extends BaseService
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA);
             $emailData->planTypes = $planTypes;
-            $workflowURL = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowURL, $emailData);
-            if (! empty($response->headers['Run-Id']) && in_array($response->status_code, [200, 201])) {
-                app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
-                app(BirdService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA, QuoteTypeId::Health);
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA, (array) $emailData);
+            if (in_array($response->status_code, [200, 201, 202])) {
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
+                app(WebEngageService::class)->createQuoteWhatsAppFlowDetails($lead, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA, QuoteTypeId::Health);
 
                 LoggerService::info('SIC Health Followups WA executed');
             }
@@ -427,12 +394,24 @@ class HealthEmailService extends BaseService
                     'message' => 'Advisor not found',
                 ];
             } else {
-                $emailData = $this->mapDataForFollowupEmail($lead, $advisor, $isApiFailed ? WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED : WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION);
+                $workflowType = $isApiFailed ? WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED : WorkflowTypeEnum::HEALTH_STP_ADVISOR_NOTIFICATION;
+                $flowType = $isApiFailed ? QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED->value : QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value;
+
+                $emailData = (array) $this->mapDataForFollowupEmail($lead, $advisor, $workflowType);
+
+                // Override WebEngage identity with advisor (notification recipient)
+                $advisorNameParts = explode(' ', $advisor->name ?? '', 2);
+                $emailData['customerId'] = $advisor->email ?? '';
+                $emailData['firstName'] = $advisorNameParts[0] ?? '';
+                $emailData['lastName'] = $advisorNameParts[1] ?? '';
+                $emailData['customerEmail'] = $advisor->email ?? '';
+                $emailData['customerMobile'] = ! empty($advisor->mobile_no) ? '+'.formatMobileNoWithoutPlus($advisor->mobile_no) : '';
+
                 if ($automationFailureKey) {
                     match ($automationFailureKey) {
-                        'UploadDocuments' => $emailData->UploadDocuments = true,
-                        'IssuePolicy' => $emailData->IssuePolicy = true,
-                        'UploadPolicyDocumentsToIMCRM' => $emailData->UploadPolicyDocumentsToIMCRM = true,
+                        'UploadDocuments' => $emailData['UploadDocuments'] = true,
+                        'IssuePolicy' => $emailData['IssuePolicy'] = true,
+                        'UploadPolicyDocumentsToIMCRM' => $emailData['UploadPolicyDocumentsToIMCRM'] = true,
                         default => null,
                     };
                 }
@@ -442,38 +421,21 @@ class HealthEmailService extends BaseService
                     LoggerService::info(self::class.' - Pusher notification sent to advisor (ID: '.($advisor?->id ?? $lead->advisor_id ?? 'N/A').") for UUID: {$lead->uuid}");
                 }
 
-                $workflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_HEALTH_STP_ADVISOR_NOTIFICATION_WORKFLOW, useCache: true);
-                if (! $workflow) {
-                    LoggerService::error(self::class." - Workflow not found for UUID: {$lead->uuid}");
+                $isFollowupExecuted = app(WebEngageService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), $flowType);
+                if ($isFollowupExecuted) {
+                    LoggerService::info('STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification already executed');
                     $result = [
-                        'success' => false,
-                        'message' => 'Workflow not found',
+                        'success' => true,
+                        'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification already executed',
                     ];
                 } else {
-                    $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypes::HEALTH->id(), $isApiFailed ? QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED->value : QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value);
-                    if ($isFollowupExecuted) {
-                        LoggerService::info('STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification already executed');
-                        $result = [
-                            'success' => true,
-                            'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification already executed',
-                        ];
-                    } else {
-                        $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);
-                        if (in_array($response->status_code, [200, 201])) {
-                            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, $isApiFailed ? QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION_API_FAILED->value : QuoteFlowType::HEALTH_STP_ADVISOR_NOTIFICATION->value, QuoteTypeId::Health);
-                            LoggerService::info('STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification sent for lead uuid: '.$lead->uuid);
-                            $result = [
-                                'success' => true,
-                                'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification sent',
-                            ];
-                        } else {
-                            LoggerService::error(self::class.' - STP Advisor '.($isApiFailed ? 'API Failed' : '')." notification failed for UUID: {$lead->uuid}");
-                            $result = [
-                                'success' => false,
-                                'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification failed',
-                            ];
-                        }
-                    }
+                    app(WebEngageService::class)->sendEvent($workflowType, $emailData);
+                    app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, $flowType, QuoteTypeId::Health);
+                    LoggerService::info('STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification sent for lead uuid: '.$lead->uuid);
+                    $result = [
+                        'success' => true,
+                        'message' => 'STP Advisor '.($isApiFailed ? 'API Failed' : '').' notification sent',
+                    ];
                 }
             }
 
