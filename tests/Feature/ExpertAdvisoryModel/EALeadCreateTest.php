@@ -15,7 +15,6 @@ use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
-use App\Models\User;
 use App\Services\EALeadCapiService;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -122,13 +121,8 @@ it('user with EA_REFERRAL role can access the lead creation endpoint', function 
 
 it('user with EA_COLLABORATE permission can access the lead creation endpoint', function () {
     Queue::fake();
-    $user = TestDataSeeder::createUser(['email' => fake()->unique()->safeEmail()]);
-    TestDataSeeder::seedRolePermissions('EA_REFERRAL', ['ea-collaborate']);
-    DB::connection('sqlite')->table('model_has_roles')->insertOrIgnore([
-        'role_id' => DB::connection('sqlite')->table('roles')->where('name', 'EA_REFERRAL')->value('id'),
-        'model_type' => User::class,
-        'model_id' => $user->id,
-    ]);
+    $user = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    TestDataSeeder::seedRolePermissions(RolesEnum::EAReferral, ['ea-collaborate']);
     app(PermissionRegistrar::class)->forgetCachedPermissions();
     $user->refresh();
 

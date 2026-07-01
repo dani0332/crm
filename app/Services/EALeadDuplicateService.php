@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -73,28 +74,28 @@ class EALeadDuplicateService
     {
         if ($quoteTypeId === QuoteTypeId::Car) {
             return CarQuote::where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
-                ->where('source', 'Renewal_upload')
+                ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
         }
 
         if ($quoteTypeId === QuoteTypeId::Health) {
             return HealthQuote::where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
-                ->where('source', 'Renewal_upload')
+                ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
         }
 
         if ($quoteTypeId === QuoteTypeId::Travel) {
             return TravelQuote::where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
-                ->where('source', 'Renewal_upload')
+                ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
         }
 
         if (in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
             return BusinessQuote::where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
-                ->where('source', 'Renewal_upload')
+                ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
         }
@@ -103,7 +104,7 @@ class EALeadDuplicateService
         if ($quoteTypeEnum && checkPersonalQuotes($quoteTypeEnum->value)) {
             return PersonalQuote::where(fn ($q) => $q->where('email', $email)->orWhere('mobile_no', $mobileNo))
                 ->where('quote_type_id', $quoteTypeId)
-                ->where('source', 'Renewal_upload')
+                ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                 ->where('policy_expiry_date', '>=', now())
                 ->exists();
         }
