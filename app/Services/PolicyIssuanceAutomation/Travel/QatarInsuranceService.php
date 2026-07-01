@@ -22,7 +22,6 @@ use App\Jobs\SendTravelQatarFailedAllocationEmailJob;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
-use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\PaymentRepository;
@@ -43,6 +42,14 @@ class QatarInsuranceService implements PolicyIssuanceInterface
 
     public const TYPE = quoteTypeCode::Travel;
     public const TYPE_ID = QuoteTypeId::Travel;
+    public const ADDON_OPTION_MAP = [
+        'medicalLight' => '50',
+        'winterSports' => '51',
+        'business' => '52',
+        'terrorism' => '54',
+        'hazardousActivities' => '55',
+        'excessWaiver' => '56',
+    ];
 
     public mixed $vat = null;
     public $policyIssuance = null;
@@ -247,22 +254,35 @@ class QatarInsuranceService implements PolicyIssuanceInterface
             'agency_reference' => 'asc',
         ];
 
-        $providerId = $quote->insuranceProvider->id;
+        $addons = $quote->travelQuotePlanDetails->where('plan_id', $quote->plan_id)->first()?->addons;
 
-        $updateQuote = TravelInsurerRequestResponses::where('quote_uuid', $quote->uuid)
-            ->where('provider_id', $providerId)
-            ->orderBy('created_at', 'DESC')
-            ->first();
+        $decodedAddons = ! empty($addons) ? json_decode($addons) : null;
 
-        $updateQuoteRequest = json_decode($updateQuote->request, true);
+        if (! empty($decodedAddons) && is_array($decodedAddons)) {
+            $selectedCodes = collect($decodedAddons)
+                ->filter(function ($addon) {
+                    return is_object($addon)
+                        && ! empty($addon->addonOptions)
+                        && is_array($addon->addonOptions)
+                        && isset($addon->addonOptions[0]->isSelected)
+                        && $addon->addonOptions[0]->isSelected === true;
+                })
+                ->pluck('code')
+                ->filter(fn ($code) => ! empty($code) && is_string($code))
+                ->all();
 
-        if (
-            isset($updateQuoteRequest['data']['options']) &&
-            ! empty($updateQuoteRequest['data']['options'])
-        ) {
-            $selectedOptionIds = (object) array_fill_keys(array_map('strval', array_keys($updateQuoteRequest['data']['options'])), 1);
+            if (! empty($selectedCodes)) {
+                $selectedOptionIds = collect($selectedCodes)
+                    ->mapWithKeys(fn ($code) => isset(self::ADDON_OPTION_MAP[$code])
+                        ? [self::ADDON_OPTION_MAP[$code] => '1']
+                        : [])
+                    ->filter()
+                    ->all();
 
-            $payload = [...$payload, 'options' => $selectedOptionIds];
+                if (! empty($selectedOptionIds)) {
+                    $payload = [...$payload, 'options' => (object) $selectedOptionIds];
+                }
+            }
         }
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
