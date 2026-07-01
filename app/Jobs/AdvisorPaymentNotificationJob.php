@@ -2,10 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Exceptions\AdvisorNotificationFailedException;
-use App\Exceptions\BirdUrlNotFoundException;
-use App\Services\BirdService;
+use App\Enums\WorkflowTypeEnum;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -13,7 +11,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Symfony\Component\HttpFoundation\Response;
 
 class AdvisorPaymentNotificationJob implements ShouldQueue
 {
@@ -30,33 +27,22 @@ class AdvisorPaymentNotificationJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(BirdService $birdService): void
+    public function handle(): void
     {
         $emailData = (object) [
+            'workflowType' => WorkflowTypeEnum::ADVISOR_PAYMENT_NOTIFICATION,
             'date' => Carbon::now()->format(config('constants.DATE_DISPLAY_FORMAT')),
             'crmLink' => url('/reports/payment-summary'),
             ...$this->payment,
+            'customerId' => $this->payment['advisorEmail'] ?? '',
+            'firstName' => $this->payment['advisorName'] ?? '',
+            'lastName' => '',
+            'customerEmail' => $this->payment['advisorEmail'] ?? '',
+            'customerMobile' => '',
+            'quoteUID' => '',
         ];
 
-        $birdUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_ADVISOR_PAYMENT_NOTIFICATION_WORKFLOW_URL, false, true) ?? '';
-        if (! $birdUrl) {
-            LoggerService::error('AdvisorPaymentNotificationJob: Bird URL not found');
-
-            throw new BirdUrlNotFoundException;
-        }
-
-        $response = $birdService->triggerWebHookRequest($birdUrl, $emailData);
-
-        if ($response?->status_code !== Response::HTTP_OK) {
-            LoggerService::error('AdvisorPaymentNotificationJob: Email sent failed', [
-                'response' => json_encode($response),
-            ]);
-
-            throw new AdvisorNotificationFailedException(
-                'Failed to send advisor payment notification email',
-                $response?->status_code ?? 0
-            );
-        }
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::ADVISOR_PAYMENT_NOTIFICATION, (array) $emailData);
 
         LoggerService::info('AdvisorPaymentNotificationJob: Email sent successfully');
     }
