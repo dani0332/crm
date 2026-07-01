@@ -17,6 +17,7 @@ use App\Services\HealthRevamp\HealthQuoteRevampMigrationQueries;
 use App\Services\HealthRevamp\HealthQuoteRevampMigrationStateLogger;
 use App\Services\Logger\LoggerService;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Applies health revamp data migration logic to a single lead.
@@ -187,8 +188,6 @@ class HealthQuoteRevampMigrationService
             $healthQuote->salary_band_id = null;
         }
 
-        $healthQuote->save();
-
         if ($policyHolder->visa_category_id === VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value) {
             $policyHolder->visa_category_id = VisaCategoryEnum::EMPLOYMENT->value;
         }
@@ -197,7 +196,10 @@ class HealthQuoteRevampMigrationService
             $policyHolder->salary_band_id = null;
         }
 
-        $policyHolder->save();
+        DB::transaction(function () use ($healthQuote, $policyHolder): void {
+            $healthQuote->save();
+            $policyHolder->save();
+        });
     }
 
     public function isMigrated(HealthQuote $healthQuote): bool
