@@ -20,6 +20,7 @@ class SendEAManagerDecisionEmailJob implements ShouldQueue
 
     public int $tries = 3;
     public int $timeout = 30;
+    public int $backoff = 60;
 
     public function __construct(
         private readonly Model $quote,
