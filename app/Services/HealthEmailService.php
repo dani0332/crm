@@ -53,6 +53,7 @@ class HealthEmailService extends BaseService
             'customerFullName' => "{$lead->first_name} {$lead->last_name}",
             'customerName' => "{$lead->first_name} {$lead->last_name}",
             'customerId' => $lead->customer_id ?? '',
+            'uniqueId' => (string) Str::ulid(),
             'customerMobile' => (! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : ''),
             'firstName' => $lead->first_name ?? '',
             'lastName' => $lead->last_name ?? '',

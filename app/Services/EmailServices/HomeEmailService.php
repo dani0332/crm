@@ -500,6 +500,7 @@ class HomeEmailService extends BaseService
             'quoteUID' => $personalQuote->uuid,
             'quoteUUID' => $personalQuote->uuid,
             'refID' => $personalQuote->code,
+            'uniqueId' => (string) Str::ulid(),
             'uuid' => $personalQuote->uuid,
             'customerEmail' => $personalQuote->email,
             'customerFullName' => trim("{$personalQuote->first_name} {$personalQuote->last_name}"),
