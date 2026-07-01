@@ -7,6 +7,7 @@ use App\Enums\MaritalStatusEnum;
 use App\Models\HealthPlan;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Str;
 
 class HealthRateMaritalStatusValidRule implements ValidationRule
 {
@@ -21,10 +22,10 @@ class HealthRateMaritalStatusValidRule implements ValidationRule
         $healthPlan = $this->healthPlanId ? HealthPlan::find($this->healthPlanId) : null;
 
         // Only required for female if plan level is enabled
-        if ($healthPlan && $healthPlan->marital_status_enabled && strtolower($this->gender) == strtolower(GenderEnum::FEMALE->value)) {
+        if ($healthPlan && $healthPlan->marital_status_enabled && Str::lower($this->gender) == Str::lower(GenderEnum::FEMALE->value)) {
             $maritalStatuses = array_column(MaritalStatusEnum::cases(), 'value');
 
-            if (! in_array(strtolower($value), $maritalStatuses, true)) {
+            if (! in_array(Str::lower($value), $maritalStatuses, true)) {
                 $fail('The marital status is invalid.');
             }
         }

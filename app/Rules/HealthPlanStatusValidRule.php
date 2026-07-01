@@ -5,6 +5,7 @@ namespace App\Rules;
 use App\Models\HealthPlan;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Str;
 
 class HealthPlanStatusValidRule implements ValidationRule
 {
@@ -21,7 +22,7 @@ class HealthPlanStatusValidRule implements ValidationRule
         }
 
         if (! in_array(
-            strtolower($healthPlan->status),
+            Str::lower($healthPlan->status),
             $this->statuses,
         )) {
             $fail($this->message);

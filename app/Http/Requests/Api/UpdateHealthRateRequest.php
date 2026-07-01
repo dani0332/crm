@@ -59,7 +59,7 @@ class UpdateHealthRateRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator)
+    public function withValidator(Validator $validator)
     {
         $this->plan = HealthPlan::find($this->health_plan_id);
 

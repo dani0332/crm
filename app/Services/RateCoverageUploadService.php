@@ -19,6 +19,7 @@ use App\Services\Logger\LoggerService;
 use App\Support\HealthPlanVersionHelper;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 class RateCoverageUploadService
@@ -243,7 +244,7 @@ class RateCoverageUploadService
 
             if ($rowCount > 1) {
                 // normalize header case
-                $headers = array_map('strtolower', $rows[0]);
+                $headers = array_map(Str::lower(...), $rows[0]);
                 $allCohorts = $this->cohortMappingService->getAllCohorts();
                 $allCoPayments = $this->healthPlanCoPaymentService->getAllCoPayments();
 
@@ -277,7 +278,7 @@ class RateCoverageUploadService
                     $gender = $plan->gender_enabled ? (trim($rowAssoc['gender'] ?? '') ?: null) : null;
                     $maritalStatus = $plan->marital_status_enabled
                         && ! empty($gender)
-                        && strtolower($gender) === GenderEnum::FEMALE->value ? (trim($rowAssoc['marital_status'] ?? '') ?: null) : null;
+                        && Str::lower($gender) === GenderEnum::FEMALE->value ? (trim($rowAssoc['marital_status'] ?? '') ?: null) : null;
                     $cohort = $plan->cohort_enabled ? (trim($rowAssoc['cohort'] ?? '') ?: null) : null;
 
                     // Throw error if any required value is empty
@@ -323,7 +324,7 @@ class RateCoverageUploadService
                         }
 
                         $allowedGenders = array_column(GenderEnum::cases(), 'value');
-                        if (! in_array(strtolower($gender), $allowedGenders, true)) {
+                        if (! in_array(Str::lower($gender), $allowedGenders, true)) {
                             $this->throwValidationError('Gender ('.$gender.') value must be either "male" or "female" at row '.($i + 1));
                         }
                     }
@@ -334,7 +335,7 @@ class RateCoverageUploadService
                             $this->throwValidationError('Cohort is required when plan cohort is enabled.');
                         }
 
-                        if (! in_array(strtoupper($cohort), $allCohorts, true)) {
+                        if (! in_array(Str::upper($cohort), $allCohorts, true)) {
                             $this->throwValidationError('Invalid cohort value.');
                         }
                     }
@@ -346,12 +347,12 @@ class RateCoverageUploadService
                             $this->throwValidationError('Gender must be enabled when marital status is enabled.');
                         }
 
-                        if (empty($maritalStatus) && strtolower($gender) === GenderEnum::FEMALE->value) {
+                        if (empty($maritalStatus) && Str::lower($gender) === GenderEnum::FEMALE->value) {
                             $this->throwValidationError('Marital status is required when gender is female and plan marital status is enabled.');
                         }
 
                         $allowedMaritalStatuses = array_column(MaritalStatusEnum::cases(), 'value');
-                        if (! empty($maritalStatus) && ! in_array(strtolower($maritalStatus), $allowedMaritalStatuses, true)) {
+                        if (! empty($maritalStatus) && ! in_array(Str::lower($maritalStatus), $allowedMaritalStatuses, true)) {
                             $this->throwValidationError('Marital status value must be either "single" or "married".');
                         }
                     }
@@ -454,7 +455,7 @@ class RateCoverageUploadService
     private function uploadRates(int $planId, int $healthRateControlId, float $version, array $data)
     {
         $plan = $this->healthPlanService->getPlanById($planId);
-        $headers = array_map('strtolower', $data[0]);
+        $headers = array_map(Str::lower(...), $data[0]);
         $codes = [];
 
         // Get all the payment codes first
@@ -487,7 +488,7 @@ class RateCoverageUploadService
                 'gender' => $plan->gender_enabled ? $rowAssoc['gender'] : null,
                 'marital_status' => $plan->marital_status_enabled
                         && ! empty($rowAssoc['gender'])
-                        && strtolower($rowAssoc['gender']) === GenderEnum::FEMALE->value ? $rowAssoc['marital_status'] : null,
+                        && Str::lower($rowAssoc['gender']) === GenderEnum::FEMALE->value ? $rowAssoc['marital_status'] : null,
                 'cohort' => $plan->cohort_enabled ? $rowAssoc['cohort'] : null,
                 'premium' => $rowAssoc['premium'],
                 'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,

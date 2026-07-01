@@ -6,6 +6,7 @@ use App\Models\HealthPlan;
 use App\Services\CohortMappingService;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Str;
 
 class HealthRateCohortValidRule implements ValidationRule
 {
@@ -19,7 +20,7 @@ class HealthRateCohortValidRule implements ValidationRule
         if ($healthPlan && $healthPlan->cohort_enabled) {
             $cohorts = $cohortMappingService->getAllCohorts();
 
-            if (! in_array(strtoupper($value), $cohorts, true)) {
+            if (! in_array(Str::upper($value), $cohorts, true)) {
                 $fail('The cohort is invalid.');
             }
         }

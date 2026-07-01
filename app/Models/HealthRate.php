@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class HealthRate extends Model
 {
@@ -37,21 +38,21 @@ class HealthRate extends Model
     protected function cohort(): Attribute
     {
         return Attribute::make(
-            set: fn ($value) => $value === null ? null : strtoupper($value),
+            set: fn ($value) => $value === null ? null : Str::upper($value),
         );
     }
 
     protected function gender(): Attribute
     {
         return Attribute::make(
-            set: fn ($value) => $value === null ? null : strtoupper($value),
+            set: fn ($value) => $value === null ? null : Str::upper($value),
         );
     }
 
     protected function maritalStatus(): Attribute
     {
         return Attribute::make(
-            set: fn ($value) => $value === null ? null : strtoupper($value),
+            set: fn ($value) => $value === null ? null : Str::upper($value),
         );
     }
 

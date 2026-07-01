@@ -6,6 +6,7 @@ use App\Enums\HealthPlanRateSheetStatusEnum;
 use App\Models\HealthRate;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Str;
 
 class HealthRateStatusValidRule implements ValidationRule
 {
@@ -22,10 +23,10 @@ class HealthRateStatusValidRule implements ValidationRule
 
         if (
             ! in_array(
-                strtolower($rate->status),
+                Str::lower($rate->status),
                 [
-                    strtolower(HealthPlanRateSheetStatusEnum::DRAFT->value),
-                    strtolower(HealthPlanRateSheetStatusEnum::SCHEDULED->value),
+                    Str::lower(HealthPlanRateSheetStatusEnum::DRAFT->value),
+                    Str::lower(HealthPlanRateSheetStatusEnum::SCHEDULED->value),
                 ]
             )
 

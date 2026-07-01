@@ -11,6 +11,7 @@ use App\Support\HealthPlanVersionHelper;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class HealthRateService extends BaseService
 {
@@ -120,7 +121,7 @@ class HealthRateService extends BaseService
                 'gender' => $plan->gender_enabled ? $data['gender'] : null,
                 'cohort' => $plan->cohort_enabled ? $data['cohort'] : null,
                 'marital_status' => $plan->marital_status_enabled
-                    && strtolower($data['gender']) === GenderEnum::FEMALE->value ? $data['marital_status'] : null,
+                    && Str::lower($data['gender']) === GenderEnum::FEMALE->value ? $data['marital_status'] : null,
             ]);
 
             return $healthRate;
@@ -183,7 +184,7 @@ class HealthRateService extends BaseService
             $matchingFields[] = 'gender';
         }
 
-        if ($plan->marital_status_enabled and ! empty($data['gender']) and strtolower($data['gender']) === GenderEnum::FEMALE->value) {
+        if ($plan->marital_status_enabled and ! empty($data['gender']) and Str::lower($data['gender']) === GenderEnum::FEMALE->value) {
             $matchingFields[] = 'marital_status';
         }
 
@@ -200,8 +201,8 @@ class HealthRateService extends BaseService
                 foreach ($matchingFields as $field) {
                     // Check duplicate by composite key
                     // Compare, treating null and missing as equivalent
-                    $rateValue = $rate->{$field} !== null ? strtolower($rate->{$field}) : null;
-                    $dataValue = isset($data[$field]) && $data[$field] !== null ? strtolower($data[$field]) : null;
+                    $rateValue = $rate->{$field} !== null ? Str::lower($rate->{$field}) : null;
+                    $dataValue = isset($data[$field]) && $data[$field] !== null ? Str::lower($data[$field]) : null;
 
                     if ($rateValue !== $dataValue) {
                         $duplicate = false;
@@ -248,7 +249,7 @@ class HealthRateService extends BaseService
                 $data['cohort'] = $plan->cohort_enabled ? $data['cohort'] : null;
                 $data['gender'] = $plan->gender_enabled ? $data['gender'] : null;
                 $data['marital_status'] = $plan->marital_status_enabled && $plan->gender_enabled
-                    && strtolower($data['gender']) === GenderEnum::FEMALE->value ? $data['marital_status'] : null;
+                    && Str::lower($data['gender']) === GenderEnum::FEMALE->value ? $data['marital_status'] : null;
 
                 $rate->fill($data);
                 $rate->save();
