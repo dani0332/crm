@@ -191,6 +191,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedOcrPlanValidation();
         $this->seedDttHomeEnabled();
         $this->seedAllianceBrandSwitchDate();
+        $this->seedAmlAutomationReTriggerRecipients();
     }
 
     private function livaCarAutomationSeed()
@@ -726,6 +727,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::TRAVEL_AML_RETRIGGER_ENABLED],
             [
                 'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAmlAutomationReTriggerRecipients()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_RE_TRIGGER_RECIPIENTS],
+            [
+                'value' => 'mohamed.faisal@insurancemarket.ae,utkarsh.shukla@insurancemarket.ae,vishwa.tomar@insurancemarket.ae,yashpal.tomar@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

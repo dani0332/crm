@@ -221,7 +221,7 @@ class AMLController extends Controller
         return response()->json($travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo), 200);
     }
 
-    public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
+    public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId, $isFromAPI = false)
     {
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
@@ -326,7 +326,7 @@ class AMLController extends Controller
             LoggerService::info('Dispatching AML Screening Job for Members including primary insured', extra: [
                 'membersDetails' => $getMemberOrUBODetails->toArray() ?? [],
             ]);
-            $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
+            $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation, isFromAPI: $isFromAPI);
 
             return app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
         }
@@ -423,10 +423,10 @@ class AMLController extends Controller
         LoggerService::info('Chassis Number Update Completed');
     }
 
-    private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType, $processByUser = null, $isAutomation = false)
+    private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType, $processByUser = null, $isAutomation = false, $isFromAPI = false)
     {
         foreach ($membersDetails as $memberDetail) {
-            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
+            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation, isFromAPI: $isFromAPI);
         }
 
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
@@ -907,7 +907,7 @@ class AMLController extends Controller
                         ['status' => AmlAutomationStatus::Queue->value],
                     );
 
-                    AmlScreeningAutomationJob::dispatch(QuoteTypes::TRAVEL, $quote);
+                    AmlScreeningAutomationJob::dispatch(QuoteTypes::TRAVEL, $quote, true);
                     $dispatched++;
                 }
             });

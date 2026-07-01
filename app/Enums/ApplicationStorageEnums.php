@@ -512,4 +512,5 @@ final class ApplicationStorageEnums extends Enum
 
     // Alliance → Qatar Insurance brand switch
     public const ALLIANCE_BRAND_SWITCH_DATE = 'ALLIANCE_BRAND_SWITCH_DATE';
+    public const AML_AUTOMATION_RE_TRIGGER_RECIPIENTS = 'AML_AUTOMATION_RE_TRIGGER_RECIPIENTS';
 }

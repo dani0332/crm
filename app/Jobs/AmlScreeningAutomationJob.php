@@ -41,16 +41,18 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     private TravelQuote|PersonalQuote $quoteRequest;
     private QuoteTypes $quoteType;
     private string $quoteRefId;
+    private bool $isFromAPI;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(QuoteTypes $quoteType, TravelQuote|PersonalQuote $quoteRequest)
+    public function __construct(QuoteTypes $quoteType, TravelQuote|PersonalQuote $quoteRequest, bool $isFromAPI = false)
     {
         $this->quoteType = $quoteType;
         $this->quoteRequest = $quoteRequest;
         $this->quoteRefId = $this->quoteRequest?->code ?? '';
         $this->uniqueKey = strtolower($this->quoteRefId).'-'.strtolower($quoteType->value);
+        $this->isFromAPI = $isFromAPI;
     }
 
     /**
@@ -103,7 +105,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $amlRequestData = $this->buildAmlRequestData($customer, $idType, $idNumber);
 
             $quoteTypeId = (int) (QuoteTypes::getId($this->quoteType) ?? 0);
-            $quoteAmlProcessCall = app(AMLService::class)->quoteAmlProcessCall($amlRequestData, $quoteTypeId, $this->quoteRequest->id);
+            $quoteAmlProcessCall = app(AMLService::class)->quoteAmlProcessCall($amlRequestData, $quoteTypeId, $this->quoteRequest->id, $this->isFromAPI);
 
             $this->processAmlResult($quoteAmlProcessCall, $amlAutomation, $loggerPrefix);
 
@@ -130,7 +132,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $this->quoteRequest->refresh();
             LoggerService::startQuoteLogging($this->quoteRequest);
 
-            if (! $this->preconditionsMet()) {
+            if (! $this->preconditionsMet() && ! $this->isFromAPI) {
                 $exitReason = 'Preconditions not met';
             }
         }
