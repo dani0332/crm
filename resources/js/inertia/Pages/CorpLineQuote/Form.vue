@@ -146,9 +146,17 @@ function onSubmit(isValid) {
   if (!isValid) return;
 
   const method = isEdit.value ? 'put' : 'post';
-  const url = isEdit.value
+  let url = isEdit.value
     ? route('business.update', props.quote.uuid)
     : route('business.store');
+
+  if (
+    !isEdit.value &&
+    new URLSearchParams(window.location.search).get('ea_model') ===
+      'collaborate'
+  ) {
+    url += '?ea_model=collaborate';
+  }
 
   const options = {
     onError: errors => {

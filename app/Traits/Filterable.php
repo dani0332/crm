@@ -272,4 +272,13 @@ trait Filterable
         });
     }
 
+    public function scopeFilterByLeadGeneratorName($query, ?string $name)
+    {
+        if (! $name) {
+            return $query;
+        }
+
+        return $query->whereHas('leadGenerator', fn ($uq) => $uq->where('name', 'like', '%'.$name.'%'));
+    }
+
 }

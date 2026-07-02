@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EaModelCast;
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
@@ -22,6 +23,9 @@ class HomeQuote extends Model implements AuditableContract
     protected $table = 'home_quote_request';
     protected $fillable = [];
     protected $guarded = [];
+    protected $casts = [
+        'ea_model' => EaModelCast::class,
+    ];
     public $allowedColumns = ['first_name', 'last_name', 'previous_quote_policy_number', 'code', 'email', 'source', 'policy_expiry_date', 'policy_number', 'policy_start_date', 'uuid', 'mobile_no', 'customer_id', 'advisor_id', 'premium', 'insurance_provider_id', 'insly_migrated', 'quote_status_id', 'previous_building_aed', 'previous_contents_aed', 'previous_personal_belongings_aed'];
     public $filterables = [
         'first_name' => FilterTypes::FREE,

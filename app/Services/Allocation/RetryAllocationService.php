@@ -4,6 +4,7 @@ namespace App\Services\Allocation;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\EaModelEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
@@ -355,8 +356,15 @@ class RetryAllocationService
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
         }
 
-        $leads = PersonalQuote::whereNull('advisor_id')
-            ->select('uuid', 'tier_id', 'payment_status_id', 'quote_status_id', 'lead_allocation_failed_at', 'source')
+        $leads = PersonalQuote::where(function ($q) {
+            $q->whereNull('advisor_id')
+                ->orWhere(function ($sq) {
+                    $sq->where('source', LeadSourceEnum::EA_IMCRM)
+                        ->where('ea_model', EaModelEnum::Collaborate->value)
+                        ->whereNull('expert_advisor_id');
+                });
+        })
+            ->select('uuid', 'tier_id', 'payment_status_id', 'quote_status_id', 'lead_allocation_failed_at', 'source', 'ea_model')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -393,8 +401,15 @@ class RetryAllocationService
     public function executeAllocation(QuoteTypes $quoteType, $to, $chunkSize, $allocationStartDate)
     {
         $processedRecords = 0;
-        $leads = $quoteType->model()::whereNull('advisor_id')
-            ->select('uuid', 'payment_status_id', 'quote_status_id', 'lead_allocation_failed_at', 'source')
+        $leads = $quoteType->model()::where(function ($q) {
+            $q->whereNull('advisor_id')
+                ->orWhere(function ($sq) {
+                    $sq->where('source', LeadSourceEnum::EA_IMCRM)
+                        ->where('ea_model', EaModelEnum::Collaborate->value)
+                        ->whereNull('expert_advisor_id');
+                });
+        })
+            ->select('uuid', 'payment_status_id', 'quote_status_id', 'lead_allocation_failed_at', 'source', 'ea_model')
             ->orderBy('created_at', 'desc')
             ->when($quoteType->isPersonalQuote(), function ($q) use ($quoteType) {
                 $q->where('quote_type_id', $quoteType->id());

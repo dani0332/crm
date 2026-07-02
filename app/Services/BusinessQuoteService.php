@@ -157,6 +157,18 @@ class BusinessQuoteService extends BaseService
                 'bqr.is_branch_applicable',
                 'bqr.pq_advisor_id',
                 'pqa_u.name as pre_qualification_advisor_name',
+                'bqr.ea_model',
+                'bqr.lead_generator_id',
+                'lg.name as lead_generator_name',
+                'lg.email as lead_generator_email',
+                'bqr.expert_advisor_id',
+                'ea.name as expert_advisor_name',
+                'bqr.ea_assigned_advisor_approved_at',
+                'bqr.ea_assigned_advisor_rejected_at',
+                'bqr.ea_expert_advisor_approved_at',
+                'bqr.ea_expert_advisor_rejected_at',
+                'bqr.ea_manager_approved_at',
+                'bqr.ea_manager_rejected_at',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -192,7 +204,9 @@ class BusinessQuoteService extends BaseService
                     ->where('ub.status', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
-            ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id');
+            ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id')
+            ->leftJoin('users as lg', 'lg.id', '=', 'bqr.lead_generator_id')
+            ->leftJoin('users as ea', 'ea.id', '=', 'bqr.expert_advisor_id');
     }
 
     private function applyUtmJoin(): void
@@ -334,6 +348,8 @@ class BusinessQuoteService extends BaseService
             'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
             'businessActivityId' => $request->nature_of_company_activity_id,
         ];
+        EACollaborateHelper::applyEAIMCRMSource($dataArr);
+
         if (! Auth::user()->hasRole('ADMIN')) {
 
             if (Auth::user()->hasRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {
@@ -345,7 +361,35 @@ class BusinessQuoteService extends BaseService
 
         $dataArr = array_merge($dataArr, $this->buildGroupMedicalCapiPayload($request));
 
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('BusinessQuoteService: CAPI payload for EA lead', [
+                'ea_model' => $dataArr['eaModel'] ?? request()->input('ea_model'),
+                'source' => $dataArr['source'] ?? null,
+                'email' => $dataArr['email'] ?? null,
+                'lead_generator_id' => $dataArr['leadGeneratorId'] ?? null,
+                'advisor_id' => $dataArr['advisorId'] ?? null,
+                'quote_type_id' => $dataArr['quoteTypeId'] ?? null,
+            ]);
+        }
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('BusinessQuoteService: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $eaQuote = BusinessQuote::where('uuid', $response->quoteUID)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'business');
+                }
+            }
+        }
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::BusinessQuote, $request, $response);
@@ -566,6 +610,14 @@ class BusinessQuoteService extends BaseService
 
         if (! empty($request->lead_type) && is_array($request->lead_type)) {
             $this->query->whereIn('bqr.lead_type', $request->lead_type);
+        }
+
+        if (! empty($request->ea_model)) {
+            $this->query->where('bqr.ea_model', $request->ea_model);
+        }
+
+        if (! empty($request->lead_generator)) {
+            $this->query->where('lg.name', 'like', '%'.$request->lead_generator.'%');
         }
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');

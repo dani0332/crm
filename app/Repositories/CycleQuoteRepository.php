@@ -11,6 +11,7 @@ use App\Facades\Capi;
 use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
 use App\Services\BranchAssignmentService;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -71,9 +72,40 @@ class CycleQuoteRepository extends BaseRepository
             'additionalNotes' => $data['notes'] ?? null,
         ];
 
+        EACollaborateHelper::applyEAIMCRMSource($quoteData);
+
         LoggerService::info('cycleQuote:'.json_encode($quoteData));
 
-        return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
+        if (request()->input('ea_model')) {
+            LoggerService::info('CycleQuoteRepository: CAPI payload for EA lead', [
+                'ea_model' => $quoteData['eaModel'] ?? request()->input('ea_model'),
+                'source' => $quoteData['source'] ?? null,
+                'email' => $quoteData['email'] ?? null,
+                'lead_generator_id' => $quoteData['leadGeneratorId'] ?? null,
+                'advisor_id' => $quoteData['advisorId'] ?? null,
+                'quote_type_id' => $quoteData['quoteTypeId'] ?? null,
+            ]);
+        }
+
+        $response = Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('CycleQuoteRepository: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $quote = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                if ($quote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($quote, 'cycle');
+                }
+            }
+        }
+
+        return $response;
     }
 
     /**
@@ -104,6 +136,8 @@ class CycleQuoteRepository extends BaseRepository
             },
             'customer',
             'branch:id,name',
+            'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -123,6 +157,8 @@ class CycleQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->select([
                 '*',
                 DB::raw('

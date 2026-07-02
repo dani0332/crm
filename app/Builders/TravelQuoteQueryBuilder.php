@@ -74,6 +74,8 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'parent_id',
             'branch_id',
             'is_branch_applicable',
+            'ea_model',
+            'lead_generator_id',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
@@ -96,6 +98,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'parent:id,code',
             'child:id,code,parent_id',
             'branch:id,name',
+            'leadGenerator:id,name',
         ]);
     }
 
@@ -292,6 +295,10 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                         $q->whereRaw('('.implode(' OR ', $ageConditions).')');
                     }
                 }
+            })
+            ->when($this->hasFilterValue('ea_model', $requestParams), fn ($q) => $q->where('ea_model', $this->getFilterValue('ea_model', $requestParams)))
+            ->when($this->hasFilterValue('lead_generator', $requestParams), function ($query) use ($requestParams) {
+                $query->whereHas('leadGenerator', fn ($uq) => $uq->where('name', 'like', '%'.$this->getFilterValue('lead_generator', $requestParams).'%'));
             });
     }
 

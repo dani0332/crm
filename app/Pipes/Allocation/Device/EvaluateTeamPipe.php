@@ -2,6 +2,7 @@
 
 namespace App\Pipes\Allocation\Device;
 
+use App\Enums\LeadSourceEnum;
 use App\Models\PersonalQuote;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -50,6 +51,16 @@ class EvaluateTeamPipe extends BaseAllocationPipe
             'deviceQuoteExists' => $deviceQuote ? true : false,
             'hasRetryFlag' => $hasRetryFlag,
         ]);
+
+        // EA_IMCRM leads bypass payment/SIC checks — proceed directly to advisor allocation
+        if ($lead->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - EA_IMCRM lead detected, bypassing SIC/payment checks', extra: [
+                'uuid' => $lead->uuid,
+                'ea_model' => $lead->ea_model?->value,
+            ]);
+
+            return $defaultTeamId;
+        }
 
         // SIC advisor requested or has retry flag, assign to hardcoded advisors
         if ($sicAdvisorRequested || $hasRetryFlag || $lead->isPaymentAuthorized() || $isPaymentAuthorizedOrDeclined || $lead->hasRemainedUnauthorizedFor12Hours()) {

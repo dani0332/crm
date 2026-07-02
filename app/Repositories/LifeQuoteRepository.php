@@ -168,7 +168,9 @@ class LifeQuoteRepository extends BaseRepository
             'customer',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
-            }])
+            },
+            'leadGenerator:id,name',
+        ])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
@@ -184,6 +186,8 @@ class LifeQuoteRepository extends BaseRepository
             ->filterBySegment('life_quote_request')
             ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->select([
                 '*',
                 DB::raw('
