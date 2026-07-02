@@ -2,19 +2,35 @@
 
 namespace App\Services;
 
+use App\Enums\EmirateTypeEnum;
+use App\Enums\GenderEnum;
+use App\Enums\HealthPlanRateSheetStatusEnum;
+use App\Enums\MaritalStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\RateCoverageEnum;
 use App\Imports\CoveragesImport;
 use App\Imports\RatesImport;
 use App\Jobs\UploadCoveragesJob;
-use App\Jobs\UploadRatesJob;
+use App\Models\HealthRate;
+use App\Models\HealthRateControl;
 use App\Models\RateCoverageProcess;
 use App\Models\RateCoverageUpload;
 use App\Services\Logger\LoggerService;
+use App\Support\HealthPlanVersionHelper;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class RateCoverageUploadService
 {
+    public function __construct(
+        private HealthPlanService $healthPlanService,
+        private CohortMappingService $cohortMappingService,
+        private HealthPlanCoPaymentService $healthPlanCoPaymentService,
+        private HealthRateControlService $healthRateControlService
+    ) {}
+
     public function uploadFile()
     {
         $path = 'ratings/health';
@@ -188,12 +204,311 @@ class RateCoverageUploadService
         return $coverages;
     }
 
+    private function removeEmptyRows(array $rows): array
+    {
+        $filteredRows = [];
+        foreach ($rows as $index => $row) {
+            // Consider non-empty if at least one cell is not null/empty string/empty after trim
+            $hasValue = false;
+            foreach ($row as $cell) {
+                if (! is_null($cell) && trim($cell) !== '') {
+                    $hasValue = true;
+                    break;
+                }
+            }
+            // Always include header row (index 0), and any non-empty rows
+            if ($index === 0 || $hasValue) {
+                $filteredRows[] = $row;
+            }
+        }
+
+        return $filteredRows;
+    }
+
     public function rateUploadCreate($data)
     {
         $uploadedFile = $this->uploadFile();
+        $seenCombinations = [];
+        $excelRecords = [];
 
-        $uploadRate = $this->createRate($uploadedFile);
-        UploadRatesJob::dispatch($uploadRate);
+        if ($data && isset($data['file_name']) && file_exists($data['file_name'])) {
+            $excelRecords = Excel::toArray([], $data['file_name']);
+
+            // Assuming first sheet, and first row is header
+            $rows = $excelRecords[0] ?? [];
+
+            // Remove empty rows (skip header for now, so keep index 0)
+            $rows = $this->removeEmptyRows($rows);
+            $rowCount = count($rows);
+            $plan = null;
+
+            if ($rowCount > 1) {
+                // normalize header case
+                $headers = array_map(Str::lower(...), $rows[0]);
+                $allCohorts = $this->cohortMappingService->getAllCohorts();
+                $allCoPayments = $this->healthPlanCoPaymentService->getAllCoPayments();
+
+                // Get first plan code to validate from database
+                $rowAssoc = array_combine($headers, $rows[1]);
+                if (empty($rowAssoc['plan_code'])) {
+                    $this->throwValidationError('Plan code is required.');
+                }
+
+                $plans = $this->healthPlanService->getPlanByCode($rowAssoc['plan_code']);
+                if ($plans->isEmpty()) {
+                    $this->throwValidationError('Plan not found.');
+                }
+
+                // Filter draft plan if exists
+                $plan = $plans->firstWhere('status', HealthPlanRateSheetStatusEnum::DRAFT->value);
+                // If draft does not exist, then take first plan (active)
+                if (! $plan) {
+                    $plan = $plans->first();
+                }
+
+                // Iterate through rows to get values
+                for ($i = 1; $i < $rowCount; $i++) {
+                    $rowAssoc = array_combine($headers, $rows[$i]);
+                    $planCode = $rowAssoc['plan_code'] ?? null;
+                    $minAge = $rowAssoc['min_age'] ?? null;
+                    $maxAge = $rowAssoc['max_age'] ?? null;
+                    $premium = $rowAssoc['premium'] ?? null;
+                    $copaymentCode = trim($rowAssoc['copayment_code'] ?? '') ?: null;
+                    $emirateType = $rowAssoc['emirate_type'] ?? null;
+                    $gender = $plan->gender_enabled ? (trim($rowAssoc['gender'] ?? '') ?: null) : null;
+                    $maritalStatus = $plan->marital_status_enabled
+                        && ! empty($gender)
+                        && Str::lower($gender) === GenderEnum::FEMALE->value ? (trim($rowAssoc['marital_status'] ?? '') ?: null) : null;
+                    $cohort = $plan->cohort_enabled ? (trim($rowAssoc['cohort'] ?? '') ?: null) : null;
+
+                    // Throw error if any required value is empty
+                    if (
+                        empty($planCode) ||
+                        ! isset($minAge) ||
+                        ! isset($maxAge) ||
+                        empty($premium) ||
+                        empty($copaymentCode) ||
+                        empty($emirateType)
+                    ) {
+                        $this->throwValidationError("All fields (plan_code, min_age, max_age, premium, copayment_code, emirate_type) are required. Please check row {$i}");
+                    }
+
+                    // Validate plan code is the same as the first plan code
+                    // To get previous row's record as an associative array:
+                    if ($i > 1) {
+                        $prevRowAssoc = array_combine($headers, $rows[$i - 1]);
+                        if ($planCode !== $prevRowAssoc['plan_code']) {
+                            $this->throwValidationError('All plan codes must be the same. Please check plan code at row '.($i + 1));
+                        }
+                    }
+
+                    // Validate min age as integers
+                    if (! ctype_digit(strval($minAge))) {
+                        $this->throwValidationError('All min ages values must be integers.');
+                    }
+
+                    // Validate max age as integers
+                    if (! ctype_digit(strval($maxAge))) {
+                        $this->throwValidationError('All max ages values must be integers.');
+                    }
+
+                    // Validate premium as integers
+                    if (! preg_match('/^\d+(\.\d{1,2})?$/', strval($premium))) {
+                        $this->throwValidationError('All premiums can be a decimal upto 2 digits. Please check row '.($i + 1).'.');
+                    }
+
+                    // Validate gender based on plan gender enabled
+                    if ($plan->gender_enabled) {
+                        if (empty($gender)) {
+                            $this->throwValidationError('Gender is required when plan gender is enabled.');
+                        }
+
+                        $allowedGenders = array_column(GenderEnum::cases(), 'value');
+                        if (! in_array(Str::lower($gender), $allowedGenders, true)) {
+                            $this->throwValidationError('Gender ('.$gender.') value must be either "male" or "female" at row '.($i + 1));
+                        }
+                    }
+
+                    // Validate cohort based on plan cohort enabled
+                    if ($plan->cohort_enabled) {
+                        if (empty($cohort)) {
+                            $this->throwValidationError('Cohort is required when plan cohort is enabled.');
+                        }
+
+                        if (! in_array(Str::upper($cohort), $allCohorts, true)) {
+                            $this->throwValidationError('Invalid cohort value.');
+                        }
+                    }
+
+                    // Validate marital status based on plan marital status enabled
+                    if ($plan->marital_status_enabled) {
+                        // Plan gender must be enabled if marital status is enabled, other throw error
+                        if (! $plan->gender_enabled) {
+                            $this->throwValidationError('Gender must be enabled when marital status is enabled.');
+                        }
+
+                        if (empty($maritalStatus) && Str::lower($gender) === GenderEnum::FEMALE->value) {
+                            $this->throwValidationError('Marital status is required when gender is female and plan marital status is enabled.');
+                        }
+
+                        $allowedMaritalStatuses = array_column(MaritalStatusEnum::cases(), 'value');
+                        if (! empty($maritalStatus) && ! in_array(Str::lower($maritalStatus), $allowedMaritalStatuses, true)) {
+                            $this->throwValidationError('Marital status value must be either "single" or "married".');
+                        }
+                    }
+
+                    // Validate if copayment code is in the list of all co payments
+                    if ($copaymentCode && ! in_array($copaymentCode, $allCoPayments, true)) {
+                        $this->throwValidationError('Invalid copayment code value.');
+                    }
+
+                    // Validate emirate type
+                    if (! in_array($emirateType, EmirateTypeEnum::labels(), true)) {
+                        $this->throwValidationError('Invalid emirate type value.');
+                    }
+
+                    // Apply unique combination
+                    $combinationKey = "{$copaymentCode}|{$gender}|{$maritalStatus}|{$cohort}";
+
+                    // Initialize storage for combinations if not already
+                    if (! isset($seenCombinations)) {
+                        $seenCombinations = [];
+                    }
+
+                    // Check if this combinationKey has been seen before
+                    if (isset($seenCombinations[$combinationKey])) {
+                        // If combination detected, check if age ranges overlap
+                        foreach ($seenCombinations[$combinationKey] as $seenAgeRange) {
+                            // Check if min_age and max_age overlap
+                            if (
+                                ($minAge <= $seenAgeRange['max_age'] && $maxAge >= $seenAgeRange['min_age'])
+                            ) {
+                                $this->throwValidationError('Duplicate row detected at row '.($i + 1));
+                            }
+                        }
+                        // If no overlap, add the new age range to the combination
+                        $seenCombinations[$combinationKey][] = [
+                            'min_age' => $minAge,
+                            'max_age' => $maxAge,
+                        ];
+                    } else {
+                        // First time this combination, add age range array
+                        $seenCombinations[$combinationKey][] = [
+                            'min_age' => $minAge,
+                            'max_age' => $maxAge,
+                        ];
+                    }
+                }
+
+                // Upload file and rates in a transaction
+                DB::transaction(function () use ($uploadedFile, $plan, $rows, $rowCount, $data) {
+                    // Upload file (health rate control)
+                    $result = $this->uploadHealthRateControl($uploadedFile['file_name'], $data['effective_from'], $data['effective_to'], $plan->id, $plan->code, $rowCount - 1);
+
+                    // Upload rates
+                    $this->uploadRates($plan->id, $result['health_rate_control_id'], $result['version'], $rows);
+                });
+
+            } else {
+                $this->throwValidationError('No data found in the file.');
+            }
+        }
+    }
+
+    private function uploadHealthRateControl(
+        string $fileName,
+        $effectiveFrom,
+        $effectiveTo,
+        int $planId,
+        $planCode,
+        int $totalRecords): array
+    {
+        // Check if any draft/scheduled version exists against plan
+        $draftVersion = $this->healthRateControlService->getByPlanIdAndStatus($planId, [HealthPlanRateSheetStatusEnum::DRAFT->value, HealthPlanRateSheetStatusEnum::SCHEDULED->value]);
+
+        if ($draftVersion) {
+            $this->throwValidationError("Upload rejected. A pending rate sheet already exists for plan {$planCode}. Please delete the existing Draft/Scheduled rate sheet before uploading a new one");
+        }
+
+        // Derive plan versiob
+        $rateVersion = $this->deriveRateVersion($planId);
+
+        $uploadLeadData = [
+            'file_name' => $fileName,
+            'health_plan_id' => $planId,
+            'version' => $rateVersion,
+            'effective_from' => $effectiveFrom,
+            'effective_to' => $effectiveTo,
+            'total_records' => $totalRecords,
+            'created_by' => auth()->user()->id,
+            'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
+        ];
+
+        $healthRateControl = HealthRateControl::create($uploadLeadData);
+
+        return [
+            'health_rate_control_id' => $healthRateControl->id,
+            'version' => $rateVersion,
+        ];
+    }
+
+    private function uploadRates(int $planId, int $healthRateControlId, float $version, array $data)
+    {
+        $plan = $this->healthPlanService->getPlanById($planId);
+        $headers = array_map(Str::lower(...), $data[0]);
+        $codes = [];
+
+        // Get all the payment codes first
+        // To save databse query everytime in loop
+        for ($i = 1; $i < count($data); $i++) {
+            $rowAssoc = array_combine($headers, $data[$i]);
+
+            $rows[] = $rowAssoc;
+            $codes[] = $rowAssoc['copayment_code'];
+        }
+
+        $codes = array_unique($codes);
+        $coPayments = $this->healthPlanCoPaymentService->getByCodes($codes);
+
+        // Iterate again to create rates
+        for ($i = 1; $i < count($data); $i++) {
+            $rowAssoc = array_combine($headers, $data[$i]);
+            $coPayment = $coPayments[$rowAssoc['copayment_code']];
+            $emirateType = EmirateTypeEnum::fromText($rowAssoc['emirate_type']);
+
+            // Check if we can add bulk insert outside loop
+            HealthRate::create([
+                'health_plan_id' => $planId,
+                'health_rate_control_id' => $healthRateControlId,
+                'version' => $version,
+                'health_plan_co_payment_id' => $coPayment->id,
+                'emirate_type' => $emirateType->value,
+                'min_age' => $rowAssoc['min_age'],
+                'max_age' => $rowAssoc['max_age'],
+                'gender' => $plan->gender_enabled ? $rowAssoc['gender'] : null,
+                'marital_status' => $plan->marital_status_enabled
+                        && ! empty($rowAssoc['gender'])
+                        && Str::lower($rowAssoc['gender']) === GenderEnum::FEMALE->value ? $rowAssoc['marital_status'] : null,
+                'cohort' => $plan->cohort_enabled ? $rowAssoc['cohort'] : null,
+                'premium' => $rowAssoc['premium'],
+                'status' => HealthPlanRateSheetStatusEnum::DRAFT->value,
+                'is_active' => 0,
+            ]);
+        }
+    }
+
+    private function deriveRateVersion(int $planId): float
+    {
+        // Get Active plan version (if exists)
+        $plan = HealthRateControl::where('health_plan_id', $planId)
+            ->where('status', HealthPlanRateSheetStatusEnum::ACTIVE)
+            ->first();
+
+        if ($plan) {
+            return HealthPlanVersionHelper::nextMinorVersion($plan->version);
+        }
+
+        return 1.0;
     }
 
     public function createRate($uploadedFile)
@@ -317,23 +632,7 @@ class RateCoverageUploadService
 
     public function getUploadRates()
     {
-        $rates = RateCoverageUpload::select(
-            'rate_coverage_uploads.file_name as fileName',
-            'rate_coverage_uploads.status as status',
-            'rate_coverage_uploads.total_records as totalRecords',
-            DB::raw('IF(COUNT(rate_coverage_processes.id) = 0, 0, SUM(CASE WHEN rate_coverage_processes.validation_errors IS NULL THEN 1 ELSE 0 END)) as good'),
-            DB::raw('IF(COUNT(rate_coverage_processes.id) = 0, 0, SUM(CASE WHEN rate_coverage_processes.validation_errors IS NOT NULL THEN 1 ELSE 0 END)) as cannotUpload'),
-            'rate_coverage_uploads.id as upload_id',
-            'rate_coverage_uploads.created_at as created_at',
-            'rate_coverage_uploads.updated_at as updated_at',
-            'rate_coverage_processes.type as type',
-        )
-            ->where('rate_coverage_uploads.type', '=', RateCoverageEnum::RATES)
-            ->leftJoin('rate_coverage_processes', 'rate_coverage_processes.rate_coverage_id', '=', 'rate_coverage_uploads.id')
-            ->groupBy('rate_coverage_uploads.id')
-            ->orderBy('rate_coverage_uploads.created_at', 'desc')
-            ->simplePaginate(10)
-            ->withQueryString();
+        $rates = HealthRateControl::with('user', 'healthPlan')->orderByDesc('id')->simplePaginate(10)->withQueryString();
 
         return $rates;
     }
@@ -343,6 +642,13 @@ class RateCoverageUploadService
         return RateCoverageProcess::where('rate_coverage_id', $id)
             ->whereNotNull('validation_errors')
             ->get(['data', 'validation_errors']);
+    }
+
+    private function throwValidationError(string $message): never
+    {
+        throw new HttpResponseException(
+            response()->json(['message' => $message], 422)
+        );
     }
 
 }

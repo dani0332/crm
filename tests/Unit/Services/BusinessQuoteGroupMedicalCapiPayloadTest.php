@@ -57,7 +57,6 @@ test('buildGroupMedicalCapiPayload maps AMT snake_case intake fields to CAPI cam
         'companyActivityTypeId' => 3,
         'hasExistingGroupPolicy' => true,
         'healthPlanTypeId' => 13,
-        'numberOfCategories' => 2,
         'categories' => [
             [
                 'groupMedicalCategoryId' => 1,
@@ -102,14 +101,13 @@ test('buildGroupMedicalCapiPayload maps ecommerce camelCase payload', function (
     $payload = invokeGroupMedicalCapiPayload($request);
 
     expect($payload)->toHaveKeys([
-        'quoteUID',
         'companyActivityTypeId',
         'hasExistingGroupPolicy',
         'healthPlanTypeId',
-        'numberOfCategories',
         'categories',
     ])
-        ->and($payload['quoteUID'])->toBe('DPL7PA7L')
+        ->and($payload)->not->toHaveKey('quoteUID')
+        ->and($payload)->not->toHaveKey('numberOfCategories')
         ->and($payload['categories'][0])->toMatchArray([
             'groupMedicalCategoryId' => 1,
             'numberOfPeople' => 40,

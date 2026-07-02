@@ -827,29 +827,6 @@ const insurerAMLStatusOption = computed(() => {
         </x-select>
 
         <x-select
-          v-model="filters.pq_advisor_id"
-          name="pq_advisor_id"
-          placeholder="Search by PQA"
-          :options="pqaAdvisorOptions"
-          class="w-full"
-          filterable
-          label="Pre-Qualification Advisor"
-          multiple
-          truncate
-        >
-          <template #content-footer>
-            <ui-select-actions
-              @select-all="
-                filters.pq_advisor_id = pqaAdvisorOptions.map(
-                  item => item.value,
-                )
-              "
-              @clear="filters.pq_advisor_id = []"
-            />
-          </template>
-        </x-select>
-
-        <x-select
           v-model="filters.support_user_id"
           name="support_user_id"
           placeholder="Search by OE / AE"

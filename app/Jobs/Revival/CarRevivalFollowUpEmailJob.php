@@ -129,7 +129,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
     private function sendFollowUpEmail(object $emailData, CarQuote $lead): void
     {
         $emailData->uniqueId = (string) Str::ulid();
-        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP, (array) $emailData);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP, (array) $emailData);
 
         DttRevival::where('id', $this->dttRevival->id)->increment('follow_up_email_count');
 

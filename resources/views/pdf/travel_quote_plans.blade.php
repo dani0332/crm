@@ -283,9 +283,9 @@
             border: none;
         }
 
-    
 
-      
+
+
 
         .text-left {
             text-align: left;
@@ -322,8 +322,8 @@
         height: 167px !important;
     }
 
-   
-   
+
+
 
         .full-page-image {
             width: 100%;
@@ -371,7 +371,7 @@
         }
     }
 
-       
+
     </style>
 </head>
 
@@ -481,7 +481,7 @@ $addonsVat = 0;
 
 foreach ($quotePlan->addons as &$addon) {
     $addon = (object) $addon;
-    
+
     // Set default values
     $addon->value = "Excluded";
     $addon->price = 0;
@@ -506,7 +506,7 @@ foreach ($quotePlan->addons as &$addon) {
             $totalPriceWithVAT = $addonsPrice;
 
             $discountPremium = $vat = [];
-            
+
             $quotePlan->actualPremium = $quotePlan->discountPremium  + $totalPriceWithVAT;
             $quotePlan->vat += $addonsVat;
             //$quotePlan->vat = 100;
@@ -682,6 +682,21 @@ foreach ($quotePlan->addons as &$addon) {
                 "type" => "addons"
             ],
             [
+                "code" => "medicalLight",
+                "title" => "Pre-existing Medical Light",
+                "type" => "addons"
+            ],
+            [
+                "code" => "summerWinterSportsExtension",
+                "title" => "Summer/Winter Sports Extension",
+                "type" => "addons"
+            ],
+            [
+                "code" => "golfExtension",
+                "title" => "Golf Extension",
+                "type" => "addons"
+            ],
+            [
                 'code' => 'actualPremium',
                 'title' => 'Premium',
                 'type' => 'info',
@@ -729,11 +744,11 @@ foreach ($quotePlan->addons as &$addon) {
         </div>
     </header>
 
-  
+
     {{-- PDF Page Footer Section --}}
     @component('pdf.components.pdf_footer_section',['quote' => $quote,'ecomInsuranceLink'=>config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid])
-        
-     
+
+
     @endcomponent
 {{-- End of PDF Page Footer Section --}}
     <main>
