@@ -377,7 +377,7 @@ class TravelEmailService extends BaseService
 
         $emailData = $this->buildCommonEmailData($travelQuote, $advisor, null, WorkflowTypeEnum::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS);
 
-        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS, (array) $emailData);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::TRAVEL_RENEWAL_AUTOMATED_FOLLOWUPS, (array) $emailData);
 
         LoggerService::info('sendAutomatedTravelRenewalFollowup - Successfully triggered automated follow-up workflow');
 
@@ -531,7 +531,7 @@ class TravelEmailService extends BaseService
 
         $emailData = $this->buildCommonEmailData($travelQuote, $advisor, null, WorkflowTypeEnum::TRAVEL_AUTOMATED_FOLLOWUPS);
 
-        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::TRAVEL_AUTOMATED_FOLLOWUPS, (array) $emailData);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::TRAVEL_AUTOMATED_FOLLOWUPS, (array) $emailData);
 
         LoggerService::info('sendAutomatedTravelFollowup - Successfully triggered automated follow-up workflow');
 
