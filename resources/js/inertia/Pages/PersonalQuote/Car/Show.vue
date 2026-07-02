@@ -1693,7 +1693,13 @@ const convertToNumber = (value, decimalPlace = 2) => {
 
 function genderFormatForProfile(gender) {
   if (!gender) return gender;
-  return gender === 'M' || gender === 'Male' ? 'Male' : 'Female';
+  if (['m', 'male', 'M', 'Male'].includes(gender)) {
+    return 'Male';
+  }
+  if (['f', 'female', 'F', 'Female'].includes(gender)) {
+    return 'Female';
+  }
+  return gender;
 }
 
 function capitalizeString(str) {
