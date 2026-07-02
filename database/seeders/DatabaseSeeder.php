@@ -73,6 +73,7 @@ class DatabaseSeeder extends Seeder
             HealthPlanRatesStatusVersionSeeder::class,
             SplitHealthRatesGenderMaritalStatusSeeder::class,
             MakeGenderMaritalStatusUppercase::class,
+            // ReverseSplitHealthRatesGenderMaritalStatusSeeder::class, This is for reversal of SplitHealthRatesGenderMaritalStatusSeeder
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
             PartnerSeeder::class,
