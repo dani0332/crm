@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\DB;
 
 class SplitHealthRatesGenderMaritalStatusSeeder extends Seeder
 {
+    /**
+     * Idempotent: the WHERE clause scopes the UPDATE to rows still holding the
+     * legacy codes ('M', 'FS', 'FM'). Once converted to 'MALE'/'FEMALE', those
+     * rows no longer match, so re-running this seeder is a no-op.
+     */
     public function run(): void
     {
         DB::statement("
