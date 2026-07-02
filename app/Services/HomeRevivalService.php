@@ -197,7 +197,7 @@ class HomeRevivalService
             'isShort' => $quote->source === LeadSourceEnum::REVIVAL_SHORT,
         ];
 
-        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::HOME_REVIVAL_OCB, (array) $payload);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HOME_REVIVAL_OCB, (array) $payload);
 
         LoggerService::info(self::class.' - Home revival OCB event sent for Quote UUID: '.$quoteUuid);
 
