@@ -252,6 +252,11 @@ const tableHeader = reactive([
     value: 'branch_name',
     tooltip: 'The branch of the lead',
   },
+  {
+    text: 'Pre-Qualification Advisor',
+    value: 'pqa',
+    tooltip: 'The pre-qualification advisor assigned to the lead',
+  },
 ]);
 
 const calculateTotalSum = useCalculateTotalSum;
@@ -408,6 +413,9 @@ const isIntegerColumn = key => {
     </template>
     <template #item-sage_reciept_id="{ sage_reciept_id }">
       {{ sage_reciept_id ?? 'N/A' }}
+    </template>
+    <template #item-pqa="{ pqa }">
+      {{ pqa ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">

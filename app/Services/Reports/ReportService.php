@@ -112,7 +112,7 @@ class ReportService extends BaseService
                 $query->whereBetween('personal_quotes.created_at', [$dateFrom, $dateTo]);
             }
 
-            $records = $query->get();
+            $records = $query->logRawSql('UTM Report')->get();
 
             $records->map(function ($item) use ($groupBy) {
                 $item['utm_id'] = in_array('utm_id', $groupBy) ? $item['utm_id'] : '';
@@ -126,7 +126,11 @@ class ReportService extends BaseService
             });
         }
 
-        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER])->get();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health,
+            quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet,
+            quoteTypeCode::Business, quoteTypeCode::SAVINGS, quoteTypeCode::CYBER, quoteTypeCode::Bike, quoteTypeCode::Yacht,
+        ])->get();
+
         $lobs->push([
             'id' => 999,
             'text' => 'Group Medical',

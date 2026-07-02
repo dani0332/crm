@@ -139,6 +139,17 @@ class SaleSummaryReportService extends ManagementReport
             $query->addSelect('quote_type.code as line_of_business');
         }
 
+        if ($request->groupBy == 'pqa') {
+            $query->leftJoin('business_quote_request as bqr', 'personal_quotes.quote_id', '=', 'bqr.id')
+                ->leftJoin('users as pqa_user', 'pqa_user.id', '=', 'bqr.pq_advisor_id')
+                ->leftJoin('health_quote_request as hqrr', function ($join) {
+                    $join->on('personal_quotes.quote_id', '=', 'hqrr.id')
+                        ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
+                })
+                ->leftJoin('users as health_pqa_user', 'health_pqa_user.id', '=', 'hqrr.pq_advisor_id')
+                ->addSelect(DB::raw('IFNULL(COALESCE(pqa_user.name, health_pqa_user.name), "N/A") as pqa'));
+        }
+
         if ($request['reportType'] == ManagementReportTypeEnum::APPROVED_TRANSACTIONS) {
             $query->joinSub($distinctPaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
@@ -306,6 +317,19 @@ class SaleSummaryReportService extends ManagementReport
             // Endorsements
             $query->addSelect('quote_type.code as line_of_business');
         }
+
+        if ($request->groupBy == 'pqa') {
+            // Endorsements
+            $query->leftJoin('business_quote_request as bqr', 'personal_quotes.quote_id', '=', 'bqr.id')
+                ->leftJoin('users as pqa_user', 'pqa_user.id', '=', 'bqr.pq_advisor_id')
+                ->leftJoin('health_quote_request as hqrr', function ($join) {
+                    $join->on('personal_quotes.quote_id', '=', 'hqrr.id')
+                        ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
+                })
+                ->leftJoin('users as health_pqa_user', 'health_pqa_user.id', '=', 'hqrr.pq_advisor_id')
+                ->addSelect(DB::raw('IFNULL(COALESCE(pqa_user.name, health_pqa_user.name), "N/A") as pqa'));
+        }
+
         $this->branchJoin($query);
         $query = $this->applyFilters($query, $request, true, true);
 
@@ -402,6 +426,18 @@ class SaleSummaryReportService extends ManagementReport
             $reversalQuery->addSelect('quote_type.code as line_of_business');
         }
 
+        if ($request->groupBy == 'pqa') {
+            // Endorsements
+            $reversalQuery->leftJoin('business_quote_request as bqr', 'personal_quotes.quote_id', '=', 'bqr.id')
+                ->leftJoin('users as pqa_user', 'pqa_user.id', '=', 'bqr.pq_advisor_id')
+                ->leftJoin('health_quote_request as hqrr', function ($join) {
+                    $join->on('personal_quotes.quote_id', '=', 'hqrr.id')
+                        ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Health);
+                })
+                ->leftJoin('users as health_pqa_user', 'health_pqa_user.id', '=', 'hqrr.pq_advisor_id')
+                ->addSelect(DB::raw('IFNULL(COALESCE(pqa_user.name, health_pqa_user.name), "N/A") as pqa'));
+        }
+
         if ($request['reportType'] == ManagementReportTypeEnum::APPROVED_TRANSACTIONS) {
             $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
@@ -478,6 +514,7 @@ class SaleSummaryReportService extends ManagementReport
             'line_of_business' => ['quote_type.code', 'branch_name'],
             'department' => ['u.department_id', 'branch_name'],
             'branch_name' => ['branch_name'],
+            'pqa' => ['pqa', 'branch_name'],
         ];
 
         if ($isEndorsementQuery) {

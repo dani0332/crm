@@ -8,18 +8,18 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Models\ApplicationStorage;
+use App\Enums\WorkflowTypeEnum;
 use App\Models\DttRevival;
 use App\Models\PersonalQuote;
 use App\Services\ApplicationStorageService;
-use App\Services\BirdService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use RuntimeException;
+use Illuminate\Support\Str;
 use Throwable;
 
 class HomeRevivalFollowUpEmailJob implements ShouldQueue
@@ -122,43 +122,23 @@ class HomeRevivalFollowUpEmailJob implements ShouldQueue
 
     private function sendFollowUpEmail(object $emailData, PersonalQuote $lead, DttRevival $dttRevival): void
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_OCB)->first();
+        $emailData->uniqueId = (string) Str::ulid();
 
-        if (! $workflowUrl || empty($workflowUrl->value)) {
-            LoggerService::warning(self::class.': HOME_RENEWAL_OCB URL missing in CMS', [
-                'flow' => self::LOG_FLOW,
-                'dtt_revival_id' => $dttRevival->id,
-                'child_quote_uuid' => $dttRevival->uuid,
-            ]);
+        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::HOME_REVIVAL_FOLLOWUP, (array) $emailData);
 
-            throw new RuntimeException('HOME_RENEWAL_OCB URL missing in CMS');
-        }
+        DttRevival::where('id', $dttRevival->id)->increment('follow_up_email_count');
 
-        $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
+        app(WebEngageService::class)->createQuoteWorkFlowDetails(
+            $lead->uuid,
+            QuoteFlowType::HOME_REVIVAL_FOLLOWUP->value,
+            (int) QuoteTypes::HOME->id()
+        );
 
-        if (in_array($response->status_code, [201, 200])) {
-            DttRevival::where('id', $dttRevival->id)->increment('follow_up_email_count');
-
-            app(BirdService::class)->createQuoteWorkFlowDetails(
-                $lead,
-                $response,
-                QuoteFlowType::HOME_REVIVAL_FOLLOWUP->value,
-                (int) QuoteTypes::HOME->id()
-            );
-
-            LoggerService::info(self::class.': follow-up email sent and status updated to FollowedUp', [
-                'flow' => self::LOG_FLOW,
-                'dtt_revival_id' => $dttRevival->id,
-                'child_quote_uuid' => $dttRevival->uuid,
-            ]);
-        } else {
-            LoggerService::warning(self::class.': Bird follow-up call did not return success', [
-                'flow' => self::LOG_FLOW,
-                'dtt_revival_id' => $dttRevival->id,
-                'child_quote_uuid' => $dttRevival->uuid,
-                'response_code' => $response->status_code,
-            ]);
-        }
+        LoggerService::info(self::class.': follow-up email sent and flow details recorded', [
+            'flow' => self::LOG_FLOW,
+            'dtt_revival_id' => $dttRevival->id,
+            'child_quote_uuid' => $dttRevival->uuid,
+        ]);
     }
 
     public function failed(Throwable $exception): void

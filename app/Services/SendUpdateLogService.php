@@ -1434,7 +1434,7 @@ class SendUpdateLogService
         } elseif ($quoteTypeId == QuoteTypeId::Business) {
             $emailData->companyName = $quote?->company_name ?? '-';
         } elseif ($quoteTypeId == QuoteTypeId::Health) {
-            $activeMembers = $quote->activeMembers ?? collect();
+            $activeMembers = $quote->activeMembers?->where('is_policy_holder', true) ?? collect();
             $emailData->policyHolderName = $activeMembers->isEmpty()
                 ? ''
                 : implode(', ', array_map(function ($member) {

@@ -11,7 +11,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\TiersEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\FailedIlaLeadsExport;
-use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -69,31 +68,25 @@ class FailedILAEmailService
         }
 
         LoggerService::info(self::class.' - sendFailedIlaEmails - Sending failed ILA emails to managers: '.implode(', ', $managerEmails));
-        $birdSendFailedIlaEmailsWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SEND_FAILED_ILA_EMAILS_WORKFLOW, useCache: true);
-        if ($birdSendFailedIlaEmailsWorkflow) {
-            LoggerService::info(self::class.' - sendFailedIlaEmails - Triggering web hook request for workflow: '.$birdSendFailedIlaEmailsWorkflow);
-            app(BirdService::class)->triggerWebHookRequest($birdSendFailedIlaEmailsWorkflow, $this->buildFailedIlaEmailData($quoteType, $managerEmails));
-            LoggerService::info(self::class.' - sendFailedIlaEmails - Web hook request triggered successfully');
-        } else {
-            LoggerService::warning(self::class.' - sendFailedIlaEmails - Workflow not found');
-        }
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $this->buildFailedIlaEmailData($quoteType, $managerEmails, $leadsCount));
+        LoggerService::info(self::class.' - sendFailedIlaEmails - WebEngage event triggered successfully');
     }
 
-    public function buildFailedIlaEmailData($quoteType, $managerEmails)
+    public function buildFailedIlaEmailData($quoteType, $managerEmails, $leadsCount = null): array
     {
-        return (object) [
-            // The first email is advisor, the rest are managers. Use named destructuring for clarity and efficiency.
-            ...(
-                count($managerEmails) > 0
-                ? [
-                    'advisorEmail' => $managerEmails[0],
-                    'managerEmails' => array_slice($managerEmails, 1),
-                ]
-                : [
-                    'advisorEmail' => null,
-                    'managerEmails' => [],
-                ]
-            ),
+        $primaryEmail = count($managerEmails) > 0 ? $managerEmails[0] : '';
+
+        return [
+            'customerId' => $primaryEmail,
+            'firstName' => '',
+            'lastName' => '',
+            'customerEmail' => $primaryEmail,
+            'customerMobile' => '',
+            'leadsCount' => $leadsCount,
+            'quoteUID' => '',
+            // The first email is advisor, the rest are managers.
+            'advisorEmail' => $primaryEmail ?: null,
+            'managerEmails' => count($managerEmails) > 0 ? array_slice($managerEmails, 1) : [],
             'quoteType' => $quoteType,
             'workflowType' => WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS,
             'dateOfAttempt' => now()->format('Y-m-d'),

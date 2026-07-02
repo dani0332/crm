@@ -11,7 +11,10 @@ use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypes;
 use App\Jobs\CarLost\CarSoldResubmissions;
+use App\Jobs\PqaAllocationBackupJob;
+use App\Jobs\ResetPqaAllocationCountJob;
 use App\Jobs\SLAMonitoringJob;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
@@ -136,6 +139,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('send-failed-ila-leads --quoteType=CorpLine')->name('send-failed-ila-leads:cron:corpline')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Yacht')->name('send-failed-ila-leads:cron:yacht')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Jetski')->name('send-failed-ila-leads:cron:jetski')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
+
+        $schedule->job(new PqaAllocationBackupJob(QuoteTypes::CORPLINE))->name('pqa-backup:corpline')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->job(new PqaAllocationBackupJob(QuoteTypes::HEALTH))->name('pqa-backup:health')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->job(new ResetPqaAllocationCountJob)->timezone('Asia/Dubai')->dailyAt('00:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('QuoteSyncUpdate:cron')
             ->everyThreeMinutes()

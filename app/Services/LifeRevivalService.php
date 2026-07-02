@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\AMLStatusCode;
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -13,13 +12,13 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\ApplicationStorage;
 use App\Models\CurrencyType;
 use App\Models\LifeInsuranceTenure;
 use App\Models\LifePurposeOfInsurance;
 use App\Models\LifeQuote;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -343,43 +342,22 @@ class LifeRevivalService
             return;
         }
 
-        // Build Bird payload
         $payload = [
-            'to' => [
-                [
-                    'email' => $quote->email,
-                    'name' => $quote->first_name.' '.$quote->last_name,
-                ],
-            ],
-            'workflowType' => WorkflowTypeEnum::LIFE_REVIVAL_OCB,
-            'quoteUID' => $quoteUuid,
+            'customerId' => $quote->customer_id ?? $quote->email,
+            'firstName' => $quote->first_name ?? '',
+            'lastName' => $quote->last_name ?? '',
             'customerEmail' => $quote->email,
+            'customerMobile' => ! empty($quote->mobile_no) ? '+'.formatMobileNoWithoutPlus($quote->mobile_no) : '',
+            'quoteUID' => $quoteUuid,
+            'workflowType' => WorkflowTypeEnum::LIFE_REVIVAL_OCB,
             'customerName' => $quote->first_name.' '.$quote->last_name,
             'refID' => $quote->code,
-            'subject' => $quote->first_name.' '.$quote->last_name."'s Life Policy with Alfred",
-            'tag' => 'life-revival-email',
             'lob' => QuoteTypes::LIFE->id(),
-            'templateId' => 1000,
-            'tierRId' => $quote->tier_id,
         ];
 
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_OCA_EMAIL_FLOW)->first();
-        if (! $workflowUrl) {
-            LoggerService::error('LifeRevivalService - Life revival email not sent since workflow URL not found');
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::LIFE_REVIVAL_OCB, $payload);
 
-            return;
-        }
-
-        // Send Bird request
-        $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $payload, 'post');
-
-        LoggerService::info("LifeRevivalService - Life revival email sent for Quote UUID: {$quoteUuid} - Response: ".json_encode($response));
-
-        if (! in_array($response->status_code, [200, 201])) {
-            LoggerService::error("LifeRevivalService - Life revival email not sent for Quote UUID: {$quoteUuid} - Response: ".json_encode($response));
-
-            return;
-        }
+        LoggerService::info("LifeRevivalService - Life revival WebEngage event triggered for Quote UUID: {$quoteUuid}");
 
         $this->updateQuoteStatus($quote);
 

@@ -15,7 +15,7 @@ class ActivityController extends Controller
     }
     public function getActivity(ActivityGetApiRequest $request)
     {
-        return app(ActivitiesService::class)->getActivity($request->entityUId);
+        return app(ActivitiesService::class)->getActivity($request->entityUId, $request->isModified);
     }
 
 }

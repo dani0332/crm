@@ -22,6 +22,7 @@ use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\EmbeddedTransactionRepository;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\JsonResponse;
@@ -121,6 +122,11 @@ class EmbeddedTransactionService extends BaseService
             'quoteTypeId' => $quoteTypeId,
             'refId' => $quote->code,
             'uuid' => $quote->uuid,
+            'uniqueId' => (string) Str::ulid(),
+            'customerId' => $quote->customer_id ?? '',
+            'firstName' => $quote->first_name ?? '',
+            'lastName' => $quote->last_name ?? '',
+            'customerEmail' => $quote->email,
             'embeddedTransactionCode' => $epTransaction->code,
             'workflowType' => WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER,
             'getRetargetingEpReminderUrl' => $getRetargetingEpReminderUrl,
@@ -129,7 +135,8 @@ class EmbeddedTransactionService extends BaseService
 
         LoggerService::info('triggerBirdWorkflowRetargetEpReminder: ', extra: ['data' => $birdEmailData]);
 
-        return $this->birdService->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
+        return app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER, (array) $birdEmailData);
+
     }
 
     protected function triggerEpRetargetingWorkflowForBike(PersonalQuote $quote, int $quoteTypeId, EmbeddedTransaction $epTransaction): object

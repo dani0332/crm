@@ -122,12 +122,22 @@ class AlfredCoinsWebhookService
     {
         $quoteTypeEnum = QuoteTypes::getName($quoteTypeId);
         if (! $quoteTypeEnum instanceof QuoteTypes) {
+            LoggerService::warning('AlfredCoinsWebhookService - Invalid quote type ID', [
+                'quoteUID' => $uuid,
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
             return null;
         }
 
         $quote = $this->getQuoteObject($quoteTypeEnum->value, $uuid);
 
-        if ($quote === false || ! $quote instanceof Model) {
+        if ($quote === false) {
+            LoggerService::warning('AlfredCoinsWebhookService - Quote not found for webhook', [
+                'quoteUID' => $uuid,
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
             $quote = PersonalQuote::query()
                 ->where('uuid', $uuid)
                 ->where('quote_type_id', $quoteTypeId)
@@ -136,7 +146,13 @@ class AlfredCoinsWebhookService
 
         if (
             $quote instanceof PersonalQuote &&
-            (int) $quote->getAttribute('quote_type_id') !== $quoteTypeId) {
+            (int) $quote->getAttribute('quote_type_id') !== $quoteTypeId
+        ) {
+            LoggerService::warning('AlfredCoinsWebhookService - Quote type ID mismatch', [
+                'quoteUID' => $uuid,
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
             return null;
         }
 
