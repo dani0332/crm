@@ -13,6 +13,15 @@ use Illuminate\Support\Facades\DB;
 
 class HealthPlanRatesStatusVersionSeeder extends Seeder
 {
+    /**
+     * Idempotent: only targets plans where `version` is still NULL. Each
+     * branch sets `version` to 1.0 once processed, so already-migrated plans
+     * are excluded from subsequent runs. The rates branch also wraps the
+     * version bump, HealthRateControl creation, and rate update in a single
+     * DB::transaction() — if any step fails, the version save rolls back too,
+     * leaving the plan NULL so the next run retries it cleanly instead of
+     * leaving it half-migrated.
+     */
     public function run(): void
     {
         // Fetch all existing plans (without version)
