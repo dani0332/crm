@@ -1858,7 +1858,7 @@ class SendEmailCustomerService extends BaseService
             'workflowType' => WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
         ];
 
-        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS, $payload);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS, $payload);
         LoggerService::info('sendWhatsappNotificationToCustomer - WebEngage event triggered with Ref-ID: '.$quote->uuid.' | Time:'.now());
     }
 
