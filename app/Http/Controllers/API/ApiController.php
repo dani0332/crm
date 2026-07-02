@@ -35,6 +35,7 @@ use App\Http\Requests\LogEpEmailStatusesRequest;
 use App\Http\Requests\LogFollowUpEventRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\PqaAllocationRequest;
+use App\Http\Requests\ReTriggerCarRevivalRequest;
 use App\Http\Requests\ReTriggerHomeRevivalRequest;
 use App\Http\Requests\ReTriggerLifeRevivalRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
@@ -55,6 +56,7 @@ use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\ProcessPaymentStatusUpdateJob;
 use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\Revival\CarRevivalFollowUpEmailJob;
+use App\Jobs\Revival\CarRevivalResendJob;
 use App\Jobs\Revival\HomeRevivalResendJob;
 use App\Jobs\Revival\LifeRevivalLeadsCreationJob;
 use App\Jobs\RunCQFJobs;
@@ -112,6 +114,7 @@ class ApiController extends Controller
     private const OCR_UTIL_FEAT = 'OCR UTIL FEATURE';
     private const LIFE_REVIVAL_JOB_DELAY_SECONDS = 30;
     private const HOME_REVIVAL_JOB_DELAY_SECONDS = 30;
+    private const CAR_REVIVAL_JOB_DELAY_SECONDS = 30;
 
     use GenericQueriesAllLobs, PrivateClient;
 
@@ -1586,6 +1589,125 @@ class ApiController extends Controller
             ->dispatch();
 
         LoggerService::info("{$logPrefix} All Home Revival Resend Jobs dispatched");
+    }
+
+    public function reTriggerCarRevival(ReTriggerCarRevivalRequest $request): JsonResponse
+    {
+        Log::withContext(['feature' => 're-trigger-car-revival']);
+
+        $validated = $request->validated();
+
+        $startDate = Carbon::parse($validated['created_at_start'])->startOfDay();
+        $endDate = Carbon::parse($validated['created_at_end'])->endOfDay();
+
+        if ($request->boolean('debug')) {
+            $leads = $this->getCarRevivalLeadsForResend($startDate, $endDate);
+            if (! empty($validated['limit'])) {
+                $leads = $leads->take((int) $validated['limit']);
+            }
+
+            return apiResponse([
+                'count' => $leads->count(),
+                'leads' => $leads->values(),
+            ], Response::HTTP_OK, 'Car revival leads (debug)');
+        }
+
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
+            LoggerService::info(self::class.' - reTriggerCarRevival - DTT is not enabled from cms');
+
+            return apiResponse(false, Response::HTTP_OK, 'DTT is not enabled from cms');
+        }
+
+        if (! $request->boolean('all')) {
+            return apiResponse(false, Response::HTTP_BAD_REQUEST, 'Invalid request');
+        }
+
+        $leads = $this->getCarRevivalLeadsForResend($startDate, $endDate);
+
+        if (! empty($validated['limit'])) {
+            $leads = $leads->take((int) $validated['limit']);
+        }
+
+        if ($leads->isEmpty()) {
+            LoggerService::info(self::class.' - reTriggerCarRevival - no car revival leads to process');
+
+            return apiResponse(true, Response::HTTP_OK, 'No car revival leads to process');
+        }
+
+        $this->dispatchCarRevivalResendJobs($leads);
+
+        LoggerService::info(self::class.' - reTriggerCarRevival - car revival batch dispatched', [
+            'lead_count' => $leads->count(),
+        ]);
+
+        return apiResponse(true, Response::HTTP_OK, 'Car revival jobs dispatched successfully');
+    }
+
+    private function getCarRevivalLeadsForResend(Carbon $startDate, Carbon $endDate)
+    {
+        return CarQuote::query()
+            ->select(['id', 'uuid'])
+            ->where('source', LeadSourceEnum::REVIVAL)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->get();
+    }
+
+    private function dispatchCarRevivalResendJobs($leads): void
+    {
+        $leadsList = $leads->values()->all();
+
+        if ($leadsList === [] || count($leadsList) === 0) {
+            return;
+        }
+
+        $logPrefix = self::class.' - dispatchCarRevivalResendJobs - ';
+
+        $dttRevivalsByUuid = DttRevival::query()
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->whereIn('uuid', array_map(fn ($lead) => $lead->uuid, $leadsList))
+            ->get()
+            ->keyBy('uuid');
+
+        $jobs = [];
+        $delayCounter = 0;
+
+        foreach ($leadsList as $lead) {
+            $dttRevival = $dttRevivalsByUuid->get($lead->uuid);
+
+            if ($dttRevival === null) {
+                LoggerService::warning("{$logPrefix} no DTT revival record found, skipping", [
+                    'quote_uuid' => $lead->uuid,
+                ]);
+
+                continue;
+            }
+
+            $jobs[] = (new CarRevivalResendJob($lead->uuid, $dttRevival->id))->delay(now()->addSeconds(self::CAR_REVIVAL_JOB_DELAY_SECONDS + $delayCounter));
+            $delayCounter += self::CAR_REVIVAL_JOB_DELAY_SECONDS;
+        }
+
+        if ($jobs === []) {
+            LoggerService::info("{$logPrefix} no jobs queued, no DTT revival records matched");
+
+            return;
+        }
+
+        Bus::batch($jobs)
+            ->then(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} all car revival batch jobs completed successfully");
+            })
+            ->catch(function () use ($logPrefix) {
+                LoggerService::warning("{$logPrefix} one of car revival batch jobs failed.");
+            })
+            ->finally(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} car revival batch finished");
+            })
+            ->allowFailures()
+            ->name('Car Revival OCB Resend Batch Jobs (API)')
+            ->dispatch();
+
+        LoggerService::info("{$logPrefix} All Car Revival Resend Jobs dispatched");
     }
 
 }
