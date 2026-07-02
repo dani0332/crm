@@ -10,14 +10,12 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\DeleteTempOCBPDFFileJob;
-use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\User;
 use App\Services\BaseService;
-use App\Services\BirdService;
 use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
@@ -549,7 +547,7 @@ class HomeEmailService extends BaseService
             $personalQuote->homeQuote
         );
 
-        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS, (array) $emailData);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS, (array) $emailData);
 
         LoggerService::info("sendAutomatedHomeRenewalFollowup - Successfully triggered event for Home renewal quote: {$personalQuote->uuid}");
 

@@ -124,7 +124,7 @@ class HomeRevivalFollowUpEmailJob implements ShouldQueue
     {
         $emailData->uniqueId = (string) Str::ulid();
 
-        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::HOME_REVIVAL_FOLLOWUP, (array) $emailData);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HOME_REVIVAL_FOLLOWUP, (array) $emailData);
 
         DttRevival::where('id', $dttRevival->id)->increment('follow_up_email_count');
 
