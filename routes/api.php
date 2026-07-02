@@ -3,6 +3,9 @@
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\EpCancellationCallbackController;
+use App\Http\Controllers\API\HealthPlanController;
+use App\Http\Controllers\API\HealthRateControlController;
+use App\Http\Controllers\API\HealthRateController;
 use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
@@ -187,6 +190,25 @@ Route::prefix('v1')->group(function () {
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
+
+// Cms Api Routes
+Route::prefix('cms')->middleware(['basicAuth'])->group(function () {
+    Route::group(['prefix' => 'health-plans'], function () {
+        Route::post('/', [HealthPlanController::class, 'create']);
+        Route::put('/{id}', [HealthPlanController::class, 'update']);
+        Route::get('/get-status-versions/{parentId}/{status}', [HealthPlanController::class, 'getStatusVersions']);
+        Route::delete('/{id}', [HealthPlanController::class, 'delete']);
+        Route::post('/publish/{id}', [HealthPlanController::class, 'publish']);
+    });
+
+    Route::prefix('health-rates')->group(function () {
+        Route::post('/', [HealthRateController::class, 'create']);
+        Route::put('/{id}', [HealthRateController::class, 'update']);
+        Route::delete('/{id}', [HealthRateController::class, 'delete']);
+        Route::delete('/sheet/{id}', [HealthRateControlController::class, 'delete']);
+        Route::post('/publish/{id}', [HealthRateController::class, 'publish']);
+    });
+});
 
 Route::get('/heath-check', function () {
     return response()->json(['success' => true]);
