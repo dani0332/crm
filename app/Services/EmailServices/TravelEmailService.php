@@ -388,13 +388,46 @@ class TravelEmailService extends BaseService
     {
         $advisor = User::where('id', $lead->advisor_id)->first();
 
-        $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_QATAR_FAILED_ALLOCATION);
+        $emailData = $this->buildFailedEmailData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_QATAR_FAILED_ALLOCATION);
 
         $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::TRAVEL_QATAR_FAILED_ALLOCATION, (array) $emailData);
         info("sendTravelQatarFailedAllocationEmail workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
 
         return $response->status_code ?? 200;
 
+    }
+    private function buildFailedEmailData(TravelQuote $lead, $advisor, $previousAdvisor, $workflowType = null): object
+    {
+        return (object) [
+            'clientFullName' => "{$lead->first_name} {$lead->last_name}",
+            'customerName' => "{$lead->first_name} {$lead->last_name}",
+            'customerFullName' => "{$lead->first_name} {$lead->last_name}",
+            'customerId' => $advisor?->email ?? '',
+            'firstName' => $advisor?->name ?? '',
+            'customerEmail' => $advisor?->email ?? '',
+            'lastName' => $advisor?->name ?? '',
+            'customerMobile' => ! empty($advisor?->mobile_no) ? '+'.formatMobileNoWithoutPlus($advisor?->mobile_no) : '',
+
+            'uniqueId' => (string) Str::ulid(),
+            'landLine' => (! empty($advisor?->landline_no) ? formatLandlineDisplay($advisor?->landline_no) : ''),
+            'mobilePhone' => (! empty($advisor?->mobile_no) ? formatMobileNoDisplay($advisor?->mobile_no) : ''),
+            'mobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? preg_replace('/\s+/', '', $advisor?->mobile_no) : ''),
+            'advisorEmail' => (! empty($advisor?->email) ? $advisor?->email : ''),
+            'advisorName' => (! empty($advisor?->name) ? $advisor?->name : ''),
+            'travelQuoteId' => $lead->code,
+            'action' => $lead->insurer_api_email_action,
+            'imcrmLink' => QuoteTypes::TRAVEL->url($lead->uuid),
+            'requestAdvisorLink' => QuoteTypes::TRAVEL->quoteLink($lead->uuid, ['assignAdvisor' => 'true']),
+            'assignmentType' => getAssignmentTypeText($lead->assignment_type),
+            'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor?->name : '',
+            'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor?->status) : '',
+            'isReAssignment' => ! empty($previousAdvisor),
+            'workflowType' => $workflowType ?? null,
+            'quoteUUID' => $lead->uuid,
+            'quoteUID' => $lead->uuid,
+            'refId' => $lead->code,
+            'refID' => $lead->code,
+        ];
     }
     /**
      * Creates quote flow details for tracking email campaigns
