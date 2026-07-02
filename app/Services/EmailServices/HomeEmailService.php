@@ -547,7 +547,7 @@ class HomeEmailService extends BaseService
             $personalQuote->homeQuote
         );
 
-        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS, (array) $emailData);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS, (array) $emailData);
 
         LoggerService::info("sendAutomatedHomeRenewalFollowup - Successfully triggered event for Home renewal quote: {$personalQuote->uuid}");
 

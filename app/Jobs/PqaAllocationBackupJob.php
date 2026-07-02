@@ -40,6 +40,7 @@ class PqaAllocationBackupJob implements ShouldQueue
                 LeadSourceEnum::REVIVAL_SHORT,
                 LeadSourceEnum::REVIVAL_ANNUAL,
             ])
+            ->whereDate('created_at', '>', '2026-07-01')
             ->limit(self::BATCH_LIMIT)
             ->get();
 

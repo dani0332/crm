@@ -98,7 +98,7 @@ class WebEngageService
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer '.$this->apiToken,
             ])->post($url, $payload);
-            $refId = $eventData['quoteUID'];
+            $refId = $eventData['quoteUID'] ?? '';
 
             LoggerService::info("WebEngage - sendEvent: {$eventName} | Status: {$response->status()}", $logContext);
             LoggerService::info("WebEngage RefID: {$refId} | Event: {$eventName} | Payload: ".json_encode($payload), $logContext);

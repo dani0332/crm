@@ -130,6 +130,7 @@ class EpSendDocumentJob implements ShouldQueue
             'customerName' => trim(($this->quote?->first_name ?? '').' '.($this->quote?->last_name ?? '')),
             'refID' => $this->quote?->code ?? '',
             'uuid' => $this->quote?->uuid ?? '',
+            'quoteUID' => $this->quote?->uuid ?? '',
             ...$recipients,
             ...$advisorData,
             'attachingDocsEmail' => count($attachments) > 0 ? 'yes' : 'no',
@@ -138,7 +139,7 @@ class EpSendDocumentJob implements ShouldQueue
             'customerEmail' => $this->quote->email,
             'firstName' => $this->quote->first_name ?? '',
             'lastName' => $this->quote->last_name ?? '',
-            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'customerMobile' => (! empty($this->quote->mobile_no) ? $this->quote->mobile_no : ''),
             ...$policyContext,
         ];
 
