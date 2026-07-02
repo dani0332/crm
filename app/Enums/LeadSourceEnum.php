@@ -79,7 +79,8 @@ final class LeadSourceEnum extends Enum
     // Home Revivals
     const REVIVAL_SHORT = 'REVIVAL_SHORT';
     const REVIVAL_ANNUAL = 'REVIVAL_ANNUAL';
-    
+
     // second source for car 24 leads
     const CARS24 = 'cars24';
+    const EA_IMCRM = 'EA_IMCRM';
 }

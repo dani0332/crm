@@ -111,6 +111,7 @@ class TransactionReportService extends ManagementReport
                 'personal_quotes.created_at as quote_created_at',
                 'ipp.text as plan_name',
                 DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
+                DB::raw('IFNULL(COALESCE(pqa_user.name, health_pqa_user.name), "N/A") as pqa'),
             );
         $this->paymentJoin($query);
         $query->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -144,7 +145,13 @@ class TransactionReportService extends ManagementReport
                     ->where('personal_quotes.quote_type_id', '=', QuoteTypeId::Travel);
             })
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
-            ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id');
+            ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
+            ->leftJoin('business_quote_request as bqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'bqr.id')
+                    ->whereIn('personal_quotes.quote_type_id', [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical]);
+            })
+            ->leftJoin('users as pqa_user', 'pqa_user.id', '=', 'bqr.pq_advisor_id')
+            ->leftJoin('users as health_pqa_user', 'health_pqa_user.id', '=', 'hqr.pq_advisor_id');
 
         $this->branchJoin($query);
         $this->applyFilters($query, $request, isSSR: true);

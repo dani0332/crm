@@ -13,6 +13,7 @@ use Config;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -26,6 +27,15 @@ class BusinessQuote extends Model implements AuditableContract
 
     protected $table = 'business_quote_request';
     protected $guarded = [];
+
+    protected function casts(): array
+    {
+        return [
+            'gm_category_intake' => 'array',
+            'has_existing_group_health_insurance' => 'boolean',
+        ];
+    }
+
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
@@ -128,6 +138,16 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->belongsTo(GroupMedicalType::class, 'group_medical_type_id');
     }
 
+    public function healthPlanType(): BelongsTo
+    {
+        return $this->belongsTo(HealthPlanType::class, 'health_plan_type_id');
+    }
+
+    public function natureOfCompanyActivity(): BelongsTo
+    {
+        return $this->belongsTo(CompanyActivityType::class, 'nature_of_company_activity_id');
+    }
+
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text', 'code']);
@@ -148,6 +168,11 @@ class BusinessQuote extends Model implements AuditableContract
     public function supportUser()
     {
         return $this->belongsTo(User::class, 'support_user_id', 'id');
+    }
+
+    public function preQualificationAdvisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pq_advisor_id', 'id');
     }
 
     public function payments()
@@ -248,6 +273,11 @@ class BusinessQuote extends Model implements AuditableContract
     public function quoteStatusLogs(): HasMany
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
+    }
+
+    public function businessActivity(): BelongsTo
+    {
+        return $this->belongsTo(BusinessActivity::class);
     }
 
     /**
@@ -376,5 +406,12 @@ class BusinessQuote extends Model implements AuditableContract
     public function emirate()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
+    }
+
+    public function groupMedicalCategories()
+    {
+
+        return $this->hasMany(GroupMedicalQuoteCategory::class, 'business_quote_request_id', 'id')
+            ->orderBy('sort_order');
     }
 }

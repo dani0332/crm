@@ -437,6 +437,16 @@ class HandleInertiaRequests extends Middleware
                     )
                     ->addIf(
                         auth()->user()->hasAnyPermission([
+                            PermissionsEnum::PQA_LEAD_ALLOCATION_DASHBOARD,
+                            PermissionsEnum::PQA_LEAD_ALLOCATION_VIEW_ONLY,
+                            PermissionsEnum::PQA_LEAD_ALLOCATION_EDIT,
+                        ]),
+                        'Pre Qualification',
+                        route('pqa-lead-allocation-dashboard'),
+                        fn ($s) => $s->attributes(['icon' => 'car'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyPermission([
                             PermissionsEnum::CYBER_LEAD_ALLOCATION_DASHBOARD,
                             PermissionsEnum::CYBER_LEAD_ALLOCATION_VIEW_ONLY,
                             PermissionsEnum::CYBER_LEAD_ALLOCATION_EDIT,
@@ -449,6 +459,22 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::DEVICE_LEAD_ALLOCATION_DASHBOARD),
                         'Device',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::DEVICE]),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
+            });
+        }
+
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::PQA_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::PQA_LEAD_ALLOCATION_VIEW_ONLY,
+            PermissionsEnum::PQA_LEAD_ALLOCATION_EDIT,
+        ])) {
+            $nav = $nav->add('Prospect Allocation', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        true,
+                        'Pre Qualification',
+                        route('pqa-lead-allocation-dashboard'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });

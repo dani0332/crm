@@ -68,11 +68,11 @@ class FailedILAEmailService
         }
 
         LoggerService::info(self::class.' - sendFailedIlaEmails - Sending failed ILA emails to managers: '.implode(', ', $managerEmails));
-        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $this->buildFailedIlaEmailData($quoteType, $managerEmails));
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::SEND_FAILED_ILA_EMAILS, $this->buildFailedIlaEmailData($quoteType, $managerEmails, $leadsCount));
         LoggerService::info(self::class.' - sendFailedIlaEmails - WebEngage event triggered successfully');
     }
 
-    public function buildFailedIlaEmailData($quoteType, $managerEmails): array
+    public function buildFailedIlaEmailData($quoteType, $managerEmails, $leadsCount = null): array
     {
         $primaryEmail = count($managerEmails) > 0 ? $managerEmails[0] : '';
 
@@ -82,6 +82,7 @@ class FailedILAEmailService
             'lastName' => '',
             'customerEmail' => $primaryEmail,
             'customerMobile' => '',
+            'leadsCount' => $leadsCount,
             'quoteUID' => '',
             // The first email is advisor, the rest are managers.
             'advisorEmail' => $primaryEmail ?: null,

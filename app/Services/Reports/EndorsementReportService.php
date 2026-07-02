@@ -155,6 +155,7 @@ class EndorsementReportService extends ManagementReport
                 'personal_quotes.created_at as quote_created_at',
                 'ipp.text as plan_name',
                 DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
+                DB::raw('IFNULL(COALESCE(pqa_user.name, health_pqa_user.name), "N/A") as pqa'),
             )->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id');
         $this->paymentJoin($query, null, 'pq', 'leftJoin', 'leftJoin');
         $query->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
@@ -191,6 +192,12 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
             ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
             ->leftJoin('lookups as sso', 'personal_quotes.sub_source_options_id', '=', 'sso.id')
+            ->leftJoin('business_quote_request as bqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'bqr.id')
+                    ->whereIn('personal_quotes.quote_type_id', [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical, QuoteTypeId::Health]);
+            })
+            ->leftJoin('users as pqa_user', 'pqa_user.id', '=', 'bqr.pq_advisor_id')
+            ->leftJoin('users as health_pqa_user', 'health_pqa_user.id', '=', 'hqr.pq_advisor_id')
             ->whereIn('send_update_logs.status', $statues)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->branchJoin($query);
@@ -280,6 +287,7 @@ class EndorsementReportService extends ManagementReport
                 'personal_quotes.created_at as quote_created_at',
                 'ipp.text as plan_name',
                 DB::raw('CASE WHEN personal_quotes.is_branch_applicable = 1 THEN b.name ELSE "N/A" END as branch_name'),
+                DB::raw('IFNULL(COALESCE(pqa_user.name, health_pqa_user.name), "N/A") as pqa'),
             )->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id');
         $this->paymentJoin($reversalQuery, null, 'pq', 'leftJoin', 'leftJoin');
         $reversalQuery->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
@@ -314,6 +322,12 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.destination_id')
             ->leftJoin('lookups as ls', 'personal_quotes.sub_source_id', '=', 'ls.id')
+            ->leftJoin('business_quote_request as bqr', function ($join) {
+                $join->on('personal_quotes.quote_id', '=', 'bqr.id')
+                    ->whereIn('personal_quotes.quote_type_id', [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical, QuoteTypeId::Health]);
+            })
+            ->leftJoin('users as pqa_user', 'pqa_user.id', '=', 'bqr.pq_advisor_id')
+            ->leftJoin('users as health_pqa_user', 'health_pqa_user.id', '=', 'hqr.pq_advisor_id')
             ->whereIn('send_update_logs.status', $statues)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);

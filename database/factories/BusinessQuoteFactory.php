@@ -51,6 +51,14 @@ class BusinessQuoteFactory extends Factory
         ]);
     }
 
+    /** Set quote as CorpLine business type. */
+    public function corpline(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'business_type_of_insurance_id' => BusinessTypeOfInsuranceIdEnum::PROPERTY,
+        ]);
+    }
+
     /** Set a specific emirate_of_registration_id. */
     public function withEmirate(int $emirateId): static
     {
