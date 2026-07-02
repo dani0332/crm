@@ -113,8 +113,10 @@ final class WorkflowTypeEnum extends Enum
 
     // Life Revival OCB
     public const LIFE_REVIVAL_OCB = 'life_revival_ocb';
+    public const AML_AUTOMATION_OUTCOME = 'aml_automation_outcome';
 
     // Home Revival OCB
     public const HOME_REVIVAL_OCB = 'home_revival_ocb';
     public const HOME_REVIVAL_FOLLOWUP = 'home_revival_followup';
+    public const ADVISOR_PAYMENT_NOTIFICATION = 'advisor_payment_notification';
 }

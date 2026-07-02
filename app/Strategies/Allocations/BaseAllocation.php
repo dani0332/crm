@@ -82,6 +82,17 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             }
 
             $advisor = null;
+            if ($this->quoteType == QuoteTypes::GROUP_MEDICAL && ! $this->hasDuplicateLead && $this->lead->quote_status_id == QuoteStatusEnum::Duplicate) {
+
+                LoggerService::info(self::class.' - groupMedicalDuplicateLeadStatus: Resolved from database', extra: [
+                    'quote_type' => $this->quoteType->value,
+                    'quote_uuid' => $this->uuid,
+                    'has_duplicate_lead' => $this->hasDuplicateLead,
+                ]);
+
+                return $this->createResponse(0, 'Lead Status is Duplicate', Response::HTTP_NOT_FOUND);
+            }
+
             if ($this->hasDuplicateLead) {
                 $advisor = $this->getAdvisorForDuplicateLeadAssignment();
                 LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
@@ -126,9 +137,13 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->when($this->quoteType->isPersonalQuote(), function ($q) {
                 $q->where('quote_type_id', $this->quoteType->id());
             })
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
                 $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+                // $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Lost]);
+                $q->whereIn('quote_status_id', [QuoteStatusEnum::Qualified, QuoteStatusEnum::Duplicate]);
+            }, function ($q) {
+                $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost]);
+
             })
             ->when($this->quoteType === QuoteTypes::CORPLINE, function ($q) {
                 $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);

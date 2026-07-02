@@ -8,18 +8,18 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
-use App\Models\ApplicationStorage;
+use App\Enums\WorkflowTypeEnum;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
-use App\Services\BirdService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use RuntimeException;
+use Illuminate\Support\Str;
 use Throwable;
 
 class CarRevivalFollowUpEmailJob implements ShouldQueue
@@ -128,31 +128,12 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue
 
     private function sendFollowUpEmail(object $emailData, CarQuote $lead): void
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
+        $emailData->uniqueId = (string) Str::ulid();
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP, (array) $emailData);
 
-        if (! $workflowUrl || empty($workflowUrl->value)) {
-            LoggerService::warning(self::class.': MOTOR_REVIVAL_WORKFLOW URL missing in CMS', [
-                'flow' => self::LOG_FLOW,
-                'dtt_revival_id' => $this->dttRevival->id,
-                'child_quote_uuid' => $this->dttRevival->uuid,
-            ]);
+        DttRevival::where('id', $this->dttRevival->id)->increment('follow_up_email_count');
 
-            throw new RuntimeException('MOTOR_REVIVAL_WORKFLOW URL missing in CMS');
-        }
-
-        $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-
-        if (in_array($response->status_code, [201, 200])) {
-            DttRevival::where('id', $this->dttRevival->id)->increment('follow_up_email_count');
-            app(BirdService::class)->createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP->value, (int) QuoteTypes::CAR->id());
-        } else {
-            LoggerService::warning(self::class.': Bird follow-up call did not return success', [
-                'flow' => self::LOG_FLOW,
-                'dtt_revival_id' => $this->dttRevival->id,
-                'child_quote_uuid' => $this->dttRevival->uuid,
-                'response_code' => $response->status_code,
-            ]);
-        }
+        app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP->value, (int) QuoteTypes::CAR->id());
     }
 
     public function failed(Throwable $exception): void

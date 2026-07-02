@@ -85,8 +85,10 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'policy_holder_category_code',
             'visa_category_id',
             'cover_for_id',
+            'pq_advisor_id',
         ], [
             'maritalStatus:id,text',
+            'preQualificationAdvisor:id,name',
             'healthCoverFor:id,text',
             'nationality:id,text',
             'emirate:id,text',
@@ -152,6 +154,12 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByDate('next_followup_date', requestParams: $requestParams)
             ->filterByDate('next_followup_date_end', 'next_followup_date', false, requestParams: $requestParams)
             ->filterByAdvisors($this->getFilterValue('advisor_id', $requestParams) ?? $this->getFilterValue('advisors', $requestParams))
+            ->when($this->hasFilterValue('pq_advisor_id', $requestParams) && is_array($this->getFilterValue('pq_advisor_id', $requestParams)) && count($this->getFilterValue('pq_advisor_id', $requestParams)) === 1 && $this->getFilterValue('pq_advisor_id', $requestParams)[0] == '-1', function ($query) {
+                $query->whereNull('health_quote_request.pq_advisor_id');
+            })
+            ->when($this->hasFilterValue('pq_advisor_id', $requestParams) && is_array($this->getFilterValue('pq_advisor_id', $requestParams)) && ! in_array('-1', $this->getFilterValue('pq_advisor_id', $requestParams)), function ($query) use ($requestParams) {
+                $query->whereIn('health_quote_request.pq_advisor_id', $this->getFilterValue('pq_advisor_id', $requestParams));
+            })
             ->filterBy('assignment_type', ignoreAll: true, requestParams: $requestParams)
             ->when($this->hasFilterValue('unassigned', $requestParams) && strtolower((string) $this->getFilterValue('unassigned', $requestParams)) === 'yes', function ($query) {
                 $query->whereNull('advisor_id')

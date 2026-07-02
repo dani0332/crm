@@ -568,6 +568,15 @@ class SukoonMedexService
             'commission_with_vat' => $commissionAmount + $commissionVat ?? null,
             'commission_without_vat' => $commissionAmount,
             'policy_price' => $paymentData['amount_breakdown']['policy_price'] ?? null,
+            'collection_amount' => $paymentData['amount'] ?? null,
+            'premium_without_tax' => $transactionDetail['pricing']['policy_price'] ?? null,
+            'premium_tax_amount' => $transactionDetail['pricing']['tax_amount'] ?? null,
+            'policy_start_date' => isset($transactionDetail['start_date'])
+                ? Carbon::createFromFormat('d/m/Y', $transactionDetail['start_date'])->toDateString()
+                : null,
+            'policy_end_date' => isset($transactionDetail['end_date'])
+                ? Carbon::createFromFormat('d/m/Y', $transactionDetail['end_date'])->toDateString()
+                : null,
         ];
 
         if (! empty($paymentData['status'])) {

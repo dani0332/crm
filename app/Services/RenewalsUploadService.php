@@ -1128,7 +1128,7 @@ class RenewalsUploadService
             LoggerService::info($logPrefix.' Quote created. QuoteType: '.$data['quote_type'].' UUID: '.$quote->uuid);
 
             return $quote;
-        });
+        }, 5);
 
         /*
          * create manual plan for health
@@ -1391,7 +1391,7 @@ class RenewalsUploadService
             LoggerService::info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
 
             return $quote;
-        }); // 5 retries for deadlocks
+        }, 5);
 
         if ($isQuoteTypeHealth) {
             $this->updateOrCreateHealthMembers($quote, $data, $renewalQuoteProcess);

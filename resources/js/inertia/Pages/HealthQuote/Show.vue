@@ -1992,7 +1992,8 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       v-if="
         (!$page.props.can.isAdvisor ||
           hasRole(rolesEnum.SuperManagerLeadAllocation)) &&
-        !can(permissionsEnum.VIEW_ALL_LEADS)
+        !can(permissionsEnum.VIEW_ALL_LEADS) &&
+        !hasRole(rolesEnum.PreQualificationAdvisor)
       "
       class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
     >
@@ -2127,6 +2128,10 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                     {{ hasAgeSixtyAndAbove ? 'Yes' : 'No' }}
                   </x-tag>
                 </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRE-QUALIFICATION ADVISOR</dt>
+                <dd>{{ quote.preQualificationAdvisor?.name ?? '—' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>

@@ -50,6 +50,10 @@ const props = defineProps({
   isFuncsEnabled: Array,
   activities: Array,
   advisors: Array,
+  gmCategoryIntakeDisplay: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const page = usePage();
@@ -89,6 +93,132 @@ const dateFormat = date =>
 
 const dateFormatYMD = date =>
   date ? useDateFormat(date, 'YYYY-MM-DD').value : '-';
+
+const { copy } = useClipboard({ legacy: true });
+
+const gmEcommerceCopyLink = computed(
+  () => page.props.gmEcommerceCopyLink ?? { enabled: false },
+);
+const isGmEcommerceCopyLinkDisabled = computed(
+  () => !gmEcommerceCopyLink.value.enabled,
+);
+const gmEcommerceCopyLinkLoading = ref(false);
+
+const onCopyGmEcommerceJourneyLink = () => {
+  if (isGmEcommerceCopyLinkDisabled.value) {
+    return;
+  }
+  gmEcommerceCopyLinkLoading.value = true;
+
+  const fetchUrl = () =>
+    axios
+      .post(route('amt.ecommerce-copy-link', page.props.quote.uuid))
+      .then(res => res.data.url)
+      .finally(() => {
+        gmEcommerceCopyLinkLoading.value = false;
+      });
+
+  const onCopySuccess = () => {
+    notification.success({
+      title:
+        'Link copied to clipboard. Share it with the customer so they can continue their journey.',
+      position: 'top',
+    });
+  };
+
+  const onCopyError = err => {
+    const message =
+      err.response?.data?.message ??
+      'Could not copy the ecommerce link. Please try again.';
+    notification.error({ title: message, position: 'top' });
+  };
+
+  // Safari requires clipboard.write() to be called synchronously within the user gesture.
+  // Passing a Promise to ClipboardItem lets the fetch happen async while keeping the
+  // gesture context alive — the only pattern that works on Safari.
+  if (navigator.clipboard && window.ClipboardItem) {
+    const blobPromise = fetchUrl()
+      .then(url => new Blob([url], { type: 'text/plain' }))
+      .catch(err => {
+        onCopyError(err);
+        throw err;
+      });
+
+    navigator.clipboard
+      .write([new ClipboardItem({ 'text/plain': blobPromise })])
+      .then(onCopySuccess)
+      .catch(() => {});
+  } else {
+    fetchUrl()
+      .then(url => {
+        copy(url);
+        onCopySuccess();
+      })
+      .catch(onCopyError);
+  }
+};
+
+const natureOfCompanyActivityText = computed(
+  () => props.quote?.business_activity?.name ?? '—',
+);
+
+const hasExistingGroupHealthInsurancePolicyText = computed(() => {
+  const value = props.quote?.has_existing_group_policy;
+
+  if (value === true || value === 1 || value === '1') {
+    return 'Yes';
+  }
+
+  if (value === false || value === 0 || value === '0') {
+    return 'No';
+  }
+
+  return '—';
+});
+
+const numberOfCategoriesDisplay = computed(() => {
+  const saved = props.quote?.number_of_categories;
+  if (saved != null && saved !== '') {
+    return String(saved);
+  }
+
+  if (props.gmCategoryIntakeDisplay.length > 0) {
+    return String(props.gmCategoryIntakeDisplay.length);
+  }
+
+  const intake = props.quote?.gm_category_intake;
+  if (Array.isArray(intake) && intake.length > 0) {
+    return String(intake.length);
+  }
+
+  return '0';
+});
+
+const categoryRows = computed(() => {
+  if (props.gmCategoryIntakeDisplay.length > 0) {
+    return props.gmCategoryIntakeDisplay;
+  }
+
+  const n =
+    parseInt(props.quote?.number_of_categories) ||
+    (Array.isArray(props.quote?.gm_category_intake)
+      ? props.quote.gm_category_intake.length
+      : 0);
+
+  return Array.from({ length: n }, (_, i) => ({
+    serial: i + 1,
+    category_label: '—',
+    existing_insurance_provider: 'N/A',
+    existing_tpa: 'N/A',
+    existing_network: 'N/A',
+    existing_policy_renewal_date: 'N/A',
+    number_of_people: '—',
+  }));
+});
+
+const quotePlanTypeDisplay = computed(
+  () => props.quote?.health_plan_type_text ?? '—',
+);
 
 const modals = reactive({
   duplicate: false,
@@ -184,7 +314,7 @@ const onLeadStatus = () => {
         countDays.value = useDaysSinceStale(response.props.quote?.stale_at);
         // Optimized partial reload: only reload quote data, preserve state and scroll
         router.reload({
-          only: ['quote'],
+          only: ['quote', 'gmEcommerceCopyLink'],
           preserveState: true,
           preserveScroll: true,
         });
@@ -699,9 +829,12 @@ function handleOcrNotification(event) {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2"></div>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Details</h3>
+          </div>
         </template>
         <template #body>
+          <x-divider class="my-4" />
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -833,6 +966,11 @@ function handleOcrNotification(event) {
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRE-QUALIFICATION ADVISOR</dt>
+                <dd>{{ quote?.pre_qualification_advisor?.name ?? '' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ quote.created_at }}</dd>
               </div>
@@ -843,19 +981,10 @@ function handleOcrNotification(event) {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
+                <dt class="font-medium">NUMBER OF PEOPLE TO BE INSURED</dt>
                 <dd>{{ quote.number_of_employees ?? 'N/A' }}</dd>
               </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PLAN TYPE</dt>
-                <dd>{{ quote?.group_medical_type?.text ?? 'N/A' }}</dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PLAN TYPE</dt>
-                <dd>{{ quote.health_plan_type_text ?? '—' }}</dd>
-              </div>
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
@@ -998,6 +1127,269 @@ function handleOcrNotification(event) {
                 </div>
               </template>
             </dl>
+
+            <x-divider class="my-6" />
+
+            <div class="space-y-8">
+              <section aria-labelledby="gm-quote-details-heading">
+                <div
+                  class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4"
+                >
+                  <h4
+                    id="gm-quote-details-heading"
+                    class="text-lg font-semibold text-primary-700"
+                  >
+                    Quote Details
+                  </h4>
+                  <div
+                    v-if="can(permissionsEnum.GMQuoteCopyLink)"
+                    class="flex flex-wrap items-center gap-2"
+                  >
+                    <x-tooltip
+                      v-if="!isGmEcommerceCopyLinkDisabled"
+                      placement="top"
+                    >
+                      <x-button
+                        size="sm"
+                        color="orange"
+                        class="shrink-0 rounded-lg"
+                        :loading="gmEcommerceCopyLinkLoading"
+                        @click.prevent="onCopyGmEcommerceJourneyLink"
+                      >
+                        <span class="border-b border-dotted">Copy Link</span>
+                      </x-button>
+                      <template #tooltip>
+                        Copy this link and send it to the customer so they can
+                        resume and complete their application.
+                      </template>
+                    </x-tooltip>
+                    <x-tooltip v-else placement="top">
+                      <x-button
+                        size="sm"
+                        color="orange"
+                        class="shrink-0 rounded-lg"
+                        disabled
+                      >
+                        <span class="border-b border-dotted">Copy Link</span>
+                      </x-button>
+                      <template #tooltip>
+                        Copy Link is unavailable after the lead is Transaction
+                        Approved.
+                      </template>
+                    </x-tooltip>
+                  </div>
+                </div>
+                <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">
+                      <x-tooltip placement="bottom">
+                        <span
+                          class="cursor-help underline decoration-dotted decoration-primary-700"
+                        >
+                          NATURE OF COMPANY'S ACTIVITY
+                        </span>
+                        <template #tooltip>
+                          Select the main business activity of the company. This
+                          helps assess the risk profile for the group health
+                          insurance.
+                        </template>
+                      </x-tooltip>
+                    </dt>
+                    <dd>{{ natureOfCompanyActivityText }}</dd>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">
+                      <x-tooltip placement="bottom">
+                        <span
+                          class="cursor-help underline decoration-dotted decoration-primary-700"
+                        >
+                          WITH EXISTING GROUP HEALTH INSURANCE POLICY
+                        </span>
+                        <template #tooltip>
+                          Indicate if the company currently has a group health
+                          insurance policy in place with any provider
+                        </template>
+                      </x-tooltip>
+                    </dt>
+                    <dd>{{ hasExistingGroupHealthInsurancePolicyText }}</dd>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">
+                      <x-tooltip placement="bottom">
+                        <span
+                          class="cursor-help underline decoration-dotted decoration-primary-700"
+                        >
+                          NUMBER OF CATEGORIES
+                        </span>
+                        <template #tooltip>
+                          Enter how many employee categories the group has.
+                          Categories usually differ by Benefits or salary band.
+                        </template>
+                      </x-tooltip>
+                    </dt>
+                    <dd>{{ numberOfCategoriesDisplay }}</dd>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2">
+                    <dt class="font-medium">
+                      <x-tooltip placement="bottom">
+                        <span
+                          class="cursor-help underline decoration-dotted decoration-primary-700"
+                        >
+                          PLAN TYPE
+                        </span>
+                        <template #tooltip>
+                          Select the type of health insurance plan as defined
+                          for this group or category.
+                        </template>
+                      </x-tooltip>
+                    </dt>
+                    <dd>{{ quotePlanTypeDisplay }}</dd>
+                  </div>
+                </dl>
+              </section>
+
+              <section aria-labelledby="gm-people-per-category-heading">
+                <h4
+                  id="gm-people-per-category-heading"
+                  class="text-base font-semibold text-gray-900 mb-3"
+                >
+                  People to be insured per category
+                </h4>
+                <div
+                  class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm"
+                >
+                  <table class="min-w-full border-collapse text-sm">
+                    <thead>
+                      <tr
+                        class="bg-primary-600 text-left text-xs font-semibold uppercase tracking-wide text-white"
+                      >
+                        <th class="whitespace-nowrap px-3 py-3">S/No</th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          <x-tooltip placement="bottom">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
+                              Category
+                            </span>
+                            <template #tooltip>
+                              Choose the specific employee category this record
+                              refers to. Each category may have different plan
+                              Benefits and limits.
+                            </template>
+                          </x-tooltip>
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          <x-tooltip placement="bottom">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
+                              Existing insurance provider
+                            </span>
+                            <template #tooltip>
+                              Select the current health insurance provider for
+                              this group.
+                            </template>
+                          </x-tooltip>
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          <x-tooltip placement="bottom">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
+                              Existing third party administrator
+                            </span>
+                            <template #tooltip>
+                              Select the current TPA (Third Party Administrator)
+                              managing claims and approvals for the existing
+                              policy.
+                            </template>
+                          </x-tooltip>
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          <x-tooltip placement="bottom">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
+                              Existing network
+                            </span>
+                            <template #tooltip>
+                              Select the current medical provider network
+                              name/level under the existing policy.
+                            </template>
+                          </x-tooltip>
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          <x-tooltip placement="bottom">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
+                              Existing policy renewal date
+                            </span>
+                            <template #tooltip>
+                              Enter the expiry date of the client's current
+                              group health insurance policy as shown on the
+                              policy schedule.
+                            </template>
+                          </x-tooltip>
+                        </th>
+                        <th class="whitespace-nowrap px-3 py-3">
+                          <x-tooltip placement="bottom">
+                            <span
+                              class="cursor-help underline decoration-dotted decoration-white"
+                            >
+                              Number of people
+                            </span>
+                            <template #tooltip>
+                              Enter the total number of insured members in this
+                              group/category (including employees and, if
+                              applicable, their dependents).
+                            </template>
+                          </x-tooltip>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white text-gray-900">
+                      <tr
+                        v-for="row in categoryRows"
+                        :key="row.serial"
+                        class="border-b border-gray-100 last:border-0"
+                      >
+                        <td class="px-3 py-3 align-top">{{ row.serial }}</td>
+                        <td class="px-3 py-3 align-top font-medium">
+                          {{ row.category_label }}
+                        </td>
+                        <td class="px-3 py-3 align-top text-gray-700">
+                          {{ row.existing_insurance_provider }}
+                        </td>
+                        <td class="px-3 py-3 align-top text-gray-700">
+                          {{ row.existing_tpa }}
+                        </td>
+                        <td class="px-3 py-3 align-top text-gray-700">
+                          {{ row.existing_network }}
+                        </td>
+                        <td class="px-3 py-3 align-top text-gray-700">
+                          {{ row.existing_policy_renewal_date }}
+                        </td>
+                        <td class="px-3 py-3 align-top tabular-nums">
+                          {{ row.number_of_people }}
+                        </td>
+                      </tr>
+                      <tr v-if="categoryRows.length === 0">
+                        <td
+                          colspan="7"
+                          class="px-3 py-6 text-center text-gray-500"
+                        >
+                          No members are recorded per category yet.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
           </div>
         </template>
       </Collapsible>

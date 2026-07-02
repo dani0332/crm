@@ -1153,9 +1153,16 @@ class SagePayloadFactory
         $sageRequest->sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
         $sageRequest->sage_payment_code = $paymentSplit->payment_method;
         $sageRequest->checkNumber = $paymentSplit->check_detail;
+        $sageRequest->checkDetails = $paymentSplit->check_detail;
         $sageRequest->originalCommissionTaxInvoiceNumber = $payment?->insurer_commmission_invoice_number;
         $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
         $sageRequest->paymentMethod = $paymentSplit?->payment_method;
+
+        if (! isset($sageRequest->endorsementNumber)) {
+            $sendUpdateLog = $payment?->sendUpdateLog;
+            $sageRequest->endorsementNumber = $sendUpdateLog?->code;
+            $sageRequest->sendUpdateEndorsementNumber = $sendUpdateLog?->endorsement_number;
+        }
 
         if (! isset($sageRequest->insurerReceiptNumber)) {
             $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;

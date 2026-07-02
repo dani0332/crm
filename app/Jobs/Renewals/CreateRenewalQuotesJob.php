@@ -50,7 +50,7 @@ class CreateRenewalQuotesJob implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
+        return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()->expireAfter($this->timeout)];
     }
 
     /**

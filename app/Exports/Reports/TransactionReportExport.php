@@ -81,6 +81,7 @@ class TransactionReportExport implements CsvExportableInterface
             'Payment Frequency',
             'Lead Created Date',
             'Branch',
+            'Pre-Qualification Advisor',
         ];
     }
 
@@ -158,6 +159,7 @@ class TransactionReportExport implements CsvExportableInterface
             $quote->payment_frequency ?? 'N/A',
             $quote->quote_created_at ?? 'N/A',
             $quote->branch_name ?? 'N/A',
+            $quote->pqa ?? 'N/A',
         ]);
 
         foreach ($this->columnTotals as $index => $field) {
