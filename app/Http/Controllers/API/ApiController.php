@@ -8,6 +8,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\EmailStatusExport;
@@ -34,6 +35,7 @@ use App\Http\Requests\LogEpEmailStatusesRequest;
 use App\Http\Requests\LogFollowUpEventRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\PqaAllocationRequest;
+use App\Http\Requests\ReTriggerHomeRevivalRequest;
 use App\Http\Requests\ReTriggerLifeRevivalRequest;
 use App\Http\Requests\RewatermarkQuoteDocumentsRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
@@ -53,6 +55,7 @@ use App\Jobs\ProcessLeadOCRDataComparison;
 use App\Jobs\ProcessPaymentStatusUpdateJob;
 use App\Jobs\RemovePcQualifiedJob;
 use App\Jobs\Revival\CarRevivalFollowUpEmailJob;
+use App\Jobs\Revival\HomeRevivalResendJob;
 use App\Jobs\Revival\LifeRevivalLeadsCreationJob;
 use App\Jobs\RunCQFJobs;
 use App\Jobs\TagPcpCustomerJob;
@@ -62,6 +65,7 @@ use App\Models\DttRevival;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
+use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\Allocation\AllocationCreationService;
@@ -107,6 +111,7 @@ class ApiController extends Controller
 {
     private const OCR_UTIL_FEAT = 'OCR UTIL FEATURE';
     private const LIFE_REVIVAL_JOB_DELAY_SECONDS = 30;
+    private const HOME_REVIVAL_JOB_DELAY_SECONDS = 30;
 
     use GenericQueriesAllLobs, PrivateClient;
 
@@ -1460,6 +1465,127 @@ class ApiController extends Controller
             ->dispatch();
 
         LoggerService::info("{$logPrefix} All Life Revival Leads Jobs dispatched");
+    }
+
+    public function reTriggerHomeRevival(ReTriggerHomeRevivalRequest $request): JsonResponse
+    {
+        Log::withContext(['feature' => 're-trigger-home-revival']);
+
+        $validated = $request->validated();
+
+        $startDate = Carbon::parse($validated['created_at_start'])->startOfDay();
+        $endDate = Carbon::parse($validated['created_at_end'])->endOfDay();
+
+        if ($request->boolean('debug')) {
+            $leads = $this->getHomeRevivalLeadsForResend($startDate, $endDate);
+            if (! empty($validated['limit'])) {
+                $leads = $leads->take((int) $validated['limit']);
+            }
+
+            return apiResponse([
+                'count' => $leads->count(),
+                'leads' => $leads->values(),
+            ], Response::HTTP_OK, 'Home revival leads (debug)');
+        }
+
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_HOME_ENABLED);
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
+            LoggerService::info(self::class.' - reTriggerHomeRevival - DTT Home Revival is not enabled from cms');
+
+            return apiResponse(false, Response::HTTP_OK, 'DTT Home Revival is not enabled from cms');
+        }
+
+        if (! $request->boolean('all')) {
+            return apiResponse(false, Response::HTTP_BAD_REQUEST, 'Invalid request');
+        }
+
+        $leads = $this->getHomeRevivalLeadsForResend($startDate, $endDate);
+
+        if (! empty($validated['limit'])) {
+            $leads = $leads->take((int) $validated['limit']);
+        }
+
+        if ($leads->isEmpty()) {
+            LoggerService::info(self::class.' - reTriggerHomeRevival - no home revival leads to process');
+
+            return apiResponse(true, Response::HTTP_OK, 'No home revival leads to process');
+        }
+
+        $this->dispatchHomeRevivalResendJobs($leads);
+
+        LoggerService::info(self::class.' - reTriggerHomeRevival - home revival batch dispatched', [
+            'lead_count' => $leads->count(),
+        ]);
+
+        return apiResponse(true, Response::HTTP_OK, 'Home revival jobs dispatched successfully');
+    }
+
+    private function getHomeRevivalLeadsForResend(Carbon $startDate, Carbon $endDate)
+    {
+        return PersonalQuote::query()
+            ->select(['id', 'uuid'])
+            ->where('quote_type_id', QuoteTypeId::Home)
+            ->whereIn('source', HomeRevivalService::REVIVAL_SOURCES)
+            ->whereHas('homeQuote')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->get();
+    }
+
+    private function dispatchHomeRevivalResendJobs($leads): void
+    {
+        $leadsList = $leads->values()->all();
+
+        if ($leadsList === [] || count($leadsList) === 0) {
+            return;
+        }
+
+        $logPrefix = self::class.' - dispatchHomeRevivalResendJobs - ';
+
+        $dttRevivalsByUuid = DttRevival::query()
+            ->where('quote_type_id', QuoteTypeId::Home)
+            ->whereIn('uuid', array_map(fn ($lead) => $lead->uuid, $leadsList))
+            ->get()
+            ->keyBy('uuid');
+
+        $jobs = [];
+        $delayCounter = 0;
+
+        foreach ($leadsList as $lead) {
+            $dttRevival = $dttRevivalsByUuid->get($lead->uuid);
+
+            if ($dttRevival === null) {
+                LoggerService::warning("{$logPrefix} no DTT revival record found, skipping", [
+                    'quote_uuid' => $lead->uuid,
+                ]);
+
+                continue;
+            }
+
+            $jobs[] = (new HomeRevivalResendJob($lead->uuid, $dttRevival->id))->delay(now()->addSeconds(self::HOME_REVIVAL_JOB_DELAY_SECONDS + $delayCounter));
+            $delayCounter += self::HOME_REVIVAL_JOB_DELAY_SECONDS;
+        }
+
+        if ($jobs === []) {
+            LoggerService::info("{$logPrefix} no jobs queued, no DTT revival records matched");
+
+            return;
+        }
+
+        Bus::batch($jobs)
+            ->then(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} all home revival batch jobs completed successfully");
+            })
+            ->catch(function () use ($logPrefix) {
+                LoggerService::warning("{$logPrefix} one of home revival batch jobs failed.");
+            })
+            ->finally(function () use ($logPrefix) {
+                LoggerService::info("{$logPrefix} home revival batch finished");
+            })
+            ->allowFailures()
+            ->name('Home Revival OCB Resend Batch Jobs (API)')
+            ->dispatch();
+
+        LoggerService::info("{$logPrefix} All Home Revival Resend Jobs dispatched");
     }
 
 }
