@@ -172,7 +172,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildDttRevivalBirdEmailPayload($carQuote, $previousAdvisor);
                 $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_OCB;
 
-                app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::MOTOR_REVIVAL_OCB, (array) $emailData);
+                app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::MOTOR_REVIVAL_OCB, (array) $emailData);
 
                 app(CarRevivalService::class)->markRevivalCommsTriggered($revivalCarQuoteUUID);
 
