@@ -122,6 +122,7 @@ class EmbeddedTransactionService extends BaseService
             'quoteTypeId' => $quoteTypeId,
             'refId' => $quote->code,
             'uuid' => $quote->uuid,
+            'quoteUID' => $quote->uuid,
             'uniqueId' => (string) Str::ulid(),
             'customerId' => $quote->customer_id ?? '',
             'firstName' => $quote->first_name ?? '',
