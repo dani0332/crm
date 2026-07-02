@@ -116,6 +116,15 @@ class VisaCategorySeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
+            [
+                'code' => 'UAE_Citizen',
+                'text' => 'UAE Citizen',
+                'is_active' => 1,
+                'sort_order' => 12,
+                'health_cover_for_id' => 4,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
         ]);
     }
 }
