@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
     Route::post('/imcrm/re-trigger-life-revival', [ApiController::class, 'reTriggerLifeRevival'])->name('reTriggerLifeRevival');
+    Route::post('/imcrm/re-trigger-home-revival', [ApiController::class, 'reTriggerHomeRevival'])->name('reTriggerHomeRevival');
 });
 
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
