@@ -928,6 +928,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('policy-issuance-logs', [AuditableController::class, 'loadPolicyIssuanceApiLogs']);
     Route::post('ocr-logs', [AuditableController::class, 'loadOcrLogs']);
     Route::post('health-routing-logs', [AuditableController::class, 'loadHealthRoutingLogs']);
+    Route::post('health-pricing-logs', [AuditableController::class, 'loadHealthPricingLogs']);
     Route::post('ep-logs', [AuditableController::class, 'loadEpLogs']);
     Route::post('uae-signing-pass-logs', [AuditableController::class, 'loadUaeSigningPassLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);

@@ -476,6 +476,15 @@ class LookupService extends BaseService
         );
     }
 
+    public function getVisaCategoryAll()
+    {
+        return Cache::remember(
+            CacheKeyEnum::VISA_CATEGORY_KEY->value.'_all',
+            CacheKeyEnum::VISA_CATEGORY_KEY->expiry(),
+            fn () => VisaCategory::orderBy('sort_order')->get()
+        );
+    }
+
     public function getMemberRelations()
     {
         return Cache::remember(
