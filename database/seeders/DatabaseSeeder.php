@@ -86,6 +86,7 @@ class DatabaseSeeder extends Seeder
             SalaryBandSeeder::class,
             MaritalStatusSeeder::class,
             PqaLeadAllocationPermissionSeeder::class,
+            EAModelRolePermissionSeeder::class,
         ]);
     }
 }

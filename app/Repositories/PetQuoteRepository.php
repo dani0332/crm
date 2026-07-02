@@ -15,6 +15,7 @@ use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Services\BranchAssignmentService;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -75,10 +76,33 @@ class PetQuoteRepository extends BaseRepository
             'additionalNotes' => $request['notes'] ?? null,
         ];
 
+        EACollaborateHelper::applyEAIMCRMSource($dataArr);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('PetQuoteRepository: CAPI payload for EA lead', [
+                'ea_model' => $dataArr['eaModel'] ?? request()->input('ea_model'),
+                'source' => $dataArr['source'] ?? null,
+                'email' => $dataArr['email'] ?? null,
+                'lead_generator_id' => $dataArr['leadGeneratorId'] ?? null,
+                'advisor_id' => $dataArr['advisorId'] ?? null,
+                'quote_type_id' => $dataArr['quoteTypeId'] ?? null,
+            ]);
+        }
+
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('PetQuoteRepository: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+        }
 
         if (isset($response->quoteUID)) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $response->quoteUID)->firstOrFail();
+            EACollaborateHelper::dispatchLeadSubmittedEmail($quote, 'pet');
         }
 
         return $response;
@@ -150,6 +174,8 @@ class PetQuoteRepository extends BaseRepository
             'quoteDetail',
             'customer',
             'branch:id,name',
+            'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -173,6 +199,8 @@ class PetQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->select([
                 '*',
                 DB::raw('

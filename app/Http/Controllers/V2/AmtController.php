@@ -534,6 +534,8 @@ class AmtController extends Controller
             'natureOfCompanyActivity:id,text',
             'groupMedicalCategories',
             'businessActivity:id,name',
+            'leadGenerator', 
+            'expertAdvisor'
         ]);
         abort_if(! $record, 404);
         /* Start - Temporarily adding for correcting historic data */
