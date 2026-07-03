@@ -473,6 +473,16 @@ watch(
   },
 );
 
+watch(
+  () => quoteForm.coverage_code,
+  newCoverageCode => {
+    if (newCoverageCode === travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP) {
+      quoteForm.end_date = null;
+      quoteForm.days_cover_for = 365;
+    }
+  },
+);
+
 const addressTypes = [
   { value: '', label: 'No Address' }, // option for leaving it blank
   { value: 'Home', label: 'Home' },
