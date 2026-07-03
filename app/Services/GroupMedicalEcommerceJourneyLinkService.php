@@ -48,7 +48,7 @@ final class GroupMedicalEcommerceJourneyLinkService
                 return null;
             }
 
-            return rtrim($base, '/')."/?{$quote->uuid}&resume=true";
+            return rtrim($base, '/')."/?uuid={$quote->uuid}&resume=true";
         } else {
 
             $base = config('constants.ECOM_GROUP_MEDICAL_INSURANCE_QUOTE_URL');
