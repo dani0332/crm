@@ -1710,4 +1710,27 @@ class ApiController extends Controller
         LoggerService::info("{$logPrefix} All Car Revival Resend Jobs dispatched");
     }
 
+    public function handlePostMarkEmailInteractionWebhook(Request $request)
+    {
+        try {
+            $payload = $request->all();
+
+            LoggerService::info('Postmark inbound email webhook received', [
+                'ip' => $request->ip(),
+                'headers' => $request->headers->all(),
+                'payload' => $payload,
+            ]);
+
+            return response()->json(['status' => 'received'], 200);
+
+        } catch (\Throwable $e) {
+
+            LoggerService::warning('Postmark inbound webhook error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['status' => 'error'], 500);
+        }
+    }
+
 }
