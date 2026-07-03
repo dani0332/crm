@@ -1324,6 +1324,7 @@ class CRUDController extends Controller
                 } else {
                     $quoteStatuses = array_values($leadStatuses->toArray());
                 }
+                $advisors = $advisors->concat($this->crudService->getPqaAdvisorList(QuoteTypes::HEALTH->id())->get());
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
