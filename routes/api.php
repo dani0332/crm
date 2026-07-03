@@ -142,6 +142,7 @@ Route::post('/imcrm/eligible-for-revival-followups', [ApiController::class, 'eli
 
 Route::prefix('v1')->group(function () {
     Route::post('/log-ep-email-statuses', [ApiController::class, 'logEpEmailStatuses'])->name('logEpEmailStatuses');
+    Route::post('/postmark/emails-inbound-hook', [ApiController::class, 'handlePostMarkEmailInteractionWebhook'])->name('postmark.email-interaction-webhook');
 
     Route::post('quotes/car/followup-started', [CarQuoteController::class, 'followupStarted']);
     Route::post('quotes/car/pause-resume-followup', [CarQuoteController::class, 'updatePauseAndResumeCounters']);
