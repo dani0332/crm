@@ -41,6 +41,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentAction;
 use App\Models\QuoteBatches;
+use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\Team;
@@ -2136,5 +2137,20 @@ class HealthQuoteService extends BaseService
         $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
 
         return $modelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
+    }
+
+    public function isPQAQualified(int $id, int $pqaAdvisorId): int
+    {
+        if (! $pqaAdvisorId) {
+            return 0;
+        }
+
+        $statusCount = QuoteStatusLog::where('quote_type_id', QuoteTypes::HEALTH)
+            ->where('previous_quote_status_id', QuoteStatusEnum::NewLead)
+            ->where('current_quote_status_id', QuoteStatusEnum::Qualified)
+            ->where('created_by', $pqaAdvisorId)
+            ->count();
+
+        return $statusCount > 0 ? 1 : 0;
     }
 }

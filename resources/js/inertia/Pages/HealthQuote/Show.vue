@@ -90,8 +90,11 @@ const props = defineProps({
   policyHolderOptions: Array,
   maritalStatusOptions: Array,
   emirateEnum: Object,
+  pqaQualified: Number
 });
 const modelClass = 'App\\Models\\HealthQuote';
+
+const pqaQualifiedFormatted = computed(() => (props.pqaQualified === 0 ? 'No' : 'Yes'));
 
 const isManualPlansCount = ref(0);
 
@@ -2399,6 +2402,13 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
               >
                 <dt class="font-medium">PC-Qualified</dt>
                 <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
+                <dt class="font-medium">PQA Qualified</dt>
+                <dd>{{ pqaQualifiedFormatted }}</dd>
               </div>
             </dl>
           </div>

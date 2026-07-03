@@ -145,6 +145,11 @@ const tableHeader = ref([
     value: 'pre_qualification_advisor',
     is_active: true,
   },
+  {
+    text: 'PQA Qualified',
+    value: 'pqa_qualified',
+    is_active: true
+  },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
   { text: 'UNASSIGNED', value: 'unassigned', is_active: true },
   { text: 'OE/AE', value: 'support_user.name', is_active: true },
@@ -309,6 +314,11 @@ const filters = reactive({
 const eaModelOptions = [
   { value: 'referral', label: 'Referral' },
   { value: 'collaborate', label: 'Collaborative' },
+];
+
+const pqaQualifiedOptions = [
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
 ];
 
 const canExport = ref(false);
@@ -1427,6 +1437,13 @@ const paymentStatusOptions = computed(() => {
           label="Lead Generator"
           class="w-full"
           placeholder="Search by lead generator name"
+        />
+        <x-select
+          v-model="filters.pqa_qualified"
+          label="PQA Qualified"
+          placeholder="All"
+          :options="pqaQualifiedOptions"
+          class="w-full"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

@@ -1340,7 +1340,7 @@ class CRUDController extends Controller
 
                 $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
 
-                $healthUmafResponse = HealthUMAFResponse::where('quote_uuid', $record->uuid)->first();
+                $healthUmafResponse = null; // HealthUMAFResponse::where('quote_uuid', $record->uuid)->first();
                 $record->isSTPCase = $healthUmafResponse && $healthUmafResponse?->stp_rating ? $healthUmafResponse?->stp_rating['is_stp'] : null;
                 $record->api_issuance_status = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
                 $record->insurer_api_status = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
@@ -1360,6 +1360,8 @@ class CRUDController extends Controller
                     $quoteStatuses = array_values($leadStatuses->toArray());
                 }
                 $advisors = $advisors->concat($this->crudService->getPqaAdvisorList(QuoteTypes::HEALTH->id())->get());
+
+                $pqaQualified = $this->healthQuoteService->isPQAQualified($record->id, $record->pq_advisor_id);
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
@@ -1455,6 +1457,7 @@ class CRUDController extends Controller
                     'policyHolderOptions' => $policyHolderOptions,
                     'emirateEnum' => EmirateEnum::asArray(),
                     'policyHolderRelationMap' => RelationCodeEnum::policyHolderRelationMap(),
+                    'pqaQualified' => $pqaQualified,
                 ]);
             } else {
                 return view('shared.show', compact([
