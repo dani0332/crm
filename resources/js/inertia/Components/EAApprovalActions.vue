@@ -63,14 +63,20 @@ const { auth } = usePage().props;
 const currentUserId = auth.user.id;
 const isEaManager = useHasRole('EA_MANAGER');
 
-// PaymentPending = 28
-const PAYMENT_PENDING = 28;
+// Mirrors App\Enums\QuoteStatusEnum::eaApprovalEligibleStatuses()
+const EA_APPROVAL_ELIGIBLE_STATUSES = [
+  28, // PaymentPending
+  15, // TransactionApproved
+  34, // PolicyInvoiced
+  33, // PolicyIssued
+  70, // PolicySentToCustomer (Send to customer)
+];
 
 const isEaCollaborateLead = computed(
   () =>
     props.source === 'EA_IMCRM' &&
     props.eaModel === 'collaborate' &&
-    props.quoteStatusId === PAYMENT_PENDING,
+    EA_APPROVAL_ELIGIBLE_STATUSES.includes(props.quoteStatusId),
 );
 
 const isAdvisor = computed(
