@@ -16,6 +16,7 @@ use App\Facades\Capi;
 use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
+use App\Models\BusinessQuote;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
@@ -39,6 +40,8 @@ class SendEmailCustomerService extends BaseService
     protected $appEnv = '';
     protected $appUrl = '';
     private $accept = 'application/json';
+
+    private const GROUP_HEALTH_PQA_INTRO_EMAIL_TEMPLATE_ID = 906;
 
     public function __construct(
         EmailActivityService $emailActivityService,
@@ -1934,6 +1937,86 @@ class SendEmailCustomerService extends BaseService
 
         app(WebEngageService::class)->sendEvent($workflowType, $payload);
         LoggerService::info(self::class.' - sendIntroAndReassignEmail - WebEngage event sent for Ref-ID: '.$quote->uuid.' | Time:'.now());
+    }
+
+    public function sendGroupHealthPqaIntroEmail(BusinessQuote $businessQuote): int
+    {
+        $responseCode = 0;
+        $isEmailSent = 0;
+        $response = null;
+        $customerName = trim("{$businessQuote->first_name} {$businessQuote->last_name}");
+
+        try {
+            $advisor = $businessQuote->preQualificationAdvisor;
+
+            $advisorName = '';
+            $advisorEmail = '';
+            $mobilePhone = '';
+            $advisorProfilePhotoPath = '';
+            $landLine = '';
+
+            if ($advisor && $advisor->name && $advisor->email) {
+                $advisorName = $advisor->name;
+                $advisorEmail = $advisor->email;
+                $mobilePhone = $advisor->mobile_no ?? '';
+                $advisorProfilePhotoPath = $advisor->profile_photo_path ?? '';
+                $landLine = $advisor->landline_no ?? '';
+            }
+
+            $resumeApplicationUrl = app(GroupMedicalEcommerceJourneyLinkService::class)->buildCustomerJourneyUrl($businessQuote);
+
+            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
+            $subject = $subjectEnvTag."Your Group Health Insurance Application - Let's pick up where you left off! BUS-{$businessQuote->uuid}";
+
+            $cc = $this->getAdditionalEmails((string) getAppStorageValueByKey(ApplicationStorageEnums::GROUP_HEALTH_CC));
+            if ($advisorEmail) {
+                $cc[] = ['email' => $advisorEmail];
+            }
+
+            $bcc = $this->getAdditionalEmails((string) getAppStorageValueByKey(ApplicationStorageEnums::GROUP_HEALTH_BCC));
+
+            $replyToEmail = $advisorEmail ?: (getAppStorageValueByKey(ApplicationStorageEnums::GROUP_HEALTH_REPLY_TO_EMAIL) ?: null);
+
+            $body = [
+                'to' => [[
+                    'email' => $businessQuote->email,
+                    'name' => $customerName,
+                ]],
+                'templateId' => self::GROUP_HEALTH_PQA_INTRO_EMAIL_TEMPLATE_ID,
+                'params' => [
+                    'customerName' => $customerName,
+                    'resumeApplicationUrl' => $resumeApplicationUrl,
+                    'advisorName' => $advisorName,
+                    'advisorEmail' => $advisorEmail,
+                    'mobilePhone' => $mobilePhone,
+                    'advisorProfilePhotoPath' => $advisorProfilePhotoPath,
+                    'landLine' => $landLine,
+                ],
+                'subject' => $subject,
+                'cc' => ! empty($cc) ? $cc : null,
+                'bcc' => ! empty($bcc) ? $bcc : null,
+            ];
+
+            if ($replyToEmail) {
+                $body['replyTo'] = ['email' => $replyToEmail];
+            }
+
+            LoggerService::info(self::class." - sendGroupHealthPqaIntroEmail - Sending PQA intro email for uuid: {$businessQuote->uuid}", extra: [
+                'advisorEmail' => $advisorEmail,
+                'resumeApplicationUrl' => $resumeApplicationUrl,
+            ]);
+
+            ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            LoggerService::error(self::class." - sendGroupHealthPqaIntroEmail failed for uuid {$businessQuote->uuid}: ".$ex->getMessage());
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $isEmailSent = 0;
+        }
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $businessQuote->email);
+
+        return $responseCode;
     }
 
     public function sendSupportUserAssignmentEmail($emailData)
