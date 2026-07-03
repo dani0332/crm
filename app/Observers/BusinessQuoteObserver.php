@@ -14,6 +14,7 @@ use App\Jobs\Audit\LogAllocation;
 use App\Jobs\DispatchIlaAllocationJob;
 use App\Jobs\DispatchPqaAllocationJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\SendGroupHealthPqaIntroEmailJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
 use App\Repositories\PaymentRepository;
@@ -25,6 +26,7 @@ use App\Services\QuoteStatusLogService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -200,6 +202,21 @@ class BusinessQuoteObserver
             $payment = $businessQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($businessQuote, $payment, QuoteTypes::BUSINESS->value);
 
+        }
+
+        if (
+            isset($dirty['pq_advisor_id']) &&
+            $businessQuote->pq_advisor_id !== null &&
+            $businessQuote->getOriginal('pq_advisor_id') === null &&
+            (int) $businessQuote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+        ) {
+            try {
+                SendGroupHealthPqaIntroEmailJob::dispatch($businessQuote)->delay(Carbon::now()->addSeconds(30));
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - dispatch SendGroupHealthPqaIntroEmailJob failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
+            }
         }
 
         $isCorpline = (int) $businessQuote->business_type_of_insurance_id !== BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;

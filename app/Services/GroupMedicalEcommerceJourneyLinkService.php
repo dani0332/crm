@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\BusinessQuote;
 use App\Models\User;
@@ -39,14 +40,26 @@ final class GroupMedicalEcommerceJourneyLinkService
 
     public function buildCustomerJourneyUrl(BusinessQuote $quote): ?string
     {
-        $base = config('constants.ECOM_GROUP_MEDICAL_INSURANCE_QUOTE_URL');
-        if (! is_string($base) || trim($base) === '') {
-            return null;
+
+        if (in_array($quote->source, [LeadSourceEnum::CALL_DESK_WHATSAPP, LeadSourceEnum::CALL_DESK])) {
+
+            $base = config('constants.ECOM_GROUP_MEDICAL_INSURANCE_QUOTE_URL_FIRST_STEP');
+            if (! is_string($base) || trim($base) === '') {
+                return null;
+            }
+
+            return rtrim($base, '/')."/?{$quote->uuid}&resume=true";
+        } else {
+
+            $base = config('constants.ECOM_GROUP_MEDICAL_INSURANCE_QUOTE_URL');
+            if (! is_string($base) || trim($base) === '') {
+                return null;
+            }
+
+            $resource = $quote->quote_status_id == QuoteStatusEnum::QualificationPending ? 'documents' : 'plan-type';
+
+            return rtrim($base, '/')."/{$quote->uuid}/{$resource}/?resume=true";
         }
-
-        $resource = $quote->quote_status_id == QuoteStatusEnum::QualificationPending ? 'documents' : 'plan-type';
-
-        return rtrim($base, '/')."/{$quote->uuid}/{$resource}/?resume=true";
     }
 
     public function recordAdvisorCopyLinkAudit(BusinessQuote $quote, User $user): void
