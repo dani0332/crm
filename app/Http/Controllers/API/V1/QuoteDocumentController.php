@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteQuoteDocumentRequest;
 use App\Http\Requests\QuoteDocumentRequest;
+use App\Http\Requests\StoreCensusListExcelRequest;
 use App\Http\Requests\UploadToMetLifeRequest;
 use App\Http\Resources\DocumentTypeResource;
 use App\Http\Resources\QuoteDocumentResource;
@@ -55,8 +56,9 @@ class QuoteDocumentController extends Controller
         $quoteTypeId = $activitiesService->getQuoteTypeId($quoteType);
         $registrationType = $request->input('registration_type');
         $vehicleUse = $request->input('vehicle_use');
+        $businessTypeOfInsuranceId = $request->input('business_type_of_insurance_id') ?? null;
 
-        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $registrationType, $vehicleUse, $documentTypeCategory);
+        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId, $registrationType, $vehicleUse, $documentTypeCategory, $businessTypeOfInsuranceId);
 
         return DocumentTypeResource::collection($documentTypes);
     }
@@ -147,5 +149,40 @@ class QuoteDocumentController extends Controller
         return response()->json([
             'data' => $data,
         ]);
+    }
+
+    /**
+     * Accept AMT group medical census list member rows (validated JSON) for census-list Excel processing.
+     */
+    public function storeCensusListExcel(string $quoteType, StoreCensusListExcelRequest $request): JsonResponse
+    {
+        $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+
+        if (! $quote) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quote not found',
+            ], 404);
+        }
+
+        $members = $request->validated()['members'] ?? [];
+        $quoteDocument = $this->quoteDocumentService->generateCensusListExcelFromMembers($quote, $members);
+
+        if (! $quoteDocument) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not generate or store the census list Excel. Ensure document type CENSUS_LIST exists.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Census list Excel stored successfully',
+            'data' => [
+                'quote_document_uuid' => $quoteDocument->uuid ?? null,
+                'quote_document_id' => $quoteDocument->id ?? null,
+                'document_type_code' => $quoteDocument->document_type->code ?? null,
+            ],
+        ], 201);
     }
 }

@@ -177,6 +177,14 @@ class DocumentTypeCode extends Enum
     public const HEA_CUSTOMER_DUE_DILIGENCE = 'OTH_Hlth'; // customer due diligence
     public const HEA_EMIRATE_ID_COPY = 'MEEID'; // Member's Emirates ID Copy
     public const HEA_INSURED_EMIRATES_ID_APPLICATION = 'HEAEIDA'; // Insured Emirates ID Application
+
+    /** Group Medical — IMCRM / lead intake documents (business LOB + group medical insurance type) */
+    const CENSUS_LIST = 'CENSUS_LIST';
+
+    const CURRENT_TABLE_OF_BENEFITS = 'CURRENT_TABLE_OF_BENEFITS';
+    const TRADE_LICENSE = 'TRADE_LICENSE';
+    const DHA_REPORT = 'DHA_REPORT';
+    const OTHER_DOCUMENTS = 'OTHER_DOCUMENTS';
     public const TCOMP_PC = 'TCOMP_PC'; // Business Policical Violence Policy Certificate
     public const TCOMP_PS = 'TCOMP_PS'; // Business Policical Violence Policy Schedule
 }

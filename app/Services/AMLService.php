@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
@@ -32,10 +31,8 @@ use App\Events\AmlAutomationScreeningSucceeded;
 use App\Facades\Ken;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Requests\AMLCheckRequest;
-use App\Jobs\AmlScreeningAutomationJob;
 use App\Jobs\AutomationFailedJob;
 use App\Models\AML;
-use App\Models\AmlAutomation;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -70,14 +67,13 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\LookupRepository;
+use App\Services\AML\AMLAutomationService;
 use App\Services\AML\AMLInsurerService;
 use App\Services\AML\AMLLookupsService;
 use App\Services\Cars24\Cars24Service;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Car\LivaInsuranceService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Services\Quotes\PersonalQuoteAmlAutomationCustomerService;
-use App\Support\AmlQuoteAutomation\AmlAutomatableLobRegistry;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -86,16 +82,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\View;
 use PDF;
-use Symfony\Component\HttpFoundation\Response;
 
 class AMLService
 {
     use GenericQueriesAllLobs;
 
     public function __construct(
-        private readonly PersonalQuoteAmlAutomationCustomerService $personalQuoteAmlAutomationCustomerService,
+        private readonly AMLAutomationService $eligibilityService,
     ) {}
 
     public static function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = ''): bool
@@ -2240,7 +2234,7 @@ class AMLService
 
         if ($amlStatus == AMLStatusCode::AMLScreeningCleared) {
             $quoteType = QuoteTypes::getName($quoteObject->quote_type_id);
-            if ($quoteType !== null && AmlAutomatableLobRegistry::allows($quoteType)) {
+            if ($quoteType !== null && AMLAutomationService::isLobAllowedForAmlAutomationScreeningSucceededEvent($quoteType)) {
                 event(new AmlAutomationScreeningSucceeded(
                     (int) $quoteObject->id,
                     (string) $quoteObject->uuid,
@@ -2664,237 +2658,4 @@ class AMLService
         return $policyIssuanceService?->isPolicyIssuanceAutomationEnabled() ?? false;
     }
 
-    /**
-     * API entry-point: validate and queue AML screening automation for a quote UUID and LOB.
-     * HTTP callers must pass {@see QuoteTypes} resolved after Form Request validation against {@see AmlAutomatableLobRegistry::allowed()};
-     * the quote row is then loaded with {@see GenericQueriesAllLobs::getQuoteObject}.
-     *
-     * @return array{success: bool, http_status: int, message: string, data?: array<string, mixed>}
-     */
-    public function initiateAutomatedAmlByQuoteUuid(string $quoteUuid, QuoteTypes $quoteType): array
-    {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::AML_AUTOMATION_BY_QUOTE_UUID);
-        LoggerService::info('AML automate-by-uuid: request received', extra: [
-            'quoteUuid' => $quoteUuid,
-            'quoteType' => $quoteType->value,
-        ]);
-
-        $respond = function (bool $success, int $httpStatus, string $message, ?array $data = null): array {
-            $payload = [
-                'success' => $success,
-                'http_status' => $httpStatus,
-                'message' => $message,
-            ];
-            if ($data !== null) {
-                $payload['data'] = $data;
-            }
-
-            return $payload;
-        };
-
-        try {
-            $amlAutomationEnabled = (bool) app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
-            if (! $amlAutomationEnabled) {
-                LoggerService::info('AML automate-by-uuid: blocked — AML automation disabled in CMS', extra: [
-                    'quoteUuid' => $quoteUuid,
-                    'quoteType' => $quoteType->value,
-                    'outcome' => 'blocked',
-                    'reason' => 'aml_automation_disabled',
-                    'amlAutomationEnabled' => $amlAutomationEnabled,
-                    'http_status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                ]);
-
-                return $respond(false, Response::HTTP_UNPROCESSABLE_ENTITY, 'AML automation is not enabled');
-            }
-
-            $quote = $this->getQuoteObject($quoteType->value, $quoteUuid);
-            if ($quote === false) {
-                LoggerService::info('AML automate-by-uuid: blocked — quote not found', extra: [
-                    'quoteUuid' => $quoteUuid,
-                    'quoteType' => $quoteType->value,
-                    'outcome' => 'blocked',
-                    'reason' => 'quote_not_found',
-                    'http_status' => Response::HTTP_NOT_FOUND,
-                ]);
-
-                return $respond(false, Response::HTTP_NOT_FOUND, 'Quote not found');
-            }
-
-            LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AML_AUTOMATION_BY_QUOTE_UUID);
-
-            $quote->loadMissing('insuranceProvider');
-            $quoteContext = [
-                'quoteUuid' => $quoteUuid,
-                'quoteId' => (int) $quote->id,
-                'quoteCode' => $quote->code,
-                'quoteTypeId' => (int) $quote->quote_type_id,
-                'customerId' => $quote->customer_id !== null ? (int) $quote->customer_id : null,
-                'amlStatus' => $quote->aml_status,
-                'apiIssuanceStatusId' => $quote->api_issuance_status_id !== null ? (int) $quote->api_issuance_status_id : null,
-                'apiIssuanceStatusRequired' => (int) PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
-                'insuranceProviderCode' => $quote->insuranceProvider?->code,
-            ];
-
-            LoggerService::info('AML automate-by-uuid: quote loaded', extra: array_merge($quoteContext, [
-                'outcome' => 'progress',
-                'step' => 'quote_loaded',
-            ]));
-
-            $quoteTypeFromQuote = QuoteTypes::getName((int) $quote->quote_type_id);
-            if (! $quoteTypeFromQuote instanceof QuoteTypes || $quoteTypeFromQuote !== $quoteType) {
-                LoggerService::info('AML automate-by-uuid: blocked — quote LOB does not match requested quoteType', extra: array_merge($quoteContext, [
-                    'outcome' => 'blocked',
-                    'reason' => 'quote_lob_mismatch',
-                    'requestedQuoteType' => $quoteType->value,
-                    'resolvedQuoteType' => $quoteTypeFromQuote instanceof QuoteTypes ? $quoteTypeFromQuote->value : null,
-                    'http_status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                ]));
-
-                return $respond(false, Response::HTTP_UNPROCESSABLE_ENTITY, 'Quote does not match the requested line of business');
-            }
-
-            $quoteContext['quoteType'] = $quoteType->value;
-
-            $skipsApiIssuanceStatusCheck = AmlAutomatableLobRegistry::skipsApiIssuanceStatusCheckForAutomatedAml($quoteType, $quote);
-
-            if ($skipsApiIssuanceStatusCheck) {
-                LoggerService::info('AML automate-by-uuid: skipping policy issuance API status check (Savings + OIC)', extra: array_merge($quoteContext, [
-                    'outcome' => 'progress',
-                    'step' => 'api_issuance_check_skipped',
-                ]));
-            }
-
-            if (! $skipsApiIssuanceStatusCheck) {
-                $apiIssuanceStatusIdInt = (int) $quote->api_issuance_status_id;
-                $apiIssuanceStatusIdEnumInt = (int) PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
-                if ($apiIssuanceStatusIdInt !== $apiIssuanceStatusIdEnumInt) {
-                    LoggerService::info('AML automate-by-uuid: blocked — policy issuance API status not confirmed', extra: array_merge($quoteContext, [
-                        'outcome' => 'blocked',
-                        'reason' => 'api_issuance_status_not_yes',
-                        'apiIssuanceStatusId' => $apiIssuanceStatusIdInt,
-                        'http_status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                    ]));
-
-                    return $respond(false, Response::HTTP_UNPROCESSABLE_ENTITY, 'Policy issuance API status must be confirmed');
-                }
-            }
-
-            $isAmlPending = empty($quote->aml_status) || $quote->aml_status === AMLStatusCode::AMLPending;
-            if (! $isAmlPending) {
-                LoggerService::info('AML automate-by-uuid: blocked — AML status not pending', extra: array_merge($quoteContext, [
-                    'outcome' => 'blocked',
-                    'reason' => 'aml_status_not_pending',
-                    'amlPendingRequired' => AMLStatusCode::AMLPending,
-                    'http_status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                ]));
-
-                return $respond(false, Response::HTTP_UNPROCESSABLE_ENTITY, 'AML status must be pending or empty');
-            }
-
-            $automation = AmlAutomation::query()->where('code', $quote->code)->first();
-            $automationEnum = $automation === null
-                ? null
-                : AmlAutomationStatus::tryFrom((string) $automation->status);
-
-            if ($automationEnum !== null && in_array($automationEnum, [
-                AmlAutomationStatus::Complete,
-                AmlAutomationStatus::Processing,
-            ], true)) {
-                LoggerService::info('AML automate-by-uuid: blocked — automation already complete or processing', extra: array_merge($quoteContext, [
-                    'outcome' => 'blocked',
-                    'reason' => 'automation_complete_or_processing',
-                    'amlAutomationId' => $automation->id,
-                    'amlAutomationStatus' => $automation->status,
-                    'http_status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                ]));
-
-                return $respond(false, Response::HTTP_UNPROCESSABLE_ENTITY, 'AML automation already completed or in progress');
-            }
-
-            if ($automationEnum === AmlAutomationStatus::Queue) {
-                LoggerService::info('AML automate-by-uuid: blocked — automation already queued', extra: array_merge($quoteContext, [
-                    'outcome' => 'blocked',
-                    'reason' => 'automation_already_queued',
-                    'amlAutomationId' => $automation->id,
-                    'amlAutomationStatus' => $automation->status,
-                    'http_status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                ]));
-
-                return $respond(false, Response::HTTP_UNPROCESSABLE_ENTITY, 'AML automation already queued');
-            }
-
-            LoggerService::info('AML automate-by-uuid: automation row state OK', extra: array_merge($quoteContext, [
-                'outcome' => 'progress',
-                'step' => 'aml_automation_gate_passed',
-                'amlAutomationExists' => $automation !== null,
-                'amlAutomationStatus' => $automation?->status,
-            ]));
-
-            $customerPersonalQuoteAmlRecord = $this->personalQuoteAmlAutomationCustomerService->getCustomerPersonalQuoteAmlInfo((int) $quote->id, (int) $quote->quote_type_id);
-            if ($customerPersonalQuoteAmlRecord === false || empty($customerPersonalQuoteAmlRecord->id)) {
-                LoggerService::info('AML automate-by-uuid: blocked — customer insured row missing', extra: array_merge($quoteContext, [
-                    'outcome' => 'blocked',
-                    'reason' => 'customer_insured_not_found',
-                    'customerInsuredLookupOk' => false,
-                    'http_status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                ]));
-
-                return $respond(false, Response::HTTP_UNPROCESSABLE_ENTITY, 'Customer insured data not found for AML');
-            }
-
-            $customerCheck = $this->personalQuoteAmlAutomationCustomerService->checkCustomerPersonalQuoteAmlInfoIsComplete((array) $customerPersonalQuoteAmlRecord);
-            if (! $customerCheck['status']) {
-                LoggerService::info('AML automate-by-uuid: blocked — customer insured data incomplete', extra: array_merge($quoteContext, [
-                    'outcome' => 'blocked',
-                    'reason' => 'customer_insured_incomplete',
-                    'customerInsuredId' => (int) $customerPersonalQuoteAmlRecord->id,
-                    'customerCheckMessage' => $customerCheck['message'] ?? null,
-                    'http_status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                ]));
-
-                return $respond(false, Response::HTTP_UNPROCESSABLE_ENTITY, $customerCheck['message'] ?: 'Incomplete customer data for AML');
-            }
-
-            LoggerService::info('AML automate-by-uuid: customer insured checks passed', extra: array_merge($quoteContext, [
-                'outcome' => 'progress',
-                'step' => 'customer_insured_ok',
-                'customerInsuredId' => (int) $customerPersonalQuoteAmlRecord->id,
-            ]));
-
-            try {
-                AmlAutomation::updateOrCreate(
-                    ['code' => $quote->code],
-                    ['status' => AmlAutomationStatus::Queue->value]
-                );
-
-                LoggerService::info('AML automate-by-uuid: running job via dispatchSync', extra: array_merge($quoteContext, [
-                    'outcome' => 'progress',
-                    'step' => 'dispatch_sync',
-                ]));
-
-                AmlScreeningAutomationJob::dispatchSync($quoteType, $quote);
-
-                LoggerService::info('AML automate-by-uuid: successfully — dispatched', extra: array_merge($quoteContext, [
-                    'outcome' => 'success',
-                    'step' => 'dispatch_sync_complete',
-                    'http_status' => Response::HTTP_OK,
-                ]));
-
-                return $respond(true, Response::HTTP_OK, 'AML screening automation dispatched', [
-                    'dispatch_sync' => true,
-                    'quote_code' => $quote->code,
-                ]);
-            } catch (\Throwable $e) {
-                LoggerService::error('AML automate-by-uuid: post-validation failure', array_merge($quoteContext, [
-                    'outcome' => 'error',
-                    'reason' => 'post_validation_exception',
-                    'exceptionMessage' => $e->getMessage(),
-                ]), $e);
-
-                return $respond(false, Response::HTTP_INTERNAL_SERVER_ERROR, 'Unable to complete AML automation: '.$e->getMessage());
-            }
-        } finally {
-            LoggerService::endLogging();
-        }
-    }
 }

@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
     Route::post('/imcrm/re-trigger-life-revival', [ApiController::class, 'reTriggerLifeRevival'])->name('reTriggerLifeRevival');
+    Route::post('/imcrm/re-trigger-home-revival', [ApiController::class, 'reTriggerHomeRevival'])->name('reTriggerHomeRevival');
+    Route::post('/imcrm/re-trigger-car-revival', [ApiController::class, 'reTriggerCarRevival'])->name('reTriggerCarRevival');
 });
 
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
@@ -107,6 +109,17 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     // !! Do not remove this route, it is used for debugging purposes and do not enable it in production without approval from the team !!.
     // Route::post('/imcrm/re-trigger-revival-followups', [ApiController::class, 'reTriggerRevivalFollowups'])->name('reTriggerRevivalFollowups');
     Route::post('/imcrm/re-trigger-revival-followups-with-date', [ApiController::class, 'reTriggerRevivalFollowupsWithDate'])->name('reTriggerRevivalFollowupsWithDate');
+
+    // amt
+    Route::post('amt/quotes/{quoteType}/documents/census-list-excel', [QuoteDocumentController::class, 'storeCensusListExcel']);
+
+    // pre qualification advisor allocation
+    Route::post('/imcrm/pqa-allocation', [ApiController::class, 'preQualificationAdvisorAllocation'])->name('preQualificationAdvisorAllocation');
+    // pre qualification advisor allocation
+    Route::prefix('pqa')->group(function () {
+        Route::post('/allocation', [ApiController::class, 'preQualificationAdvisorAllocation'])->name('preQualificationAdvisorAllocation');
+    });
+
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');

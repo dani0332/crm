@@ -197,7 +197,8 @@ class InboundEmailsHookService extends BaseService
                     $this->birdMessageInteractionsUpdate($result, $identifierValue);
                     // Handle specific status types if necessary
                     if (in_array($type, [ProcessStatusCode::UNSUBSCRIBED])) {
-                        $this->sendUnsubscribeEmailNotification($messageId);
+                        // $this->sendUnsubscribeEmailNotification($messageId);
+
                     }
                 } else {
                     LoggerService::warning('Required fields missing in the payload.');

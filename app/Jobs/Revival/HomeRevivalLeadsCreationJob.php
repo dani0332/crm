@@ -15,8 +15,8 @@ use App\Facades\Capi;
 use App\Models\ApplicationStorage;
 use App\Models\DttRevival;
 use App\Models\PersonalQuote;
-use App\Services\BirdService;
 use App\Services\DTTRevivalService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\HomeQuoteService;
 use App\Services\HomeRevivalService;
 use App\Services\Logger\LoggerService;
@@ -201,7 +201,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
             ]);
 
             if ($emailPayload !== null) {
-                if (app(BirdService::class)->isFollowupExecuted($homeRevivalQuoteUUID, (int) QuoteTypes::HOME->id(), QuoteFlowType::HOME_REVIVAL_FOLLOWUP->value)) {
+                if (app(WebEngageService::class)->isFollowupExecuted($homeRevivalQuoteUUID, (int) QuoteTypes::HOME->id(), QuoteFlowType::HOME_REVIVAL_FOLLOWUP->value)) {
                     LoggerService::info(self::class.' - follow-up already executed', [
                         'dtt_revival_id' => $dttRevival->id,
                         'child_quote_uuid' => $homeRevivalQuoteUUID,
@@ -209,7 +209,7 @@ class HomeRevivalLeadsCreationJob implements ShouldQueue
                     ]);
                 } else {
                     $emailPayload->workflowType = WorkflowTypeEnum::HOME_REVIVAL_FOLLOWUP;
-                    HomeRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailPayload);
+                    HomeRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailPayload)->delay(now()->addMinutes(10));
 
                     LoggerService::info(self::class.' - OCB done — dtt + parent updated + follow-up job queued', [
                         'dtt_revival_id' => $dttRevival->id,

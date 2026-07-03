@@ -1699,6 +1699,7 @@ class SendEmailCustomerService extends BaseService
         $quoteCode = $healthQuote->code ?? '';
 
         return (object) [
+            'uniqueId' => (string) Str::ulid(),
             'clientFullName' => $customerFullName,
             'customerName' => $customerFullName,
             'customerEmail' => $healthQuote->email ?? '',
@@ -1836,6 +1837,7 @@ class SendEmailCustomerService extends BaseService
         $advisor = User::where('id', $advisorId)->first();
         $payload = [
             'customerId' => $quote->customer_id ?? $quote->email,
+            'uniqueId' => (string) Str::ulid(),
             'firstName' => $quote->first_name ?? '',
             'lastName' => $quote->last_name ?? '',
             'customerEmail' => $quote->email,
@@ -1856,7 +1858,7 @@ class SendEmailCustomerService extends BaseService
             'workflowType' => WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
         ];
 
-        app(WebEngageService::class)->sendEvent(app()->environment().'_'.WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS, $payload);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS, $payload);
         LoggerService::info('sendWhatsappNotificationToCustomer - WebEngage event triggered with Ref-ID: '.$quote->uuid.' | Time:'.now());
     }
 
@@ -2049,6 +2051,7 @@ class SendEmailCustomerService extends BaseService
             'customerEmail' => $lead->email,
             'refID' => $lead->code,
             'customerId' => $lead->customer_id,
+            'uniqueId' => (string) Str::ulid(),
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
             'firstName' => $lead->first_name,
             'lastName' => $lead->last_name,
@@ -2138,6 +2141,7 @@ class SendEmailCustomerService extends BaseService
 
         $emailData = [
             'customerId' => $itSupportEmail,
+            'uniqueId' => (string) Str::ulid(),
             'firstName' => 'IT Support',
             'lastName' => 'AFIA',
             'customerEmail' => $itSupportEmail,

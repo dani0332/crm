@@ -19,6 +19,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\TeamTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
@@ -30,6 +31,7 @@ use App\Models\KycLog;
 use App\Models\Lookup;
 use App\Models\LostReasons;
 use App\Models\Nationality;
+use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BusinessQuoteRepository;
@@ -45,6 +47,9 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\GroupMedical\GroupMedicalAmtFormDropdownService;
+use App\Services\GroupMedicalEcommerceJourneyLinkService;
+use App\Services\GroupMedicalQuoteCategoryService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -56,6 +61,7 @@ use App\Traits\RolePermissionConditions;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -91,6 +97,7 @@ class AmtController extends Controller
             })
             ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
             ->leftJoin('emirates as e', 'bqr.emirate_of_registration_id', '=', 'e.id')
+            ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -109,6 +116,7 @@ class AmtController extends Controller
                 'ls.text as lost_reason',
                 'u.name as advisor_id_text',
                 'su.name as support_user_name',
+                'pqa_u.name as pre_qualification_advisor_name',
                 'bqr.premium',
                 'bqr.company_name',
                 DB::raw('DATE_FORMAT(bqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
@@ -151,12 +159,23 @@ class AmtController extends Controller
                     WHEN bqr.assignment_type = '.AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD.' THEN "Reassigned as Bought Lead"
                     WHEN bqr.assignment_type = '.AssignmentTypeEnum::SELF_ASSIGNED.' THEN "Self Assigned"
                     ELSE "" END) as assignment_type_text'),
+                'bqr.pq_advisor_id',
             );
-        if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
-            // if user has advisor Role then fetch leads assigned to the user only
-            $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
+        // PQA-only users see leads where they are the assigned pre-qualification advisor.
+        // We skip the generic whereBasedOnRole for these users because isAdvisor() would
+        // otherwise incorrectly restrict to advisor_id instead of pq_advisor_id.
+        $isPqaOnly = Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)
+            && ! Auth::user()->hasAnyRole([RolesEnum::GMAdvisor, RolesEnum::GMManager, RolesEnum::Admin, RolesEnum::Engineering]);
+
+        if ($isPqaOnly) {
+            $data->where('bqr.pq_advisor_id', Auth::user()->id);
+        } else {
+            if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
+                // if user has advisor Role then fetch leads assigned to the user only
+                $data->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
+            }
+            $this->whereBasedOnRole($data, 'bqr', quoteTypeCode::Business);
         }
-        $this->whereBasedOnRole($data, 'bqr', quoteTypeCode::Business);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $advisors = DB::table('users as u')
@@ -165,12 +184,37 @@ class AmtController extends Controller
             ->whereIn('r.name', ['GM_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
 
+        // Fetch PQA
+        $pqas = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->where('r.name', RolesEnum::PreQualificationAdvisor)
+            ->select('u.id', 'u.name')
+            ->orderBy('u.name')
+            ->distinct()
+            ->get();
+
         // Get support users (OE role with Group Medical product access)
         $supportUsers = app(UserService::class)->getSupportUsers([
             'product_filter' => QuoteTypes::GROUP_MEDICAL,
             'include_role_in_name' => true,
             'return_format' => 'collection',
         ]);
+
+        $preQualificationAdvisors = User::activeUser()
+            ->select(
+                'users.id',
+                DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::PreQualificationAdvisor."') AS name"),
+            )
+            ->join('model_has_roles as pqa_mr', 'pqa_mr.model_id', '=', 'users.id')
+            ->join('roles as pqa_r', 'pqa_r.id', '=', 'pqa_mr.role_id')
+            ->join('pqa_lead_allocation_config as pqa_cfg', 'pqa_cfg.user_id', '=', 'users.id')
+            ->where('pqa_mr.model_type', User::class)
+            ->where('pqa_r.name', RolesEnum::PreQualificationAdvisor)
+            ->where('pqa_cfg.quote_type_id', QuoteTypes::BUSINESS->id())
+            ->orderBy('users.name')
+            ->distinct()
+            ->get();
 
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
 
@@ -245,6 +289,9 @@ class AmtController extends Controller
                 $data->whereIn('bqr.advisor_id', $request->advisor_id);
             }
         }
+        if (isset($request->pq_advisor_id) && is_array($request->pq_advisor_id)) {
+            $data->whereIn('bqr.pq_advisor_id', $request->pq_advisor_id);
+        }
 
         if (isset($request->support_user_id) && is_array($request->support_user_id) && count($request->support_user_id) > 0) {
             if (count($request->support_user_id) === 1 && $request->support_user_id[0] == '-1') {
@@ -300,6 +347,9 @@ class AmtController extends Controller
         if ($request->filled('assignment_type') && strtolower((string) $request->assignment_type) !== 'all') {
             $data->where('bqr.assignment_type', $request->assignment_type);
         }
+        if ($request->filled('pq_advisor_id')) {
+            $data->whereIn('bqr.pq_advisor_id', $request->pq_advisor_id);
+        }
 
         // Apply authorize_date filter
         if (! empty($request->authorize_date) && is_array($request->authorize_date) && count($request->authorize_date) >= 2) {
@@ -340,7 +390,10 @@ class AmtController extends Controller
             $isManagerORDeputy ||
             Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
 
-        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
+        $canAssignPreQualificationAdvisor = Auth::user()->can(PermissionsEnum::ASSIGN_GROUP_MEDICAL_PRE_QUALIFICATION_ADVISOR)
+            || Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::LeadPool]);
+
+        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport || $canAssignPreQualificationAdvisor);
         $quotes = $data->simplePaginate(15)->withQueryString();
 
         $this->postProcessAmtQuotes($quotes);
@@ -349,7 +402,33 @@ class AmtController extends Controller
         $emirates = Emirate::getActiveEmirates();
         $assignmentTypes = AssignmentTypeEnum::withLabels();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes'));
+        $groupMedicalName = QuoteTypes::GROUP_MEDICAL->value;
+        $productType = TeamTypeEnum::PRODUCT;
+
+        $preQualificationAdvisors = User::activeUser()
+            ->select(
+                'users.id',
+                DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::PreQualificationAdvisor."') AS name"),
+            )
+            ->join('model_has_roles as pqa_mr', 'pqa_mr.model_id', '=', 'users.id')
+            ->join('roles as pqa_r', 'pqa_r.id', '=', 'pqa_mr.role_id')
+            ->join('pqa_lead_allocation_config as pqa_cfg', 'pqa_cfg.user_id', '=', 'users.id')
+            ->where('pqa_mr.model_type', User::class)
+            ->where('pqa_r.name', RolesEnum::PreQualificationAdvisor)
+            ->where('pqa_cfg.quote_type_id', QuoteTypes::BUSINESS->id())
+            ->whereExists(function ($sub) use ($productType, $groupMedicalName) {
+                $sub->selectRaw('1')
+                    ->from('user_products as up_gm')
+                    ->join('teams as t_gm', 't_gm.id', '=', 'up_gm.product_id')
+                    ->whereColumn('up_gm.user_id', 'users.id')
+                    ->where('t_gm.type', $productType)
+                    ->whereRaw("UPPER(t_gm.name) = UPPER('{$groupMedicalName}')");
+            })
+            ->orderBy('users.name')
+            ->distinct()
+            ->get();
+
+        return inertia('GroupMedicalQuote/Index', compact('model', 'pqas', 'leadStatuses', 'advisors', 'supportUsers', 'canAssignClientSupport', 'canAssignLeadAdvisor', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus', 'subSources', 'emirates', 'assignmentTypes', 'canAssignPreQualificationAdvisor', 'preQualificationAdvisors'));
     }
 
     /**
@@ -387,6 +466,7 @@ class AmtController extends Controller
             'quote' => new BusinessQuote,
             'subSources' => $subSources,
             'emirates' => $emirates,
+            ...app(GroupMedicalAmtFormDropdownService::class)->formDropdownProps(),
             'leadSourceParams' => [
                 'type' => $request->input('type'),
                 'subSource' => $request->input('subSourceId'),
@@ -402,17 +482,22 @@ class AmtController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request, [
+        $request->merge([
+            'number_of_employees' => collect($request->input('categories', []))->sum(fn ($row) => (int) ($row['numberOfPeople'] ?? 0)),
+        ]);
+
+        $this->validate($request, array_merge([
             'first_name' => 'required|between:1,20',
             'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns|max:150',
             'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required|numeric|max:2147483645',
+            'number_of_employees' => 'required|numeric|min:1|max:2147483645',
             'brief_details' => 'required',
             'emirate_of_registration_id' => 'required|exists:emirates,id',
-        ]);
+        ], $this->groupMedicalAmtIntakeValidationRules()));
+
         $record = app(BusinessQuoteService::class)->saveBusinessQuote($request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
@@ -441,9 +526,16 @@ class AmtController extends Controller
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ])->load(['subSource:id,text,description', 'subSourceOption:id,text,description', 'renewalBatchModel:id,name', 'groupMedicalType:id,text,description']);
+        ])->load([
+            'subSource:id,text,description',
+            'subSourceOption:id,text,description',
+            'renewalBatchModel:id,name',
+            'groupMedicalType:id,text,description',
+            'natureOfCompanyActivity:id,text',
+            'groupMedicalCategories',
+            'businessActivity:id,name',
+        ]);
         abort_if(! $record, 404);
-
         /* Start - Temporarily adding for correcting historic data */
         (new PaymentRepository)->updatePriceVatApplicableAndVat($record, QuoteTypes::BUSINESS->value);
         /* End - Temporarily adding for correcting historic data */
@@ -457,6 +549,10 @@ class AmtController extends Controller
         $record->health_plan_type_text = ! empty($record->health_plan_type_id)
             ? (HealthPlanType::find($record->health_plan_type_id)?->text ?? null)
             : null;
+        $gmDropdownService = app(GroupMedicalAmtFormDropdownService::class);
+        $gmCategoryIntakeDisplay = $record->groupMedicalCategories->isNotEmpty()
+            ? $gmDropdownService->enrichCategoryIntakeForDisplay($record->groupMedicalCategories)
+            : $gmDropdownService->enrichCategoryIntakeFromJson($record->gm_category_intake ?? []);
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasons::getAll();
@@ -534,9 +630,15 @@ class AmtController extends Controller
         ])
             ->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
+        $pqaData = app(CRUDService::class)->getPqaAdvisorList(QuoteTypes::GROUP_MEDICAL->id())->get();
         $advisors = User::role(RolesEnum::GMAdvisor)
             ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
-            ->get();
+            ->get()
+            ->concat($pqaData);
+
+        if (auth()->user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            $quoteStatuses = array_values(QuoteStatus::whereIn('id', [QuoteStatusEnum::FollowedUp, QuoteStatusEnum::MissingDocumentsRequested, $record->quote_status_id])->get()->toArray());
+        }
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -589,34 +691,44 @@ class AmtController extends Controller
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'activities' => $activities,
             'advisors' => $advisors,
+            'gmEcommerceCopyLink' => [
+                'enabled' => app(GroupMedicalEcommerceJourneyLinkService::class)->isAdvisorCopyEnabled($record),
+            ],
+            'gmCategoryIntakeDisplay' => $gmCategoryIntakeDisplay,
         ]);
     }
-    public function checkUserHasGroupMedicalAccess($method)
-    {
 
-        $permissions = [
-            'show' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate, PermissionsEnum::GMQuotesList],
-            'edit' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate],
-            'create' => [PermissionsEnum::GMQuotesCreate],
-            'list' => [PermissionsEnum::GMQuotesList],
-        ];
-        $roles = [
-            'show' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
-            'edit' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
-            'create' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
-            'list' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
-        ];
-        if (
-            auth()->user()->canAny($permissions[$method])
-            || auth()->user()->hasAnyRole(...$roles[$method])
-            || auth()->user()->hasAnyRole(RolesEnum::Engineering, RolesEnum::Admin)
-            || auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS)
-        ) {
-            return true;
-        } else {
-            return false;
+    public function copyEcommerceJourneyLink(
+        string $uuid,
+        GroupMedicalEcommerceJourneyLinkService $groupMedicalEcommerceJourneyLinkService,
+    ): JsonResponse {
+        $quote = BusinessQuote::query()
+            ->where('uuid', $uuid)
+            ->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
+            ->first();
+
+        if (! $quote) {
+            abort(404);
         }
+
+        if (! $groupMedicalEcommerceJourneyLinkService->isAdvisorCopyEnabled($quote)) {
+            return response()->json([
+                'message' => 'Copy Link is unavailable after the lead is Transaction Approved.',
+            ], 422);
+        }
+
+        $url = $groupMedicalEcommerceJourneyLinkService->buildCustomerJourneyUrl($quote);
+        if ($url === null) {
+            return response()->json([
+                'message' => 'Group Medical ecommerce URL is not configured.',
+            ], 503);
+        }
+
+        $groupMedicalEcommerceJourneyLinkService->recordAdvisorCopyLinkAudit($quote, Auth::user());
+
+        return response()->json(['url' => $url]);
     }
+
     /**
      * Show the form for editing the specified resource.
      *
@@ -626,7 +738,7 @@ class AmtController extends Controller
     public function edit($id)
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
-        $record = BusinessQuote::with('quoteRequestEntityMapping.entity')
+        $record = BusinessQuote::with(['quoteRequestEntityMapping.entity', 'groupMedicalCategories.category'])
             ->where([['uuid', $id], ['business_type_of_insurance_id', 5]])
             ->first();
 
@@ -660,6 +772,8 @@ class AmtController extends Controller
             'emirates' => $emirates,
             'isEmirateDisabled' => true,
             'leadSourceParams' => [],
+            'categoryCount' => app(GroupMedicalQuoteCategoryService::class)->getCategoryCountByQuoteId($record->id),
+            ...app(GroupMedicalAmtFormDropdownService::class)->formDropdownProps(),
         ]);
     }
 
@@ -671,16 +785,18 @@ class AmtController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $this->validate($request, [
+        $request->merge([
+            'number_of_employees' => collect($request->input('categories', []))->sum(fn ($row) => (int) ($row['numberOfPeople'] ?? 0)),
+        ]);
+
+        $this->validate($request, array_merge([
             'first_name' => 'required|max:150',
             'last_name' => 'required|max:150',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required|numeric|max:2147483645',
+            'number_of_employees' => 'required|numeric|min:1|max:2147483645',
             'brief_details' => 'required',
-            'group_medical_type_id' => 'required',
-            'premium' => 'required',
-        ]);
+        ], $this->groupMedicalAmtIntakeValidationRules()));
         app(CRUDService::class)->updateModelByType('business', $request, $id);
 
         return redirect('medical/amt/'.$id)->with('success', 'Lead has been updated');
@@ -715,5 +831,79 @@ class AmtController extends Controller
             'is_renewal' => null,
             'business_type_of_insurance_id' => BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL,
         ]);
+    }
+
+    public function getNetworksByTpa(Request $request): JsonResponse
+    {
+        $tpaId = $request->integer('tpa_id');
+
+        if (! $tpaId) {
+            return response()->json([]);
+        }
+
+        $networks = app(GroupMedicalAmtFormDropdownService::class)->groupMedicalNetworks($tpaId);
+
+        return response()->json($networks);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function groupMedicalAmtIntakeValidationRules(): array
+    {
+        return [
+            'nature_of_company_activity_id' => ['required', 'exists:business_activities,id'],
+            'has_existing_group_health_insurance' => ['required', 'boolean'],
+            'health_plan_type_id' => ['required', 'exists:health_plan_type,id'],
+            'categories' => [
+                'required',
+                'array',
+                'max:26',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $expected = (int) request()->input('number_of_categories', 0);
+                    if (! is_array($value) || count($value) !== $expected) {
+                        $fail('People per category rows must match the number of categories.');
+                    }
+
+                    $categoryIds = array_filter(array_column($value, 'groupMedicalCategoryId'));
+                    if (count($categoryIds) !== count(array_unique($categoryIds))) {
+                        $fail('Each category can only be selected once.');
+                    }
+                },
+            ],
+            // 'categories.*.groupMedicalCategoryId' => ['required', 'integer', 'exists:group_medical_category,id'],
+            'categories.*.insuranceProviderId' => ['nullable', 'exists:insurance_provider,id'],
+            'categories.*.healthTpaId' => ['nullable', 'exists:health_third_party_administrator,id'],
+            'categories.*.healthNetworkId' => ['nullable', 'exists:health_networks,id'],
+            'categories.*.renewalDate' => ['nullable', 'date'],
+            'categories.*.numberOfPeople' => ['required', 'integer', 'min:1', 'max:2147483645'],
+        ];
+    }
+
+    public function checkUserHasGroupMedicalAccess($method)
+    {
+
+        $permissions = [
+            'show' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate, PermissionsEnum::GMQuotesList],
+            'edit' => [PermissionsEnum::GMQuotesEdit, PermissionsEnum::GMQuotesCreate],
+            'create' => [PermissionsEnum::GMQuotesCreate],
+            'list' => [PermissionsEnum::GMQuotesList],
+        ];
+        $roles = [
+            'show' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+            'edit' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+            'create' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+            'list' => [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::GMAdvisor],
+        ];
+        if (
+            auth()->user()->canAny($permissions[$method])
+            || auth()->user()->hasAnyRole(...$roles[$method])
+            || auth()->user()->hasAnyRole(RolesEnum::Engineering, RolesEnum::Admin)
+            || auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS)
+        ) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

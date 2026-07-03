@@ -245,9 +245,14 @@ class CarEmailService extends BaseService
         [$emailCampaignBanner, $emailCampaignBannerRedirectUrl] = getEmailCampaignBanner();
 
         return (object) [
+            'uniqueId' => (string) Str::ulid(),
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
+            'customerId' => $carQuote->customer_id ?? '',
+            'firstName' => $carQuote->first_name ?? '',
+            'lastName' => $carQuote->last_name ?? '',
+            'customerMobile' => $carQuote->mobile_no ?? '',
             'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
             'whatsAppNumber' => $whatsAppNumber,
             'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
@@ -448,6 +453,7 @@ class CarEmailService extends BaseService
     public function buildNBMotorFollowupEmailData($lead, $advisor, $type, $templateType = null, $pdfUrl = null)
     {
         return (object) [
+            'uniqueId' => (string) Str::ulid(),
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
             'refID' => $lead->code,
@@ -557,6 +563,7 @@ class CarEmailService extends BaseService
         $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
 
         return (object) [
+            'uniqueId' => (string) Str::ulid(),
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
             'refID' => $lead->code,
@@ -629,6 +636,7 @@ class CarEmailService extends BaseService
     private function buildAIGWorkflowData($lead, $advisor, $type, $templateType = null)
     {
         return (object) [
+            'uniqueId' => (string) Str::ulid(),
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
             'uuid' => $lead->uuid,
@@ -805,6 +813,7 @@ class CarEmailService extends BaseService
         $isFollowupExecuted = app(BirdService::class)->isFollowupExecuted($lead->uuid, QuoteTypeId::Car, QuoteFlowType::CAR_AI_ADVISOR_OCB);
 
         return (object) [
+            'uniqueId' => (string) Str::ulid(),
             'CarMake' => $lead->carMake?->text,
             'CarModel' => $lead->carModel?->text,
             'advisorId' => $advisor->id,
@@ -848,13 +857,15 @@ class CarEmailService extends BaseService
 
         // Get all failed renewal processes for the given policy numbers
         $failedPolicyNumbers = collect($failedQuotes)->unique()->values()->all();
-        $renewalManager = $renewalsManagersEmails[0] ?? null;
+        $renewalManagerEmail = $renewalsManagersEmails[0] ?? null;
+        $renewalManager = User::where('email', $renewalManagerEmail)->first();
 
         return (object) [
-            'customerId' => $renewalManager->id ?? '',
-            'firstName' => $renewalManager->name ?? '',
+            'uniqueId' => (string) Str::ulid(),
+            'customerId' => $renewalManagerEmail ?? '',
+            'firstName' => $renewalManager->name ?? 'adv',
             'lastName' => 'Adv',
-            'customerEmail' => $renewalManager->email ?? '',
+            'customerEmail' => $renewalManagerEmail ?? '',
             'customerMobile' => $renewalManager->mobile_no ?? '',
             'failedQuotes' => implode(', ', $failedPolicyNumbers),
             'quoteUID' => '', // Not used, reserved for future

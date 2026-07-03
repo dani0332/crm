@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class CyberEmailService extends BaseService
 {
@@ -75,6 +76,7 @@ class CyberEmailService extends BaseService
         $isMinor = ! empty($lead->dob) ? Carbon::parse($lead->dob)->age < 18 : false;
 
         $emailData = [
+            'uniqueId' => (string) Str::ulid(),
             'customerId' => $lead->customer_id ?? '',
             'customerMobile' => (! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : ''),
             'firstName' => $lead->first_name ?? '',

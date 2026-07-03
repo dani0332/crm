@@ -1282,7 +1282,7 @@ class CarQuoteService extends BaseService
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
 
         if (! $quoteUuId) {
-            LoggerService::warning(self::class .' - FN: getQuotePlans - CarQuote not found for UUID: '.$id);
+            LoggerService::warning(self::class.' - FN: getQuotePlans - CarQuote not found for UUID: '.$id);
 
             return 'Quote Not Found!';
         }
