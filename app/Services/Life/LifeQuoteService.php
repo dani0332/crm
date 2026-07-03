@@ -881,7 +881,7 @@ class LifeQuoteService extends BaseService
     {
         return LifeRiderOption::active()
             ->where('plan_id', $planId)
-            ->select('id', 'rider_id', 'plan_id')
+            ->select('id', 'rider_id', 'plan_id', 'code')
             ->with(['currencyCoverages' => function ($query) {
                 $query->select('life_rider_option_id', 'min_cover', 'max_cover', 'currency_id');
             }])
