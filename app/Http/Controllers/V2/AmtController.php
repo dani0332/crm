@@ -630,9 +630,11 @@ class AmtController extends Controller
         ])
             ->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
+        $pqaData = app(CRUDService::class)->getPqaAdvisorList(QuoteTypes::GROUP_MEDICAL->id())->get();
         $advisors = User::role(RolesEnum::GMAdvisor)
             ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
-            ->get();
+            ->get()
+            ->concat($pqaData);
 
         if (auth()->user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
             $quoteStatuses = array_values(QuoteStatus::whereIn('id', [QuoteStatusEnum::FollowedUp, QuoteStatusEnum::MissingDocumentsRequested, $record->quote_status_id])->get()->toArray());
