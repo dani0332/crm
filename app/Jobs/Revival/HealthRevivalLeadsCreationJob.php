@@ -12,6 +12,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RelationCodeEnum;
 use App\Enums\SalaryBandEnum;
+use App\Enums\VisaCategoryEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
@@ -89,6 +90,11 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue
                 $memberCategoryId = $this->lead->member_category_id;
                 $visaCategoryId = $this->lead->visa_category_id;
 
+                if ($coverForId != HealthCoverForEnum::DOMESTIC_HELPER->value) {
+                    $salaryBandId = null;
+                    $visaCategoryId = VisaCategoryEnum::EMPLOYMENT->value;
+                }
+
             } else {
 
                 // update following data for non-migrated
@@ -100,8 +106,8 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue
 
                 // create policyholder member data for non-migrated
                 $gender = $this->mutator->getGender($this->lead);
-                $salaryBandId = $this->mutator->getSalaryBandId($this->lead);
-                $visaCategoryId = $this->mutator->getVisaCategoryId($this->lead);
+                $salaryBandId = $this->mutator->getSalaryBandId($this->lead, $coverForId != HealthCoverForEnum::DOMESTIC_HELPER->value);
+                $visaCategoryId = $this->mutator->getVisaCategoryId($this->lead, $coverForId != HealthCoverForEnum::DOMESTIC_HELPER->value);
                 $memberCategoryId = $this->mutator->getMemberCategoryId($this->lead);
             }
 

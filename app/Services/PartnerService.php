@@ -28,6 +28,13 @@ class PartnerService
             ->hasActiveProviderWithPlan($providerId, $quoteTypeId, $planId)
             ->first();
 
+        LoggerService::info('PartnerService - Checking if partner is active', extra: [
+            'partnerCode' => $partnerCode,
+            'quoteTypeId' => $quoteTypeId,
+            'providerId' => $providerId,
+            'planId' => $planId,
+        ]);
+
         return $partner ?? false;
     }
 
@@ -56,7 +63,7 @@ class PartnerService
         return [
             'quote' => $quote,
             'insuranceProvider' => $insuranceProvider,
-            'partnerEmail' => $partner->email,
+            'partnerName' => $partner->name,
         ];
     }
 
@@ -99,7 +106,7 @@ class PartnerService
             return;
         }
 
-        PartnerPolicyDocumentJob::dispatch($filteredDocuments, $validation['partnerEmail'], $quote->uuid, $quoteType->id());
+        PartnerPolicyDocumentJob::dispatch($filteredDocuments, $validation['partnerName'], $quote->uuid, $quoteType->id());
     }
 
     /**

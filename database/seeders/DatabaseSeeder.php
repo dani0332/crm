@@ -31,11 +31,15 @@ class DatabaseSeeder extends Seeder
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
             DocumentTypesSeeder::class,
+            GroupMedicalLeadDocumentTypesSeeder::class,
             // CommercialCarPlanSeeder::class,
             // RuleNameSeeder::class,
             // BusinessActivitiesSeeder::class,
             // PaymentMethodsAddSeeder::class,
             PermissionSeeder::class,
+            GroupMedicalQuoteCopyLinkPermissionSeeder::class,
+            PqaLeadAllocationPermissionSeeder::class,
+            PqaGroupMedicalQuotesListPermissionSeeder::class,
             // AiAdvisorSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
             // CarAdditionalDetailsForLivaSeeder::class,
@@ -45,6 +49,7 @@ class DatabaseSeeder extends Seeder
             AutomationSeeder::class,
             TravelLeadAllocationDashboardSeeder::class,
             ManagerLeadAllocationRoleSeeder::class,
+
             VehicleColorSeeder::class,
             SendUpdateNotesSeeder::class,
             NonApiInsurerVehicleColorSeeder::class,
@@ -54,6 +59,7 @@ class DatabaseSeeder extends Seeder
             CarAdditionalDetailsForSukoonSeeder::class,
             QICTokioLookupSeeder::class,
             DeviceQuoteSeeder::class,
+            ActivateTravelDicDocumentTypesSeeder::class,
             DocRequiredForPolicySendSeeder::class,
             SendUpdateSeederForCyber::class,
             BranchSeeder::class,
@@ -64,6 +70,10 @@ class DatabaseSeeder extends Seeder
             HealthNationalityGroupSeeder::class,
             CanonicalNationalitySeeder::class,
             HealthGroupNationalitySeeder::class,*/
+            HealthPlanRatesStatusVersionSeeder::class,
+            SplitHealthRatesGenderMaritalStatusSeeder::class,
+            MakeGenderMaritalStatusUppercase::class,
+            // ReverseSplitHealthRatesGenderMaritalStatusSeeder::class, This is for reversal of SplitHealthRatesGenderMaritalStatusSeeder
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
             PartnerSeeder::class,
@@ -75,6 +85,8 @@ class DatabaseSeeder extends Seeder
             VisaCategorySeeder::class,
             SalaryBandSeeder::class,
             MaritalStatusSeeder::class,
+            PqaLeadAllocationPermissionSeeder::class,
+            EAModelRolePermissionSeeder::class,
         ]);
     }
 }

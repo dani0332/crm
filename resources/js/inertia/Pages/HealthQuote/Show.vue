@@ -85,6 +85,7 @@ const props = defineProps({
   },
   archivedDocuments: Array,
   visaCategoryOptions: Array,
+  allVisaCategoryOptions: Array,
   policyHolderCategoryOptions: Array,
   insureCodeOptions: Array,
   policyHolderOptions: Array,
@@ -473,6 +474,13 @@ const visaCategorySelect = computed(() => {
       value: item.id,
       label: item.text,
     }));
+});
+
+const allVisaCategorySelect = computed(() => {
+  return (page.props.allVisaCategoryOptions ?? []).map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
 });
 
 const onTeamAssign = () => {
@@ -1613,6 +1621,23 @@ onMounted(() => {
   isMounted.value = true;
 
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  if (isMigrated.value) {
+    const policyHolder = members.value.find(
+      m => m.is_policy_holder == 1 && m.is_insured == 1,
+    );
+    if (policyHolder) {
+      const quoteSalaryMissing = page.props.quote.salary_band_id === null;
+      const memberSalaryMissing = policyHolder.salary_band_id === null;
+      if (quoteSalaryMissing || memberSalaryMissing) {
+        notification.error({
+          title:
+            'Salary band information is missing for the insured policyholder. Please fill in the missing customer details to recalculate the plans.',
+          position: 'top',
+        });
+      }
+    }
+  }
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1992,7 +2017,8 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
       v-if="
         (!$page.props.can.isAdvisor ||
           hasRole(rolesEnum.SuperManagerLeadAllocation)) &&
-        !can(permissionsEnum.VIEW_ALL_LEADS)
+        !can(permissionsEnum.VIEW_ALL_LEADS) &&
+        !hasRole(rolesEnum.PreQualificationAdvisor)
       "
       class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
     >
@@ -2127,6 +2153,10 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                     {{ hasAgeSixtyAndAbove ? 'Yes' : 'No' }}
                   </x-tag>
                 </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRE-QUALIFICATION ADVISOR</dt>
+                <dd>{{ quote.preQualificationAdvisor?.name ?? '—' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -2600,7 +2630,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dt class="font-medium">VISA CATEGORY</dt>
                   <dd>
                     {{
-                      page.props.visaCategoryOptions.find(
+                      page.props.allVisaCategoryOptions.find(
                         option => option.id === quote.visa_category_id,
                       )?.text ?? '-'
                     }}
@@ -2869,6 +2899,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
         }))
       "
       :visaCategoryOptions="visaCategorySelect"
+      :allVisaCategoryOptions="allVisaCategorySelect"
       :includePolicyHolder="isIncludePolicyholder"
       :coverForId="quote.cover_for_id"
       :healthInsureCode="quote.insure_code"
@@ -3234,6 +3265,30 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
           </div>
         </template>
       </Collapsible>
+
+      <EALeadInfo
+        :source="quote.source"
+        :ea-model="quote.ea_model"
+        :lead-generator="quote.lead_generator"
+        :expert-advisor="quote.expert_advisor"
+      />
+
+      <EAApprovalActions
+        quote-type="health"
+        :quote-id="quote.id"
+        :source="quote.source"
+        :ea-model="quote.ea_model"
+        :quote-status-id="quote.quote_status_id"
+        :advisor-id="quote.advisor_id"
+        :expert-advisor-id="quote.expert_advisor_id"
+        :ea-assigned-advisor-approved-at="quote.ea_assigned_advisor_approved_at"
+        :ea-expert-advisor-approved-at="quote.ea_expert_advisor_approved_at"
+        :ea-assigned-advisor-rejected-at="quote.ea_assigned_advisor_rejected_at"
+        :ea-expert-advisor-rejected-at="quote.ea_expert_advisor_rejected_at"
+        :ea-manager-approved-at="quote.ea_manager_approved_at"
+        :ea-manager-rejected-at="quote.ea_manager_rejected_at"
+        @updated="$inertia.reload({ only: ['quote'] })"
+      />
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -4204,6 +4259,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
     />
 
     <HealthRoutingLogs type="ROUTING" :quoteRequestId="$page.props.quote.id" />
+    <HealthPricingLogs :quoteRequestId="$page.props.quote.id" />
 
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"

@@ -81,6 +81,9 @@ class TravelQuoteService extends BaseService
             'tqr.paid_at',
             'tqr.payment_paid_at',
             'tqr.source',
+            'tqr.ea_model',
+            'tqr.lead_generator_id',
+            'tqr.expert_advisor_id',
             'tqr.policy_number',
             'tqr.nationality_id',
             'n.TEXT AS nationality_id_text',
@@ -209,6 +212,7 @@ class TravelQuoteService extends BaseService
             'b.name as lead_branch_name',
             'b.id as lead_branch_id',
             'tqr.is_branch_applicable',
+            'tqr.quote_status_date',
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -292,7 +296,7 @@ class TravelQuoteService extends BaseService
     public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest): array
     {
         $message = '';
-        $requiredProperty = collect(['first_name', 'dob', 'nationality_id', 'passport']);
+        $requiredProperty = collect(['first_name', 'dob', 'nationality_id']);
 
         $missingDetails = [];
         foreach ($requiredProperty as $value) {
@@ -305,6 +309,10 @@ class TravelQuoteService extends BaseService
                 };
                 array_push($missingDetails, ucwords($propertyName));
             }
+        }
+
+        if (($travelQuoteRequest['id_type'] ?? null) === 'passport' && empty($travelQuoteRequest['id_number'])) {
+            $missingDetails[] = 'Passport';
         }
 
         $missingDetailCount = count($missingDetails);
@@ -328,7 +336,7 @@ class TravelQuoteService extends BaseService
             'nationalityId' => $request->nationality_id,
             'destinationIds' => $request->destination_ids ?? [],
             'tripStarted' => ($request->has_arrived_uae == '1' || $request->has_arrived_destination == '1') ? 1 : 0,
-            'source' => config('constants.SOURCE_NAME'),
+            'source' => $request->lead_type === 'expert_advisor_model' ? LeadSourceEnum::EA_IMCRM : config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'departureCountryId' => $request->departure_country_id ?? null,
             // Sub-source fields from CreateLeadModal

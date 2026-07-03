@@ -3,7 +3,9 @@
 namespace App\Pipes\Allocation\Car;
 
 use App\Enums\CarRegistrationType;
+use App\Enums\EaModelEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\RuleEnum;
@@ -52,7 +54,11 @@ trait Carable
                 },
             )
             ->activeUser()
-            ->when($this->allocationRequest->getReAssigFromAdvisorId(), fn ($q) => $q->where('user_id', '!=', $this->allocationRequest->getReAssigFromAdvisorId()));
+            ->when($this->allocationRequest->getReAssigFromAdvisorId(), fn ($q) => $q->where('user_id', '!=', $this->allocationRequest->getReAssigFromAdvisorId()))
+            ->when(
+                $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === EaModelEnum::Referral,
+                fn ($q) => $q->whereHas('leadAllocationUser', fn ($uq) => $uq->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedReferralAdvisor)))
+            );
     }
 
     private function getRulesForLeadSource($lead)

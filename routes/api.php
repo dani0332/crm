@@ -3,6 +3,9 @@
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\EpCancellationCallbackController;
+use App\Http\Controllers\API\HealthPlanController;
+use App\Http\Controllers\API\HealthRateControlController;
+use App\Http\Controllers\API\HealthRateController;
 use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
@@ -107,6 +110,17 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     // !! Do not remove this route, it is used for debugging purposes and do not enable it in production without approval from the team !!.
     // Route::post('/imcrm/re-trigger-revival-followups', [ApiController::class, 'reTriggerRevivalFollowups'])->name('reTriggerRevivalFollowups');
     Route::post('/imcrm/re-trigger-revival-followups-with-date', [ApiController::class, 'reTriggerRevivalFollowupsWithDate'])->name('reTriggerRevivalFollowupsWithDate');
+
+    // amt
+    Route::post('amt/quotes/{quoteType}/documents/census-list-excel', [QuoteDocumentController::class, 'storeCensusListExcel']);
+
+    // pre qualification advisor allocation
+    Route::post('/imcrm/pqa-allocation', [ApiController::class, 'preQualificationAdvisorAllocation'])->name('preQualificationAdvisorAllocation');
+    // pre qualification advisor allocation
+    Route::prefix('pqa')->group(function () {
+        Route::post('/allocation', [ApiController::class, 'preQualificationAdvisorAllocation'])->name('preQualificationAdvisorAllocation');
+    });
+
 });
 
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads'])->name('assign-leads');
@@ -170,11 +184,31 @@ Route::prefix('v1')->group(function () {
     Route::get('/claim-documents', [QuoteDocumentController::class, 'getClaimDocuments']);
 
     Route::post('/imcrm/update-revival-lead-source', [ApiController::class, 'updateRevivalLeadSource'])->name('updateRevivalLeadSource');
+    Route::post('/imcrm/travel/retrigger-aml-screening', [AMLController::class, 'retriggerTravelAmlScreening'])->name('api.imcrm.travel.retrigger-aml-screening');
 });
 
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
+
+// Cms Api Routes
+Route::prefix('cms')->middleware(['basicAuth'])->group(function () {
+    Route::group(['prefix' => 'health-plans'], function () {
+        Route::post('/', [HealthPlanController::class, 'create']);
+        Route::put('/{id}', [HealthPlanController::class, 'update']);
+        Route::get('/get-status-versions/{parentId}/{status}', [HealthPlanController::class, 'getStatusVersions']);
+        Route::delete('/{id}', [HealthPlanController::class, 'delete']);
+        Route::post('/publish/{id}', [HealthPlanController::class, 'publish']);
+    });
+
+    Route::prefix('health-rates')->group(function () {
+        Route::post('/', [HealthRateController::class, 'create']);
+        Route::put('/{id}', [HealthRateController::class, 'update']);
+        Route::delete('/{id}', [HealthRateController::class, 'delete']);
+        Route::delete('/sheet/{id}', [HealthRateControlController::class, 'delete']);
+        Route::post('/publish/{id}', [HealthRateController::class, 'publish']);
+    });
+});
 
 Route::get('/heath-check', function () {
     return response()->json(['success' => true]);

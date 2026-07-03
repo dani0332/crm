@@ -11,4 +11,8 @@ enum VisaCategoryEnum: int
     case NEWBORN_BORN_IN_UAE = 5;
     case DOMESTIC_WORKER_VISA_FOR_UAE_NATIONALS = 6;
     case DOMESTIC_WORKER_VISA_FOR_NON_UAE_NATIONALS = 7;
+    case DEPENDENT_FAMILY = 8;
+    case EMPLOYMENT = 9;
+    case STUDENT = 10;
+    case RETIREE = 11;
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EaModelCast;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmirateEnum;
@@ -18,6 +19,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\TeamNameEnum;
 use App\Events\QuoteEmailUpdated;
 use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
@@ -32,6 +34,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -43,6 +46,9 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait, SpatieActivityLog, TransformsAuditables;
 
+    protected $casts = [
+        'ea_model' => EaModelCast::class,
+    ];
     protected $appends = [
         'insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted',
         'pc_qualified_formatted', 'has_pec_tag', 'signatory_text', 'uae_pass_api_status_text', 'is_migrated',
@@ -227,6 +233,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(User::class, 'support_user_id');
     }
 
+    public function preQualificationAdvisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pq_advisor_id', 'id');
+    }
+
     public function getFullNameAttribute()
     {
         return $this->first_name.' '.$this->last_name;
@@ -358,17 +369,27 @@ class HealthQuote extends Model implements AuditableContract
 
     public function isValueLead()
     {
-        return $this->health_team_type === HealthTeamType::RM_SPEED;
+        return $this->health_team_type === HealthTeamType::RM_SPEED || $this->notional_team === TeamNameEnum::RM_SPEED;
     }
 
     public function isVolumeLead()
     {
-        return $this->health_team_type === HealthTeamType::EBP;
+        return $this->health_team_type === HealthTeamType::EBP || $this->notional_team === TeamNameEnum::EBP;
     }
 
     public function previousAdvisor()
     {
         return $this->belongsTo(User::class, 'previous_advisor_id');
+    }
+
+    public function leadGenerator()
+    {
+        return $this->hasOne(User::class, 'id', 'lead_generator_id')->select(['id', 'email', 'name']);
+    }
+
+    public function expertAdvisor()
+    {
+        return $this->hasOne(User::class, 'id', 'expert_advisor_id')->select(['id', 'email', 'name', 'mobile_no']);
     }
 
     public function dependentMembers()

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BikePlanType;
+use App\Enums\EaModelEnum;
 use App\Enums\InsuranceProviderEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
@@ -45,12 +46,14 @@ class BikeAllocationService extends AllocationService
     protected bool $hasNationalityConfig = false;
     protected array $advisorIDs = [];
     protected array $excludedAdvisorIds = [];
+    protected $lead = null;
 
     protected function resetProps(): void
     {
         $this->hasNationalityConfig = false;
         $this->advisorIDs = [];
         $this->excludedAdvisorIds = [];
+        $this->lead = null;
     }
 
     public function fetchLead($quoteId, $overrideAdvisorId)
@@ -73,7 +76,14 @@ class BikeAllocationService extends AllocationService
             ->whereNotIn('source', $exemptedLeadSources);
 
         if (! $overrideAdvisorId) {
-            $bikeQuoteQuery->whereNull('advisor_id');
+            $bikeQuoteQuery->where(function ($q) {
+                $q->whereNull('advisor_id')
+                    ->orWhere(function ($sq) {
+                        $sq->where('source', LeadSourceEnum::EA_IMCRM)
+                            ->where('ea_model', EaModelEnum::Collaborate->value)
+                            ->whereNull('expert_advisor_id');
+                    });
+            });
         }
 
         return $bikeQuoteQuery->first();
@@ -286,6 +296,7 @@ class BikeAllocationService extends AllocationService
     public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $bikeLead)
     {
         $this->resetProps();
+        $this->lead = $bikeLead;
 
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
         LoggerService::info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
@@ -339,7 +350,24 @@ class BikeAllocationService extends AllocationService
                     }
                 },
             )
+            ->when(
+                $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === EaModelEnum::Collaborate,
+                fn ($q) => $q->whereHas('leadAllocationUser', fn ($uq) => $uq->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedExpertAdvisor)))
+            )
+            ->when(
+                $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === EaModelEnum::Referral,
+                fn ($q) => $q->whereHas('leadAllocationUser', fn ($uq) => $uq->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedReferralAdvisor)))
+            )
             ->orderBy('last_allocated');
+
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - getAdvisorsByStatus: EA_IMCRM lead, filtering advisor pool by permission', extra: [
+                'ea_model' => $this->lead->ea_model?->value,
+                'permission' => $this->lead->ea_model === EaModelEnum::Collaborate
+                    ? PermissionsEnum::AssignedExpertAdvisor
+                    : PermissionsEnum::AssignedReferralAdvisor,
+            ]);
+        }
 
         // Exclude a specific advisor if an advisor ID is provided.
         if (! empty($advisorId)) {
@@ -503,6 +531,18 @@ class BikeAllocationService extends AllocationService
     {
         LoggerService::info('About to assign bike lead to user with ID: '.$userId);
 
+        $isEACollaborate = $lead->source === LeadSourceEnum::EA_IMCRM
+            && $lead->ea_model === EaModelEnum::Collaborate;
+
+        if ($lead->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - processLeadAssignment: EA_IMCRM lead assignment', extra: [
+                'uuid' => $lead->uuid ?? null,
+                'ea_model' => $lead->ea_model?->value,
+                'assigning_to' => $isEACollaborate ? 'expert_advisor_id' : 'advisor_id',
+                'advisor_id' => $userId,
+            ]);
+        }
+
         // Store the previous Assignment Type
         $previousAssignmentType = $lead->assignment_type;
 
@@ -535,12 +575,23 @@ class BikeAllocationService extends AllocationService
             LoggerService::info('Was previously assigned to User ID: '.$lead->advisor_id.' and is now being assigned to User ID: '.$userId);
         }
 
+        $isEACollaborate = $lead->source === LeadSourceEnum::EA_IMCRM
+            && $lead->ea_model === EaModelEnum::Collaborate;
+
         // Update lead properties.
         $lead->tier_id = $tier->id;
-        $lead->advisor_id = $userId;
         $lead->cost_per_lead = $tier->cost_per_lead;
         $lead->auto_assigned = true;
-        $lead->assignment_type = $assignmentType;
+        if ($isEACollaborate) {
+            LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: EA Collaborate model, assigning to expert_advisor_id', extra: [
+                'expert_advisor_id' => $userId,
+                'ea_model' => $lead->ea_model?->value,
+            ]);
+            $lead->expert_advisor_id = $userId;
+        } else {
+            $lead->advisor_id = $userId;
+            $lead->assignment_type = $assignmentType;
+        }
 
         LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Checking lead_assignment_trigger', extra: [
             'current_value' => $lead->lead_assignment_trigger ?? 'null',

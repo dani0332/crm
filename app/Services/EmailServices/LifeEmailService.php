@@ -2,28 +2,23 @@
 
 namespace App\Services\EmailServices;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
-use App\Models\ApplicationStorage;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\BaseService;
-use App\Services\BirdService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class LifeEmailService extends BaseService
 {
     public function sendFICEmail(PersonalQuote $personalQuote)
     {
-
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::FIC_LIFE_EMAIL)->first();
-
         LoggerService::info('| sendFICEmail - Initiating process');
 
         if ($personalQuote->isSuppressIntroEmail()) {
@@ -32,56 +27,48 @@ class LifeEmailService extends BaseService
             return;
         }
 
-        if ($workflowUrl && ! empty($workflowUrl->value)) {
-            // Fetch the advisor
-            $advisor = User::find($personalQuote->advisor_id);
-            if (! $advisor) {
-                LoggerService::info('sendFICEmail - Advisor not found');
-            }
-            $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_FIC_EMAIL);
+        $advisor = User::find($personalQuote->advisor_id);
+        if (! $advisor) {
+            LoggerService::info('sendFICEmail - Advisor not found');
+        }
 
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-            if ($response && $response->status_code === 200) {
-                LoggerService::info('sendFICEmail - Successfully triggered event');
-            } else {
-                LoggerService::info("sendFICEmail - Error triggering event having response status code: {$response?->status_code}");
-            }
-            $plansData = $this->checkPlans($personalQuote->uuid);
-            // Optimize plan status checks and logging for clarity and maintainability
-            if (! empty($plansData['hasError'])) {
-                LoggerService::warning(
-                    "sendFICEmail - Error checking plans: {$plansData['errorMessage']}, keeping lead status as NewLead"
-                );
+        $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_FIC_EMAIL);
 
-                return;
-            }
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::LIFE_FIC_EMAIL, (array) $emailData);
+        LoggerService::info('sendFICEmail - Successfully triggered WebEngage event');
 
-            $totalPlans = (int) ($plansData['totalNumberOfPlans'] ?? 0);
-            $hiddenPlans = (int) ($plansData['totalNumberOfHiddenPlans'] ?? 0);
+        app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::LIFE_FIC_EMAIL->value, QuoteTypes::LIFE->id());
 
-            if ($totalPlans === 0) {
-                LoggerService::info('sendFICEmail - No plans found, lead status remains NewLead');
+        $plansData = $this->checkPlans($personalQuote->uuid);
+        if (! empty($plansData['hasError'])) {
+            LoggerService::warning(
+                "sendFICEmail - Error checking plans: {$plansData['errorMessage']}, keeping lead status as NewLead"
+            );
 
-                return;
-            }
+            return;
+        }
 
-            if ($hiddenPlans === $totalPlans) {
-                LoggerService::info('sendFICEmail - All plans are hidden, lead status remains NewLead');
+        $totalPlans = (int) ($plansData['totalNumberOfPlans'] ?? 0);
+        $hiddenPlans = (int) ($plansData['totalNumberOfHiddenPlans'] ?? 0);
 
-                return;
-            }
+        if ($totalPlans === 0) {
+            LoggerService::info('sendFICEmail - No plans found, lead status remains NewLead');
 
-            if ($personalQuote->quote_status_id == QuoteStatusEnum::NewLead) {
-                $personalQuote->quote_status_id = QuoteStatusEnum::Quoted;
-                $personalQuote->save();
-                LifeQuote::where('uuid', $personalQuote->uuid)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
+            return;
+        }
 
-            } else {
-                LoggerService::info("sendFICEmail - Quote status is not new lead for quote: {$personalQuote->uuid}");
-            }
+        if ($hiddenPlans === $totalPlans) {
+            LoggerService::info('sendFICEmail - All plans are hidden, lead status remains NewLead');
 
+            return;
+        }
+
+        if ($personalQuote->quote_status_id == QuoteStatusEnum::NewLead) {
+            $personalQuote->quote_status_id = QuoteStatusEnum::Quoted;
+            $personalQuote->save();
+            LifeQuote::where('uuid', $personalQuote->uuid)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
         } else {
-            LoggerService::info(self::class.' - FIC Life Email is not set');
+            LoggerService::info("sendFICEmail - Quote status is not new lead for quote: {$personalQuote->uuid}");
         }
     }
 
@@ -89,11 +76,15 @@ class LifeEmailService extends BaseService
     {
         $data = [
             // Lead-related data
+            'uniqueId' => (string) Str::ulid(),
+            'customerId' => $lead->customer_id ?? $lead->email,
+            'firstName' => $lead->first_name ?? '',
+            'lastName' => $lead->last_name ?? '',
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
             'customerFullName' => trim("{$lead->first_name} {$lead->last_name}"),
             'refID' => $lead->code,
-            'customerMobile' => $lead->mobile_no ?? '',
+            'customerMobile' => ! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : '',
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::LIFE, $lead->uuid),
             // Advisor-related data
             'advisorId' => $advisor?->id,
@@ -112,9 +103,9 @@ class LifeEmailService extends BaseService
         return (object) $data;
     }
 
-    public function sendEmailAdvanceBirthdayWishToCustomer(PersonalQuote $personalQuote, $emailData, $workflowUrl)
+    public function sendEmailAdvanceBirthdayWishToCustomer(PersonalQuote $personalQuote, $emailData)
     {
-        $isFollowupExecuted = app(BirdService::class)
+        $isFollowupExecuted = app(WebEngageService::class)
             ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::LIFE->id(), QuoteFlowType::LIFE_ADVANCE_BIRTHDAY_WISH->value);
 
         if ($isFollowupExecuted) {
@@ -143,11 +134,12 @@ class LifeEmailService extends BaseService
 
             $emailData->workflowType = WorkflowTypeEnum::LIFE_ADVANCE_BIRTHDAY_WISH_EMAIL;
             $emailData = array_merge((array) $emailData, $notifyBirthdayDate);
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
 
-            if ($response && $response->status_code === 200) {
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::LIFE_ADVANCE_BIRTHDAY_WISH_EMAIL, (array) $emailData);
+
+            if ($response && $response->status_code) {
                 LoggerService::info('sendEmailAdvanceBirthdayWishToCustomer - Successfully triggered event');
-                app(BirdService::class)->createQuoteWorkFlowDetails($personalQuote, $response, QuoteFlowType::LIFE_ADVANCE_BIRTHDAY_WISH->value, QuoteTypes::LIFE->id());
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::LIFE_ADVANCE_BIRTHDAY_WISH->value, QuoteTypes::LIFE->id());
 
             } else {
                 LoggerService::info("sendEmailAdvanceBirthdayWishToCustomer - Error triggering event having response status code: {$response?->status_code}");
@@ -157,9 +149,9 @@ class LifeEmailService extends BaseService
         }
     }
 
-    public function sendEmailBirthdayWishToCustomer(PersonalQuote $personalQuote, $emailData, $workflowUrl)
+    public function sendEmailBirthdayWishToCustomer(PersonalQuote $personalQuote, $emailData)
     {
-        $isFollowupExecuted = app(BirdService::class)
+        $isFollowupExecuted = app(WebEngageService::class)
             ->isFollowupExecuted($personalQuote->uuid, QuoteTypes::LIFE->id(), QuoteFlowType::LIFE_BIRTHDAY_WISH->value);
 
         if ($isFollowupExecuted) {
@@ -187,11 +179,12 @@ class LifeEmailService extends BaseService
             ];
             $emailData->workflowType = WorkflowTypeEnum::LIFE_BIRTHDAY_WISH_EMAIL;
             $emailData = array_merge((array) $emailData, $notifyBirthdayDate);
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::LIFE_BIRTHDAY_WISH_EMAIL, (array) $emailData);
 
-            if ($response && $response->status_code === 200) {
+            if ($response && $response->status_code) {
                 LoggerService::info('sendEmailBirthdayWishToCustomer - Successfully triggered event');
-                app(BirdService::class)->createQuoteWorkFlowDetails($personalQuote, $response, QuoteFlowType::LIFE_BIRTHDAY_WISH->value, QuoteTypes::LIFE->id());
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::LIFE_BIRTHDAY_WISH->value, QuoteTypes::LIFE->id());
+
             } else {
                 LoggerService::info("sendEmailBirthdayWishToCustomer - Error triggering event having response status code: {$response?->status_code}");
             }
@@ -202,30 +195,24 @@ class LifeEmailService extends BaseService
 
     public function sendAutomatedLifeFollowup(PersonalQuote $personalQuote)
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::FIC_LIFE_EMAIL)->first();
 
         LoggerService::info('| sendAutomatedLifeFollowup - Initiating process');
+        // Fetch the advisor
+        $advisor = User::find($personalQuote->advisor_id);
+        if (! $advisor) {
+            LoggerService::info("sendAutomatedLifeFollowup - Advisor not found for quote: {$personalQuote->uuid}");
+        }
+        $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_AUTOMATED_FOLLOWUPS);
+        $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::LIFE_AUTOMATED_FOLLOWUPS, (array) $emailData);
 
-        if ($workflowUrl && ! empty($workflowUrl->value)) {
-            // Fetch the advisor
-            $advisor = User::find($personalQuote->advisor_id);
-            if (! $advisor) {
-                LoggerService::info("sendAutomatedLifeFollowup - Advisor not found for quote: {$personalQuote->uuid}");
-            }
-            $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_AUTOMATED_FOLLOWUPS);
+        $this->sendEmailAdvanceBirthdayWishToCustomer($personalQuote, $emailData);
+        $this->sendEmailBirthdayWishToCustomer($personalQuote, $emailData);
 
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-            $this->sendEmailAdvanceBirthdayWishToCustomer($personalQuote, $emailData, $workflowUrl->value);
-            $this->sendEmailBirthdayWishToCustomer($personalQuote, $emailData, $workflowUrl->value);
-
-            if ($response && $response->status_code === 200) {
-                LoggerService::info("sendAutomatedLifeFollowup - Successfully triggered event for quote: {$personalQuote->uuid}");
-                app(BirdService::class)->createQuoteWorkFlowDetails($personalQuote, $response, QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS->value, QuoteTypes::LIFE->id());
-            } else {
-                LoggerService::info("sendAutomatedLifeFollowup - Error triggering event having response status code: {$response?->status_code}");
-            }
+        if ($response && $response->status_code) {
+            LoggerService::info("sendAutomatedLifeFollowup - Successfully triggered event for quote: {$personalQuote->uuid}");
+            app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::LIFE_AUTOMATED_FOLLOWUPS->value, QuoteTypes::LIFE->id());
         } else {
-            LoggerService::info(self::class." - Automated Life Followup is not set workflow url not found for quote: {$personalQuote->uuid}");
+            LoggerService::info("sendAutomatedLifeFollowup - Error triggering event having response status code: {$response?->status_code}");
         }
     }
     private function checkPlans(string $quoteUID): array

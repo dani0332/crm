@@ -9,6 +9,13 @@ class PartnerSchema
     public function register(): void
     {
         SchemaUtils::ensureTables([
+            'car_model_detail' => function (Blueprint $table) {
+                $table->id();
+                $table->string('text')->nullable();
+                $table->unsignedBigInteger('car_model_id')->nullable();
+                $table->boolean('is_active')->default(1);
+                $table->timestamps();
+            },
             'vehicle_type' => function (Blueprint $table) {
                 $table->id();
                 $table->string('text')->nullable();

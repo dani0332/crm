@@ -121,6 +121,14 @@ function onSubmit(isValid) {
       ? route('jetski-quotes-update', props.quote.uuid)
       : route('jetski-quotes-store');
 
+    if (
+      !editMode.value &&
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
+    ) {
+      url += '?ea_model=collaborate';
+    }
+
     quoteForm.clearErrors();
     quoteForm.submit(method, url, {
       onError: errors => {

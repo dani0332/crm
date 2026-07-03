@@ -13,9 +13,9 @@ use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\QuoteBatches;
-use App\Services\BirdService;
 use App\Services\CarRevivalService;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
@@ -171,64 +171,43 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
 
                 $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildDttRevivalBirdEmailPayload($carQuote, $previousAdvisor);
                 $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_OCB;
-                // Shifted to Bird Workflow, previous it was using Brevo
-                $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW)->first();
 
-                if (! $workflowUrl || empty($workflowUrl->value)) {
-                    LoggerService::warning(self::class.': MOTOR_REVIVAL_WORKFLOW URL missing in CMS (OCB not sent)', [
+                app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::MOTOR_REVIVAL_OCB, (array) $emailData);
+
+                app(CarRevivalService::class)->markRevivalCommsTriggered($revivalCarQuoteUUID);
+
+                // Get the latest quote batch and assign it to the lead.
+                $quoteBatch = QuoteBatches::latest()->first();
+
+                $dttRevival = DttRevival::create([
+                    'quote_type_id' => QuoteTypes::CAR->id(),
+                    'quote_id' => $carQuote->id,
+                    'uuid' => $revivalCarQuoteUUID,
+                    'revival_quote_batch_id' => $quoteBatch->id,
+                    'email_sent' => true,
+                ]);
+
+                CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($carQuote->uuid, QuoteFlowType::MOTOR_REVIVAL_OCB->value, (int) QuoteTypes::CAR->id());
+
+                if (app(WebEngageService::class)->isFollowupExecuted($revivalCarQuoteUUID, (int) QuoteTypes::CAR->id(), QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP->value)) {
+                    LoggerService::info(self::class.': follow-up email already executed', [
                         'flow' => self::LOG_FLOW,
+                        'dtt_revival_id' => $dttRevival->id,
                         'parent_lead_uuid' => $this->lead->uuid,
                         'child_quote_uuid' => $revivalCarQuoteUUID,
                     ]);
-                    $response = (object) ['status_code' => 0];
                 } else {
+                    $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP;
 
-                    $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-                }
+                    CarRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailData)->delay(now()->addMinutes(10));
 
-                if (in_array($response->status_code, [201, 200])) {
-                    app(CarRevivalService::class)->markRevivalCommsTriggered($revivalCarQuoteUUID);
-
-                    // Get the latest quote batch and assign it to the lead.
-                    $quoteBatch = QuoteBatches::latest()->first();
-
-                    $dttRevival = DttRevival::create([
-                        'quote_type_id' => QuoteTypes::CAR->id(),
-                        'quote_id' => $carQuote->id,
-                        'uuid' => $revivalCarQuoteUUID,
-                        'revival_quote_batch_id' => $quoteBatch->id,
-                        'email_sent' => true,
-                    ]);
-
-                    CarQuote::find($this->lead->id)->update(['is_revived' => true]);
-
-                    app(BirdService::class)->createQuoteWorkFlowDetails($carQuote, $response, QuoteFlowType::MOTOR_REVIVAL_OCB->value, (int) QuoteTypes::CAR->id());
-
-                    if (app(BirdService::class)->isFollowupExecuted($revivalCarQuoteUUID, (int) QuoteTypes::CAR->id(), QuoteFlowType::MOTOR_REVIVAL_FOLLOWUP->value)) {
-                        LoggerService::info(self::class.': follow-up email already executed', [
-                            'flow' => self::LOG_FLOW,
-                            'dtt_revival_id' => $dttRevival->id,
-                            'parent_lead_uuid' => $this->lead->uuid,
-                            'child_quote_uuid' => $revivalCarQuoteUUID,
-                        ]);
-                    } else {
-                        $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_FOLLOWUP;
-
-                        CarRevivalFollowUpEmailJob::dispatch($dttRevival->id, $emailData);
-
-                        LoggerService::info(self::class.': revival OCB done — dtt + parent updated + follow-up job queued', [
-                            'flow' => self::LOG_FLOW,
-                            'dtt_revival_id' => $dttRevival->id,
-                            'parent_lead_uuid' => $this->lead->uuid,
-                            'child_quote_uuid' => $revivalCarQuoteUUID,
-                        ]);
-                    }
-                } else {
-                    LoggerService::warning(self::class.': Bird OCB call did not return success (no dtt / no follow-up)', [
+                    LoggerService::info(self::class.': revival OCB done — dtt + parent updated + follow-up job queued', [
                         'flow' => self::LOG_FLOW,
+                        'dtt_revival_id' => $dttRevival->id,
                         'parent_lead_uuid' => $this->lead->uuid,
                         'child_quote_uuid' => $revivalCarQuoteUUID,
-                        'response_code' => $response->status_code,
                     ]);
                 }
             }

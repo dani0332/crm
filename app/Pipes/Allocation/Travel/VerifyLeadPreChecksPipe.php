@@ -4,6 +4,7 @@ namespace App\Pipes\Allocation\Travel;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProviderEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -39,6 +40,12 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
     {
         if ($this->verifyFetchLeadPreChecks() === false) {
             return null;
+        }
+
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - EA_IMCRM lead detected, bypassing SIC check and proceeding with ILA allocation');
+
+            return $this->getLeadBaseQuery()->first();
         }
 
         return $this->getLeadBaseQuery()

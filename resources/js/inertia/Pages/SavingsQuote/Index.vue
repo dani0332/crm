@@ -53,6 +53,8 @@ let availableFilters = {
   policy_expiry_date_end: '',
   last_modified_date: '',
   investment_frequency: '',
+  ea_model: '',
+  lead_generator: '',
 };
 
 const filters = reactive(availableFilters);
@@ -143,7 +145,14 @@ const tableHeader = ref([
   },
   { text: 'Renewal Batch', value: 'renewal_batch_model', is_active: true },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text', is_active: true },
+  { text: 'EA MODEL', value: 'ea_model', is_active: true },
+  { text: 'LEAD GENERATOR', value: 'lead_generator', is_active: true },
 ]);
+
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborative' },
+];
 
 const quotesSelected = ref([]);
 const permissionAssignLeads = ref(false);
@@ -598,6 +607,23 @@ const validateDateRange = () => {
             :single="true"
           />
         </x-field>
+        <x-field label="EA Model">
+          <x-select
+            v-model="filters.ea_model"
+            placeholder="All Models"
+            :options="eaModelOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Lead Generator">
+          <x-input
+            v-model="filters.lead_generator"
+            type="search"
+            name="lead_generator"
+            class="w-full"
+            placeholder="Search by lead generator name"
+          />
+        </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -725,6 +751,12 @@ const validateDateRange = () => {
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
+      </template>
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+      <template #item-lead_generator="item">
+        {{ item.lead_generator?.name }}
       </template>
     </DataTable>
 

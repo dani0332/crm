@@ -381,17 +381,23 @@ const submitPolicy = async () => {
     .post(url, data)
     .then(response => {
       if (response.status == 200) {
-        notification.success({
-          title: response.data.message,
-          position: 'top',
-        });
-        location.reload();
+        if (response.data.status) {
+          notification.success({
+            title: response.data.message,
+            position: 'top',
+          });
+          location.reload();
+        } else {
+          notification.error({
+            title: response.data.message,
+            position: 'top',
+          });
+        }
         modals.sendPolicyConfirm = false;
       }
     })
     .catch(err => {
       const flash_messages = err.response.data.errors;
-
       Object.keys(flash_messages).forEach(function (key) {
         if (flash_messages[key]) {
           notification.error({

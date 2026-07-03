@@ -42,6 +42,14 @@ class QatarInsuranceService implements PolicyIssuanceInterface
 
     public const TYPE = quoteTypeCode::Travel;
     public const TYPE_ID = QuoteTypeId::Travel;
+    public const ADDON_OPTION_MAP = [
+        'medicalLight' => '50',
+        'winterSports' => '51',
+        'business' => '52',
+        'terrorism' => '54',
+        'hazardousActivities' => '55',
+        'excessWaiver' => '56',
+    ];
 
     public mixed $vat = null;
     public $policyIssuance = null;
@@ -245,6 +253,38 @@ class QatarInsuranceService implements PolicyIssuanceInterface
             'mobile' => '971502245943', // will be static, as we dont share customer contact details outside organization
             'agency_reference' => 'asc',
         ];
+
+        $addons = $quote->travelQuotePlanDetails->where('plan_id', $quote->plan_id)->first()?->addons;
+
+        $decodedAddons = ! empty($addons) ? json_decode($addons) : null;
+
+        if (! empty($decodedAddons) && is_array($decodedAddons)) {
+            $selectedCodes = collect($decodedAddons)
+                ->filter(function ($addon) {
+                    return is_object($addon)
+                        && ! empty($addon->addonOptions)
+                        && is_array($addon->addonOptions)
+                        && isset($addon->addonOptions[0]->isSelected)
+                        && $addon->addonOptions[0]->isSelected === true;
+                })
+                ->pluck('code')
+                ->filter(fn ($code) => ! empty($code) && is_string($code))
+                ->all();
+
+            if (! empty($selectedCodes)) {
+                $selectedOptionIds = collect($selectedCodes)
+                    ->mapWithKeys(fn ($code) => isset(self::ADDON_OPTION_MAP[$code])
+                        ? [self::ADDON_OPTION_MAP[$code] => '1']
+                        : [])
+                    ->filter()
+                    ->all();
+
+                if (! empty($selectedOptionIds)) {
+                    $payload = [...$payload, 'options' => (object) $selectedOptionIds];
+                }
+            }
+        }
+
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
         $issuePolicy = $this->qatarHttpCall($endPoint, $payload);

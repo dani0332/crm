@@ -18,6 +18,7 @@ class GroupMedicalExport implements CsvExportableInterface
 
     public function collection(array $requestParams = []): Collection
     {
+
         return BusinessQuoteRepository::getData(QuoteTypes::GROUP_MEDICAL->value, true, requestParams: $requestParams)->get();
     }
 
@@ -37,6 +38,7 @@ class GroupMedicalExport implements CsvExportableInterface
             'FIRST NAME',
             'LAST NAME',
             'LEAD STATUS',
+            'PRE-QUALIFICATION ADVISOR',
             'ADVISOR',
             'OE / AE',
             'BRANCH',
@@ -57,6 +59,8 @@ class GroupMedicalExport implements CsvExportableInterface
             'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'EA MODEL',
+            'LEAD GENERATOR',
         ];
     }
 
@@ -71,6 +75,7 @@ class GroupMedicalExport implements CsvExportableInterface
             $quote->first_name,
             $quote->last_name,
             optional($quote->quoteStatus)->text,
+            optional($quote->preQualificationAdvisor)->name ?? '',
             optional($quote->advisor)->name,
             optional($quote->supportUser)->name,
             $branch,
@@ -91,6 +96,8 @@ class GroupMedicalExport implements CsvExportableInterface
             $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            $quote->ea_model?->value ?? '',
+            $quote->leadGenerator?->name ?? '',
         ];
     }
 

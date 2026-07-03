@@ -46,6 +46,7 @@ use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Services\PqaAllocation\PqaLeadAllocationService;
 use App\Services\SLA\SLAService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
@@ -310,7 +311,7 @@ class HealthQuoteService extends BaseService
     {
         $this->applyUtmJoin();
 
-        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no'])->where('hqr.uuid', $id)->first();
+        return $this->query->addSelect(['hqr.email', 'hqr.mobile_no', 'hqr.pq_advisor_id'])->where('hqr.uuid', $id)->first();
     }
 
     public function getLead($id): HealthQuote
@@ -457,7 +458,18 @@ class HealthQuoteService extends BaseService
     public function getGridData($model = null, $requestParams = [])
     {
         $query = $this->healthQuoteQueryBuilder->processGridData($requestParams);
-        $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health, user: $requestParams['user'] ?? null);
+        $codeParam = request()->input('code');
+        if (Auth::check() && Auth::user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
+            $query->where('health_quote_request.pq_advisor_id', Auth::id());
+            if (empty($codeParam)) {
+                $query->whereNull('health_quote_request.health_plan_type_id');
+            }
+        } elseif (Auth::check() && Auth::user()->hasRole(RolesEnum::PreQualificationLead)) {
+
+        } else {
+            $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health, user: $requestParams['user'] ?? null);
+        }
+
         $this->adjustQueryByDateFilters($query, 'health_quote_request', $requestParams);
 
         return $query;
@@ -2058,5 +2070,71 @@ class HealthQuoteService extends BaseService
         }
 
         $quote->save();
+    }
+
+    /**
+     * Manually assign or reassign Pre‑Qualification Advisor on Corpline business quotes (IMCRM list).
+     *
+     * @param  array<int, string|int>  $leadIds
+     */
+    public function assignPreQualificationAdvisor(array $leadIds, int $preQualificationAdvisorUserId, string $modelType): ?string
+    {
+
+        $pqaService = app(PqaLeadAllocationService::class);
+        $quoteTypeId = (int) QuoteTypes::HEALTH->id();
+
+        if (! $pqaService->userIsEligiblePreQualificationAdvisor($preQualificationAdvisorUserId, $quoteTypeId)) {
+
+            LoggerService::warning(self::class.'::assignPreQualificationAdvisor: ineligible PQA user '.$preQualificationAdvisorUserId);
+
+            return null;
+        }
+
+        $parsedIds = [];
+        foreach ($leadIds as $rawId) {
+            $id = (int) explode('|', (string) $rawId)[0];
+            if ($id > 0) {
+                $parsedIds[] = $id;
+            }
+        }
+
+        if ($parsedIds === []) {
+            return null;
+        }
+
+        $updatedLeadIds = [];
+
+        DB::transaction(function () use ($parsedIds, $preQualificationAdvisorUserId, $pqaService, $quoteTypeId, &$updatedLeadIds) {
+            foreach ($parsedIds as $id) {
+                $quote = $this->getEntityPlain($id);
+                if ($quote === null) {
+                    continue;
+                }
+
+                if ((int) $quote->pq_advisor_id === $preQualificationAdvisorUserId) {
+                    continue;
+                }
+
+                $previousId = $quote->pq_advisor_id !== null ? (int) $quote->pq_advisor_id : null;
+
+                $quote->pq_advisor_id = $preQualificationAdvisorUserId;
+                $quote->pq_assigned_at = now();
+                $quote->save();
+
+                $pqaService->recordManualPqaAssignment($preQualificationAdvisorUserId, $quoteTypeId, $previousId);
+
+                $updatedLeadIds[] = $id;
+            }
+        });
+
+        if ($updatedLeadIds === []) {
+            $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
+
+            return 'Selected leads already have '.$assigneeName.' as Pre‑Qualification Advisor.';
+        }
+
+        $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
+
+        return $modelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
     }
 }

@@ -212,6 +212,10 @@ trait QuoteModelTrait
 
     public function isBuyLeadApplicable(bool $isSIC = false): bool
     {
+        if ($this->source === LeadSourceEnum::EA_IMCRM) {
+            return false;
+        }
+
         if ($isSIC) {
             return (! $this->isStale() && ! $this->isPaid()) &&
                 (request('isRequestedForAnAdvisor', false) ||
@@ -483,5 +487,10 @@ trait QuoteModelTrait
             QuoteTypeId::Device => "{$baseUrl}/personal-quotes/smartphone/{$quoteId}", // Device quote type
             default => 'N/A'
         };
+    }
+
+    public function isLeadSourceCar24(): bool
+    {
+        return in_array($this->source, [LeadSourceEnum::CAR_24, LeadSourceEnum::CARS24]);
     }
 }

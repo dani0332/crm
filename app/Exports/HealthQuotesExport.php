@@ -53,6 +53,7 @@ class HealthQuotesExport implements CsvExportableInterface
             'POLICY PEC FLAG',
             'IS AGE 60 AND ABOVE',
             'LEAD STATUS',
+            'PRE-QUALIFICATION ADVISOR',
             'ADVISOR',
             'UNASSIGNED',
             'OE/AE',
@@ -97,6 +98,8 @@ class HealthQuotesExport implements CsvExportableInterface
             'IMCRM SUB-SOURCE',
             'Signatory',
             'UAE PASS API Status',
+            'EA MODEL',
+            'LEAD GENERATOR',
         ];
     }
 
@@ -112,6 +115,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->has_pec_tag ? 'Yes' : 'No',
             $this->hasMemberAgeSixtyOrAbove($quote) ? 'Yes' : 'No',
             $quote->quoteStatus?->text,
+            $quote->preQualificationAdvisor?->name,
             $quote->advisor?->name,
             $quote->advisor_id ? 'No' : 'Yes',
             $quote->supportUser?->name ?? '',
@@ -156,6 +160,8 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->subSource?->text,
             HealthQuoteDigitalSignatory::displayLabel($quote->digital_signatory),
             HealthQuoteUaePassApiStatus::displayLabel($quote->uae_pass_api_status),
+            $quote->ea_model?->value ?? '',
+            $quote->leadGenerator?->name ?? '',
         ];
     }
 
