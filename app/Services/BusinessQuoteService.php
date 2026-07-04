@@ -343,7 +343,10 @@ class BusinessQuoteService extends BaseService
             }
         }
 
-        $dataArr = array_merge($dataArr, $this->buildGroupMedicalCapiPayload($request));
+        $dataArr = array_filter(
+            [...$dataArr, ...$this->buildGroupMedicalCapiPayload($request)],
+            fn (mixed $value): bool => $value !== null && $value !== '',
+        );
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
