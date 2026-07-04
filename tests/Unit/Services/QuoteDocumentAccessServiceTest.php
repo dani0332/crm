@@ -151,6 +151,30 @@ test('service does not apply document-delete permission when destroy flag is fal
     expect($service->userCanAccessQuoteDocumentable($user, $quote))->toBeFalse();
 });
 
+test('service allows add-additional-contact permission when additional contact flag is true', function () {
+    $assignedAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor, ['email' => 'assigned-add-contact@example.com']);
+    $user = TestDataSeeder::createUser(['email' => 'add-additional-contact-holder@example.com']);
+    Permission::findOrCreate(PermissionsEnum::ADD_ADDITIONAL_CONTACT, AuthGuardEnum::Web->value);
+    $user->givePermissionTo(PermissionsEnum::ADD_ADDITIONAL_CONTACT);
+
+    $quote = CarQuote::factory()->create(['advisor_id' => $assignedAdvisor->id]);
+    $service = app(QuoteDocumentAccessService::class);
+
+    expect($service->userCanAccessQuoteDocumentable($user, $quote, forAdditionalContact: true))->toBeTrue();
+});
+
+test('service does not apply add-additional-contact permission when additional contact flag is false', function () {
+    $assignedAdvisor = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor, ['email' => 'assigned-no-contact-flag@example.com']);
+    $user = TestDataSeeder::createUser(['email' => 'add-additional-contact-only@example.com']);
+    Permission::findOrCreate(PermissionsEnum::ADD_ADDITIONAL_CONTACT, AuthGuardEnum::Web->value);
+    $user->givePermissionTo(PermissionsEnum::ADD_ADDITIONAL_CONTACT);
+
+    $quote = CarQuote::factory()->create(['advisor_id' => $assignedAdvisor->id]);
+    $service = app(QuoteDocumentAccessService::class);
+
+    expect($service->userCanAccessQuoteDocumentable($user, $quote))->toBeFalse();
+});
+
 test('service allows car advisor on send update log resolved via linked quote uuid', function () {
     $advisor = TestDataSeeder::createUserWithRole(RolesEnum::CarAdvisor);
     $quote = CarQuote::factory()->create(['advisor_id' => $advisor->id]);

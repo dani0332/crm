@@ -343,7 +343,10 @@ class BusinessQuoteService extends BaseService
             }
         }
 
-        $dataArr = array_merge($dataArr, $this->buildGroupMedicalCapiPayload($request));
+        $dataArr = array_filter(
+            [...$dataArr, ...$this->buildGroupMedicalCapiPayload($request)],
+            fn (mixed $value): bool => $value !== null && $value !== '',
+        );
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
@@ -727,17 +730,20 @@ class BusinessQuoteService extends BaseService
         }
 
         $capiPayload = array_merge(
-            [
-                'quoteUID' => $id,
-                'firstName' => $request->first_name,
-                'lastName' => $request->last_name,
-                'mobileNo' => $request->mobile_no,
-                'companyName' => $request->company_name,
-                'emirateOfRegistrationId' => $request->emirate_of_registration_id,
-                'businessActivityId' => $request->nature_of_company_activity_id,
-                'briefDetails' => $request->brief_details,
-                'premium' => $request->premium ?? 0,
-            ],
+            array_filter(
+                [
+                    'quoteUID' => $id,
+                    'firstName' => $request->first_name,
+                    'lastName' => $request->last_name,
+                    'mobileNo' => $request->mobile_no,
+                    'companyName' => $request->company_name,
+                    'emirateOfRegistrationId' => $request->emirate_of_registration_id,
+                    'businessActivityId' => $request->nature_of_company_activity_id,
+                    'briefDetails' => $request->brief_details,
+                    'premium' => $request->premium ?? 0,
+                ],
+                fn (mixed $value): bool => $value !== null && $value !== '',
+            ),
             $this->buildGroupMedicalCapiPayload($request),
         );
 
