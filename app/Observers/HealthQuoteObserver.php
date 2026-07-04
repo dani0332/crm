@@ -208,7 +208,7 @@ class HealthQuoteObserver
             $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
         ) {
             try {
-                QuotePolicyBooked::dispatch($healthQuote->uuid, QuoteTypeId::Health);
+                QuotePolicyBooked::dispatch($healthQuote->uuid, QuoteTypeId::Health, leadSource: $healthQuote->source);
             } catch (Exception $e) {
                 LoggerService::error('HealthQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $healthQuote->uuid]);
             }

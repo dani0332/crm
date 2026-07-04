@@ -186,7 +186,7 @@ class BusinessQuoteObserver
                 if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                     $quoteTypeId = QuoteTypeId::GroupMedical;
                 }
-                QuotePolicyBooked::dispatch($businessQuote->uuid, $quoteTypeId);
+                QuotePolicyBooked::dispatch($businessQuote->uuid, $quoteTypeId, leadSource: $businessQuote->source);
             } catch (Exception $e) {
                 LoggerService::error('BusinessQuoteObserver - dispatch QuotePolicyBooked event failed', [
                     'uuid' => $businessQuote->uuid,
