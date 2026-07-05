@@ -80,6 +80,7 @@ class EALeadController extends Controller
             return response()->json([
                 'duplicate' => true,
                 'existing_advisor' => optional($existing->advisor)->name,
+                'existing_code' => $existing->code ?? null,
                 'message' => 'A lead already exists for this client within the past 60 days.',
             ], 422);
         }

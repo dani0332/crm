@@ -547,6 +547,10 @@ watch(
               Existing Advisor:
               <strong>{{ duplicateInfo.existing_advisor }}</strong>
             </p>
+            <p v-else-if="duplicateInfo.existing_code" class="text-sm mt-1">
+              Existing Lead Ref:
+              <strong>{{ duplicateInfo.existing_code }}</strong>
+            </p>
           </div>
         </div>
       </div>
