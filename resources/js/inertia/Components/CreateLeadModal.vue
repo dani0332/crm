@@ -60,6 +60,7 @@ const leadForm = useForm({
   mobile_no: '',
   business_type_of_insurance_id: null,
   health_plan_type_id: null,
+  notes: '',
 });
 
 const isModalOpen = computed({
@@ -213,6 +214,7 @@ const submitEALead = async () => {
       mobile_no: leadForm.mobile_no,
       business_type_of_insurance_id: leadForm.business_type_of_insurance_id,
       health_plan_type_id: leadForm.health_plan_type_id,
+      notes: leadForm.notes,
     });
 
     notification.success({
@@ -260,6 +262,7 @@ const resetForm = () => {
   leadForm.mobile_no = '';
   leadForm.business_type_of_insurance_id = null;
   leadForm.health_plan_type_id = null;
+  leadForm.notes = '';
   duplicateInfo.value = null;
   if (typeof leadForm.reset === 'function') leadForm.reset();
 };
@@ -333,6 +336,7 @@ watch(
     leadForm.mobile_no = '';
     leadForm.business_type_of_insurance_id = null;
     leadForm.health_plan_type_id = null;
+    leadForm.notes = '';
     duplicateInfo.value = null;
   },
 );
@@ -521,6 +525,15 @@ watch(
               :rules="[isRequired]"
               :required="true"
             />
+
+            <x-textarea
+              v-model="leadForm.notes"
+              label="ADDITIONAL NOTES"
+              name="notes"
+              class="w-full"
+              placeholder="Add any additional notes (optional)"
+              rows="3"
+            />
           </template>
 
           <!-- Duplicate warning popup -->
@@ -533,6 +546,10 @@ watch(
             <p v-if="duplicateInfo.existing_advisor" class="text-sm mt-1">
               Existing Advisor:
               <strong>{{ duplicateInfo.existing_advisor }}</strong>
+            </p>
+            <p v-else-if="duplicateInfo.existing_code" class="text-sm mt-1">
+              Existing Lead Ref:
+              <strong>{{ duplicateInfo.existing_code }}</strong>
             </p>
           </div>
         </div>

@@ -79,6 +79,7 @@ class EALeadCreateRequest extends FormRequest
                 'integer',
                 'exists:health_plan_type,id',
             ],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
 

@@ -1,5 +1,6 @@
 <script setup>
 const page = usePage();
+const notification = useNotifications('toast');
 
 const props = defineProps({
   genderOptions: Object,
@@ -133,6 +134,12 @@ function onSubmit(isValid) {
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
       },
     });
   }

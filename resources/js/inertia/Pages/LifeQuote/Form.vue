@@ -180,6 +180,12 @@ function onSubmit(isValid) {
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
       },
     });
   }

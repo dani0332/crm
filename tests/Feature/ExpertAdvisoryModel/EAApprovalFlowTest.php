@@ -60,7 +60,7 @@ it('returns 422 when lead is not a collaborate EA lead', function () {
         ->assertStatus(422);
 });
 
-it('returns 422 when lead status is not PaymentPending', function () {
+it('returns 422 when lead status is not one of the EA approval eligible statuses', function () {
     $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
     $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
 
@@ -74,13 +74,30 @@ it('returns 422 when lead status is not PaymentPending', function () {
         'ea_model' => 'collaborate',
         'advisor_id' => $advisor->id,
         'expert_advisor_id' => $expert->id,
-        'quote_status_id' => QuoteStatusEnum::NewLead, // not PaymentPending
+        'quote_status_id' => QuoteStatusEnum::NewLead, // not an eligible status
     ]);
 
     $this->actingAs($advisor);
     $this->postJson(route('ea-leads.approve', ['quoteType' => 'personal', 'quoteId' => $lead->id]))
         ->assertStatus(422);
 });
+
+it('allows approval at every EA approval eligible status', function (int $status) {
+    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    $lead = makeCollaborateLead($advisor->id, $expert->id);
+    $lead->update(['quote_status_id' => $status]);
+
+    $this->actingAs($advisor);
+    $this->postJson(route('ea-leads.approve', ['quoteType' => 'personal', 'quoteId' => $lead->id]))
+        ->assertOk()->assertJsonPath('success', true);
+})->with([
+    'Payment Pending' => [QuoteStatusEnum::PaymentPending],
+    'Transaction Approved' => [QuoteStatusEnum::TransactionApproved],
+    'Policy Invoiced' => [QuoteStatusEnum::PolicyInvoiced],
+    'Policy Issued' => [QuoteStatusEnum::PolicyIssued],
+    'Send to Customer' => [QuoteStatusEnum::PolicySentToCustomer],
+]);
 
 // ─── D8 / Approve flow ────────────────────────────────────────────────────────
 

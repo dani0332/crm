@@ -273,6 +273,84 @@ it('EA manager can approve a BusinessQuote (Corpline/GroupMedical) via ea-manage
         ->and($lead->ea_manager_id)->toBe($manager->id);
 });
 
+// ─── Per-column LG / EA approval status labels ────────────────────────────────
+
+it('shows pending for both LG and EA columns when neither has acted', function () {
+    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+
+    PersonalQuote::create([
+        'uuid' => Str::uuid()->toString(), 'code' => 'CYB-status-pending',
+        'quote_type_id' => 20, 'first_name' => 'Pending', 'last_name' => 'Lead',
+        'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0505550001',
+        'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
+        'advisor_id' => $advisor->id, 'expert_advisor_id' => $expert->id,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
+    ]);
+
+    $lead = app(EAManagerService::class)->getLeads()->first();
+
+    expect($lead['lead_generator_status'])->toBe('pending')
+        ->and($lead['expert_advisor_status'])->toBe('pending');
+});
+
+it('shows approved under LG column when the assigned advisor approves', function () {
+    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+
+    PersonalQuote::create([
+        'uuid' => Str::uuid()->toString(), 'code' => 'CYB-status-lg-approved',
+        'quote_type_id' => 20, 'first_name' => 'LgApproved', 'last_name' => 'Lead',
+        'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0505550002',
+        'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
+        'advisor_id' => $advisor->id, 'expert_advisor_id' => $expert->id,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
+        'ea_assigned_advisor_approved_at' => now(),
+    ]);
+
+    $lead = app(EAManagerService::class)->getLeads()->first();
+
+    expect($lead['lead_generator_status'])->toBe('approved')
+        ->and($lead['expert_advisor_status'])->toBe('pending');
+});
+
+it('shows rejected under EA column when the expert advisor rejects', function () {
+    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+    $expert = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+
+    PersonalQuote::create([
+        'uuid' => Str::uuid()->toString(), 'code' => 'CYB-status-ea-rejected',
+        'quote_type_id' => 20, 'first_name' => 'EaRejected', 'last_name' => 'Lead',
+        'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0505550003',
+        'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'collaborate',
+        'advisor_id' => $advisor->id, 'expert_advisor_id' => $expert->id,
+        'quote_status_id' => QuoteStatusEnum::PaymentPending,
+        'ea_expert_advisor_rejected_at' => now(),
+    ]);
+
+    $lead = app(EAManagerService::class)->getLeads()->first();
+
+    expect($lead['lead_generator_status'])->toBe('pending')
+        ->and($lead['expert_advisor_status'])->toBe('rejected');
+});
+
+it('does not show LG/EA approval status for referral model leads', function () {
+    $advisor = TestDataSeeder::createUserWithRole(RolesEnum::EAReferral, ['email' => fake()->unique()->safeEmail()]);
+
+    PersonalQuote::create([
+        'uuid' => Str::uuid()->toString(), 'code' => 'CYB-status-referral',
+        'quote_type_id' => 20, 'first_name' => 'Referral', 'last_name' => 'Lead',
+        'email' => fake()->unique()->safeEmail(), 'mobile_no' => '0505550004',
+        'source' => LeadSourceEnum::EA_IMCRM, 'ea_model' => 'referral',
+        'advisor_id' => $advisor->id, 'quote_status_id' => QuoteStatusEnum::NewLead,
+    ]);
+
+    $lead = app(EAManagerService::class)->getLeads()->first();
+
+    expect($lead['lead_generator_status'])->toBeNull()
+        ->and($lead['expert_advisor_status'])->toBeNull();
+});
+
 // ─── E9 / Export access ───────────────────────────────────────────────────────
 
 it('EA manager can access the export endpoint', function () {

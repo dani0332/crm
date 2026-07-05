@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Jobs\SendEALeadSubmittedEmailJob;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 
 class EACollaborateHelper
@@ -35,6 +36,44 @@ class EACollaborateHelper
             ]);
 
             return;
+        }
+
+        $email = $payload['email'] ?? '';
+        $mobileNo = $payload['mobileNo'] ?? '';
+        $quoteTypeId = $payload['quoteTypeId'] ?? 0;
+
+        $duplicateService = app(EALeadDuplicateService::class);
+
+        if ($duplicateService->isBlockedByRenewalExpiry($email, $mobileNo, $quoteTypeId)) {
+            LoggerService::warning('EACollaborateHelper: Blocked by active renewal-upload lead', [
+                'ea_model' => $eaModel,
+                'email' => $email,
+                'mobile_no' => $mobileNo,
+                'quote_type_id' => $quoteTypeId,
+            ]);
+
+            $message = 'A renewal-upload lead exists for this client and has not yet expired.';
+
+            throw new HttpResponseException(back()->withErrors(['duplicate_lead' => $message]));
+        }
+
+        $existing = $duplicateService->findDuplicate($email, $mobileNo, $quoteTypeId);
+
+        if ($existing) {
+            $advisorName = optional($existing->advisor)->name;
+            $identifier = $advisorName ? "Existing Advisor : {$advisorName}" : "Existing Lead Ref : {$existing->code}";
+            $message = "A lead already exists for this client within the past 60 days.\n{$identifier}";
+
+            LoggerService::warning('EACollaborateHelper: Duplicate lead detected for EA model', [
+                'ea_model' => $eaModel,
+                'email' => $email,
+                'mobile_no' => $mobileNo,
+                'quote_type_id' => $quoteTypeId,
+                'existing_advisor' => $advisorName,
+                'existing_code' => $existing->code,
+            ]);
+
+            throw new HttpResponseException(back()->withErrors(['duplicate_lead' => $message]));
         }
 
         $payload['source'] = LeadSourceEnum::EA_IMCRM;

@@ -2,6 +2,7 @@
 import { XInput } from '@indielayer/ui';
 
 const page = usePage();
+const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
@@ -150,6 +151,12 @@ function onSubmit(isValid) {
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
       },
     });
   }

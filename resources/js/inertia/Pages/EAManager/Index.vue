@@ -248,11 +248,35 @@ const updateRow = async lead => {
     </template>
 
     <template #item-lead_generator="item">
-      {{ item.lead_generator?.name ?? '—' }}
+      <div class="flex flex-col gap-0.5">
+        <span>{{ item.lead_generator?.name ?? '—' }}</span>
+        <span
+          v-if="item.lead_generator_status"
+          class="text-xs font-semibold capitalize"
+          :class="{
+            'text-green-600': item.lead_generator_status === 'approved',
+            'text-red-600': item.lead_generator_status === 'rejected',
+            'text-gray-500': item.lead_generator_status === 'pending',
+          }"
+          >{{ item.lead_generator_status }}</span
+        >
+      </div>
     </template>
 
     <template #item-expert_advisor="item">
-      {{ item.expert_advisor?.name ?? '—' }}
+      <div class="flex flex-col gap-0.5">
+        <span>{{ item.expert_advisor?.name ?? '—' }}</span>
+        <span
+          v-if="item.expert_advisor_status"
+          class="text-xs font-semibold capitalize"
+          :class="{
+            'text-green-600': item.expert_advisor_status === 'approved',
+            'text-red-600': item.expert_advisor_status === 'rejected',
+            'text-gray-500': item.expert_advisor_status === 'pending',
+          }"
+          >{{ item.expert_advisor_status }}</span
+        >
+      </div>
     </template>
 
     <template #item-quote_type="item">
