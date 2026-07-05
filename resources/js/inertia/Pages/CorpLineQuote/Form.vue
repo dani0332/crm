@@ -1,5 +1,6 @@
 <script setup>
 const page = usePage();
+const notification = useNotifications('toast');
 const props = defineProps({
   quote: Object,
   dropdownSource: Object,
@@ -161,6 +162,12 @@ function onSubmit(isValid) {
   const options = {
     onError: errors => {
       quoteForm.setError(errors);
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
     },
     onStart: () => {
       quoteForm.clearErrors();

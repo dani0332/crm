@@ -54,7 +54,7 @@ class EACollaborateHelper
 
             $message = 'A renewal-upload lead exists for this client and has not yet expired.';
 
-            throw new HttpResponseException(back()->with('error', $message));
+            throw new HttpResponseException(back()->withErrors(['email' => $message]));
         }
 
         $existing = $duplicateService->findDuplicate($email, $mobileNo, $quoteTypeId);
@@ -73,7 +73,7 @@ class EACollaborateHelper
                 'existing_code' => $existing->code,
             ]);
 
-            throw new HttpResponseException(back()->with('error', $message));
+            throw new HttpResponseException(back()->withErrors(['email' => $message]));
         }
 
         $payload['source'] = LeadSourceEnum::EA_IMCRM;
