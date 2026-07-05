@@ -193,6 +193,7 @@ class HandleInertiaRequests extends Middleware
             'relationCodeEnum' => array_column(RelationCodeEnum::cases(), 'value', 'name'),
             'salaryBandEnum' => array_column(SalaryBandEnum::cases(), 'value', 'name'),
             'visaCategoryEnum' => array_column(VisaCategoryEnum::cases(), 'value', 'name'),
+            'eaApprovalEligibleStatuses' => QuoteStatusEnum::eaApprovalEligibleStatuses(),
         ];
     }
 
