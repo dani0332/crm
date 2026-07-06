@@ -144,7 +144,12 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
                 $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
                 // $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Lost]);
-                $q->whereIn('quote_status_id', [QuoteStatusEnum::Qualified, QuoteStatusEnum::Duplicate]);
+                $q->where(function ($statusQuery) {
+                    $statusQuery->where(function ($eaQuery) {
+                        $eaQuery->where('source', LeadSourceEnum::EA_IMCRM)
+                            ->where('ea_model', EaModelEnum::Referral->value);
+                    })->orWhereIn('quote_status_id', [QuoteStatusEnum::Qualified, QuoteStatusEnum::Duplicate]);
+                });
             }, function ($q) {
                 $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost]);
 
