@@ -1130,7 +1130,7 @@ class HealthQuoteService extends BaseService
 
             return false;
         }
-        if ($lead->health_team_type != null && $lead->advisor_id != null) {
+        if ($lead->health_team_type != null && $lead->advisor_id != null && ! in_array($lead->quote_status_id, QuoteStatusEnum::postTransactionStatuses())) {
             LoggerService::info('Removing previous advisor as lead already assigned to a health team');
             $this->removePreviousAdvisorAndUpdateStatus($lead, QuoteStatusEnum::Qualified);
         }
