@@ -316,11 +316,6 @@ const eaModelOptions = [
   { value: 'collaborate', label: 'Collaborative' },
 ];
 
-const pqaQualifiedOptions = [
-  { value: 1, label: 'Yes' },
-  { value: 0, label: 'No' },
-];
-
 const canExport = ref(false);
 watch(
   () => filters,
@@ -1438,13 +1433,6 @@ const paymentStatusOptions = computed(() => {
           class="w-full"
           placeholder="Search by lead generator name"
         />
-        <x-select
-          v-model="filters.pqa_qualified"
-          label="PQA Qualified"
-          placeholder="All"
-          :options="pqaQualifiedOptions"
-          class="w-full"
-        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div>
@@ -1610,6 +1598,13 @@ const paymentStatusOptions = computed(() => {
         <div class="text-center">
           <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
             {{ sic_advisor_requested ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-pqa_qualified="{ pqa_qualified }">
+        <div class="text-center">
+          <x-tag size="sm" :color="pqa_qualified ? 'success' : 'error'">
+            {{ pqa_qualified ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>

@@ -483,6 +483,7 @@ class HealthQuoteService extends BaseService
             $quote->is_entity = $quote->isEntity();
             $quote->is_migrated = $quote->isMigrated();
             $quote->is_policyholder_included = $quote->isPolicyholderIncluded();
+            $quote->pqa_qualified = $this->isPQAQualified($quote->id, (int) $quote->pq_advisor_id);
 
             return $quote;
         });
@@ -2145,7 +2146,8 @@ class HealthQuoteService extends BaseService
             return 0;
         }
 
-        $statusCount = QuoteStatusLog::where('quote_type_id', QuoteTypes::HEALTH)
+        $statusCount = QuoteStatusLog::where('quote_type_id', QuoteTypes::getId(QuoteTypes::HEALTH))
+            ->where('quote_request_id', $id)
             ->where('previous_quote_status_id', QuoteStatusEnum::NewLead)
             ->where('current_quote_status_id', QuoteStatusEnum::Qualified)
             ->where('created_by', $pqaAdvisorId)

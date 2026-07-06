@@ -1355,6 +1355,7 @@ class CentralService extends BaseService
             LoggerService::info("Quote Code: {$quoteCode} - Sending qualify group medical request to CAPI");
             $response = Capi::request('/api/v1-qualify-group-medical-quote?lang=en', 'post', [
                 'quoteUID' => $quote->uuid,
+                'user_id' => auth()->id(),
             ]);
             LoggerService::info("Quote Code: {$quoteCode} - CAPI qualify group medical response: ".json_encode($response));
         }
