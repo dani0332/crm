@@ -76,8 +76,16 @@ const isAdvisor = computed(
     props.expertAdvisorId === currentUserId,
 );
 
+const hasManagerDecision = computed(
+  () => !!props.eaManagerApprovedAt || !!props.eaManagerRejectedAt,
+);
+
 const isVisible = computed(
-  () => isEaCollaborateLead.value && isAdvisor.value && !isEaManager,
+  () =>
+    isEaCollaborateLead.value &&
+    isAdvisor.value &&
+    !isEaManager &&
+    !hasManagerDecision.value,
 );
 
 const isAssignedAdvisor = computed(() => props.advisorId === currentUserId);
