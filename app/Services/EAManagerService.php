@@ -117,6 +117,8 @@ class EAManagerService
 
     private function formatLead($lead, string $quoteType): array
     {
+        $isCollaborate = EaModelEnum::tryFrom($lead->getRawOriginal('ea_model')) === EaModelEnum::Collaborate;
+
         return [
             'id' => $lead->id,
             'code' => $lead->code,
@@ -137,7 +139,25 @@ class EAManagerService
             'ea_manager_approved_at' => $lead->ea_manager_approved_at,
             'ea_manager_rejected_at' => $lead->ea_manager_rejected_at,
             'ea_status' => $this->computeEaStatus($lead),
+            'lead_generator_status' => $isCollaborate
+                ? $this->computeApprovalStatus($lead->ea_assigned_advisor_approved_at, $lead->ea_assigned_advisor_rejected_at)
+                : null,
+            'expert_advisor_status' => $isCollaborate
+                ? $this->computeApprovalStatus($lead->ea_expert_advisor_approved_at, $lead->ea_expert_advisor_rejected_at)
+                : null,
         ];
+    }
+
+    private function computeApprovalStatus(?string $approvedAt, ?string $rejectedAt): string
+    {
+        if ($approvedAt) {
+            return 'approved';
+        }
+        if ($rejectedAt) {
+            return 'rejected';
+        }
+
+        return 'pending';
     }
 
     public function pendingRejectionsCount(): int

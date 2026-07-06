@@ -182,6 +182,7 @@ class EALeadCapiService
             'leadGeneratorId' => auth()->id(),
             'createdById' => auth()->id(),
             'quoteStatusId' => QuoteStatusEnum::NewLead,
+            'additionalNotes' => $request->notes ?? null,
         ];
 
         if ($isCollaborate) {

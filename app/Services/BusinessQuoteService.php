@@ -339,6 +339,7 @@ class BusinessQuoteService extends BaseService
             'briefDetails' => $request->brief_details,
             'premium' => $request->premium,
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
+            'quoteTypeId' => QuoteTypeId::Business,
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             // Sub-source fields (CAPI will ignore if unsupported)
@@ -360,7 +361,6 @@ class BusinessQuoteService extends BaseService
         }
 
         $dataArr = array_merge($dataArr, $this->buildGroupMedicalCapiPayload($request));
-
 
         if (request()->input('ea_model')) {
             LoggerService::info('BusinessQuoteService: CAPI payload for EA lead', [

@@ -59,18 +59,15 @@ const props = defineProps({
 
 const emit = defineEmits(['updated']);
 
-const { auth } = usePage().props;
+const { auth, eaApprovalEligibleStatuses } = usePage().props;
 const currentUserId = auth.user.id;
 const isEaManager = useHasRole('EA_MANAGER');
-
-// PaymentPending = 28
-const PAYMENT_PENDING = 28;
 
 const isEaCollaborateLead = computed(
   () =>
     props.source === 'EA_IMCRM' &&
     props.eaModel === 'collaborate' &&
-    props.quoteStatusId === PAYMENT_PENDING,
+    eaApprovalEligibleStatuses.includes(props.quoteStatusId),
 );
 
 const isAdvisor = computed(
