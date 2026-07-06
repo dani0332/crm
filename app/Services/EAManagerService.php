@@ -38,7 +38,7 @@ class EAManagerService
             ? $this->queryModel(BusinessQuote::class, $filters, 'business')
             : collect();
 
-        $personalLeads = ($lob === null || ! in_array($lob, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical], true))
+        $personalLeads = ($lob === null || ! in_array($lob, [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical], true))
             ? $this->queryPersonalLeads($filters)
             : collect();
 
@@ -67,6 +67,7 @@ class EAManagerService
     {
         return PersonalQuote::with(['advisor:id,name,email', 'expertAdvisor:id,name', 'leadGenerator:id,name', 'quoteStatus:id,text'])
             ->where('source', LeadSourceEnum::EA_IMCRM)
+            ->whereNotIn('quote_type_id', [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])
             ->when($filters['ref_id'] ?? null, fn ($q, $v) => $q->where('code', 'like', "%{$v}%"))
             ->when($filters['lob'] ?? null, fn ($q, $v) => $q->where('quote_type_id', $v))
             ->when($filters['ea_model'] ?? null, fn ($q, $v) => $q->where('ea_model', $v))
