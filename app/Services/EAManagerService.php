@@ -175,6 +175,8 @@ class EAManagerService
         return CarQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count()
             + HealthQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count()
             + BusinessQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count()
-            + PersonalQuote::where('source', LeadSourceEnum::EA_IMCRM)->where($pending)->count();
+            + PersonalQuote::where('source', LeadSourceEnum::EA_IMCRM)
+                ->whereNotIn('quote_type_id', [QuoteTypeId::Business, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])
+                ->where($pending)->count();
     }
 }

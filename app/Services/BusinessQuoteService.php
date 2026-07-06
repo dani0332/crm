@@ -564,6 +564,14 @@ class BusinessQuoteService extends BaseService
             $this->query->whereIn('bqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
+        if ($request->filled('ea_model')) {
+            $this->query->where('bqr.ea_model', $request->ea_model);
+        }
+
+        if ($request->filled('lead_generator')) {
+            $this->query->where('lg.name', 'like', '%'.$request->lead_generator.'%');
+        }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at' && $item != 'company_name') {
                 if ($request[$item] == 'null') {
