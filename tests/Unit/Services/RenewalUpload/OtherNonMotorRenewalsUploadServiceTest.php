@@ -16,11 +16,13 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Models\User;
 use App\Services\OtherNonMotorRenewalsUploadService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\Helpers\TestSchemaCreator;
 
 beforeEach(function () {
     TestSchemaCreator::createRenewalsSchema();
+    Http::fake();
 });
 
 function makeOtherNonMotorService(): OtherNonMotorRenewalsUploadService
