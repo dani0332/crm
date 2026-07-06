@@ -32,6 +32,7 @@ final class QuoteTypeId extends Enum
     const JBLS = 17;
     const Cyber = 19;
     const Device = 20;
+    const HomeAppliance = 21;
 
     /**
      * Quote type IDs that use watermarked policy schedule document URL when available.

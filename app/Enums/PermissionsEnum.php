@@ -156,6 +156,7 @@ final class PermissionsEnum extends Enum
     public const GMQuotesList = 'gm-quotes-list';
     public const GMQuotesCreate = 'gm-quotes-create';
     public const GMQuotesEdit = 'gm-quotes-edit';
+    public const GMQuoteCopyLink = 'gm-quote-copylink';
     public const CorpLineQuotesList = 'corpline-quotes-list';
     public const CorpLineQuotesCreate = 'corpline-quotes-create';
     public const CorpLineQuotesEdit = 'corpline-quotes-edit';
@@ -551,11 +552,22 @@ final class PermissionsEnum extends Enum
 
     // Claim Allocation Permissions
     public const CLAIM_ALLOCATION_DASHBOARD = 'claim-allocation-dashboard';
+
+    /** Pre Qualification Advisor (PQA) ILA dashboard */
+    public const PQA_LEAD_ALLOCATION_DASHBOARD = 'pqa-lead-allocation-dashboard';
+
+    public const PQA_LEAD_ALLOCATION_VIEW_ONLY = 'pqa-lead-allocation-view-only';
+    public const PQA_LEAD_ALLOCATION_EDIT = 'pqa-lead-allocation-edit';
+
+    /** Manual assign / reassign Pre‑Qualification Advisor on Group Medical (IMCRM) leads */
+    public const ASSIGN_GROUP_MEDICAL_PRE_QUALIFICATION_ADVISOR = 'group-medical-assign-pre-qualification-advisor';
+
     public const RE_TRIGGER_POLICY_ISSUANCE = 're-trigger-policy-issuance';
 
     // Expert Advisory Model Permissions
     public const EaCollaborate = 'ea-collaborate';
     public const AssignedExpertAdvisor = 'assigned-expert-advisor';
+    public const AssignedReferralAdvisor = 'assigned-referral-advisor';
     public const VIEW_UTM_SECTION = 'view-utm-section';
 
     // Home Revivals Permissions

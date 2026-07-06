@@ -40,6 +40,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             'SOURCE',
             'POLICY NUMBER',
             'LOST REASON',
+            'PRE-QUALIFICATION ADVISOR',
             'ADVISOR',
             'OE/AE',
             'BRANCH',
@@ -59,6 +60,8 @@ class BusinessQuoteExport implements CsvExportableInterface
             'BOOKING DATE',
             'IMCRM SUB-SOURCE',
             'LEAD TYPE',
+            'EA MODEL',
+            'LEAD GENERATOR',
         ];
     }
 
@@ -75,6 +78,7 @@ class BusinessQuoteExport implements CsvExportableInterface
             $quote->source,
             $quote->policy_number,
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
+            optional($quote->preQualificationAdvisor)->name,
             optional($quote->advisor)->name,
             $quote->supportUser?->name,
             $branch,
@@ -94,6 +98,8 @@ class BusinessQuoteExport implements CsvExportableInterface
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             optional($quote->subSource)->text,
             $quote->lead_type ?? '',
+            $quote->ea_model?->value ?? '',
+            $quote->leadGenerator?->name ?? '',
         ];
     }
 

@@ -1693,7 +1693,13 @@ const convertToNumber = (value, decimalPlace = 2) => {
 
 function genderFormatForProfile(gender) {
   if (!gender) return gender;
-  return gender === 'M' || gender === 'Male' ? 'Male' : 'Female';
+  if (['m', 'male', 'M', 'Male'].includes(gender)) {
+    return 'Male';
+  }
+  if (['f', 'female', 'F', 'Female'].includes(gender)) {
+    return 'Female';
+  }
+  return gender;
 }
 
 function capitalizeString(str) {
@@ -3358,6 +3364,30 @@ const isCars24 = computed(() => {
         </template>
       </Collapsible>
     </div>
+
+    <EALeadInfo
+      :source="record.source"
+      :ea-model="record.ea_model"
+      :lead-generator="record.lead_generator"
+      :expert-advisor="record.expert_advisor"
+    />
+
+    <EAApprovalActions
+      quote-type="car"
+      :quote-id="record.id"
+      :source="record.source"
+      :ea-model="record.ea_model"
+      :quote-status-id="record.quote_status_id"
+      :advisor-id="record.advisor_id"
+      :expert-advisor-id="record.expert_advisor_id"
+      :ea-assigned-advisor-approved-at="record.ea_assigned_advisor_approved_at"
+      :ea-expert-advisor-approved-at="record.ea_expert_advisor_approved_at"
+      :ea-assigned-advisor-rejected-at="record.ea_assigned_advisor_rejected_at"
+      :ea-expert-advisor-rejected-at="record.ea_expert_advisor_rejected_at"
+      :ea-manager-approved-at="record.ea_manager_approved_at"
+      :ea-manager-rejected-at="record.ea_manager_rejected_at"
+      @updated="$inertia.reload({ only: ['record'] })"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">

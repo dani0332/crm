@@ -186,9 +186,12 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedMotorRevivalWorkflow();
         $this->seedHighRiskScoreBirdNotificationWorkflowUrl();
         $this->seedAmlAutomationOutcomeWorkflowUrl();
+        $this->seedTravelAmlRetrigger();
         $this->seedDttLifeEnabled();
         $this->seedOcrPlanValidation();
         $this->seedDttHomeEnabled();
+        $this->seedAllianceBrandSwitchDate();
+        $this->seedEAEmailTemplates();
     }
 
     private function livaCarAutomationSeed()
@@ -709,6 +712,19 @@ class ApplicationStorageSeeder extends Seeder
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedTravelAmlRetrigger()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_AML_RETRIGGER_ENABLED],
             [
                 'value' => 0,
                 'created_at' => now(),
@@ -1827,6 +1843,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MISREPORT_RECIPIENT_EMAIL],
+            [
+                'value' => 'vishal.bhatt@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedOcrUtilEnabled()
@@ -2027,7 +2053,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::DIC_COMMISSION_PERCENTAGE],
             [
-                'value' => 0.56,
+                'value' => 56,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -2088,6 +2114,19 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedAllianceBrandSwitchDate(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ALLIANCE_BRAND_SWITCH_DATE],
+            [
+                'value' => '2026-05-25',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedDttHomeEnabled(): void
     {
         ApplicationStorage::firstOrCreate(
@@ -2099,5 +2138,26 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => ApplicationStorageEnums::ACTIVE,
             ],
         );
+    }
+
+    private function seedEAEmailTemplates(): void
+    {
+        $templates = [
+            ApplicationStorageEnums::EA_LEAD_SUBMITTED_TEMPLATE_ID => 887,
+            ApplicationStorageEnums::EA_COLLABORATE_REJECTED_TEMPLATE_ID => 889,
+            ApplicationStorageEnums::EA_MANAGER_DECISION_TEMPLATE_ID => 888,
+        ];
+
+        foreach ($templates as $key => $value) {
+            ApplicationStorage::firstOrCreate(
+                ['key_name' => $key],
+                [
+                    'value' => $value,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'is_active' => ApplicationStorageEnums::ACTIVE,
+                ],
+            );
+        }
     }
 }

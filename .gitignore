@@ -16,7 +16,7 @@ npm-debug.log
 yarn-error.log
 resources/views/.DS_Store
 .DS_Store
-storage/framework/laravel-excel/*.tmp
+storage/framework/laravel-excel/
 
 
 # extras
@@ -27,3 +27,7 @@ dump.rdb
 boost.json
 mcp.json
 boost-mcp.sh
+.claude/settings.local.json
+gwt.md
+.agents
+.codex

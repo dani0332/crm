@@ -1012,6 +1012,11 @@ const onLeadTypeUpdate = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRE-QUALIFICATION ADVISOR</dt>
+                <dd>{{ quote.pre_qualification_advisor_name ?? '—' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote.advisor_id_text }}</dd>
               </div>
@@ -1642,6 +1647,30 @@ const onLeadTypeUpdate = () => {
       </template>
     </Collapsible>
 
+    <EALeadInfo
+      :source="quote.source"
+      :ea-model="quote.ea_model"
+      :lead-generator="quote.lead_generator"
+      :expert-advisor="quote.expert_advisor"
+    />
+
+    <EAApprovalActions
+      quote-type="business"
+      :quote-id="quote.id"
+      :source="quote.source"
+      :ea-model="quote.ea_model"
+      :quote-status-id="quote.quote_status_id"
+      :advisor-id="quote.advisor_id"
+      :expert-advisor-id="quote.expert_advisor_id"
+      :ea-assigned-advisor-approved-at="quote.ea_assigned_advisor_approved_at"
+      :ea-expert-advisor-approved-at="quote.ea_expert_advisor_approved_at"
+      :ea-assigned-advisor-rejected-at="quote.ea_assigned_advisor_rejected_at"
+      :ea-expert-advisor-rejected-at="quote.ea_expert_advisor_rejected_at"
+      :ea-manager-approved-at="quote.ea_manager_approved_at"
+      :ea-manager-rejected-at="quote.ea_manager_rejected_at"
+      @updated="$inertia.reload({ only: ['quote'] })"
+    />
+
     <PlanDetails
       :insuranceProviders="insuranceProvidersAll"
       :quote="quote"
@@ -1835,6 +1864,7 @@ const onLeadTypeUpdate = () => {
           </DataTable>
         </template>
       </Collapsible>
+
       <x-modal
         v-model="modals.activity"
         size="lg"

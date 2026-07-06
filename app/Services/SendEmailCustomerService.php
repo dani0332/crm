@@ -20,12 +20,14 @@ use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
 use App\Models\User;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -1697,6 +1699,7 @@ class SendEmailCustomerService extends BaseService
         $quoteCode = $healthQuote->code ?? '';
 
         return (object) [
+            'uniqueId' => (string) Str::ulid(),
             'clientFullName' => $customerFullName,
             'customerName' => $customerFullName,
             'customerEmail' => $healthQuote->email ?? '',
@@ -1833,29 +1836,30 @@ class SendEmailCustomerService extends BaseService
 
         $advisor = User::where('id', $advisorId)->first();
         $payload = [
+            'customerId' => $quote->customer_id ?? $quote->email,
+            'uniqueId' => (string) Str::ulid(),
+            'firstName' => $quote->first_name ?? '',
+            'lastName' => $quote->last_name ?? '',
             'customerEmail' => $quote->email,
             'customerName' => $quote->first_name.' '.$quote->last_name,
-            'customerMobile' => (! empty($quote->mobile_no) ? formatMobileNo($quote->mobile_no) : ''),
+            'customerMobile' => ! empty($quote->mobile_no) ? '+'.formatMobileNoWithoutPlus($quote->mobile_no) : '',
+            'quoteUID' => $quote->uuid,
             'advisor' => $advisor ?? null,
             'advisorName' => $advisor?->name ?? '',
             'advisorEmail' => $advisor?->email ?? '',
-            'advisorLandLine' => (! empty($advisor?->landline_no) ? $advisor->landline_no : ''),
-            'advisorMobilePhone' => (! empty($advisor?->mobile_no) ? $advisor->mobile_no : ''),
+            'advisorLandLine' => ! empty($advisor?->landline_no) ? $advisor->landline_no : '',
+            'advisorMobilePhone' => ! empty($advisor?->mobile_no) ? $advisor->mobile_no : '',
             'advisorWhatsAppNumber' => ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
-            'advisorMobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
-            'quoteUID' => $quote->uuid,
+            'advisorMobileNoWithoutSpaces' => ! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : '',
             'refID' => $quote->code,
+            'uniqueId' => (string) Str::ulid(),
             'CarMake' => $quote->carMake->text ?? null,
             'CarModel' => $quote->carModel->text ?? null,
             'workflowType' => WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS,
         ];
-        $customerWANotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_WHATSAPP_NO_PLANS_ASSIGNMENT_WORKFLOW);
-        if (! empty($customerWANotificationWorkflow)) {
-            app(BirdService::class)->triggerWebHookRequest($customerWANotificationWorkflow, (object) $payload);
-            LoggerService::info('sendWhatsappNotificationToCustomer - Webhook request sent to: '.$customerWANotificationWorkflow.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
-        } else {
-            LoggerService::info('sendWhatsappNotificationToCustomer - Webhook URL not found in storage with Ref-ID:'.$quote->uuid.' | Time:'.now());
-        }
+
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS, $payload);
+        LoggerService::info('sendWhatsappNotificationToCustomer - WebEngage event triggered with Ref-ID: '.$quote->uuid.' | Time:'.now());
     }
 
     public function getBccAdditionalEmails(QuoteTypes $quoteType): array
@@ -1904,9 +1908,14 @@ class SendEmailCustomerService extends BaseService
 
         $bccEmails = $this->getBCCEmails($quoteType, $quote->source);
         $payload = [
+            'uniqueId' => (string) Str::ulid(),
+            'customerId' => $quote->customer_id ?? $quote->email,
+            'firstName' => $quote->first_name ?? '',
+            'lastName' => $quote->last_name ?? '',
             'customerEmail' => $quote->email,
-            'customerName' => $quote->first_name.' '.$quote->last_name,
+            'customerMobile' => ! empty($quote->mobile_no) ? '+'.formatMobileNoWithoutPlus($quote->mobile_no) : '',
             'quoteUID' => $quote->uuid,
+            'customerName' => $quote->first_name.' '.$quote->last_name,
             'refID' => $quote->code,
             'quoteType' => $quoteType,
             'advisor' => $advisor,
@@ -1923,13 +1932,8 @@ class SendEmailCustomerService extends BaseService
             'bccEmails' => $bccEmails,
         ];
 
-        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
-        if (! empty($customerNotificationWorkflow)) {
-            app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
-            LoggerService::info(self::class.' - sendIntroAndReassignEmail - Webhook request sent to: '.$customerNotificationWorkflow.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
-        } else {
-            LoggerService::info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
-        }
+        app(WebEngageService::class)->sendEvent($workflowType, $payload);
+        LoggerService::info(self::class.' - sendIntroAndReassignEmail - WebEngage event sent for Ref-ID: '.$quote->uuid.' | Time:'.now());
     }
 
     public function sendSupportUserAssignmentEmail($emailData)
@@ -1999,35 +2003,78 @@ class SendEmailCustomerService extends BaseService
 
     public function sendCarIntroEmailWithAdvisor($quote)
     {
-        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
-        if (! empty($carIntroEmailWorkflowUrl)) {
+        try {
+
             $advisor = User::where('id', $quote->advisor_id)->first() ?? null;
             $workflowType = ! empty($quote->car_make_id) ? WorkflowTypeEnum::CAR_INTRO_EMAIL : WorkflowTypeEnum::CAR_INTRO_EMAIL_WITHOUT_VEHICLE_DETAILS;
             LoggerService::info('sendCarIntroEmailWithAdvisor - Workflow type: '.$workflowType.' with Car Make ID: '.$quote->car_make_id.' with Ref-ID: '.$quote->uuid);
-            $emailData = $this->buildEmailDataForBirdFlow($quote, $advisor, $workflowType);
-            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
-            LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
-        } else {
-            LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook URL not found in storage with Ref-ID:'.$quote->uuid.' | Time:'.now());
-        }
+            $emailData = $this->buildEmailDataForWEFlow($quote, $advisor, $workflowType);
 
-        return true;
+            $webEngage = app(WebEngageService::class);
+            $webEngage->sendEvent($workflowType, (array) $emailData);
+            LoggerService::info('sendCarIntroEmailWithAdvisor - Webhook request sent to: '.WorkflowTypeEnum::CAR_INTRO_EMAIL.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
+
+            return true;
+        } catch (Exception $e) {
+            LoggerService::warning(
+                'sendCarIntroEmailWithAdvisor - Error for Ref-ID: '.$quote->uuid.
+                ' | Message: '.$e->getMessage()
+            );
+
+            return false;
+        }
     }
 
     public function sendCarIntroEmailWithoutAdvisor($quote)
     {
-        $carIntroEmailWorkflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW);
-        if (! empty($carIntroEmailWorkflowUrl)) {
-            $emailData = $this->buildEmailDataForBirdFlow($quote, null, WorkflowTypeEnum::CAR_INTRO_EMAIL);
-            app(BirdService::class)->triggerWebHookRequest($carIntroEmailWorkflowUrl, (object) $emailData);
-            LoggerService::info('sendCarIntroEmailWithoutAdvisor - Webhook request sent to: '.$carIntroEmailWorkflowUrl);
-        } else {
-            LoggerService::info('sendCarIntroEmailWithoutAdvisor - Webhook URL not found in storage');
+        try {
+            $emailData = $this->buildEmailDataForWEFlow($quote, null, WorkflowTypeEnum::CAR_INTRO_EMAIL);
+            $webEngage = app(WebEngageService::class);
+            $webEngage->sendEvent(WorkflowTypeEnum::CAR_INTRO_EMAIL, (array) $emailData);
+
+            return true;
+        } catch (Exception $e) {
+            LoggerService::warning(
+                'sendCarIntroEmailWithAdvisor - Error for Ref-ID: '.$quote->uuid.
+                ' | Message: '.$e->getMessage()
+            );
+
+            return false;
         }
-
-        return true;
     }
+    public function buildEmailDataForWEFlow($lead, $advisor, $workflowType)
+    {
+        $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
 
+        return (object) [
+            'quoteUID' => $lead->uuid,
+            'customerEmail' => $lead->email,
+            'refID' => $lead->code,
+            'customerId' => $lead->customer_id,
+            'uniqueId' => (string) Str::ulid(),
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'firstName' => $lead->first_name,
+            'lastName' => $lead->last_name,
+            'companyName' => $lead->company_name ?? '',
+            'advisorId' => $advisor->id ?? null,
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'carMakeId' => ! empty($lead->car_make_id) ? true : false,
+            'documentUrl' => $documentUrl ?? null,
+            'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflowType' => $workflowType,
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+            'createdAt' => Carbon::parse($lead->created_at)->format('Y-m-d\TH:i:sO'),
+        ];
+    }
     public function buildEmailDataForBirdFlow($lead, $advisor, $workflowType)
     {
         $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
@@ -2074,30 +2121,15 @@ class SendEmailCustomerService extends BaseService
         return true;
     }
 
-    public function sendManagerDeactivationAttemptEmail(Collection $baseManagers, $attemptedBy): ?object
+    public function sendManagerDeactivationAttemptEmail(Collection $baseManagers, $attemptedBy): void
     {
-        $workflowUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW);
         $itSupportEmail = getAppStorageValueByKey(ApplicationStorageEnums::IT_SUPPORT_EMAIL);
-
-        if (empty($workflowUrl)) {
-            LoggerService::error('Manager Deactivation Attempt: BIRD_MANAGER_DEACTIVATION_ATTEMPT_WORKFLOW not found in ApplicationStorage.');
-
-            return null;
-        }
 
         if (empty($itSupportEmail)) {
             LoggerService::error('Manager Deactivation Attempt: IT_SUPPORT_EMAIL not found in ApplicationStorage.');
 
-            return null;
+            return;
         }
-
-        $emailData = (object) [
-            'recipientEmail' => $itSupportEmail,
-            'recipientName' => 'IT Support AFIA',
-            'managerIds' => $baseManagers->pluck('id')->filter()->values()->implode(','),
-            'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL,
-            'timestamp' => now()->toDateTimeString(),
-        ];
 
         /* Base user's manager's */
         $managerEmails = $baseManagers
@@ -2107,17 +2139,29 @@ class SendEmailCustomerService extends BaseService
             ->values()
             ->all();
 
-        if (! empty($managerEmails)) {
-            $emailData->managerEmails = $managerEmails;
-        }
+        $emailData = [
+            'customerId' => $itSupportEmail,
+            'uniqueId' => (string) Str::ulid(),
+            'firstName' => 'IT Support',
+            'lastName' => 'AFIA',
+            'customerEmail' => $itSupportEmail,
+            'customerMobile' => '',
+            'quoteUID' => '',
+            'recipientEmail' => $itSupportEmail,
+            'recipientName' => 'IT Support AFIA',
+            'managerIds' => $baseManagers->pluck('id')->filter()->values()->implode(','),
+            'managerEmails' => $managerEmails,
+            'workflowType' => WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL,
+            'timestamp' => now()->toDateTimeString(),
+        ];
 
-        LoggerService::info('Sending manager deactivation attempt email via Bird', [
-            'manager_ids' => $emailData->managerIds,
+        LoggerService::info('Sending manager deactivation attempt email via WebEngage', [
+            'manager_ids' => $emailData['managerIds'],
             'attempted_by' => $attemptedBy->id,
-            'emailData' => $emailData,
         ]);
 
-        return app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::MANAGER_DEACTIVATION_EMAIL, $emailData);
+        LoggerService::info('Manager deactivation attempt email - WebEngage event triggered successfully');
     }
 
     public function sendBikeEpRetargetingEmail(int $templateId, array $emailData, string $tag): int

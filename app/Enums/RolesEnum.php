@@ -83,6 +83,11 @@ final class RolesEnum extends Enum
     public const JetskiAdvisor = 'JETSKI_ADVISOR';
     public const JetskiManager = 'JETSKI_MANAGER';
     public const CarRevivalAdvisor = 'CARREVIVAL_ADVISOR';
+    public const PreQualificationAdvisor = 'PRE_QUALIFICATION_ADVISOR';
+
+    /** Team lead: manual PQA assignment on Group Medical leads in IMCRM */
+    public const PreQualificationLead = 'PRE_QUALIFICATION_LEAD';
+
     public const CarRevivalManager = 'CARREVIVAL_MANAGER';
     public const SeniorManagement = 'SENIOR_MANAGEMENT';
     public const Accounts = 'ACCOUNTS';
@@ -125,4 +130,8 @@ final class RolesEnum extends Enum
     public const CyberManager = 'CYBER_MANAGER';
     public const SmartPhoneManager = 'SMART_PHONE_MANAGER';
     public const SmartPhoneAdvisor = 'SMART_PHONE_ADVISOR';
+
+    /* Expert Advisory Model Roles */
+    public const EAReferral = 'EA_REFERRAL';
+    public const EAManager = 'EA_MANAGER';
 }
