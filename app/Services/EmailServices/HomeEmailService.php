@@ -117,12 +117,11 @@ class HomeEmailService extends BaseService
             // Map Data for Home Renewal OCB Email
             $emailData = $this->mapDataForRenewalOCBEmail($homeQuote, $advisor, WorkflowTypeEnum::HOME_RENEWAL_OCB);
 
-            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HOME_AUTOMATED_FOLLOWUPS, (array) $emailData);
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HOME_RENEWAL_OCB, (array) $emailData);
 
             LoggerService::info('Renewals OCB Email Flow triggered', extra: [
                 'email' => $lead->email,
             ]);
-            app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS, QuoteTypeId::Home);
 
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
             RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
