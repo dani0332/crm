@@ -59,14 +59,15 @@ const props = defineProps({
 
 const emit = defineEmits(['updated']);
 
-const { auth, eaApprovalEligibleStatuses } = usePage().props;
+const { auth, eaApprovalEligibleStatuses, leadSource, eaModelEnum } =
+  usePage().props;
 const currentUserId = auth.user.id;
 const isEaManager = useHasRole('EA_MANAGER');
 
 const isEaCollaborateLead = computed(
   () =>
-    props.source === 'EA_IMCRM' &&
-    props.eaModel === 'collaborate' &&
+    props.source === leadSource.EA_IMCRM &&
+    props.eaModel === eaModelEnum.Collaborate &&
     eaApprovalEligibleStatuses.includes(props.quoteStatusId),
 );
 

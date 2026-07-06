@@ -979,6 +979,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :ea-model="quote.ea_model"
       :lead-generator="quote.lead_generator"
       :expert-advisor="quote.expert_advisor"
+      :ea-manager-approved-at="quote.ea_manager_approved_at"
+      :ea-manager-rejected-at="quote.ea_manager_rejected_at"
     />
 
     <EAApprovalActions
