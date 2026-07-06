@@ -14,22 +14,16 @@ const badRates = ref([]);
 const contactLoader = ref(false);
 const tableLoader = ref(false);
 const page = usePage();
-const dates = ref({
-  effective_from: '',
-  effective_to: new Date('2099-12-31'),
-});
 
 const tableHeader = [
-  { text: 'File Name', value: 'file_name' },
+  { text: 'ID', value: 'upload_id' },
+  { text: 'File Name', value: 'fileName' },
   { text: 'Status', value: 'status' },
-  { text: 'Source', value: 'source' },
-  { text: 'Total Records', value: 'total_records' },
-  { text: 'Effective From', value: 'effective_from' },
-  { text: 'Effective To', value: 'effective_to' },
-  { text: 'Plan Code', value: 'health_plan.code' },
-  { text: 'Plan Name', value: 'health_plan.text' },
-  { text: 'Created By', value: 'user.name' },
+  { text: 'Total Record', value: 'totalRecords' },
+  { text: 'Uploaded Record', value: 'good' },
+  { text: 'Bad Record', value: 'cannotUpload' },
   { text: 'Created At', value: 'created_at' },
+  { text: 'Updated At', value: 'updated_at' },
 ];
 
 const badRecordsTableHeader = [
@@ -57,62 +51,11 @@ function handleFileUpload(event) {
   uploadForm.csvFile = event[0];
 }
 
-function validateForm() {
-  if (!dates.value.effective_from) {
-    notification.error({
-      title: 'Effective from is required',
-      position: 'top',
-    });
-    return false;
-  }
-
-  if (!dates.value.effective_to) {
-    notification.error({
-      title: 'Effective to is required',
-      position: 'top',
-    });
-    return false;
-  }
-
-  if (dates.value.effective_to < dates.value.effective_from) {
-    notification.error({
-      title: 'Effective to must be greater than effective from',
-      position: 'top',
-    });
-    return false;
-  }
-
-  if (!file) {
-    notification.error({
-      title: 'File is required',
-      position: 'top',
-    });
-    return false;
-  }
-
-  return true;
-}
-
-function onSubmit() {
-  const isValid = validateForm();
-
+function onSubmit(isValid) {
   if (isValid) {
-    // Format dates for laravel validation
-    const formattedFromDate = new Date(dates.value.effective_from)
-      .toISOString()
-      .split('T')[0];
-
-    const formattedToDate = new Date(dates.value.effective_to)
-      .toISOString()
-      .split('T')[0];
-
-    // Prepare form data
     let formData = new FormData();
     formData.append('file_name', file);
-    formData.append('effective_from', formattedFromDate);
-    formData.append('effective_to', formattedToDate);
     contactLoader.value = true;
-
     axios
       .post('/rates-coverages/upload-rates', formData, {
         headers: {
@@ -122,7 +65,7 @@ function onSubmit() {
       .then(() => {
         contactLoader.value = false;
         notification.success({
-          title: 'Rates uploaded successfully.',
+          title: 'Rates upload is being processed.',
           position: 'top',
         });
         files = [];
@@ -267,28 +210,7 @@ const showFailedRates = (id, badCount) => {
           <li>Please use the unformatted (values only) data in the sheet.</li>
         </ul>
       </x-alert>
-      <div class="grid grid-cols-2 mt-4">
-        <!-- Empty left side -->
-        <div></div>
-        <!-- Right side (split into 2) -->
-        <div class="grid grid-cols-2 gap-3">
-          <DatePicker
-            v-model="dates.effective_from"
-            name="effective_from"
-            label="Effective From"
-            format="dd/MM/yyyy"
-            :min-date="new Date(new Date().setDate(new Date().getDate() + 1))"
-          />
-
-          <DatePicker
-            v-model="dates.effective_to"
-            name="effective_to"
-            label="Effective To"
-            format="dd/MM/yyyy"
-          />
-        </div>
-      </div>
-      <div class="flex justify-end gap-2">
+      <div class="flex justify-end gap-3 my-4">
         <x-button
           size="sm"
           color="#ff5e00"
@@ -313,7 +235,7 @@ const showFailedRates = (id, badCount) => {
     </x-form>
 
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Health Plan Rates</h2>
+      <h2 class="text-xl font-semibold">Uploaded Rates</h2>
       <div class="space-x-3"></div>
     </div>
     <x-divider class="my-4" />
@@ -352,9 +274,6 @@ const showFailedRates = (id, badCount) => {
         >
           <span>{{ item.cannotUpload }} </span>
         </Button>
-      </template>
-      <template #item-source="item">
-        {{ item.file_name ? 'IMCRM' : 'CMS' }}
       </template>
     </DataTable>
 

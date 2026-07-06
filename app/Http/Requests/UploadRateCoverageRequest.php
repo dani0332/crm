@@ -30,10 +30,8 @@ class UploadRateCoverageRequest extends FormRequest
                 'file',
                 'mimes:xls,xlsx',
                 'max:5120',
-                // new FileNameExists('rate_coverage_uploads', 'file_name'),
+                new FileNameExists('rate_coverage_uploads', 'file_name'),
             ],
-            'effective_from' => 'required|date',
-            'effective_to' => 'required|date|after:effective_from',
         ];
     }
 
@@ -48,7 +46,7 @@ class UploadRateCoverageRequest extends FormRequest
             'file_name.required' => 'The file is required. Please choose a file.',
             'file_name.file' => 'The uploaded item must be a valid file.',
             'file_name.mimes' => 'The file must be an Excel file with .xls or .xlsx extension.',
-            'file_name.max' => 'The file size must not exceed 5MB.',
+            'file_name.max' => 'The file size must not exceed 2MB.',
         ];
     }
 }
