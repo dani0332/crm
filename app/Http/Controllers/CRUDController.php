@@ -2099,6 +2099,8 @@ class CRUDController extends Controller
         if ($selectedTeam != quoteTypeCode::GM && $isAssigned) {
             return redirect()->to('/quotes/health/'.$lead->uuid)->with('success', ' Lead has been Assigned To '.strtoupper($selectedTeam).' Team');
         }
+
+        return redirect()->to('/quotes/health/'.$lead->uuid)->with('error', 'Cannot assign Health Team as lead is in a post-transaction state.');
     }
 
     public function updateLeadStatus(UpdateLeadStatusRequest $request)
