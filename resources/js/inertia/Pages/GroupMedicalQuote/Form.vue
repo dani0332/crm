@@ -732,7 +732,6 @@ function onSubmit(isValid) {
           :error="emirateOfRegistrationFieldError"
           label="EMIRATE OF REGISTRATION"
           :required="!props.isEmirateDisabled"
-          :disabled="props.isEmirateDisabled"
           tooltip="Select the Emirate where the company is legally registered or primarily operates."
           @update:modelValue="onEmirateChange"
         />
