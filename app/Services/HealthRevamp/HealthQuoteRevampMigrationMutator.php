@@ -61,7 +61,7 @@ final class HealthQuoteRevampMigrationMutator
             $this->applyMaritalStatusUpdates($hqr, $members);
             $this->normalizeGenderValues($hqr, $members);
             $this->applyPolicyHolderCategoryCode($hqr);
-            $this->applyHealthQuoteSalaryBandAndVisaFromMemberCategory($hqr, $members);
+            $this->applyHealthQuoteSalaryBandAndVisaFromMemberCategory($hqr);
             $this->applyMemberRelationSalaryAndVisa($hqr, $members);
             $this->applyHealthQuoteMemberCategoryRemap($hqr);
             $this->applyCustomerMemberCategoryRemap($hqr, $members);
@@ -357,13 +357,10 @@ final class HealthQuoteRevampMigrationMutator
      * Newborns (≤ 12 months) get NEWBORN_BORN_IN_UAE visa; all other categories map via fixed rules.
      * Falls back to the existing value when the category has no explicit mapping.
      */
-    private function applyHealthQuoteSalaryBandAndVisaFromMemberCategory(HealthQuote $hqr, Collection $members): void
+    private function applyHealthQuoteSalaryBandAndVisaFromMemberCategory(HealthQuote $hqr): void
     {
-        $policyHolder = $members->first(fn (CustomerMembers $m) => $m->is_policy_holder);
-        $isPolicyHolderInsured = $policyHolder ? (bool) $policyHolder->is_insured : false;
-
-        $hqr->salary_band_id = $this->getSalaryBandId($hqr, $isPolicyHolderInsured);
-        $hqr->visa_category_id = $this->getVisaCategoryId($hqr, $isPolicyHolderInsured);
+        $hqr->salary_band_id = $this->getSalaryBandId($hqr);
+        $hqr->visa_category_id = $this->getVisaCategoryId($hqr);
         $hqr->save();
     }
 
@@ -421,20 +418,12 @@ final class HealthQuoteRevampMigrationMutator
             };
 
             $visa = match (true) {
-                in_array($mc, [
-                    MemberCategoryEnum::EMPLOYEE_2->value,
-                    MemberCategoryEnum::EMPLOYEE_1->value,
-                ], true) => VisaCategoryEnum::EMPLOYMENT->value,
-                in_array($mc, [
-                    MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value,
-                    MemberCategoryEnum::DEPENDENT_PARENT->value,
-                    MemberCategoryEnum::DEPENDENT_SPOUSE->value,
-                ], true) => VisaCategoryEnum::DEPENDENT_FAMILY->value,
+                in_array($mc, [MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value, MemberCategoryEnum::DEPENDENT_PARENT->value, MemberCategoryEnum::DEPENDENT_SPOUSE->value], true) => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
                 $mc === MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value => VisaCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
                 $mc === MemberCategoryEnum::INVESTOR_PARTNER->value => VisaCategoryEnum::INVESTOR_PARTNER->value,
                 $mc === MemberCategoryEnum::GOLDEN_VISA->value => VisaCategoryEnum::GOLDEN_VISA->value,
                 $mc === MemberCategoryEnum::DEPENDENT_CHILD->value && $months !== null && $months <= 12 => VisaCategoryEnum::NEWBORN_BORN_IN_UAE->value,
-                $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::DEPENDENT_FAMILY->value,
+                $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
                 default => $cm->visa_category_id,
             };
 
@@ -548,7 +537,7 @@ final class HealthQuoteRevampMigrationMutator
         return $g;
     }
 
-    public function getSalaryBandId($hqr, bool $isPolicyHolderInsured = false)
+    public function getSalaryBandId($hqr)
     {
         $mc = (int) $hqr->member_category_id;
 
@@ -569,39 +558,22 @@ final class HealthQuoteRevampMigrationMutator
             default => $hqr->salary_band_id,
         };
 
-        if ($isPolicyHolderInsured && $salaryBand === SalaryBandEnum::NO_SALARY_DEPENDENTS_OR_CHILDREN->value) {
-            $salaryBand = null;
-        }
-
         return $salaryBand;
     }
 
-    public function getVisaCategoryId($hqr, bool $isPolicyHolderInsured = false)
+    public function getVisaCategoryId($hqr)
     {
         $mc = (int) $hqr->member_category_id;
         $months = $this->context->monthsSinceDob($this->context->dobToDateString($hqr->dob));
         $visa = match (true) {
-            in_array($mc, [
-                MemberCategoryEnum::DOMESTIC_WORKER->value,
-                MemberCategoryEnum::EMPLOYEE_2->value,
-                MemberCategoryEnum::EMPLOYEE_1->value,
-            ], true) => VisaCategoryEnum::EMPLOYMENT->value,
-            in_array($mc, [
-                MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value,
-                MemberCategoryEnum::DEPENDENT_PARENT->value,
-                MemberCategoryEnum::DEPENDENT_SPOUSE->value,
-            ], true) => VisaCategoryEnum::DEPENDENT_FAMILY->value,
+            in_array($mc, [MemberCategoryEnum::DOMESTIC_WORKER->value, MemberCategoryEnum::EMPLOYEE_2->value, MemberCategoryEnum::EMPLOYEE_1->value, MemberCategoryEnum::DEPENDENT_SIBLING_OR_OTHER_RELATIVES->value, MemberCategoryEnum::DEPENDENT_PARENT->value, MemberCategoryEnum::DEPENDENT_SPOUSE->value], true) => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
             $mc === MemberCategoryEnum::SELF_EMPLOYED_FREELANCE->value => VisaCategoryEnum::SELF_EMPLOYED_FREELANCE->value,
             $mc === MemberCategoryEnum::INVESTOR_PARTNER->value => VisaCategoryEnum::INVESTOR_PARTNER->value,
             $mc === MemberCategoryEnum::GOLDEN_VISA->value => VisaCategoryEnum::GOLDEN_VISA->value,
             $mc === MemberCategoryEnum::DEPENDENT_CHILD->value && $months !== null && $months <= 18 * 12 => null,
-            $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::DEPENDENT_FAMILY->value,
+            $mc === MemberCategoryEnum::DEPENDENT_CHILD->value => VisaCategoryEnum::SPONSORED_EMPLOYER_FAMILY->value,
             default => $hqr->visa_category_id,
         };
-
-        if ($isPolicyHolderInsured && $visa === VisaCategoryEnum::DEPENDENT_FAMILY->value) {
-            $visa = VisaCategoryEnum::EMPLOYMENT->value;
-        }
 
         return $visa;
     }

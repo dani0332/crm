@@ -59,10 +59,6 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  allVisaCategoryOptions: {
-    type: Array,
-    default: () => [],
-  },
   includePolicyHolder: {
     type: Boolean,
     default: false,
@@ -228,11 +224,9 @@ const memberCategoryText = memberCategoryId =>
 
 const visaCategoryText = visaCategoryId =>
   computed(() => {
-    const options = props.allVisaCategoryOptions.length
-      ? props.allVisaCategoryOptions
-      : props.visaCategoryOptions;
-
-    return options.find(option => option.value === visaCategoryId)?.label;
+    return props.visaCategoryOptions.find(
+      option => option.value === visaCategoryId,
+    )?.label;
   });
 
 const maritalStatusText = maritalStatusId =>
@@ -1376,17 +1370,7 @@ defineExpose({
             <x-select
               v-model="memberForm.salary_band_id"
               label="Salary"
-              :options="
-                salaryBands.filter(
-                  item =>
-                    !(
-                      memberForm.is_policy_holder == 1 &&
-                      memberForm.is_insured == 1 &&
-                      item.value ===
-                        salaryBandEnum.NO_SALARY_DEPENDENTS_OR_CHILDREN
-                    ),
-                )
-              "
+              :options="salaryBands"
               placeholder="Select Salary Band"
               class="w-full"
               :rules="[isRequired]"
@@ -1403,11 +1387,6 @@ defineExpose({
                     !(
                       memberForm.is_policy_holder == 1 &&
                       item.value === visaCategoryEnum.NEWBORN_BORN_IN_UAE
-                    ) &&
-                    !(
-                      memberForm.is_policy_holder == 1 &&
-                      memberForm.is_insured == 1 &&
-                      item.value === visaCategoryEnum.DEPENDENT_FAMILY
                     ),
                 )
               "

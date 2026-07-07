@@ -13,6 +13,7 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\EaModelEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\GenericRequestEnum;
@@ -194,6 +195,7 @@ class HandleInertiaRequests extends Middleware
             'salaryBandEnum' => array_column(SalaryBandEnum::cases(), 'value', 'name'),
             'visaCategoryEnum' => array_column(VisaCategoryEnum::cases(), 'value', 'name'),
             'eaApprovalEligibleStatuses' => QuoteStatusEnum::eaApprovalEligibleStatuses(),
+            'eaModelEnum' => array_column(EaModelEnum::cases(), 'value', 'name'),
         ];
     }
 
