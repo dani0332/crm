@@ -80,6 +80,8 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'plan_id',
             'branch_id',
             'is_branch_applicable',
+            'ea_model',
+            'lead_generator_id',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
@@ -104,6 +106,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insuranceProvider:id,text',
             'subSource:id,text',
             'plan:id,repair_type',
+            'leadGenerator:id,name',
         ]);
     }
 
@@ -264,6 +267,10 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 $insurerApiStatusIds = (array) $getFilterValue('insurer_api_status_id');
 
                 $query->whereIn('insurer_api_status_id', $insurerApiStatusIds);
+            })
+            ->when($hasFilterValue('ea_model'), fn ($q) => $q->where('ea_model', $getFilterValue('ea_model')))
+            ->when($hasFilterValue('lead_generator'), function ($query) use ($getFilterValue) {
+                $query->whereHas('leadGenerator', fn ($uq) => $uq->where('name', 'like', '%'.$getFilterValue('lead_generator').'%'));
             });
     }
 

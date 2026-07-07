@@ -292,6 +292,8 @@ class TravelController extends Controller
         $customerAddressData = app(CustomerService::class)->getCustomerAddressData($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Travel));
         $isDicProvider = $insuranceProvider?->code === InsuranceProviderEnum::DIC->value;
+        $record->lead_generator = $record->leadGenerator?->only(['id', 'name', 'email']);
+        $record->expert_advisor = $record->expertAdvisor?->only(['id', 'name']);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,

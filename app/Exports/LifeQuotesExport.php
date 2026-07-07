@@ -54,6 +54,8 @@ class LifeQuotesExport implements CsvExportableInterface
             'SUM ASSURED',
             'SUM ASSURED CURRENCY',
             'POLICY SUM ASSURED',
+            'EA MODEL',
+            'LEAD GENERATOR',
         ];
     }
 
@@ -85,6 +87,8 @@ class LifeQuotesExport implements CsvExportableInterface
             optional($quote->lifeQuote)?->sum_insured_value ?? '',
             optional($quote->lifeQuote)?->policySumAssuredCurrency?->text ?? '',
             optional($quote->lifeQuote)?->policy_sum_assured ?? '',
+            $quote->ea_model?->value ?? '',
+            $quote->leadGenerator?->name ?? '',
         ];
     }
 

@@ -199,13 +199,21 @@ function onSubmit(isValid) {
     quoteForm.has_personal_belongings = !!quoteForm.personal_belongings_aed;
     quoteForm.has_building = !!quoteForm.building_aed;
 
-    const action = isEdit.value
+    let action = isEdit.value
       ? route('home-quotes-update', props.quote.uuid)
       : route('home-quotes-store');
 
     if (!action) {
       console.error('Form action is undefined.');
       return;
+    }
+
+    if (
+      !isEdit.value &&
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
+    ) {
+      action += '?ea_model=collaborate';
     }
 
     const submitMethod = isEdit.value ? quoteForm.put : quoteForm.post;

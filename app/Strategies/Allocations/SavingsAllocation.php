@@ -2,6 +2,7 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -14,6 +15,13 @@ class SavingsAllocation extends BaseAllocation
     protected function fetchAdvisor(int $onlineStatus)
     {
         $roles = [RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager];
+
+        // EA_IMCRM: bypass email-based routing — permission gate in getAdvisorBaseQuery handles filtering
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.'::fetchAdvisor - EA_IMCRM lead detected, bypassing email-based routing and using permission gate');
+
+            return $this->getAdvisorsByEmailsOrIds($onlineStatus, $roles);
+        }
 
         if ($this->lead->isFIC(QuoteTypes::SAVINGS)) {
             LoggerService::info(self::class.'::fetchAdvisor - Lead is FIC, fetching FIC rule users');

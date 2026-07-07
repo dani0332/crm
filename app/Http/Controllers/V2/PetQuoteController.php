@@ -205,6 +205,7 @@ class PetQuoteController extends Controller
 
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+        $quote->load('leadGenerator', 'expertAdvisor');
 
         // dd($insuranceProviders);
         return inertia('PetQuote/Show', [

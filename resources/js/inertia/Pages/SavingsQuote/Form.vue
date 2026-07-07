@@ -151,13 +151,27 @@ function onSubmit(isValid) {
   if (isValid) {
     quoteForm.clearErrors();
     let method = editMode.value ? 'put' : 'post';
-    const url = editMode.value
+    let url = editMode.value
       ? route('savings-quotes-update', props.quote.uuid)
       : route('savings-quotes-store');
+
+    if (
+      !editMode.value &&
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
+    ) {
+      url += '?ea_model=collaborate';
+    }
 
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
       },
     });
   }

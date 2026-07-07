@@ -116,6 +116,13 @@ const tableHeader = [
   { text: 'Renewal Batch', value: 'renewal_batch' },
   { text: 'Private Client', value: 'customer.pcp_tag_formatted' },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source.text' },
+  { text: 'EA MODEL', value: 'ea_model' },
+  { text: 'LEAD GENERATOR', value: 'lead_generator' },
+];
+
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborative' },
 ];
 
 const ecommerceOptions = [
@@ -332,6 +339,8 @@ const filters = reactive({
   api_issuance_status_id: [],
   insurer_api_status_id: [],
   nationality_id: [],
+  ea_model: '',
+  lead_generator: '',
 });
 
 const teamUsers =
@@ -1369,6 +1378,23 @@ const onConfirmPUAExport = () => {
             />
           </template>
         </x-select>
+
+        <x-select
+          label="EA Model"
+          v-model="filters.ea_model"
+          placeholder="All Models"
+          :options="eaModelOptions"
+          class="w-full"
+        />
+
+        <x-input
+          v-model="filters.lead_generator"
+          type="search"
+          name="lead_generator"
+          label="Lead Generator"
+          class="w-full"
+          placeholder="Search by lead generator name"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div>
@@ -1623,6 +1649,14 @@ const onConfirmPUAExport = () => {
         <p v-if="item.payment_status?.text === 'AUTHORISED'">
           {{ daysAgoFromAuthorizedDate(item.payment?.authorized_at_formatted) }}
         </p>
+      </template>
+
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+
+      <template #item-lead_generator="item">
+        {{ item.lead_generator?.name }}
       </template>
     </DataTable>
 

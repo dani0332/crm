@@ -5,6 +5,7 @@ namespace Tests\Helpers;
 use Illuminate\Support\Facades\Schema;
 use Tests\Support\Schema\CoreSchema;
 use Tests\Support\Schema\CyberSchema;
+use Tests\Support\Schema\EaSchema;
 use Tests\Support\Schema\OCRSchema;
 use Tests\Support\Schema\PartnerSchema;
 use Tests\Support\Schema\RenewalsSchema;
@@ -66,6 +67,13 @@ class TestSchemaCreator
         self::createMinimalSchema();
 
         (new RulesSchema)->register();
+    }
+
+    public static function createEaSchema(): void
+    {
+        self::createMinimalSchema();
+
+        (new EaSchema)->register();
     }
 
 }
