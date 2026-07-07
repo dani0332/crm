@@ -2140,7 +2140,7 @@ class HealthQuoteService extends BaseService
         return $modelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
     }
 
-    public function isPQAQualified(int $id, int $pqaAdvisorId): int
+    public function isPQAQualified(int $id, ?int $pqaAdvisorId = null): int
     {
         if (! $pqaAdvisorId) {
             return 0;

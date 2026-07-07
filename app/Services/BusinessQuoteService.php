@@ -802,7 +802,7 @@ class BusinessQuoteService extends BaseService
                     'businessActivityId' => $request->nature_of_company_activity_id,
                     'briefDetails' => $request->brief_details,
                     'premium' => $request->premium ?? 0,
-                    'user_id' => auth()->id(),
+                    'userId' => auth()->id(),
                 ],
                 fn (mixed $value): bool => $value !== null && $value !== '',
             ),
