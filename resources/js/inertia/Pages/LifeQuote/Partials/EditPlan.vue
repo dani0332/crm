@@ -342,8 +342,6 @@ const getQuote = () => {
       : parseFloat(Number(rider.coverValue).toFixed(2)),
   }));
 
-
-
   editForm.sumAssured = Number(parseFloat(editForm.sumAssured).toFixed(2));
   editForm.actualPremium = Number(
     parseFloat(editForm.actualPremium).toFixed(2),
@@ -554,8 +552,8 @@ const riderOptions = ref([]);
  * R1026/R1027 OFF (both) → R1028 WP auto-deselected
  */
 const RIDER_RULES = {
-  R1023: { deselects: ['R1024'], selects: [] },        // CI Acc deselects CI Add
-  R1024: { deselects: ['R1023'], selects: [] },        // CI Add deselects CI Acc
+  R1023: { deselects: ['R1024'], selects: [] }, // CI Acc deselects CI Add
+  R1024: { deselects: ['R1023'], selects: [] }, // CI Add deselects CI Acc
   R1026: { deselects: ['R1027'], selects: ['R1028'] }, // PTDA deselects PTDAS, auto-selects WP
   R1027: { deselects: ['R1026'], selects: ['R1028'] }, // PTDAS deselects PTDA, auto-selects WP
 };
@@ -1048,7 +1046,8 @@ const getDisplayPrice = computed({
                       "
                       class="text-red-500 text-sm mt-1"
                     >
-                      Selected value is invalid ({{rider.coverValue}}). Select a valid option.
+                      Selected value is invalid ({{ rider.coverValue }}). Select
+                      a valid option.
                     </p>
                   </template>
                   <x-input
