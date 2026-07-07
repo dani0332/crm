@@ -349,6 +349,7 @@ class BusinessQuoteService extends BaseService
             'additionalNotes' => $request->additional_notes ?? null,
             'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
             'businessActivityId' => $request->nature_of_company_activity_id,
+            'userId' => auth()->id(),
         ];
         EACollaborateHelper::applyEAIMCRMSource($dataArr);
 
@@ -1178,13 +1179,13 @@ class BusinessQuoteService extends BaseService
         return $messageModel.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
     }
 
-    public function isPQAQualified(int $id, int $pqaAdvisorId): int
+    public function isPQAQualified(int $id, ?int $pqaAdvisorId = null): int
     {
         if (! $pqaAdvisorId) {
             return 0;
         }
 
-        $statusCount = QuoteStatusLog::where('quote_type_id', QuoteTypes::getId(QuoteTypes::GROUP_MEDICAL))
+        $statusCount = QuoteStatusLog::where('quote_type_id', QuoteTypes::getId(QuoteTypes::BUSINESS))
             ->where('quote_request_id', $id)
             ->whereIn('previous_quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::QualificationPending])
             ->where('current_quote_status_id', QuoteStatusEnum::Qualified)
