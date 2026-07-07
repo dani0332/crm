@@ -397,7 +397,7 @@ onMounted(() => {
       code: rider.insurerCode,
       conflictsWith: rider.conflictsWith,
       autoSelectedWith: rider.autoSelectedWith,
-      active: rider.active ?? 0,
+      active: Boolean(rider.active),
       price: parseFloat(rider.price) || 0,
       coverValue: rider.coverValue ?? 0,
       text: rider.text,
@@ -587,7 +587,7 @@ const handleRiderToggle = toggledRider => {
     rules?.deselects?.forEach(codeToDeselect => {
       const target = ridersData.value.find(r => r.code === codeToDeselect);
       if (target) {
-        target.active = 0;
+        target.active = false;
         target.coverValue = 0;
         // target.price = 0;
       }
@@ -597,7 +597,7 @@ const handleRiderToggle = toggledRider => {
     rules?.selects?.forEach(codeToSelect => {
       const target = ridersData.value.find(r => r.code === codeToSelect);
       if (target) {
-        target.active = 1;
+        target.active = true;
       }
     });
   }
