@@ -37,6 +37,7 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
+use App\Models\LifeQuotePlanDetail;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -1426,7 +1427,13 @@ class SendUpdateLogService
                 $emailData->homeDetails = '-';
             }
         } elseif ($quoteTypeId == QuoteTypeId::Life) {
-            $emailData->planType = is_null($quote?->coverage_code) ? '' : ucwords(convertFromCamelCase($quote?->coverage_code));
+            $planType = LifeQuotePlanDetail::where([
+                'quoteUuid' => $quote->uuid,
+                'planId' => $quote?->plan_id,
+                'providerId' => $quote?->insurance_provider_id,
+            ])->first()?->planType;
+
+            $emailData->planType = $planType ?? '';
             $emailData->policyTerm = $quote?->lifeQuote?->numberOfYears?->text ?? '';
         } elseif ($quoteTypeId == QuoteTypeId::Travel) {
             $emailData->planType = is_null($quote?->coverage_code) ? '' : ucwords(convertFromCamelCase($quote?->coverage_code));
