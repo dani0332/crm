@@ -87,7 +87,7 @@ class SendEALeadSubmittedEmailJob implements ShouldQueue
             'cc' => array_column($ccEmails, 'email'),
             'params' => $body['params'],
             'tag' => $tag,
-            'leadGenerator' => $this->quote->leadGenerator ?? null,
+            'leadGeneratorEmail' => $this->quote->leadGenerator?->email ?? null,
         ]);
 
         $response = Http::withHeaders([
