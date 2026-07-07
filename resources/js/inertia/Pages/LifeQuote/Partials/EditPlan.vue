@@ -548,17 +548,14 @@ const riderOptions = ref([]);
  *
  * R1023 CI Acc   ↔ R1024 CI Add  : mutually exclusive
  * R1026 PTDA     ↔ R1027 PTDAS   : mutually exclusive
- * R1026/R1027 ON      →  R1028 WP auto-selected
- * R1026/R1027 OFF (both) → R1028 WP auto-deselected
+ * R1028 WP (Waiver of Premium) is independent — not auto-selected or auto-deselected by PTD riders.
  */
 const RIDER_RULES = {
   R1023: { deselects: ['R1024'], selects: [] }, // CI Acc deselects CI Add
   R1024: { deselects: ['R1023'], selects: [] }, // CI Add deselects CI Acc
-  R1026: { deselects: ['R1027'], selects: ['R1028'] }, // PTDA deselects PTDAS, auto-selects WP
-  R1027: { deselects: ['R1026'], selects: ['R1028'] }, // PTDAS deselects PTDA, auto-selects WP
+  R1026: { deselects: ['R1027'], selects: [] }, // PTDA deselects PTDAS
+  R1027: { deselects: ['R1026'], selects: [] }, // PTDAS deselects PTDA
 };
-const PTD_RIDER_CODES = ['R1026', 'R1027'];
-const WAIVER_RIDER_CODE = 'R1028';
 
 const HOSPITAL_INDEMNITY_RIDER_CODE = 'R1025';
 const HOSPITAL_INDEMNITY_COVER_VALUE_OPTIONS = {
@@ -603,22 +600,6 @@ const handleRiderToggle = toggledRider => {
         target.active = 1;
       }
     });
-  }
-
-  // When a PTD rider is turned OFF, deselect WP only if no PTD rider remains active
-  if (PTD_RIDER_CODES.includes(toggledRider.code) && !isNowActive) {
-    const anyPtdActive = ridersData.value
-      .filter(r => PTD_RIDER_CODES.includes(r.code))
-      .some(r => r.active == 1 || r.active === true);
-
-    if (!anyPtdActive) {
-      const waiver = ridersData.value.find(r => r.code === WAIVER_RIDER_CODE);
-      if (waiver) {
-        waiver.active = 0;
-        waiver.coverValue = 0;
-        // waiver.price = 0;
-      }
-    }
   }
 };
 
