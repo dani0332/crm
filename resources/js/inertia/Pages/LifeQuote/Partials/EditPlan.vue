@@ -394,6 +394,9 @@ onMounted(() => {
   if (editForm.providerId) {
     ridersData.value = props.selectedPlan.riders.map(rider => ({
       riderId: rider.id,
+      code: rider.insurerCode,
+      conflictsWith: rider.conflictsWith,
+      autoSelectedWith: rider.autoSelectedWith,
       active: rider.active ?? 0,
       price: parseFloat(rider.price) || 0,
       coverValue: rider.coverValue ?? 0,
@@ -536,6 +539,88 @@ const hidePlan = () => {
 const submitType = isApiOrRC.value ? ref('getQuote') : ref('onSubmit');
 
 const riderOptions = ref([]);
+
+/**
+ * Rider selection rules (per insurer code mapping):
+ *
+ * deselects[] — rider codes to force OFF when this rider is turned ON
+ * selects[]   — rider codes to force ON  when this rider is turned ON
+ *
+ * R1023 CI Acc   ↔ R1024 CI Add  : mutually exclusive
+ * R1026 PTDA     ↔ R1027 PTDAS   : mutually exclusive
+ * R1026/R1027 ON      →  R1028 WP auto-selected
+ * R1026/R1027 OFF (both) → R1028 WP auto-deselected
+ */
+const RIDER_RULES = {
+  R1023: { deselects: ['R1024'], selects: [] }, // CI Acc deselects CI Add
+  R1024: { deselects: ['R1023'], selects: [] }, // CI Add deselects CI Acc
+  R1026: { deselects: ['R1027'], selects: ['R1028'] }, // PTDA deselects PTDAS, auto-selects WP
+  R1027: { deselects: ['R1026'], selects: ['R1028'] }, // PTDAS deselects PTDA, auto-selects WP
+};
+const PTD_RIDER_CODES = ['R1026', 'R1027'];
+const WAIVER_RIDER_CODE = 'R1028';
+
+const HOSPITAL_INDEMNITY_RIDER_CODE = 'R1025';
+const HOSPITAL_INDEMNITY_COVER_VALUE_OPTIONS = {
+  AED: [100, 200, 300, 400, 500, 600, 730],
+  USD: [25, 50, 75, 100, 125, 150, 175, 200],
+};
+
+const getHospitalIndemnityCoverValueOptions = () => {
+  const values = HOSPITAL_INDEMNITY_COVER_VALUE_OPTIONS[editForm.currency];
+  if (!values) {
+    return [];
+  }
+  return values.map(value => ({ value, label: String(value) }));
+};
+
+const isHospitalIndemnityRider = rider =>
+  rider.code === HOSPITAL_INDEMNITY_RIDER_CODE &&
+  getHospitalIndemnityCoverValueOptions().length > 0;
+
+const handleRiderToggle = toggledRider => {
+  const isNowActive = toggledRider.active == 1 || toggledRider.active === true;
+  const rules = RIDER_RULES[toggledRider.code];
+
+  /** ridersData has props conflictsWith, autoSelectedWith contain add-ons code that we can use to create rather than static on in
+   *  RIDER_RULES in the future. */
+
+  if (isNowActive) {
+    // Deselect mutually exclusive riders
+    rules?.deselects?.forEach(codeToDeselect => {
+      const target = ridersData.value.find(r => r.code === codeToDeselect);
+      if (target) {
+        target.active = 0;
+        target.coverValue = 0;
+        // target.price = 0;
+      }
+    });
+
+    // Auto-select dependent riders
+    rules?.selects?.forEach(codeToSelect => {
+      const target = ridersData.value.find(r => r.code === codeToSelect);
+      if (target) {
+        target.active = 1;
+      }
+    });
+  }
+
+  // When a PTD rider is turned OFF, deselect WP only if no PTD rider remains active
+  if (PTD_RIDER_CODES.includes(toggledRider.code) && !isNowActive) {
+    const anyPtdActive = ridersData.value
+      .filter(r => PTD_RIDER_CODES.includes(r.code))
+      .some(r => r.active == 1 || r.active === true);
+
+    if (!anyPtdActive) {
+      const waiver = ridersData.value.find(r => r.code === WAIVER_RIDER_CODE);
+      if (waiver) {
+        waiver.active = 0;
+        waiver.coverValue = 0;
+        // waiver.price = 0;
+      }
+    }
+  }
+};
 
 // get rider details
 const getRiderDetails = async planId => {
@@ -942,7 +1027,31 @@ const getDisplayPrice = computed({
                 </div>
 
                 <div class="col-span-2">
+                  <template v-if="isHospitalIndemnityRider(rider)">
+                    <x-select
+                      :disabled="!rider.active"
+                      :options="getHospitalIndemnityCoverValueOptions()"
+                      :rules="rider.active ? [isRequired] : []"
+                      placeholder="Select cover value"
+                      class="w-full hospital-cash-benefit-select"
+                      v-model="rider.coverValue"
+                    />
+                    <p
+                      v-if="
+                        rider.active &&
+                        rider.coverValue &&
+                        !getHospitalIndemnityCoverValueOptions().some(
+                          option => option.value == rider.coverValue,
+                        )
+                      "
+                      class="text-red-500 text-sm mt-1"
+                    >
+                      Selected value is invalid ({{ rider.coverValue }}). Select
+                      a valid option.
+                    </p>
+                  </template>
                   <x-input
+                    v-else
                     :disabled="!rider.active"
                     :rules="
                       rider.active
@@ -963,7 +1072,12 @@ const getDisplayPrice = computed({
                 </div>
 
                 <div>
-                  <x-toggle v-model="rider.active" color="success" size="lg" />
+                  <x-toggle
+                    v-model="rider.active"
+                    color="success"
+                    size="lg"
+                    @update:modelValue="handleRiderToggle(rider)"
+                  />
                 </div>
 
                 <div class="col-span-2">
@@ -1185,3 +1299,20 @@ const getDisplayPrice = computed({
     </div>
   </x-modal>
 </template>
+
+<style scoped>
+.hospital-cash-benefit-select {
+  display: block;
+}
+
+.hospital-cash-benefit-select :deep(.v-popper) {
+  display: block;
+}
+
+.hospital-cash-benefit-select :deep(.truncate) {
+  height: 2.5rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+</style>
