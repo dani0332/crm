@@ -342,8 +342,6 @@ const getQuote = () => {
       : parseFloat(Number(rider.coverValue).toFixed(2)),
   }));
 
-
-
   editForm.sumAssured = Number(parseFloat(editForm.sumAssured).toFixed(2));
   editForm.actualPremium = Number(
     parseFloat(editForm.actualPremium).toFixed(2),
@@ -1029,7 +1027,8 @@ const getDisplayPrice = computed({
                       "
                       class="text-red-500 text-sm mt-1"
                     >
-                      Selected value is invalid ({{rider.coverValue}}). Select a valid option.
+                      Selected value is invalid ({{ rider.coverValue }}). Select
+                      a valid option.
                     </p>
                   </template>
                   <x-input
