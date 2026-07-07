@@ -84,6 +84,13 @@ class HomeAllocation extends BaseAllocation
             ]);
         }
 
+        // EA_IMCRM: bypass email-based routing — permission gate in getAdvisorBaseQuery handles filtering
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info('HomeAllocation: EA_IMCRM lead detected, bypassing standard advisor fetch and using permission gate');
+
+            return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::HomeAdvisor])->first();
+        }
+
         // Default behavior: Fetch value or volume advisors (Home Advisors)
         LoggerService::info('HomeAllocation: Fetching Home Advisor');
         $advisor = $this->fetchHomeAdvisor($onlineStatus, $excludedAdvisorId);

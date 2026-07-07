@@ -98,6 +98,7 @@ class AmtController extends Controller
             ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
             ->leftJoin('emirates as e', 'bqr.emirate_of_registration_id', '=', 'e.id')
             ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id')
+            ->leftJoin('users as lg', 'lg.id', '=', 'bqr.lead_generator_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -160,6 +161,8 @@ class AmtController extends Controller
                     WHEN bqr.assignment_type = '.AssignmentTypeEnum::SELF_ASSIGNED.' THEN "Self Assigned"
                     ELSE "" END) as assignment_type_text'),
                 'bqr.pq_advisor_id',
+                'bqr.ea_model',
+                'lg.name as lead_generator_name',
             );
         // PQA-only users see leads where they are the assigned pre-qualification advisor.
         // We skip the generic whereBasedOnRole for these users because isAdvisor() would
@@ -316,6 +319,12 @@ class AmtController extends Controller
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $data->where('rb.name', $request->renewal_batch);
+        }
+        if ($request->filled('ea_model')) {
+            $data->where('bqr.ea_model', $request->ea_model);
+        }
+        if ($request->filled('lead_generator')) {
+            $data->where('lg.name', 'like', '%'.$request->lead_generator.'%');
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
@@ -534,6 +543,8 @@ class AmtController extends Controller
             'natureOfCompanyActivity:id,text',
             'groupMedicalCategories',
             'businessActivity:id,name',
+            'leadGenerator',
+            'expertAdvisor',
         ]);
         abort_if(! $record, 404);
         /* Start - Temporarily adding for correcting historic data */

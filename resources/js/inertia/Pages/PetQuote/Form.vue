@@ -123,6 +123,14 @@ function onSubmit(isValid) {
       ? route('pet-quotes-update', props.quote.uuid)
       : route('pet-quotes-store');
 
+    if (
+      !editMode.value &&
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
+    ) {
+      url += '?ea_model=collaborate';
+    }
+
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));

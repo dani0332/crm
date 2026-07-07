@@ -2,6 +2,7 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\AllocationConfigurer;
@@ -20,6 +21,18 @@ class LifeAllocation extends BaseAllocation
         LoggerService::info(self::class.'::fetchAdvisor - Starting advisor fetch for Life allocation', [
             'online_status' => $onlineStatus,
         ]);
+
+        // EA_IMCRM: bypass email-based routing — permission gate in getAdvisorBaseQuery handles filtering
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.'::fetchAdvisor - EA_IMCRM lead detected, bypassing email-based routing and using permission gate');
+
+            return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::LifeAdvisor])
+                ->when(
+                    $parentLeadAdvisorId !== null,
+                    fn ($query) => $query->where('users.id', '!=', $parentLeadAdvisorId)
+                )
+                ->first();
+        }
 
         $emails = $this->getAdvisorEmails();
 
