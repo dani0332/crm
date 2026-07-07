@@ -432,23 +432,15 @@ const rules = {
                       PROVIDER NAME
                     </label>
                     <template #tooltip>
-                      Name of the insurance company responsible for the
-                      coverage.
+                      Provider is fixed based on the original policy and cannot
+                      be changed in a correction request.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-select
-                    v-if="isCPD"
-                    v-model="policyDetailsForm.insurance_provider_id"
-                    :options="insuranceProvidersOptions"
-                    placeholder="Provider Name"
-                    :disabled="!state.isEdit"
-                    filterable
-                    filterPlaceholder="Filter Provider Name...."
-                  />
-
-                  <span v-else>{{ policyDetailsForm.provider_name }}</span>
+                  <span>{{
+                    policyDetailsForm.provider_name || 'Not Set'
+                  }}</span>
                 </dd>
               </div>
 

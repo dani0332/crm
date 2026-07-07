@@ -42,6 +42,12 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 
     private function findLead()
     {
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - EA_IMCRM lead detected, bypassing pre-checks and proceeding with ILA allocation');
+
+            return $this->getLeadBaseQuery()->first();
+        }
+
         return $this->getLeadBaseQuery()
             ->where(function ($query) {
                 // First condition: either `sic_advisor_requested` is 1 or `source` is not `REVIVAL`

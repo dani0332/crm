@@ -2212,6 +2212,32 @@ const getDisplayPriceInAED = item => {
       :quote-status-enum="page.props.quoteStatusEnum"
     />
 
+    <EALeadInfo
+      :source="quote.source"
+      :ea-model="quote.ea_model"
+      :lead-generator="quote.lead_generator"
+      :expert-advisor="quote.expert_advisor"
+      :ea-manager-approved-at="quote.ea_manager_approved_at"
+      :ea-manager-rejected-at="quote.ea_manager_rejected_at"
+    />
+
+    <EAApprovalActions
+      quote-type="life"
+      :quote-id="quote.id"
+      :source="quote.source"
+      :ea-model="quote.ea_model"
+      :quote-status-id="quote.quote_status_id"
+      :advisor-id="quote.advisor_id"
+      :expert-advisor-id="quote.expert_advisor_id"
+      :ea-assigned-advisor-approved-at="quote.ea_assigned_advisor_approved_at"
+      :ea-expert-advisor-approved-at="quote.ea_expert_advisor_approved_at"
+      :ea-assigned-advisor-rejected-at="quote.ea_assigned_advisor_rejected_at"
+      :ea-expert-advisor-rejected-at="quote.ea_expert_advisor_rejected_at"
+      :ea-manager-approved-at="quote.ea_manager_approved_at"
+      :ea-manager-rejected-at="quote.ea_manager_rejected_at"
+      @updated="$inertia.reload({ only: ['quote'] })"
+    />
+
     <PlanDetails
       v-if="shouldShowPlanDetailsSection"
       :insuranceProviders="insuranceProviders"

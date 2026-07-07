@@ -16,8 +16,10 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\DeviceMake;
+use App\Models\PersonalQuote;
 use App\Models\PolicyIssuance;
 use App\Services\BranchAssignmentService;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\PolicyIssuanceAutomation\Device\SmartPhone\NationalGeneralInsurance\NgiGetPolicyDocumentsJob;
@@ -50,6 +52,8 @@ class DeviceQuoteService extends BaseQuoteService
             'nationality',
             'insuranceProviderPlan',
             'branch:id,name',
+            'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -65,6 +69,9 @@ class DeviceQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->filterBy('source')
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->filterByAdvisorAssignedDates('quoteDetail', ['advisor_assigned_date_start', 'advisor_assigned_date_end'], verifyQuoteStatus: true)
             ->filterIn('renewal_batch_id')
             ->filterBy('assignment_type', ignoreAll: true)
@@ -187,6 +194,8 @@ class DeviceQuoteService extends BaseQuoteService
                         'documents' => function ($q) {
                             $q->with('createdBy')->orderBy('created_at', 'desc');
                         },
+                        'leadGenerator',
+                        'expertAdvisor',
                     ])->select([
                         'personal_quotes.*',
                     ])->selectRaw("
@@ -357,8 +366,39 @@ class DeviceQuoteService extends BaseQuoteService
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
+        EACollaborateHelper::applyEAIMCRMSource($data);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('DeviceQuoteService: CAPI payload for EA lead', [
+                'ea_model' => $data['eaModel'] ?? request()->input('ea_model'),
+                'source' => $data['source'] ?? null,
+                'email' => $data['email'] ?? null,
+                'lead_generator_id' => $data['leadGeneratorId'] ?? null,
+                'advisor_id' => $data['advisorId'] ?? null,
+                'quote_type_id' => $data['quoteTypeId'] ?? null,
+            ]);
+        }
+
         // Make API request to save the device quote
         $response = Capi::request('/api/v1/device/create', 'post', $data);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('DeviceQuoteService: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->uuid ?? $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            $deviceQuoteUid = $response->uuid ?? $response->quoteUID ?? null;
+            if ($deviceQuoteUid) {
+                $eaQuote = PersonalQuote::where('uuid', $deviceQuoteUid)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'device');
+                }
+            }
+        }
+
         if (isset($response->code) && ! in_array($response->code, [200, 201], true) || isset($response->status) && ! in_array($response->status, [200, 201], true)) {
             return $response;
         }

@@ -124,6 +124,7 @@ const quoteForm = useForm({
     parseInt(props.quote?.sub_source_id, 10) ||
     parseInt(props.leadSourceParams?.subSource, 10) ||
     null,
+  lead_type: props.leadSourceParams?.type || null,
   sub_source_options_id:
     parseInt(props.quote?.sub_source_options_id, 10) ||
     parseInt(props.leadSourceParams?.subSourceOption, 10) ||

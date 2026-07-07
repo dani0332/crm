@@ -212,6 +212,10 @@ trait QuoteModelTrait
 
     public function isBuyLeadApplicable(bool $isSIC = false): bool
     {
+        if ($this->source === LeadSourceEnum::EA_IMCRM) {
+            return false;
+        }
+
         if ($isSIC) {
             return (! $this->isStale() && ! $this->isPaid()) &&
                 (request('isRequestedForAnAdvisor', false) ||

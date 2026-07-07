@@ -83,4 +83,15 @@ final class QuoteStatusEnum extends Enum
 
     // This is use for lost reason id not for Quote status
     public const LOSTREASONID = 34;
+
+    public static function eaApprovalEligibleStatuses(): array
+    {
+        return [
+            self::PaymentPending,
+            self::TransactionApproved,
+            self::PolicyInvoiced,
+            self::PolicyIssued,
+            self::PolicySentToCustomer,
+        ];
+    }
 }
