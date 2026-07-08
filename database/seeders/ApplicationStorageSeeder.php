@@ -184,7 +184,6 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedDisableClaimsModule();
         $this->seedDicTravelPolicyIssuance();
         $this->seedMotorRevivalWorkflow();
-        $this->seedHighRiskScoreBirdNotificationWorkflowUrl();
         $this->seedAmlAutomationOutcomeWorkflowUrl();
         $this->seedTravelAmlRetrigger();
         $this->seedDttLifeEnabled();
@@ -193,6 +192,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAllianceBrandSwitchDate();
         $this->seedAmlAutomationReTriggerRecipients();
         $this->seedEAEmailTemplates();
+        $this->seedHighRiskScoreNotificationRecipients();
     }
 
     private function livaCarAutomationSeed()
@@ -2088,19 +2088,6 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    private function seedHighRiskScoreBirdNotificationWorkflowUrl()
-    {
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL],
-            [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/dd811e82-a945-4ed1-a1bb-2e1be15fda12/invoke-sync',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-    }
-
     private function seedDttLifeEnabled(): void
     {
         ApplicationStorage::firstOrCreate(
@@ -2173,5 +2160,28 @@ class ApplicationStorageSeeder extends Seeder
                 ],
             );
         }
+    }
+
+    private function seedHighRiskScoreNotificationRecipients()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HIGH_RISK_SCORE_NOTIFICATION_TO_RECIPIENT],
+            [
+                'value' => 'HIGH_RISK_SCORE_NOTIFICATION_CC_RECIPIENT',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HIGH_RISK_SCORE_NOTIFICATION_CC_RECIPIENT],
+            [
+                'value' => 'mohamed.faisal@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
+            ],
+        );
     }
 }
