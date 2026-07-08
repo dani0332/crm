@@ -11,7 +11,7 @@ IMCRM is developed on Laravel using PHP 8.4 or above, and MySQL
 URLs:
 
 - [Live](https://imcrm.alfred.ae/)
-- [Stage](https://imcrmstage.alfred.ae/) 
+- [Stage](https://imcrmstage.alfred.ae/)
 - [UAT](https://imcrmuat.alfred.ae)
 - [DEV](https://imcrmdev.alfred.ae) [DEV1](https://imcrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
 - [TEST](https://imcrmtest.alfred.ae)
