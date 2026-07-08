@@ -59,14 +59,15 @@ const props = defineProps({
 
 const emit = defineEmits(['updated']);
 
-const { auth, eaApprovalEligibleStatuses } = usePage().props;
+const { auth, eaApprovalEligibleStatuses, leadSource, eaModelEnum } =
+  usePage().props;
 const currentUserId = auth.user.id;
 const isEaManager = useHasRole('EA_MANAGER');
 
 const isEaCollaborateLead = computed(
   () =>
-    props.source === 'EA_IMCRM' &&
-    props.eaModel === 'collaborate' &&
+    props.source === leadSource.EA_IMCRM &&
+    props.eaModel === eaModelEnum.Collaborate &&
     eaApprovalEligibleStatuses.includes(props.quoteStatusId),
 );
 
@@ -76,8 +77,16 @@ const isAdvisor = computed(
     props.expertAdvisorId === currentUserId,
 );
 
+const hasManagerDecision = computed(
+  () => !!props.eaManagerApprovedAt || !!props.eaManagerRejectedAt,
+);
+
 const isVisible = computed(
-  () => isEaCollaborateLead.value && isAdvisor.value && !isEaManager,
+  () =>
+    isEaCollaborateLead.value &&
+    isAdvisor.value &&
+    !isEaManager &&
+    !hasManagerDecision.value,
 );
 
 const isAssignedAdvisor = computed(() => props.advisorId === currentUserId);

@@ -804,6 +804,13 @@ class BusinessQuoteService extends BaseService
         $response = CapiRequestService::sendCAPIRequest('/api/v1-revise-group-medical-quote', $capiPayload);
         LoggerService::info('Capi revise-group-medical-quote response', ['response' => $response]);
 
+        // Update emirates regiration in insured
+        $entity = $businessQuote->quoteRequestEntityMapping?->entity;
+        if ($entity && $entity->emirate_of_registration_id !== $request->emirate_of_registration_id) {
+            $entity->emirate_of_registration_id = $request->emirate_of_registration_id;
+            $entity->save();
+        }
+
         if (isset($request->return_to_view)) {
             return redirect('quote/business/'.$businessQuote->id)->with('success', 'Business Quote has been updated');
         }
