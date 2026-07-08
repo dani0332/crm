@@ -24,6 +24,11 @@ class CyberSchema
                 $table->unsignedBigInteger('coverage_id')->nullable();
                 $table->timestamps();
             },
+            'branches' => function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->nullable();
+                $table->timestamps();
+            },
         ]);
     }
 
@@ -50,6 +55,9 @@ class CyberSchema
             'documents' => fn (Blueprint $table) => $table->json('documents')->nullable(),
             'insurer_api_status_id' => fn (Blueprint $table) => $table->unsignedBigInteger('insurer_api_status_id')->nullable(),
             'api_issuance_status_id' => fn (Blueprint $table) => $table->unsignedBigInteger('api_issuance_status_id')->nullable(),
+            'transaction_type_id' => fn (Blueprint $table) => $table->unsignedBigInteger('transaction_type_id')->nullable(),
+            'branch_id' => fn (Blueprint $table) => $table->unsignedBigInteger('branch_id')->nullable(),
+            'is_branch_applicable' => fn (Blueprint $table) => $table->boolean('is_branch_applicable')->default(0),
         ];
 
         foreach ($columns as $column => $callback) {
