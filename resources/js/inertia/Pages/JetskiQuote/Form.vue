@@ -1,5 +1,6 @@
 <script setup>
 const page = usePage();
+const notification = useNotifications('toast');
 
 const props = defineProps({
   genderOptions: Object,
@@ -121,10 +122,24 @@ function onSubmit(isValid) {
       ? route('jetski-quotes-update', props.quote.uuid)
       : route('jetski-quotes-store');
 
+    if (
+      !editMode.value &&
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
+    ) {
+      url += '?ea_model=collaborate';
+    }
+
     quoteForm.clearErrors();
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
       },
     });
   }

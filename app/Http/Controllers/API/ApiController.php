@@ -80,6 +80,7 @@ use App\Services\CQF\CarCQFFileExportService;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailServices\FailedILAEmailService;
 use App\Services\EmailServices\HomeEmailService;
+use App\Services\EmailServices\IncomingEmailService;
 use App\Services\EmailStatusService;
 use App\Services\HomeRevivalService;
 use App\Services\InboundEmailsHookService;
@@ -1717,9 +1718,10 @@ class ApiController extends Controller
 
             LoggerService::info('Postmark inbound email webhook received', [
                 'ip' => $request->ip(),
-                'headers' => $request->headers->all(),
                 'payload' => $payload,
             ]);
+
+            app(IncomingEmailService::class)->process($payload);
 
             return response()->json(['status' => 'received'], 200);
 

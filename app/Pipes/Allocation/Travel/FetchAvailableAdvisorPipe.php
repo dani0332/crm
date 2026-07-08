@@ -2,6 +2,7 @@
 
 namespace App\Pipes\Allocation\Travel;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Models\User;
@@ -81,6 +82,15 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             LoggerService::info(self::class.' - getAdvisorByStatus: SIC Advisor is required');
 
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        }
+
+        // EA_IMCRM: bypass SIC_UNASSISTED team exclusion — permission gate in getAdvisorBaseQuery handles filtering
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - getAdvisorsByStatus: EA_IMCRM lead detected, bypassing SIC_UNASSISTED exclusion and using permission gate');
+
+            return $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::TravelAdvisor])
+                ->logRawSql()
+                ->get();
         }
 
         return $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::TravelAdvisor])

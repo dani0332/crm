@@ -15,6 +15,7 @@ use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\BirdService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\EmbeddedTransactionService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Http\Response;
@@ -233,10 +234,10 @@ describe('retargetEpReminder', function () {
                 ->andReturn($epTransactions);
 
             $callCount = 0;
-            $this->mock(BirdService::class, function ($mock) use (&$callCount) {
-                $mock->shouldReceive('triggerWebHookRequest')
+            $this->mock(WebEngageService::class, function ($mock) use (&$callCount) {
+                $mock->shouldReceive('sendEvent')
                     ->twice()
-                    ->with($this->dummyBirdEpWorkflowUrl, Mockery::type('object'))
+                    ->with(WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER, Mockery::type('array'))
                     ->andReturnUsing(function () use (&$callCount) {
                         $callCount++;
                         if ($callCount === 1) {
@@ -282,10 +283,10 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
             ->with($this->quoteId, QuoteTypeId::Car, true, PaymentStatusEnum::DRAFT, QuoteStatusEnum::PolicyBooked, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
             ->andReturn(collect([$epTransaction]));
 
-        $this->mock(BirdService::class, function ($mock) {
-            $mock->shouldReceive('triggerWebHookRequest')
+        $this->mock(WebEngageService::class, function ($mock) {
+            $mock->shouldReceive('sendEvent')
                 ->once()
-                ->with($this->dummyBirdEpWorkflowUrl, Mockery::type('object'))
+                ->with(WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER, Mockery::type('array'))
                 ->andReturn((object) ['status_code' => Response::HTTP_NOT_FOUND, 'body' => '{"code":"NotFound","message":"The resource doesn\'t exist or you don\'t have access to it."}']);
         });
 
@@ -316,11 +317,11 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
             ->andReturn(collect([$epTransaction]));
 
         $capturedData = null;
-        $this->mock(BirdService::class, function ($mock) use (&$capturedData) {
-            $mock->shouldReceive('triggerWebHookRequest')
+        $this->mock(WebEngageService::class, function ($mock) use (&$capturedData) {
+            $mock->shouldReceive('sendEvent')
                 ->once()
-                ->with($this->dummyBirdEpWorkflowUrl, Mockery::on(function ($data) use (&$capturedData) {
-                    $capturedData = $data;
+                ->with(WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER, Mockery::on(function ($data) use (&$capturedData) {
+                    $capturedData = (object) $data;
 
                     return true;
                 }))
@@ -384,15 +385,15 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
         expect($result->message)->toBe('Bird EP Reminder Workflow URL not found');
     });
 
-    test('when call BirdService and return its result, response contains 200', function () {
+    test('when call WebEngageService and return its result, response contains 200', function () {
         $epTransaction = Mockery::mock(EmbeddedTransaction::class)->makePartial();
         $epTransaction->code = $this->embeddedTransactionCode;
 
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $this->mock(BirdService::class, function ($mock) {
-            $mock->shouldReceive('triggerWebHookRequest')
+        $this->mock(WebEngageService::class, function ($mock) {
+            $mock->shouldReceive('sendEvent')
                 ->once()
-                ->with($this->dummyBirdEpWorkflowUrl, Mockery::type('object'))
+                ->with(WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER, Mockery::type('array'))
                 ->andReturn((object) ['status_code' => Response::HTTP_OK]);
         });
 

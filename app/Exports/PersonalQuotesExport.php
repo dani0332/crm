@@ -169,6 +169,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
                 self::SUB_SOURCE,
+                'EA MODEL',
+                'LEAD GENERATOR',
             ],
             QuoteTypes::YACHT->value => [
                 self::REF_ID,
@@ -192,6 +194,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
+                'EA MODEL',
+                'LEAD GENERATOR',
             ],
             QuoteTypes::JETSKI->value => [
                 self::REF_ID,
@@ -215,6 +219,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
                 self::SUB_SOURCE,
+                'EA MODEL',
+                'LEAD GENERATOR',
             ],
             QuoteTypes::PET->value => [
                 self::REF_ID,
@@ -250,6 +256,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
                 self::SUB_SOURCE,
+                'EA MODEL',
+                'LEAD GENERATOR',
             ],
             QuoteTypes::CYCLE->value => [
                 self::REF_ID,
@@ -273,6 +281,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
                 self::SUB_SOURCE,
+                'EA MODEL',
+                'LEAD GENERATOR',
             ],
             QuoteTypes::HOME->value => [
                 self::REF_ID,
@@ -297,6 +307,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::BOOKING_DATE,
                 self::PRIVATE_CLIENT,
                 self::SUB_SOURCE,
+                'EA MODEL',
+                'LEAD GENERATOR',
             ],
             QuoteTypes::SAVINGS->value => [
                 self::REF_ID,
@@ -318,6 +330,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::TRANSACTION_APPROVED_DATE,
                 self::BOOKING_DATE,
                 self::SUB_SOURCE,
+                'EA MODEL',
+                'LEAD GENERATOR',
             ],
             QuoteTypes::LIFE->value => [
                 self::REF_ID,
@@ -346,6 +360,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::SUM_ASSURED_CURRENCY,
                 self::POLICY_SUM_ASSURED,
                 self::SUB_SOURCE,
+                'EA MODEL',
+                'LEAD GENERATOR',
             ],
             QuoteTypes::CYBER->value => [
                 self::REF_ID,
@@ -362,6 +378,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::CREATED_DATE,
                 self::LAST_MODIFIED_DATE,
                 self::PREVIOUS_POLICY_EXPIRY_DATE,
+                'EA MODEL',
+                'LEAD GENERATOR',
             ],
             QuoteTypes::DEVICE->value => [
                 self::REF_ID,
@@ -377,6 +395,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 self::CREATED_DATE,
                 self::LAST_MODIFIED_DATE,
                 self::PREVIOUS_POLICY_EXPIRY_DATE,
+                'EA MODEL',
+                'LEAD GENERATOR',
             ],
         ];
 
@@ -442,6 +462,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
                 optional($quote->subSource)->text,
+                $quote->ea_model?->value ?? '',
+                $quote->leadGenerator?->name ?? '',
             ],
             QuoteTypes::YACHT->value => [
                 $baseFields['code'],
@@ -465,6 +487,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['transaction_approved_date'],
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
+                $quote->ea_model?->value ?? '',
+                $quote->leadGenerator?->name ?? '',
             ],
             QuoteTypes::JETSKI->value => [
                 $baseFields['code'],
@@ -488,6 +512,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
                 optional($quote->subSource)->text,
+                $quote->ea_model?->value ?? '',
+                $quote->leadGenerator?->name ?? '',
             ],
             QuoteTypes::PET->value => [
                 $baseFields['code'],
@@ -523,6 +549,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
                 optional($quote->subSource)->text,
+                $quote->ea_model?->value ?? '',
+                $quote->leadGenerator?->name ?? '',
             ],
             QuoteTypes::CYCLE->value => [
                 $baseFields['code'],
@@ -546,6 +574,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
                 optional($quote->subSource)->text,
+                $quote->ea_model?->value ?? '',
+                $quote->leadGenerator?->name ?? '',
             ],
             QuoteTypes::HOME->value => [
                 $baseFields['code'],
@@ -570,6 +600,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['booking_date'],
                 $baseFields['pc_customer'],
                 optional($quote->subSource)->text,
+                $quote->ea_model?->value ?? '',
+                $quote->leadGenerator?->name ?? '',
             ],
             QuoteTypes::SAVINGS->value => [
                 $baseFields['code'],
@@ -591,6 +623,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['transaction_approved_date'],
                 $baseFields['booking_date'],
                 optional($quote->subSource)->text,
+                $quote->ea_model?->value ?? '',
+                $quote->leadGenerator?->name ?? '',
             ],
             QuoteTypes::LIFE->value => [
                 $quote->code,
@@ -619,6 +653,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $quote->lifeQuote?->policySumAssuredCurrency->text ?? '',
                 $quote->lifeQuote?->policy_sum_assured ?? '',
                 optional($quote->subSource)->text,
+                $quote->ea_model?->value ?? '',
+                $quote->leadGenerator?->name ?? '',
             ],
             QuoteTypes::CYBER->value => [
                 $baseFields['code'],
@@ -635,6 +671,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['created_date'],
                 $baseFields['last_modified_date'],
                 $baseFields['previous_policy_expiry_date'],
+                $quote->ea_model?->value ?? '',
+                $quote->leadGenerator?->name ?? '',
             ],
             QuoteTypes::DEVICE->value => [
                 $baseFields['code'],
@@ -650,6 +688,8 @@ class PersonalQuotesExport implements CsvExportableInterface
                 $baseFields['created_date'],
                 $baseFields['last_modified_date'],
                 $baseFields['previous_policy_expiry_date'],
+                $quote->ea_model?->value ?? '',
+                $quote->leadGenerator?->name ?? '',
             ],
             default => [],
         };

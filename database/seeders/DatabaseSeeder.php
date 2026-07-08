@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
             DocumentTypesSeeder::class,
-            GroupMedicalLeadDocumentTypesSeeder::class,
+            // GroupMedicalLeadDocumentTypesSeeder::class,
             // CommercialCarPlanSeeder::class,
             // RuleNameSeeder::class,
             // BusinessActivitiesSeeder::class,
@@ -82,6 +82,7 @@ class DatabaseSeeder extends Seeder
             SalaryBandSeeder::class,
             MaritalStatusSeeder::class,
             PqaLeadAllocationPermissionSeeder::class,
+            EAModelRolePermissionSeeder::class,
         ]);
     }
 }
