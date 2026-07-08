@@ -148,7 +148,7 @@ const tableHeader = ref([
   {
     text: 'PQA Qualified',
     value: 'pqa_qualified',
-    is_active: true
+    is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
   { text: 'UNASSIGNED', value: 'unassigned', is_active: true },

@@ -90,11 +90,13 @@ const props = defineProps({
   policyHolderOptions: Array,
   maritalStatusOptions: Array,
   emirateEnum: Object,
-  pqaQualified: Number
+  pqaQualified: Number,
 });
 const modelClass = 'App\\Models\\HealthQuote';
 
-const pqaQualifiedFormatted = computed(() => (props.pqaQualified === 0 ? 'No' : 'Yes'));
+const pqaQualifiedFormatted = computed(() =>
+  props.pqaQualified === 0 ? 'No' : 'Yes',
+);
 
 const isManualPlansCount = ref(0);
 
