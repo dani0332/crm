@@ -2401,12 +2401,6 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
               <div
                 class="grid sm:grid-cols-2"
               >
-                <dt class="font-medium">PC-Qualified</dt>
-                <dd>{{ quote.pc_qualified_formatted }}</dd>
-              </div>
-              <div
-                class="grid sm:grid-cols-2"
-              >
                 <dt class="font-medium">PQA Qualified</dt>
                 <dd>{{ pqaQualifiedFormatted }}</dd>
               </div>
