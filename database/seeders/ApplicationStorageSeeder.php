@@ -2167,7 +2167,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::HIGH_RISK_SCORE_NOTIFICATION_TO_RECIPIENT],
             [
-                'value' => 'HIGH_RISK_SCORE_NOTIFICATION_CC_RECIPIENT',
+                'value' => 'geetika.anand@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => ApplicationStorageEnums::ACTIVE,
