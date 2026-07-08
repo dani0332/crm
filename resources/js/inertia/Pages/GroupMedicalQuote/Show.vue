@@ -87,7 +87,9 @@ const isDuplicateAllowed = computed(() => {
   return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
 });
 
-const pqaQualifiedText = computed(() => (props.pqaQualified === 1 ? 'Yes' : 'No'));
+const pqaQualifiedText = computed(() =>
+  props.pqaQualified === 1 ? 'Yes' : 'No',
+);
 
 const genderText = gender =>
   computed(() => {
