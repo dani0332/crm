@@ -17,6 +17,7 @@ use App\Jobs\SendSupportUserAssignmentEmailJob;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
+use App\Models\QuoteStatusLog;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\PqaAllocation\PqaLeadAllocationService;
@@ -348,6 +349,7 @@ class BusinessQuoteService extends BaseService
             'additionalNotes' => $request->additional_notes ?? null,
             'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
             'businessActivityId' => $request->nature_of_company_activity_id,
+            'userId' => auth()->id(),
         ];
         EACollaborateHelper::applyEAIMCRMSource($dataArr);
 
@@ -360,7 +362,10 @@ class BusinessQuoteService extends BaseService
             }
         }
 
-        $dataArr = array_merge($dataArr, $this->buildGroupMedicalCapiPayload($request));
+        $dataArr = array_filter(
+            [...$dataArr, ...$this->buildGroupMedicalCapiPayload($request)],
+            fn (mixed $value): bool => $value !== null && $value !== '',
+        );
 
         if (request()->input('ea_model')) {
             LoggerService::info('BusinessQuoteService: CAPI payload for EA lead', [
@@ -787,17 +792,21 @@ class BusinessQuoteService extends BaseService
         }
 
         $capiPayload = array_merge(
-            [
-                'quoteUID' => $id,
-                'firstName' => $request->first_name,
-                'lastName' => $request->last_name,
-                'mobileNo' => $request->mobile_no,
-                'companyName' => $request->company_name,
-                'emirateOfRegistrationId' => $request->emirate_of_registration_id,
-                'businessActivityId' => $request->nature_of_company_activity_id,
-                'briefDetails' => $request->brief_details,
-                'premium' => $request->premium ?? 0,
-            ],
+            array_filter(
+                [
+                    'quoteUID' => $id,
+                    'firstName' => $request->first_name,
+                    'lastName' => $request->last_name,
+                    'mobileNo' => $request->mobile_no,
+                    'companyName' => $request->company_name,
+                    'emirateOfRegistrationId' => $request->emirate_of_registration_id,
+                    'businessActivityId' => $request->nature_of_company_activity_id,
+                    'briefDetails' => $request->brief_details,
+                    'premium' => $request->premium ?? 0,
+                    'userId' => auth()->id(),
+                ],
+                fn (mixed $value): bool => $value !== null && $value !== '',
+            ),
             $this->buildGroupMedicalCapiPayload($request),
         );
 
@@ -1168,5 +1177,21 @@ class BusinessQuoteService extends BaseService
 
         // return $displayModelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
         return $messageModel.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
+    }
+
+    public function isPQAQualified(int $id, ?int $pqaAdvisorId = null): int
+    {
+        if (! $pqaAdvisorId) {
+            return 0;
+        }
+
+        $statusCount = QuoteStatusLog::where('quote_type_id', QuoteTypes::getId(QuoteTypes::BUSINESS))
+            ->where('quote_request_id', $id)
+            ->whereIn('previous_quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::QualificationPending])
+            ->where('current_quote_status_id', QuoteStatusEnum::Qualified)
+            ->where('created_by', $pqaAdvisorId)
+            ->count();
+
+        return $statusCount > 0 ? 1 : 0;
     }
 }

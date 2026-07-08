@@ -18,6 +18,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Facades\Ken;
 use App\Facades\Marshall;
 use App\Jobs\CarLost\CarLostStatusRejected;
@@ -437,6 +438,58 @@ class CRUDService extends BaseService
         return $query->orderBy('r.name')->distinct()->get();
     }
 
+    public function getPqaAdvisorList($quote_type_id, $status = 1)
+    {
+
+        $productType = TeamTypeEnum::PRODUCT;
+        $corplineName = QuoteTypes::CORPLINE->value;
+        $groupMedicalName = QuoteTypes::GROUP_MEDICAL->value;
+        $corplineQuoteTypeId = (int) QuoteTypes::CORPLINE->id();
+        $businessQuoteTypeId = (int) QuoteTypes::BUSINESS->id();
+        $groupMedicalQuoteTypeId = (int) QuoteTypes::GROUP_MEDICAL->id();
+
+        $quoteTypeId = in_array($quote_type_id, [$corplineQuoteTypeId, $groupMedicalQuoteTypeId]) ? $businessQuoteTypeId : $quote_type_id;
+
+        $user = User::query()
+            ->select('users.id', DB::raw('CONCAT(users.name, "- ", "'.RolesEnum::PreQualificationAdvisor.'") AS name'))
+            ->join('pqa_lead_allocation_config as pqa', 'pqa.user_id', '=', 'users.id')
+            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
+            ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+            ->where('mhr.model_type', User::class)
+            ->where('r.name', RolesEnum::PreQualificationAdvisor)
+            ->where('pqa.quote_type_id', $quoteTypeId)
+            ->when(
+                in_array($quote_type_id, [$corplineQuoteTypeId, $groupMedicalQuoteTypeId]),
+                function ($query) use ($productType, $corplineName, $groupMedicalName, $corplineQuoteTypeId, $quote_type_id) {
+                    $productName = $quote_type_id === $corplineQuoteTypeId
+                        ? $corplineName
+                        : $groupMedicalName;
+
+                    $query->whereExists(function ($sub) use ($productType, $productName) {
+                        $sub->selectRaw('1')
+                            ->from('user_products as up_m')
+                            ->join('teams as t_m', 't_m.id', '=', 'up_m.product_id')
+                            ->whereColumn('up_m.user_id', 'users.id')
+                            ->where('t_m.type', $productType)
+                            ->whereRaw("UPPER(t_m.name) = UPPER('{$productName}')");
+                    });
+                },
+                function ($query) use ($productType) {
+                    $query->whereExists(function ($sub) use ($productType) {
+                        $sub->selectRaw('1')
+                            ->from('user_products as up_m')
+                            ->join('teams as t_m', 't_m.id', '=', 'up_m.product_id')
+                            ->whereColumn('up_m.user_id', 'users.id')
+                            ->where('t_m.type', $productType)
+                            ->whereRaw('pqa.quote_type_id = (
+                                SELECT qt_m.id FROM quote_type qt_m WHERE UPPER(qt_m.code) = UPPER(t_m.name) LIMIT 1
+                            )');
+                    });
+                }
+            );
+
+        return $user;
+    }
     public function getRenewalAdvisorsByModelType($modelType)
     {
         $query = DB::table('users as u')

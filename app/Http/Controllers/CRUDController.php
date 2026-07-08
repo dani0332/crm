@@ -1359,6 +1359,9 @@ class CRUDController extends Controller
                 } else {
                     $quoteStatuses = array_values($leadStatuses->toArray());
                 }
+                $advisors = $advisors->concat($this->crudService->getPqaAdvisorList(QuoteTypes::HEALTH->id())->get());
+
+                $pqaQualified = $this->healthQuoteService->isPQAQualified($record->id, $record->pq_advisor_id);
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
@@ -1454,6 +1457,7 @@ class CRUDController extends Controller
                     'policyHolderOptions' => $policyHolderOptions,
                     'emirateEnum' => EmirateEnum::asArray(),
                     'policyHolderRelationMap' => RelationCodeEnum::policyHolderRelationMap(),
+                    'pqaQualified' => $pqaQualified,
                 ]);
             } else {
                 return view('shared.show', compact([

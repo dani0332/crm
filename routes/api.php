@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
     Route::post('/imcrm/re-trigger-life-revival', [ApiController::class, 'reTriggerLifeRevival'])->name('reTriggerLifeRevival');
+    Route::post('/imcrm/re-trigger-home-revival', [ApiController::class, 'reTriggerHomeRevival'])->name('reTriggerHomeRevival');
+    Route::post('/imcrm/re-trigger-car-revival', [ApiController::class, 'reTriggerCarRevival'])->name('reTriggerCarRevival');
 });
 
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
@@ -140,6 +142,7 @@ Route::post('/imcrm/eligible-for-revival-followups', [ApiController::class, 'eli
 
 Route::prefix('v1')->group(function () {
     Route::post('/log-ep-email-statuses', [ApiController::class, 'logEpEmailStatuses'])->name('logEpEmailStatuses');
+    Route::post('/postmark/emails-inbound-hook', [ApiController::class, 'handlePostMarkEmailInteractionWebhook'])->name('postmark.email-interaction-webhook');
 
     Route::post('quotes/car/followup-started', [CarQuoteController::class, 'followupStarted']);
     Route::post('quotes/car/pause-resume-followup', [CarQuoteController::class, 'updatePauseAndResumeCounters']);

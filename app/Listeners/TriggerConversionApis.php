@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Events\QuotePolicyBooked;
 use App\Services\ConversionApiService;
@@ -41,16 +42,26 @@ class TriggerConversionApis implements ShouldQueue
                 $event->eventType
             );
 
-            // Trigger Google conversion API
-            $googleSuccess = $this->conversionApiService->triggerGoogleConversion(
-                $event->quoteUID,
-                $event->quoteTypeId,
-                $event->eventType
-            );
+            // Trigger Google conversion API, unless the lead came from a renewal upload
+            $googleSuccess = false;
+            if ($event->leadSource !== LeadSourceEnum::RENEWAL_UPLOAD) {
+                $googleSuccess = $this->conversionApiService->triggerGoogleConversion(
+                    $event->quoteUID,
+                    $event->quoteTypeId,
+                    $event->eventType
+                );
+            } else {
+                LoggerService::info('TriggerConversionApis - Skipping Google conversion API for renewal upload lead source', [], [
+                    'quoteTypeId' => $event->quoteTypeId,
+                    'eventType' => $event->eventType,
+                    'leadSource' => $event->leadSource,
+                ]);
+            }
 
             LoggerService::info('TriggerConversionApis - Conversion APIs processing completed', [], [
                 'quoteTypeId' => $event->quoteTypeId,
                 'eventType' => $event->eventType,
+                'leadSource' => $event->leadSource,
                 'facebookSuccess' => $facebookSuccess,
                 'googleSuccess' => $googleSuccess,
             ]);
