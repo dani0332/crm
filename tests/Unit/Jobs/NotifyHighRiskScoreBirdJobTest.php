@@ -11,17 +11,19 @@ use Symfony\Component\HttpFoundation\Response;
 test('sends WebEngage event with the payload and logs success when workflow responds 201', function () {
     Log::spy();
 
+    $toRecipient = fake()->unique()->safeEmail();
+
     $payload = [
         'refId' => 'HEA-1',
         'scoreProfile' => 'individual',
-        'customerId' => 'aml.compliance@insurancemarket.ae',
-        'customerEmail' => 'aml.compliance@insurancemarket.ae',
-        'firstName' => 'A',
-        'lastName' => 'B',
-        'customerMobile' => '0500000000',
+        'customerId' => $toRecipient,
+        'customerEmail' => $toRecipient,
+        'firstName' => fake()->firstName(),
+        'lastName' => fake()->lastName(),
+        'customerMobile' => fake()->e164PhoneNumber(),
         'riskScoreDoc' => null,
         'riskScore' => 40,
-        'ccRecipient' => 'mohamed.faisal@insurancemarket.ae',
+        'ccRecipient' => fake()->unique()->safeEmail(),
     ];
 
     $webEngageService = $this->mock(WebEngageService::class, function ($mock) use ($payload) {
@@ -44,7 +46,7 @@ test('logs a warning when WebEngage workflow does not respond 201', function () 
     $payload = [
         'refId' => 'C1',
         'scoreProfile' => 'individual',
-        'customerId' => 'x@example.com',
+        'customerId' => fake()->unique()->safeEmail(),
         'riskScore' => 40,
     ];
 
