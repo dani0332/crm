@@ -4,6 +4,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseConnectionEnum;
+use App\Enums\EaModelEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
@@ -814,7 +815,7 @@ if (! function_exists('getIMLogo')) {
         }
 
         // For PDF: use local file path, For web: use new GPTW certified CDN logo
-        return $isPDF ? public_path($imLogo) : 'https://cdn.alfred.ae/media/assets/im-logo-gptw-1.png';
+        return $isPDF ? public_path($imLogo) : 'https://cdn-prod.myalfred.me/media/assets/im-logo-gptw-1.png';
     }
 }
 
@@ -1956,5 +1957,37 @@ if (! function_exists('getManagerRoles')) {
             RolesEnum::JetskiManager,
             RolesEnum::BusinessManager,
         ];
+    }
+}
+
+if (! function_exists('isEAQuoteStatusUpdateAllowed')) {
+    /**
+     * Determine if the quote status update is allowed for EA quotes based on specific conditions.
+     * We want to block quote status id update for EA IMCRM quotes in collaborative model until manager approval or both assigned and expert advisor approval to ensure proper workflow adherence.
+     */
+    function isEAQuoteStatusUpdateAllowed(mixed $quote): bool
+    {
+        $isSourceEAIMCRM = isset($quote->source) && strtoupper(trim($quote->source)) === LeadSourceEnum::EA_IMCRM;
+        $eaModelValue = $quote->ea_model instanceof EaModelEnum ? $quote->ea_model->value : strtolower(trim((string) $quote->ea_model));
+        $isEaModelCollaborate = isset($quote->ea_model) && $eaModelValue === EaModelEnum::Collaborate->value;
+        $isEaManagerApproved = isset($quote->ea_manager_approved_at) && ! empty($quote->ea_manager_approved_at);
+        $isEaAssignedAdvisorApproved = isset($quote->ea_assigned_advisor_approved_at) && ! empty($quote->ea_assigned_advisor_approved_at);
+        $isEaExpertAdvisorApproved = isset($quote->ea_expert_advisor_approved_at) && ! empty($quote->ea_expert_advisor_approved_at);
+
+        if ($isSourceEAIMCRM && $isEaModelCollaborate) {
+            $isAllowed = $isEaManagerApproved || ($isEaAssignedAdvisorApproved && $isEaExpertAdvisorApproved);
+            LoggerService::info('isEAQuoteStatusUpdateAllowed Quote UUID: '.($quote->uuid ?? 'N/A'), extra: [
+                'isSourceEAIMCRM' => $isSourceEAIMCRM,
+                'isEaModelCollaborate' => $isEaModelCollaborate,
+                'isEaManagerApproved' => $isEaManagerApproved,
+                'isEaAssignedAdvisorApproved' => $isEaAssignedAdvisorApproved,
+                'isEaExpertAdvisorApproved' => $isEaExpertAdvisorApproved,
+                'isAllowed' => $isAllowed,
+            ]);
+
+            return $isAllowed;
+        }
+
+        return true;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\EaModelEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
@@ -67,6 +68,19 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         try {
             LoggerService::info(self::class.' - execute: Allocation Started');
             $this->resolveLead();
+
+            if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+                LoggerService::info(self::class.' - execute: EA_IMCRM lead detected', extra: [
+                    'uuid' => $this->lead->uuid,
+                    'ea_model' => $this->lead->ea_model?->value,
+                    'source' => $this->lead->source,
+                ]);
+            }
+
+            if ($this->lead && $this->shouldHandleDuplicateLead() && $this->lead->source !== LeadSourceEnum::EA_IMCRM) {
+                $this->resolveDuplicateLeadInfo();
+            }
+
             if (! $this->lead) {
                 LoggerService::info(self::class.' - execute: Lead not found');
 
@@ -77,11 +91,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
                 return $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
-            if ($this->shouldHandleDuplicateLead()) {
-                $this->resolveDuplicateLeadInfo();
-            }
 
-            $advisor = null;
             if ($this->quoteType == QuoteTypes::GROUP_MEDICAL && ! $this->hasDuplicateLead && $this->lead->quote_status_id == QuoteStatusEnum::Duplicate) {
 
                 LoggerService::info(self::class.' - groupMedicalDuplicateLeadStatus: Resolved from database', extra: [
@@ -93,6 +103,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 return $this->createResponse(0, 'Lead Status is Duplicate', Response::HTTP_NOT_FOUND);
             }
 
+            $advisor = null;
             if ($this->hasDuplicateLead) {
                 $advisor = $this->getAdvisorForDuplicateLeadAssignment();
                 LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
@@ -140,7 +151,12 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
                 $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
                 // $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Lost]);
-                $q->whereIn('quote_status_id', [QuoteStatusEnum::Qualified, QuoteStatusEnum::Duplicate]);
+                $q->where(function ($statusQuery) {
+                    $statusQuery->where(function ($eaQuery) {
+                        $eaQuery->where('source', LeadSourceEnum::EA_IMCRM)
+                            ->where('ea_model', EaModelEnum::Referral->value);
+                    })->orWhereIn('quote_status_id', [QuoteStatusEnum::Qualified, QuoteStatusEnum::Duplicate]);
+                });
             }, function ($q) {
                 $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost]);
 
@@ -160,7 +176,16 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                         ->orWhereNull('source');
                 });
             })
-            ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
+            ->when(! $this->overrideAdvisorId, function ($q) {
+                $q->where(function ($inner) {
+                    $inner->whereNull('advisor_id')
+                        ->orWhere(function ($sq) {
+                            $sq->where('source', LeadSourceEnum::EA_IMCRM)
+                                ->where('ea_model', EaModelEnum::Collaborate->value)
+                                ->whereNull('expert_advisor_id');
+                        });
+                });
+            });
     }
 
     protected function resolveLead(): void
@@ -211,7 +236,34 @@ abstract class BaseAllocation extends AllocationService implements Allocation
                 ]);
                 $q->whereNotIn('users.id', $ruleUserIds);
             })
+            ->when(
+                $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === EaModelEnum::Collaborate,
+                fn ($q) => $q->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedExpertAdvisor))
+            )
+            ->when(
+                $this->lead?->source === LeadSourceEnum::EA_IMCRM && $this->lead?->ea_model === EaModelEnum::Referral,
+                fn ($q) => $q->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedReferralAdvisor))
+            )
+            ->when(
+                $this->lead?->source === LeadSourceEnum::EA_IMCRM
+                    && $this->lead?->ea_model === EaModelEnum::Collaborate
+                    && $this->lead?->lead_generator_id
+                    && User::where('id', $this->lead->lead_generator_id)
+                        ->whereHas('permissions', fn ($pq) => $pq->where('name', PermissionsEnum::AssignedExpertAdvisor))
+                        ->exists(),
+                fn ($q) => $q->whereNotIn('users.id', [$this->lead->lead_generator_id])
+            )
             ->orderBy('la.last_allocated', 'asc');
+
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.' - getAdvisorBaseQuery: EA_IMCRM lead, filtering advisor pool by permission', extra: [
+                'uuid' => $this->lead->uuid,
+                'ea_model' => $this->lead->ea_model?->value,
+                'permission' => $this->lead->ea_model === EaModelEnum::Collaborate
+                    ? PermissionsEnum::AssignedExpertAdvisor
+                    : PermissionsEnum::AssignedReferralAdvisor,
+            ]);
+        }
 
         return $query;
     }
@@ -255,10 +307,24 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         try {
             $assignmentType = $this->isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED;
             LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');
+            $isEACollaborate = $this->lead->source === LeadSourceEnum::EA_IMCRM
+                && $this->lead->ea_model === EaModelEnum::Collaborate;
             $previousAssignmentType = $this->lead->assignment_type;
             $previousUserId = $this->lead->advisor_id;
-            $this->lead->advisor_id = $advisor->id;
-            $this->lead->assignment_type = $assignmentType;
+            if ($this->lead->source === LeadSourceEnum::EA_IMCRM) {
+                LoggerService::info(self::class.' - assignLead: EA_IMCRM lead assignment', extra: [
+                    'uuid' => $this->lead->uuid,
+                    'ea_model' => $this->lead->ea_model?->value,
+                    'assigning_to' => $isEACollaborate ? 'expert_advisor_id' : 'advisor_id',
+                    'advisor_id' => $advisor->id,
+                ]);
+            }
+            if ($isEACollaborate) {
+                $this->lead->expert_advisor_id = $advisor->id;
+            } else {
+                $this->lead->advisor_id = $advisor->id;
+                $this->lead->assignment_type = $assignmentType;
+            }
             LoggerService::info(self::class.' - assignLead: Checking lead_assignment_trigger', extra: [
                 'current_value' => $this->lead->lead_assignment_trigger ?? 'null',
             ]);

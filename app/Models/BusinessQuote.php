@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EaModelCast;
 use App\Enums\FilterTypes;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -35,6 +36,7 @@ class BusinessQuote extends Model implements AuditableContract
         return [
             'gm_category_intake' => 'array',
             'has_existing_group_health_insurance' => 'boolean',
+            'ea_model' => EaModelCast::class,
         ];
     }
 
@@ -420,5 +422,15 @@ class BusinessQuote extends Model implements AuditableContract
 
         return $this->hasMany(GroupMedicalQuoteCategory::class, 'business_quote_request_id', 'id')
             ->orderBy('sort_order');
+    }
+
+    public function leadGenerator()
+    {
+        return $this->belongsTo(User::class, 'lead_generator_id')->select(['id', 'name']);
+    }
+
+    public function expertAdvisor()
+    {
+        return $this->belongsTo(User::class, 'expert_advisor_id')->select(['id', 'name']);
     }
 }

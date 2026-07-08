@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Facades\AllocationConfigurer;
@@ -47,6 +48,19 @@ class PetAllocation extends BaseAllocation
 
         if (! $isReassignmentJob) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        }
+
+        // EA_IMCRM: bypass email-based routing — permission gate in getAdvisorBaseQuery handles filtering
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.'::fetchAvailableAdvisor - EA_IMCRM lead detected, bypassing email-based routing and using permission gate');
+            foreach ($statusOrder as $status) {
+                $advisor = $this->getAdvisorBaseQuery($status, [RolesEnum::PetAdvisor])->first();
+                if ($advisor) {
+                    return User::find($advisor->user_id);
+                }
+            }
+
+            return null;
         }
 
         $emails = app(RuleService::class)->getEmailsByLeadSource($this->lead->source, $this->lead->quote_type_id);

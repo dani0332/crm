@@ -81,6 +81,9 @@ class TravelQuoteService extends BaseService
             'tqr.paid_at',
             'tqr.payment_paid_at',
             'tqr.source',
+            'tqr.ea_model',
+            'tqr.lead_generator_id',
+            'tqr.expert_advisor_id',
             'tqr.policy_number',
             'tqr.nationality_id',
             'n.TEXT AS nationality_id_text',
@@ -334,7 +337,7 @@ class TravelQuoteService extends BaseService
             'nationalityId' => $request->nationality_id,
             'destinationIds' => $request->destination_ids ?? [],
             'tripStarted' => ($request->has_arrived_uae == '1' || $request->has_arrived_destination == '1') ? 1 : 0,
-            'source' => config('constants.SOURCE_NAME'),
+            'source' => $request->lead_type === 'expert_advisor_model' ? LeadSourceEnum::EA_IMCRM : config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'departureCountryId' => $request->departure_country_id ?? null,
             // Sub-source fields from CreateLeadModal

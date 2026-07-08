@@ -29,8 +29,6 @@ class SavePolicyDetailsRequest extends FormRequest
         $rules = [
             'first_name' => 'required|string|max:60',
             'last_name' => 'required|string|max:60',
-            'insurance_provider_id' => 'sometimes|nullable|integer',
-            'provider_name' => 'nullable|string',
             'plan_id' => 'sometimes|nullable|integer',
             'policy_number' => 'nullable|string|max:60',
             'issuance_date' => 'nullable|date',
