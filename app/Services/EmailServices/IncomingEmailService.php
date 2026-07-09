@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\HealthQuote;
+use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\BaseService;
 use App\Services\Logger\LoggerService;
@@ -46,6 +47,22 @@ class IncomingEmailService extends BaseService
         'Car Insurance with Alfred - CAR-',
     ];
 
+    /**
+     * Subject templates used for Home revival marketing/follow-up emails
+     * that carry the lead's REF-ID (e.g. `HOM-<code>`) alongside the
+     * marketing copy rather than a plain `HOM-<uuid>` token.
+     *
+     * @var array<int, string>
+     */
+    private const HOME_REVIVAL_SUBJECT_PATTERNS = [
+        'Your Home Protection Is Just a Few Clicks Away',
+        'A Smart Step Today Can Protect Your Home Tomorrow',
+        'Your Home Insurance, Made Simple with Alfred',
+        'Don’t Leave Your Home Unprotected, Complete It Today',
+        'Your Home Insurance With Alfred Is Still Waiting for You',
+        'Your Home Is Worth Protecting, Complete Your Cover Today',
+    ];
+
     public function process(array $payload)
     {
         try {
@@ -71,11 +88,15 @@ class IncomingEmailService extends BaseService
                 case QuoteTypes::HEALTH:
                     $lead = $this->resolveHealthLeadByRefId($subject);
                     break;
+                case QuoteTypes::HOME:
+                    $lead = $this->resolveHomeLeadByRefId($subject);
+                    break;
+
             }
 
             return null;
         } catch (Exception $e) {
-            LoggerService::error(self::class.' - process: Exception occurred', [
+            LoggerService::warning(self::class.' - process: Exception occurred', [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
@@ -170,6 +191,36 @@ class IncomingEmailService extends BaseService
         return $lead;
     }
 
+    private function resolveHomeLeadByRefId(string $subject): ?PersonalQuote
+    {
+        $normalizedSubject = preg_replace('/\s+/', ' ', $subject);
+        $isHomeRevivalSubject = collect(self::HOME_REVIVAL_SUBJECT_PATTERNS)
+            ->contains(fn (string $pattern) => Str::contains($normalizedSubject, $pattern, ignoreCase: true));
+
+        if (! $isHomeRevivalSubject) {
+            return null;
+        }
+
+        if (! preg_match('/HOM-([A-Za-z0-9]+)/i', $subject, $matches)) {
+            LoggerService::warning(self::class." - resolveHomeLeadByRefId: REF-ID not found in subject: {$subject}");
+
+            return null;
+        }
+        $code = QuoteTypes::HOME->shortCode().strtoupper($matches[1]);
+
+        $lead = PersonalQuote::where('code', $code)->first();
+
+        if (! $lead) {
+            LoggerService::warning(self::class." - resolveHomeLeadByRefId: Lead not found for code: {$code}");
+
+            return null;
+        }
+
+        $this->handleHome($lead);
+
+        return $lead;
+    }
+
     private function handleCar(CarQuote $lead)
     {
         if ($lead->source == LeadSourceEnum::REVIVAL) {
@@ -189,7 +240,7 @@ class IncomingEmailService extends BaseService
 
                 return apiResponse([], Response::HTTP_OK, 'Car Handled for SIC to ILA Successfully!');
             } catch (Exception $e) {
-                LoggerService::error(self::class." - handleCar: Error occurred in SIC Reply to ILA for uuid {$lead->uuid}", [
+                LoggerService::warning(self::class." - handleCar: Error occurred in SIC Reply to ILA for uuid {$lead->uuid}", [
                     'message' => $e->getMessage(),
                     'line' => $e->getLine(),
                     'file' => $e->getFile(),
@@ -215,6 +266,37 @@ class IncomingEmailService extends BaseService
         $response = QuoteTypes::TRAVEL->allocate($lead->uuid);
         $assignedAdvisorId = $response['advisorId'] ?? '';
         LoggerService::info(self::class." - handleTravel: Allocation Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+
+        return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
+    }
+
+    private function handleHome(PersonalQuote $lead)
+    {
+        $homeRevivalSources = [LeadSourceEnum::REVIVAL_SHORT, LeadSourceEnum::REVIVAL_ANNUAL];
+
+        if (! in_array($lead->source, $homeRevivalSources)) {
+            LoggerService::info(self::class." - handleHome: Lead is not a Home revival lead, skipping for uuid {$lead->uuid}");
+
+            return apiResponse([], Response::HTTP_OK, 'Lead is not a Home revival lead!');
+        }
+
+        LoggerService::info(self::class." - handleHome: Going to Assign Advisor to uuid: {$lead->uuid}");
+        if ($lead->advisor_id) {
+            LoggerService::info(self::class." - handleHome: Lead already has an advisor assigned: {$lead->uuid}");
+
+            return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
+        }
+
+        $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+        $lead->homeQuote?->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+        LoggerService::info(self::class." - handleHome: Home Quote Source updated for Revival for uuid {$lead->uuid} to REVIVAL_REPLIED");
+        DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
+        LoggerService::info(self::class." - handleHome: Home Quote Source updated for Revival for uuid {$lead->uuid}");
+
+        LoggerService::info(self::class." - handleHome: Allocation Process Executing for lead: {$lead->uuid}");
+        $response = QuoteTypes::HOME->allocate($lead->uuid);
+        $assignedAdvisorId = $response['advisorId'] ?? '';
+        LoggerService::info(self::class." - handleHome: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
     }
@@ -247,7 +329,7 @@ class IncomingEmailService extends BaseService
 
             return $this->handleHealthSicReplyToILA($lead);
         } catch (Exception $e) {
-            LoggerService::error(self::class." - handleHealth: Error occurred in SIC Reply to ILA for uuid {$lead->uuid}", [
+            LoggerService::warning(self::class." - handleHealth: Error occurred in SIC Reply to ILA for uuid {$lead->uuid}", [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
