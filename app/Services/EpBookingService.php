@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\DTO\EpBookingContext;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedTransactionEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -428,7 +429,8 @@ class EpBookingService extends BaseService
     public static function updateInsurerRequestResponseDocumentNumberForSageBooking(EmbeddedTransaction $quote, ?string $duplicateNumber): bool
     {
         $quoteUuid = Str::afterLast($quote->code, '-');
-        $updates = self::prepareSageBookingInvoiceNumberUpdates($quote, $quoteUuid, $duplicateNumber);
+        $epShortCode = $quote->product?->embeddedProduct?->short_code ?? '';
+        $updates = self::prepareSageBookingInvoiceNumberUpdates($quote, $quoteUuid, $duplicateNumber, $epShortCode);
 
         if (empty($updates)) {
             LoggerService::info(self::class.' - EP table invoice numbers missing, null, or already include Sage postfix', extra: [
@@ -442,11 +444,12 @@ class EpBookingService extends BaseService
         return self::persistSageBookingInvoiceNumberUpdates($quote, $quoteUuid, $updates);
     }
 
-    private static function prepareSageBookingInvoiceNumberUpdates(EmbeddedTransaction $quote, string $quoteUuid, ?string $duplicateNumber): array
+    private static function prepareSageBookingInvoiceNumberUpdates(EmbeddedTransaction $quote, string $quoteUuid, ?string $duplicateNumber, string $epShortCode = ''): array
     {
         $updates = [];
+        $isMdxOrRdx = in_array($epShortCode, EmbeddedProductEnum::getSukoonMedexCodes(), true);
 
-        if ($quote->tax_invoice_no !== null && $quote->tax_invoice_no === $duplicateNumber) {
+        if ($quote->tax_invoice_no !== null && ($quote->tax_invoice_no === $duplicateNumber || ($isMdxOrRdx && Str::endsWith($quote->tax_invoice_no, $duplicateNumber)))) {
             $updated = self::withSageDocumentNumberPostfix($quote->tax_invoice_no);
 
             if ($updated !== $quote->tax_invoice_no) {
@@ -467,7 +470,7 @@ class EpBookingService extends BaseService
             }
         }
 
-        if ($quote->tax_invoice_buyer_no !== null && $quote->tax_invoice_buyer_no === $duplicateNumber) {
+        if ($quote->tax_invoice_buyer_no !== null && ($quote->tax_invoice_buyer_no === $duplicateNumber || ($isMdxOrRdx && Str::endsWith($quote->tax_invoice_buyer_no, $duplicateNumber)))) {
             $updated = self::withSageDocumentNumberPostfix($quote->tax_invoice_buyer_no);
 
             if ($updated !== $quote->tax_invoice_buyer_no) {

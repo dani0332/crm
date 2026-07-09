@@ -62,6 +62,16 @@ class EmbeddedProductFactory extends Factory
     }
 
     /**
+     * Indicate that the embedded product has the RDX short code.
+     */
+    public function rdx(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'short_code' => EmbeddedProductEnum::RDX,
+        ]);
+    }
+
+    /**
      * Indicate that the embedded product has the ECB short code (retargeting allowed).
      */
     public function ecb(): static
