@@ -353,9 +353,7 @@ class CoreSchema
                 $table->decimal('vat', 15, 2)->nullable();
                 $table->date('policy_issuance_date')->nullable();
                 $table->unsignedBigInteger('policy_issuance_status_id')->nullable();
-                $table->timestamp('quote_status_date')->nullable();
                 $table->string('gender')->nullable();
-                $table->timestamp('lead_allocation_started_at')->nullable();
                 $table->timestamp('stale_at')->nullable();
                 $table->timestamps();
             },
