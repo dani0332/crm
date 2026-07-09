@@ -6,7 +6,6 @@
 
 use App\Services\Quotes\DeviceQuoteService;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use Mockery;
 use Tests\Helpers\DeviceQuoteTestDataBuilder;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
