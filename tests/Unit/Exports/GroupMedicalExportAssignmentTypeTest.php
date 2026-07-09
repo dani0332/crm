@@ -8,17 +8,19 @@ use App\Models\BusinessQuote;
 use App\Services\BusinessQuoteService;
 
 it('populates assignment type text in group medical export', function () {
-    $export = new GroupMedicalExport(Mockery::mock(BusinessQuoteService::class));
+    $businessQuoteService = Mockery::mock(BusinessQuoteService::class);
+    $businessQuoteService->shouldReceive('isPQAQualified')->andReturn(0);
+
+    $export = new GroupMedicalExport($businessQuoteService);
 
     $quote = new BusinessQuote;
+    $quote->id = 1;
     $quote->assignment_type = AssignmentTypeEnum::SYSTEM_ASSIGNED;
 
+    $headings = $export->headings();
     $row = $export->map($quote);
 
-    // Headings:
-    // 0 REF-ID
-    // ...
-    // 7 BRANCH
-    // 8 ASSIGNMENT TYPE
-    expect($row[8])->toBe('System Assigned');
+    $assignmentTypeIdx = array_search('ASSIGNMENT TYPE', $headings, true);
+
+    expect($row[$assignmentTypeIdx])->toBe('System Assigned');
 });
