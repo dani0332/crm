@@ -7,7 +7,7 @@ use App\Enums\EnvEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\BranchOverrides\BranchOverrideDetailsExport;
 use App\Models\ApplicationStorage;
-use App\Services\BirdService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -99,7 +99,7 @@ class MisReportJob implements ShouldQueue
             'Tags' => WorkflowTypeEnum::SEND_MISREPORT_EMAIL,
         ];
 
-        $this->triggerBirdWorkflow($emailData);
+        $this->triggerWebEngageEvent($emailData);
     }
 
     /**
@@ -149,12 +149,27 @@ class MisReportJob implements ShouldQueue
         return $attachment;
     }
 
-    /**
-     * This function use to trigger bird workflow
-     */
-    private function triggerBirdWorkflow(array $birdEmailData)
+    private function triggerWebEngageEvent(array $emailData): void
     {
-        $birdWorkflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_MISREPORT_JOB_WORKFLOW)->first()?->value ?? '';
-        app(BirdService::class)->triggerWebHookRequest($birdWorkflowUrl, (object) $birdEmailData);
+        $recipientEmail = getAppStorageValueByKey(ApplicationStorageEnums::MISREPORT_RECIPIENT_EMAIL);
+
+        if (empty($recipientEmail)) {
+            LoggerService::error('MisReportJob - MISREPORT_RECIPIENT_EMAIL not found in ApplicationStorage');
+
+            return;
+        }
+
+        $payload = [
+            'customerId' => $recipientEmail,
+            'firstName' => '',
+            'lastName' => '',
+            'customerEmail' => $recipientEmail,
+            'customerMobile' => '',
+            'quoteUID' => '',
+            ...$emailData,
+        ];
+
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::SEND_MISREPORT_EMAIL, $payload);
+        LoggerService::info('MisReportJob - WebEngage event triggered successfully');
     }
 }

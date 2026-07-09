@@ -157,7 +157,7 @@ class CarQuoteObserver
             RetargetEpReminderJob::dispatch($lead->uuid, QuoteTypeId::Car);
 
             try {
-                app(PartnerService::class)->sendPolicyDocumentsToPartner($lead->uuid, QuoteTypes::CAR);
+                // app(PartnerService::class)->sendPolicyDocumentsToPartner($lead->uuid, QuoteTypes::CAR);
             } catch (Exception $e) {
                 LoggerService::error('CarQuoteObserver - send partner policy documents failed', [
                     'uuid' => $lead->uuid,
@@ -255,7 +255,7 @@ class CarQuoteObserver
             $lead->quote_status_id === QuoteStatusEnum::PolicyBooked
         ) {
             try {
-                QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car);
+                QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car, leadSource: $lead->source);
             } catch (Exception $e) {
                 LoggerService::error('CarQuoteObserver - dispatch QuotePolicyBooked event failed', [
                     'uuid' => $lead->uuid,

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -12,6 +14,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -25,13 +28,16 @@ use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
 use App\Http\Requests\AutomateQuoteAmlScreeningRequest;
 use App\Http\Requests\InsuredKycRequest;
+use App\Http\Requests\RetriggerTravelAmlScreeningRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Http\Requests\TogglePolicyIssuanceAutomationRequest;
 use App\Http\Requests\UpdateAdditionalVehicleDriverDetailsRequest;
+use App\Jobs\AmlScreeningAutomationJob;
 use App\Jobs\BridgerAMLJob;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Jobs\InsurerAMLScreeningJob;
 use App\Models\AML;
+use App\Models\AmlAutomation;
 use App\Models\BikeQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\KycLog;
@@ -41,6 +47,7 @@ use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\QuoteTypeRepository;
+use App\Services\AML\AMLAutomationService;
 use App\Services\AML\AMLDisplayService;
 use App\Services\AML\AMLEntityService;
 use App\Services\AML\AMLExportService;
@@ -215,7 +222,7 @@ class AMLController extends Controller
         return response()->json($travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo), 200);
     }
 
-    public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
+    public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId, $isFromAPI = false)
     {
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
@@ -320,7 +327,7 @@ class AMLController extends Controller
             LoggerService::info('Dispatching AML Screening Job for Members including primary insured', extra: [
                 'membersDetails' => $getMemberOrUBODetails->toArray() ?? [],
             ]);
-            $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
+            $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation, isFromAPI: $isFromAPI);
 
             return app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
         }
@@ -417,10 +424,10 @@ class AMLController extends Controller
         LoggerService::info('Chassis Number Update Completed');
     }
 
-    private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType, $processByUser = null, $isAutomation = false)
+    private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType, $processByUser = null, $isAutomation = false, $isFromAPI = false)
     {
         foreach ($membersDetails as $memberDetail) {
-            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
+            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation, isFromAPI: $isFromAPI);
         }
 
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
@@ -870,13 +877,57 @@ class AMLController extends Controller
     }
 
     /**
+     * IMCRM: bulk-retrigger AML screening automation for Travel quotes in a given date range.
+     *
+     * Finds Travel quotes with PolicyBooked status and AML_PENDING, then queues
+     * AmlScreeningAutomationJob for each in chunks of 50.
+     */
+    public function retriggerTravelAmlScreening(RetriggerTravelAmlScreeningRequest $request): JsonResponse
+    {
+        getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_AML_RETRIGGER_ENABLED) || abort(403, 'Retriggering AML screening is disabled.');
+
+        $validated = $request->validated();
+
+        $startDate = Carbon::parse($validated['start_date'])->startOfDay();
+        $endDate = Carbon::parse($validated['end_date'])->endOfDay();
+
+        $dispatched = 0;
+
+        TravelQuote::query()
+            ->where('quote_status_id', QuoteStatusEnum::PolicyBooked)
+            ->where(function ($query): void {
+                $query->whereNull('aml_status')
+                    ->orWhere('aml_status', AMLStatusCode::AMLPending);
+            })
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->select(['id', 'code', 'uuid'])
+            ->chunk(50, function ($quotes) use (&$dispatched): void {
+                foreach ($quotes as $quote) {
+                    AmlAutomation::updateOrCreate(
+                        ['code' => $quote->code],
+                        ['status' => AmlAutomationStatus::Queue->value],
+                    );
+
+                    AmlScreeningAutomationJob::dispatch(QuoteTypes::TRAVEL, $quote, true);
+                    $dispatched++;
+                }
+            });
+
+        return response()->json([
+            'success' => true,
+            'message' => "Retrigger AML screening dispatched for {$dispatched} Travel quote(s).",
+            'data' => ['dispatched_count' => $dispatched],
+        ]);
+    }
+
+    /**
      * IMCRM: trigger AML screening automation for an allowed LOB by quote UUID and explicit {@see QuoteTypes} value.
      */
-    public function automateQuoteAmlScreening(AutomateQuoteAmlScreeningRequest $request): JsonResponse
+    public function automateQuoteAmlScreening(AutomateQuoteAmlScreeningRequest $request, AMLAutomationService $amlAutomationService): JsonResponse
     {
         $validated = $request->validated();
 
-        $result = app(AMLService::class)->initiateAutomatedAmlByQuoteUuid(
+        $result = $amlAutomationService->initiateAutomatedAmlByQuoteUuid(
             $validated['quoteUuid'],
             $request->validatedQuoteType(),
         );
@@ -887,4 +938,5 @@ class AMLController extends Controller
             'data' => $result['data'] ?? null,
         ], $result['http_status']);
     }
+
 }

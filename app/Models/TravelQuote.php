@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EaModelCast;
 use App\Enums\FilterTypes;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -27,6 +28,9 @@ class TravelQuote extends Model implements AuditableContract
 
     protected $table = 'travel_quote_request';
     protected $guarded = [];
+    protected $casts = [
+        'ea_model' => EaModelCast::class,
+    ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::FREE,
@@ -440,5 +444,15 @@ class TravelQuote extends Model implements AuditableContract
     public function branchOverride()
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
+
+    public function leadGenerator()
+    {
+        return $this->hasOne(User::class, 'id', 'lead_generator_id');
+    }
+
+    public function expertAdvisor()
+    {
+        return $this->hasOne(User::class, 'id', 'expert_advisor_id');
     }
 }

@@ -152,6 +152,7 @@ const quoteForm = useForm({
     parseInt(props.quote?.sub_source_options_id, 10) ||
     parseInt(props.leadSourceParams?.subSourceOption, 10) ||
     null,
+  lead_type: props.leadSourceParams?.type || null,
   additional_notes: (() => {
     let notes = props.quote?.additional_notes || '';
     return notes;
@@ -469,6 +470,16 @@ watch(
         newStartDate,
         newEndDate,
       );
+    }
+  },
+);
+
+watch(
+  () => quoteForm.coverage_code,
+  newCoverageCode => {
+    if (newCoverageCode === travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP) {
+      quoteForm.end_date = null;
+      quoteForm.days_cover_for = 365;
     }
   },
 );

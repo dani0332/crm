@@ -239,18 +239,34 @@ class SendUpdateLogRepository extends BaseRepository
 
         $sendUpdate = $this->find($data['id']);
         try {
-            $result = $sendUpdate->update([
+            $policyDetails = [
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'insurance_provider_id' => $data['insurance_provider_id'],
-                'plan_id' => $data['plan_id'],
                 'policy_number' => $data['policy_number'],
                 'issuance_date' => $data['issuance_date'],
                 'start_date' => $data['start_date'],
                 'expiry_date' => $data['expiry_date'],
+            ];
+
+            // insurance_provider_id is intentionally never updated here - the provider is fixed
+            // based on the original policy and cannot be changed in a correction request.
+            $quoteType = QuoteTypes::getName($sendUpdate->quote_type_id)->value;
+            $quote = $this->getQuoteObject($quoteType, $sendUpdate->quote_uuid);
+            $isPolicyFilled = app(SendUpdateLogService::class)->isPolicyDetailsFilled(
+                $policyDetails,
+                $sendUpdate->quote_type_id,
+                $sendUpdate->insurance_provider_id,
+                $data['plan_id'] ?? null,
+                $sendUpdate->category->code,
+                $quote,
+            );
+
+            $result = $sendUpdate->update([
+                ...$policyDetails,
+                'plan_id' => $data['plan_id'] ?? null,
                 'insurer_quote_number' => $data['insurer_quote_number'] ?? null,
                 'issuance_status_id' => $data['issuance_status_id'] ?? null,
-                'is_policy_filled' => SendUpdateLogStatusEnum::POLICY_FILLED,
+                'is_policy_filled' => $isPolicyFilled,
             ]);
         } catch (\Exception $ex) {
             $result = (object) [

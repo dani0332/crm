@@ -98,6 +98,15 @@ final class PolicyIssuanceEnum extends Enum
 
     /* Qatar Travel Steps */ // These are in used for Travel Qatar Insurance
 
+    /* DIC Travel Steps */
+
+    const DIC_TRAVEL_ISSUE_POLICY = 'IssuePolicy';
+    const DIC_TRAVEL_GET_POLICY_DOC = 'GetPolicyDoc';
+    const DIC_TRAVEL_GET_BROKER_INVOICE = 'GetBrokerInvoice';
+    const DIC_TRAVEL_BOOK_POLICY = 'BookPolicy';
+
+    /* DIC Travel Steps */
+
     /* LIVA AML API Statuses */
 
     const LIVA_AML_ACTIVE = 1;
@@ -122,12 +131,24 @@ final class PolicyIssuanceEnum extends Enum
     {
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
+                InsuranceProviderEnum::DIC->value => self::getTravelDicPolicyIssuanceSteps(),
                 InsuranceProviderEnum::QIC->value => self::getTravelQatarPolicyIssuanceSteps(),
                 default => null,
             },
             default => null,
         };
     }
+
+    public static function getTravelDicPolicyIssuanceSteps(): array
+    {
+        return [
+            self::DIC_TRAVEL_ISSUE_POLICY,
+            self::DIC_TRAVEL_GET_POLICY_DOC,
+            self::DIC_TRAVEL_GET_BROKER_INVOICE,
+            self::DIC_TRAVEL_BOOK_POLICY,
+        ];
+    }
+
     public static function getTravelQatarPolicyIssuanceSteps()
     {
         return [

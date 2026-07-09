@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Listeners;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuotePolicyBooked;
 use App\Listeners\TriggerConversionApis;
@@ -250,6 +251,51 @@ class TriggerConversionApisTest extends TestCase
         }
 
         $this->addToAssertionCount(count($testCases) * 2);
+    }
+
+    public function test_handle_skips_google_conversion_for_renewal_upload_lead_source(): void
+    {
+        $quoteUID = 'test-quote-uuid-renewal';
+        $quoteTypeId = QuoteTypeId::Car;
+
+        $event = new QuotePolicyBooked($quoteUID, $quoteTypeId, leadSource: LeadSourceEnum::RENEWAL_UPLOAD);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerFacebookConversion')
+            ->once()
+            ->with($quoteUID, $quoteTypeId, 'Purchase')
+            ->andReturn(true);
+
+        $this->mockConversionApiService
+            ->shouldNotReceive('triggerGoogleConversion');
+
+        $this->listener->handle($event);
+
+        $this->addToAssertionCount(2);
+    }
+
+    public function test_handle_calls_google_conversion_for_non_renewal_upload_lead_source(): void
+    {
+        $quoteUID = 'test-quote-uuid-non-renewal';
+        $quoteTypeId = QuoteTypeId::Car;
+
+        $event = new QuotePolicyBooked($quoteUID, $quoteTypeId, leadSource: 'Website');
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerFacebookConversion')
+            ->once()
+            ->with($quoteUID, $quoteTypeId, 'Purchase')
+            ->andReturn(true);
+
+        $this->mockConversionApiService
+            ->shouldReceive('triggerGoogleConversion')
+            ->once()
+            ->with($quoteUID, $quoteTypeId, 'Purchase')
+            ->andReturn(true);
+
+        $this->listener->handle($event);
+
+        $this->addToAssertionCount(2);
     }
 
     public function test_handle_passes_exact_parameters_from_event(): void

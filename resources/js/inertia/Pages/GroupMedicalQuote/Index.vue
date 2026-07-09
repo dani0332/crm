@@ -6,17 +6,34 @@ defineProps({
   model: String,
   leadStatuses: Array,
   advisors: Array,
+  pqas: Array,
   supportUsers: Array,
+  preQualificationAdvisors: {
+    type: Array,
+    default: () => [],
+  },
   isManagerORDeputy: Boolean,
   quotes: Object,
   isManualAllocationAllowed: Boolean,
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
+  canAssignPreQualificationAdvisor: {
+    type: Boolean,
+    default: false,
+  },
   authorizedDays: Number,
   insurerAMLStatus: Array,
   subSources: Array,
   emirates: Array,
   assignmentTypes: {
+    type: Array,
+    default: () => [],
+  },
+  canAssignPreQualificationAdvisor: {
+    type: Boolean,
+    default: false,
+  },
+  preQualificationAdvisors: {
     type: Array,
     default: () => [],
   },
@@ -67,6 +84,11 @@ const createLeadModal = ref(false);
 const onLeadConfirmed = leadData => {
   createLeadModal.value = false;
 };
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborative' },
+];
+
 const filters = reactive({
   code: '',
   first_name: '',
@@ -78,6 +100,7 @@ const filters = reactive({
   leadStatus: [],
   insurer_aml_status: [],
   advisor_id: '',
+  pq_advisor_id: '',
   support_user_id: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -94,6 +117,8 @@ const filters = reactive({
   authorize_date: '',
   captured_date: '',
   emirate_of_registration_id: [],
+  ea_model: '',
+  lead_generator: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -115,6 +140,20 @@ const advisorOptions = computed(() => {
     value: advisor.id,
     label: advisor.name,
   }));
+});
+
+const pqaOptions = computed(() => {
+  return page.props.pqas.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+const pqaAdvisorOptions = computed(() => {
+  const list = Array.isArray(page.props.preQualificationAdvisors)
+    ? page.props.preQualificationAdvisors
+    : [];
+  const options = list.map(user => ({ value: user.id, label: user.name }));
+  return options;
 });
 
 const supportUserOptions = computed(() => {
@@ -152,6 +191,14 @@ const tableHeader = [
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
+  {
+    text: 'PRE-QUALIFICATION ADVISOR',
+    value: 'pre_qualification_advisor_name',
+  },
+  {
+    text: 'PQA Qualified',
+    value: 'pqa_qualified',
+  },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
@@ -178,6 +225,8 @@ const tableHeader = [
   },
   { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
   { text: 'IMCRM SUB-SOURCE', value: 'sub_source_text' },
+  { text: 'EA MODEL', value: 'ea_model', is_active: true },
+  { text: 'LEAD GENERATOR', value: 'lead_generator_name', is_active: true },
 ];
 
 const filteredTableHeader = computed(() => {
@@ -853,6 +902,26 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+        <x-select
+          v-model="filters.pq_advisor_id"
+          name="pq_advisor_id"
+          placeholder="Search by Pre‑Qualification Advisor"
+          :options="pqaOptions"
+          class="w-full"
+          filterable
+          label="Pre‑Qualification Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.pq_advisor_id = pqaOptions.map(item => item.value)
+              "
+              @clear="filters.pq_advisor_id = []"
+            />
+          </template>
+        </x-select>
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_invoice_number"
@@ -872,6 +941,21 @@ const insurerAMLStatusOption = computed(() => {
           label="Insurer Commission Tax Invoice No"
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
+        />
+        <x-select
+          label="EA Model"
+          v-model="filters.ea_model"
+          placeholder="All Models"
+          :options="eaModelOptions"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.lead_generator"
+          type="search"
+          name="lead_generator"
+          label="Lead Generator"
+          class="w-full"
+          placeholder="Search by lead generator name"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -939,6 +1023,8 @@ const insurerAMLStatusOption = computed(() => {
             :supportUsers="assignableSupportUserOptions"
             :canAssignClientSupport="canAssignClientSupport"
             :canAssignLeadAdvisor="canAssignLeadAdvisor"
+            :pqaAdvisors="pqaAdvisorOptions"
+            :canAssignPqa="$page.props.canAssignPreQualificationAdvisor"
             quoteType="business"
             @success="manualAssignmentSuccess"
           />
@@ -996,6 +1082,15 @@ const insurerAMLStatusOption = computed(() => {
         >
           {{ source }}
         </a>
+      </template>
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+      <template #item-lead_generator_name="item">
+        {{ item.lead_generator_name }}
+      </template>
+      <template #item-pqa_qualified="{ pqa_qualified }">
+        {{ pqa_qualified === 1 ? 'Yes' : 'No' }}
       </template>
     </DataTable>
 

@@ -24,6 +24,7 @@ use App\Models\PersonalQuote;
 use App\Models\RiderOption;
 use App\Models\SavingsQuote;
 use App\Services\BranchAssignmentService;
+use App\Services\EACollaborateHelper;
 use App\Services\HttpRequestService;
 use App\Services\KenService;
 use App\Services\Logger\LoggerService;
@@ -65,6 +66,8 @@ class SavingsQuoteService extends BaseQuoteService
             'nationality',
             'subSource:id,text',
             'branch:id,name',
+            'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -79,7 +82,9 @@ class SavingsQuoteService extends BaseQuoteService
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterByPaymentDueDates('payment_due_date')
-            ->filterByDateRange('booking_date', 'policy_booking_date');
+            ->filterByDateRange('booking_date', 'policy_booking_date')
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'));
 
         if (request()->has('debug') && request()->debug == 'true') {
             echo $query->toRawSql();
@@ -153,8 +158,37 @@ class SavingsQuoteService extends BaseQuoteService
             'subSourceOptionsId' => $data['sub_source_options_id'] ?? null,
         ];
 
+        EACollaborateHelper::applyEAIMCRMSource($data);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('SavingsQuoteService: CAPI payload for EA lead', [
+                'ea_model' => $data['eaModel'] ?? request()->input('ea_model'),
+                'source' => $data['source'] ?? null,
+                'email' => $data['email'] ?? null,
+                'lead_generator_id' => $data['leadGeneratorId'] ?? null,
+                'advisor_id' => $data['advisorId'] ?? null,
+                'quote_type_id' => $data['quoteTypeId'] ?? null,
+            ]);
+        }
+
         // Make API request to save the savings quote
         $response = Capi::request('/api/v1-save-savings-quote', 'post', $data);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('SavingsQuoteService: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $eaQuote = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'savings');
+                }
+            }
+        }
 
         if (isset($response->quoteUID)) {
             $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID, false);
@@ -178,6 +212,8 @@ class SavingsQuoteService extends BaseQuoteService
             'branch:id,name',
             'customer',
             'passportVisaDetails',
+            'leadGenerator',
+            'expertAdvisor',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -333,6 +369,7 @@ class SavingsQuoteService extends BaseQuoteService
             'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL'),
             'lookUpData' => $lookUpData,
             'localLookups' => $localLookups,
+            'investmentFrequency' => $quote->quoteCustomerPlan?->plan['investmentFrequency'] ?? null,
             ...$data,
         ];
     }

@@ -7,6 +7,7 @@ use App\Enums\RolesEnum;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentAccessService;
 use Illuminate\Database\Seeder;
 
 class PermissionSeeder extends Seeder
@@ -60,6 +61,7 @@ class PermissionSeeder extends Seeder
         $this->seedEditPlanAfterTransactionApprovalPermission();
         $this->addLifeRevivalPermissions();
         $this->addHomeRevivalPermissions();
+        $this->addAdditionalContactPermission();
     }
 
     private function addEpDocumentManualOverridePermission(): void
@@ -291,6 +293,22 @@ class PermissionSeeder extends Seeder
                 ]
             );
         }
+    }
+
+    /**
+     * Creates add-additional-contact. Not granted to any role by default; grant it to roles
+     * that should bypass the LOB manager/assigned-advisor check in
+     * {@see QuoteDocumentAccessService::userCanAccessQuoteDocumentable()} for adding contacts.
+     */
+    private function addAdditionalContactPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::ADD_ADDITIONAL_CONTACT,
+            'guard_name' => self::WEB_GUARD,
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function addHomeRevivalPermissions(): void

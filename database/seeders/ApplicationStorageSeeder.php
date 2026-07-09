@@ -162,6 +162,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->rtaPortalLink();
         $this->seedOCRCustomerJourneyFlag();
         $this->seedEpEcbConfigurations();
+        $this->seedRdxRetargetingEmailConfigurations();
         $this->seedUnavailableTimeThreshold();
         $this->sendUpdateEmailBirdFlow();
         $this->seedEnableMetLife();
@@ -181,12 +182,17 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
         $this->seedPartnerAutomation();
         $this->seedDisableClaimsModule();
+        $this->seedDicTravelPolicyIssuance();
         $this->seedMotorRevivalWorkflow();
         $this->seedHighRiskScoreBirdNotificationWorkflowUrl();
         $this->seedAmlAutomationOutcomeWorkflowUrl();
+        $this->seedTravelAmlRetrigger();
         $this->seedDttLifeEnabled();
         $this->seedOcrPlanValidation();
         $this->seedDttHomeEnabled();
+        $this->seedAllianceBrandSwitchDate();
+        $this->seedAmlAutomationReTriggerRecipients();
+        $this->seedEAEmailTemplates();
     }
 
     private function livaCarAutomationSeed()
@@ -709,6 +715,32 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_ENABLED],
             [
                 'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedTravelAmlRetrigger()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_AML_RETRIGGER_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAmlAutomationReTriggerRecipients()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_RE_TRIGGER_RECIPIENTS],
+            [
+                'value' => 'mohamed.faisal@insurancemarket.ae,utkarsh.shukla@insurancemarket.ae,vishwa.tomar@insurancemarket.ae,yashpal.tomar@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1418,6 +1450,56 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedRdxRetargetingEmailConfigurations()
+    {
+        $isProd = app()->environment() === EnvEnum::PRODUCTION;
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BREVO_BIKE_EP_RETARGETING_EVENT_NAME],
+            [
+                'value' => 'ep_rdx_retargeting_enable',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => $isProd ? 0 : 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_FROM_EMAIL],
+            [
+                'value' => $isProd ? 'alfred@notify.insurancemarket.ae' : 'alfred@testnotify.alfred.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_BCC_EMAIL],
+            [
+                'value' => $isProd ? 'embeddedproducts@insurancemarket.ae' : 'embeddedproducts@yopmail.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_EMAIL_SUBJECT],
+            [
+                'value' => 'Add Rider Medical Cover to Your Bike Policy in Just Seconds (REF-ID)',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::RDX_EP_RETARGETING_REMINDER_TEMPLATE],
+            [
+                'value' => 892,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => $isProd ? 0 : 1,
+            ],
+        );
+    }
+
     private function seedEnableMetLife()
     {
         ApplicationStorage::firstOrCreate(
@@ -1775,6 +1857,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::MISREPORT_RECIPIENT_EMAIL],
+            [
+                'value' => 'vishal.bhatt@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedOcrUtilEnabled()
@@ -1880,8 +1972,10 @@ class ApplicationStorageSeeder extends Seeder
     private function seedPartnerAutomation()
     {
         $birdWorkflowUrl = 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/092b76fa-f599-43a3-8927-edc7b7b4a9cd/invoke-sync';
+        $ccEmails = 'sureshbabu.rajendran@myalfred.com';
         if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
-            $birdWorkflowUrl = '';
+            $birdWorkflowUrl = 'https://api.bird.com/workspaces/7e7ef00d-88c7-446a-81bf-c3b6cd522318/flows/0432a5ce-fec0-45f9-8d23-15144644609a/invoke-sync';
+            $ccEmails = 'fni.uae@cars24.com, abhishek.pandey@insurancemarket.ae';
         }
 
         ApplicationStorage::firstOrCreate(
@@ -1907,7 +2001,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::CARS24_SEND_POLICY_CC_EMAILS],
             [
-                'value' => 'fni.uae@cars24.com, abhishek.pandey@insurancemarket.ae',
+                'value' => $ccEmails,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => true,
@@ -1921,6 +2015,59 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::HEALTH_TEAM_ROUTING_ENABLED],
             [
                 'value' => ApplicationStorageEnums::ACTIVE,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedDicTravelPolicyIssuance()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_DIC_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DIC_TRAVEL_ASYNC_MAX_FAILED_ATTEMPTS_PER_STEP],
+            [
+                'value' => 3,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DIC_TRAVEL_ASYNC_RETRY_DELAY_SECONDS],
+            [
+                'value' => 90,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_DIC_TRAVEL_POLICY_ISSUANCE],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::DIC_COMMISSION_PERCENTAGE],
+            [
+                'value' => 56,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -1981,6 +2128,19 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
+    private function seedAllianceBrandSwitchDate(): void
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ALLIANCE_BRAND_SWITCH_DATE],
+            [
+                'value' => '2026-05-25',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
     private function seedDttHomeEnabled(): void
     {
         ApplicationStorage::firstOrCreate(
@@ -1992,5 +2152,26 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => ApplicationStorageEnums::ACTIVE,
             ],
         );
+    }
+
+    private function seedEAEmailTemplates(): void
+    {
+        $templates = [
+            ApplicationStorageEnums::EA_LEAD_SUBMITTED_TEMPLATE_ID => 887,
+            ApplicationStorageEnums::EA_COLLABORATE_REJECTED_TEMPLATE_ID => 889,
+            ApplicationStorageEnums::EA_MANAGER_DECISION_TEMPLATE_ID => 888,
+        ];
+
+        foreach ($templates as $key => $value) {
+            ApplicationStorage::firstOrCreate(
+                ['key_name' => $key],
+                [
+                    'value' => $value,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'is_active' => ApplicationStorageEnums::ACTIVE,
+                ],
+            );
+        }
     }
 }

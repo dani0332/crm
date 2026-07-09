@@ -127,7 +127,7 @@ class CarQuoteService extends BaseService
             'carMakeId' => $request->car_make_id,
             'carModelId' => $request->car_model_id, // ID
             'currentlyInsuredWith' => $request->currently_insured_with,
-            'source' => config('constants.SOURCE_NAME'),
+            'source' => $request->lead_type === 'expert_advisor_model' ? LeadSourceEnum::EA_IMCRM : config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'gender' => $request->gender ?? null,
             'chassisNumber' => $request->chassis_number,
@@ -1280,6 +1280,13 @@ class CarQuoteService extends BaseService
     public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false, $isRenewalHistorical = false, $process = '')
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
+
+        if (! $quoteUuId) {
+            LoggerService::warning(self::class.' - FN: getQuotePlans - CarQuote not found for UUID: '.$id);
+
+            return 'Quote Not Found!';
+        }
+
         if ($useKen2Endpoint) {
             $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
         } else {

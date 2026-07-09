@@ -30,6 +30,7 @@ use App\Models\Emirate;
 use App\Models\KycLog;
 use App\Models\Lookup;
 use App\Models\Nationality;
+use App\Models\User;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -42,6 +43,7 @@ use App\Services\AMLService;
 use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
+use App\Services\CorpLineQuoteService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -56,6 +58,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Response;
 use Inertia\ResponseFactory;
@@ -77,7 +80,8 @@ class BusinessQuoteController extends Controller
         BusinessQuoteService $businessQuoteService,
         CRUDService $crudService,
         LookupService $lookupService,
-        DropdownSourceService $dropdownSourceService
+        DropdownSourceService $dropdownSourceService,
+        protected CorpLineQuoteService $corplineQuoteService
     ) {
         $this->businessQuoteService = $businessQuoteService;
         $this->genericModel = $this->businessQuoteService->getGenericModel(self::TYPE);
@@ -122,7 +126,25 @@ class BusinessQuoteController extends Controller
             || $isManagerORDeputy
             || Auth::user()->can(PermissionsEnum::ASSIGN_LEAD_ADVISOR);
 
-        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport);
+        $preQualificationAdvisors = User::activeUser()
+            ->select(
+                'users.id',
+                DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::PreQualificationAdvisor."') AS name"),
+            )
+            ->join('model_has_roles as pqa_mr', 'pqa_mr.model_id', '=', 'users.id')
+            ->join('roles as pqa_r', 'pqa_r.id', '=', 'pqa_mr.role_id')
+            ->join('pqa_lead_allocation_config as pqa_cfg', 'pqa_cfg.user_id', '=', 'users.id')
+            ->where('pqa_mr.model_type', User::class)
+            ->where('pqa_r.name', RolesEnum::PreQualificationAdvisor)
+            ->whereIn('pqa_cfg.quote_type_id', [QuoteTypes::CORPLINE->id(), QuoteTypes::BUSINESS->id()])
+            ->orderBy('users.name')
+            ->distinct()
+            ->get();
+
+        $canAssignPreQualificationAdvisor = Auth::user()->can(PermissionsEnum::ASSIGN_GROUP_MEDICAL_PRE_QUALIFICATION_ADVISOR)
+            || Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::LeadPool]);
+
+        $isManualAllocationAllowed = ($canAssignLeadAdvisor || $canAssignClientSupport || $canAssignPreQualificationAdvisor);
 
         // PD Revert
         // $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
@@ -142,6 +164,8 @@ class BusinessQuoteController extends Controller
             'isManualAllocationAllowed',
             'canAssignClientSupport',
             'canAssignLeadAdvisor',
+            'canAssignPreQualificationAdvisor',
+            'preQualificationAdvisors',
             'supportUsers',
             'totalCount',
             'authorizedDays',
@@ -276,7 +300,7 @@ class BusinessQuoteController extends Controller
                 return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             })->values();
         }
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Business);
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Business, $record->insurance_provider_id);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
         $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
@@ -323,6 +347,13 @@ class BusinessQuoteController extends Controller
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Business));
+        // $record is a DB::table() stdClass — build relation-shaped arrays from the pre-joined columns.
+        $record->lead_generator = $record->lead_generator_id
+            ? ['id' => $record->lead_generator_id, 'name' => $record->lead_generator_name, 'email' => $record->lead_generator_email]
+            : null;
+        $record->expert_advisor = $record->expert_advisor_id
+            ? ['id' => $record->expert_advisor_id, 'name' => $record->expert_advisor_name]
+            : null;
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -433,9 +464,7 @@ class BusinessQuoteController extends Controller
     public function update(UpdateBusinessQuoteRequest $request, $id)
     {
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-
-        $this->crudService->updateModelByType('business', $request, $id);
-        $this->businessQuoteService->updateBusinessQuote($request, $id);
+        $this->corplineQuoteService->updateQuote($request->all(), $id);
 
         return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
     }

@@ -57,6 +57,7 @@ const props = defineProps({
   isFuncsEnabled: Object,
   paymentGatewayEnum: Array,
   planURL: String,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -761,6 +762,10 @@ const formatToDateTime = dateString => {
                 <div>{{ quote.code }}</div>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">IM AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
               </div>
@@ -1285,6 +1290,32 @@ const formatToDateTime = dateString => {
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
       :expanded="sectionExpanded"
+    />
+
+    <EALeadInfo
+      :source="quote.source"
+      :ea-model="quote.ea_model"
+      :lead-generator="quote.lead_generator"
+      :expert-advisor="quote.expert_advisor"
+      :ea-manager-approved-at="quote.ea_manager_approved_at"
+      :ea-manager-rejected-at="quote.ea_manager_rejected_at"
+    />
+
+    <EAApprovalActions
+      quote-type="device"
+      :quote-id="quote.id"
+      :source="quote.source"
+      :ea-model="quote.ea_model"
+      :quote-status-id="quote.quote_status_id"
+      :advisor-id="quote.advisor_id"
+      :expert-advisor-id="quote.expert_advisor_id"
+      :ea-assigned-advisor-approved-at="quote.ea_assigned_advisor_approved_at"
+      :ea-expert-advisor-approved-at="quote.ea_expert_advisor_approved_at"
+      :ea-assigned-advisor-rejected-at="quote.ea_assigned_advisor_rejected_at"
+      :ea-expert-advisor-rejected-at="quote.ea_expert_advisor_rejected_at"
+      :ea-manager-approved-at="quote.ea_manager_approved_at"
+      :ea-manager-rejected-at="quote.ea_manager_rejected_at"
+      @updated="$inertia.reload({ only: ['quote'] })"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

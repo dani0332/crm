@@ -27,6 +27,14 @@ defineProps({
   subSources: { type: Array, default: () => [] },
   canAssignClientSupport: Boolean,
   canAssignLeadAdvisor: Boolean,
+  canAssignPreQualificationAdvisor: {
+    type: Boolean,
+    default: false,
+  },
+  preQualificationAdvisors: {
+    type: Array,
+    default: () => [],
+  },
   healthSignatoryFilterOptions: {
     type: Array,
     default: () => [],
@@ -39,6 +47,7 @@ defineProps({
 });
 
 const page = usePage();
+// console.log('first quote item:', page.props.quotes?.data?.[0]);
 const teamNamesEnum = page.props.teamNamesEnum;
 
 const signatoryFilterOptions = computed(() => {
@@ -129,6 +138,16 @@ const tableHeader = ref([
   {
     text: 'INSURER AML STATUS',
     value: 'insurer_aml_status_text',
+    is_active: true,
+  },
+  {
+    text: 'PRE‑QUALIFICATION ADVISOR',
+    value: 'pre_qualification_advisor',
+    is_active: true,
+  },
+  {
+    text: 'PQA Qualified',
+    value: 'pqa_qualified',
     is_active: true,
   },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
@@ -228,6 +247,8 @@ const tableHeader = ref([
     value: 'uae_pass_api_status_text',
     is_active: true,
   },
+  { text: 'EA MODEL', value: 'ea_model', is_active: true },
+  { text: 'LEAD GENERATOR', value: 'lead_generator', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -254,6 +275,7 @@ const filters = reactive({
   quote_status: [],
   insurer_aml_status: [],
   advisors: [],
+  pq_advisor_id: [],
   unassigned: '',
   age_sixty_and_above: 'all',
   support_user_id: [],
@@ -285,7 +307,14 @@ const filters = reactive({
   authorize_date: '',
   captured_date: '',
   payment_status_id: [],
+  ea_model: null,
+  lead_generator: '',
 });
+
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborative' },
+];
 
 const canExport = ref(false);
 watch(
@@ -330,6 +359,15 @@ const advisorOptions = computed(() => {
     value: advisor.id,
     label: advisor.name,
   }));
+});
+
+const pqaAdvisorOptions = computed(() => {
+  const list = Array.isArray(page.props.preQualificationAdvisors)
+    ? page.props.preQualificationAdvisors
+    : [];
+  const options = list.map(user => ({ value: user.id, label: user.name }));
+  options.push({ value: '-1', label: 'UnAssigned' });
+  return options;
 });
 
 const supportUserOptions = computed(() => {
@@ -472,6 +510,7 @@ function setQueryStringFilters() {
     'quote_status',
     'insurer_aml_status',
     'advisors',
+    'pq_advisor_id',
     'renewal_batches',
     'payment_status_id',
     'emirate_of_your_visa_id',
@@ -1104,6 +1143,28 @@ const paymentStatusOptions = computed(() => {
           </template>
         </x-select>
         <x-select
+          v-model="filters.pq_advisor_id"
+          name="pq_advisor_id"
+          placeholder="Search by PQA"
+          :options="pqaAdvisorOptions"
+          class="w-full"
+          filterable
+          label="Pre-Qualification Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.pq_advisor_id = pqaAdvisorOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.pq_advisor_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.is_ecommerce"
           label="Is Ecommerce"
           placeholder="Search by Ecommerce"
@@ -1357,6 +1418,21 @@ const paymentStatusOptions = computed(() => {
           class="w-full"
           :single="false"
         />
+        <x-select
+          v-model="filters.ea_model"
+          label="EA Model"
+          placeholder="All Models"
+          :options="eaModelOptions"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.lead_generator"
+          type="search"
+          name="lead_generator"
+          label="Lead Generator"
+          class="w-full"
+          placeholder="Search by lead generator name"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div>
@@ -1449,6 +1525,8 @@ const paymentStatusOptions = computed(() => {
             "
             :canAssignClientSupport="$page.props.canAssignClientSupport"
             :canAssignLeadAdvisor="$page.props.canAssignLeadAdvisor"
+            :pqaAdvisors="pqaAdvisorOptions"
+            :canAssignPqa="$page.props.canAssignPreQualificationAdvisor"
             quoteType="health"
             @success="manualAssignmentSuccess"
           />
@@ -1520,6 +1598,13 @@ const paymentStatusOptions = computed(() => {
         <div class="text-center">
           <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
             {{ sic_advisor_requested ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-pqa_qualified="{ pqa_qualified }">
+        <div class="text-center">
+          <x-tag size="sm" :color="pqa_qualified ? 'success' : 'error'">
+            {{ pqa_qualified ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>
@@ -1612,6 +1697,17 @@ const paymentStatusOptions = computed(() => {
           >
           <span v-else>{{ item.salary_band?.text ?? 'N/A' }}</span>
         </p>
+      </template>
+      <template #item-pre_qualification_advisor="{ pre_qualification_advisor }">
+        <span>{{ pre_qualification_advisor?.name ?? '—' }}</span>
+      </template>
+
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+
+      <template #item-lead_generator="item">
+        {{ item.lead_generator?.name }}
       </template>
     </DataTable>
 

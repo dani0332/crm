@@ -41,6 +41,11 @@ const loader = reactive({
   export: false,
 });
 
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborative' },
+];
+
 let availableFilters = {
   code: '',
   first_name: '',
@@ -49,6 +54,8 @@ let availableFilters = {
   previous_quote_policy_number: '',
   renewal_batch: '',
   quote_batch_id: '',
+  ea_model: '',
+  lead_generator: '',
   page: 1,
 };
 
@@ -132,6 +139,8 @@ const tableHeader = [
     value: 'advisor_assigned_date',
   },
   { text: 'ADVISOR', value: 'advisor' },
+  { text: 'EA MODEL', value: 'ea_model' },
+  { text: 'LEAD GENERATOR', value: 'lead_generator' },
 ];
 
 const can = permission => useCan(permission);
@@ -313,6 +322,23 @@ const nbFollowupTemplates = [
             />
           </template>
         </x-select>
+
+        <x-select
+          label="EA Model"
+          v-model="filters.ea_model"
+          placeholder="All Models"
+          :options="eaModelOptions"
+          class="w-full"
+        />
+
+        <x-input
+          v-model="filters.lead_generator"
+          type="search"
+          name="lead_generator"
+          label="Lead Generator"
+          class="w-full"
+          placeholder="Search by lead generator name"
+        />
       </div>
       <div class="flex justify-end gap-3 mb-5">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
@@ -426,6 +452,14 @@ const nbFollowupTemplates = [
 
       <template #item-advisor_assigned_date="item">
         {{ item?.car_quote_request_detail?.advisor_assigned_date }}
+      </template>
+
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+
+      <template #item-lead_generator="item">
+        {{ item.lead_generator?.name }}
       </template>
     </DataTable>
 

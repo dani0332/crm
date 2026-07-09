@@ -15,7 +15,9 @@ use App\Models\EmbeddedTransaction;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\BirdService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\EmbeddedTransactionService;
+use App\Services\SendEmailCustomerService;
 use Illuminate\Http\Response;
 use Tests\Helpers\RetargetingEpReminderTestDataHelper;
 use Tests\Helpers\TestSchemaCreator;
@@ -232,10 +234,10 @@ describe('retargetEpReminder', function () {
                 ->andReturn($epTransactions);
 
             $callCount = 0;
-            $this->mock(BirdService::class, function ($mock) use (&$callCount) {
-                $mock->shouldReceive('triggerWebHookRequest')
+            $this->mock(WebEngageService::class, function ($mock) use (&$callCount) {
+                $mock->shouldReceive('sendEvent')
                     ->twice()
-                    ->with($this->dummyBirdEpWorkflowUrl, Mockery::type('object'))
+                    ->with(WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER, Mockery::type('array'))
                     ->andReturnUsing(function () use (&$callCount) {
                         $callCount++;
                         if ($callCount === 1) {
@@ -281,10 +283,10 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
             ->with($this->quoteId, QuoteTypeId::Car, true, PaymentStatusEnum::DRAFT, QuoteStatusEnum::PolicyBooked, EmbeddedProductEnum::CAR_EP_RETARGETING_REMINDER_ALLOWED_EPS)
             ->andReturn(collect([$epTransaction]));
 
-        $this->mock(BirdService::class, function ($mock) {
-            $mock->shouldReceive('triggerWebHookRequest')
+        $this->mock(WebEngageService::class, function ($mock) {
+            $mock->shouldReceive('sendEvent')
                 ->once()
-                ->with($this->dummyBirdEpWorkflowUrl, Mockery::type('object'))
+                ->with(WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER, Mockery::type('array'))
                 ->andReturn((object) ['status_code' => Response::HTTP_NOT_FOUND, 'body' => '{"code":"NotFound","message":"The resource doesn\'t exist or you don\'t have access to it."}']);
         });
 
@@ -315,11 +317,11 @@ describe('triggerBirdWorkflowRetargetEpReminder (via retargetEpReminder)', funct
             ->andReturn(collect([$epTransaction]));
 
         $capturedData = null;
-        $this->mock(BirdService::class, function ($mock) use (&$capturedData) {
-            $mock->shouldReceive('triggerWebHookRequest')
+        $this->mock(WebEngageService::class, function ($mock) use (&$capturedData) {
+            $mock->shouldReceive('sendEvent')
                 ->once()
-                ->with($this->dummyBirdEpWorkflowUrl, Mockery::on(function ($data) use (&$capturedData) {
-                    $capturedData = $data;
+                ->with(WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER, Mockery::on(function ($data) use (&$capturedData) {
+                    $capturedData = (object) $data;
 
                     return true;
                 }))
@@ -383,15 +385,15 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
         expect($result->message)->toBe('Bird EP Reminder Workflow URL not found');
     });
 
-    test('when call BirdService and return its result, response contains 200', function () {
+    test('when call WebEngageService and return its result, response contains 200', function () {
         $epTransaction = Mockery::mock(EmbeddedTransaction::class)->makePartial();
         $epTransaction->code = $this->embeddedTransactionCode;
 
         $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
-        $this->mock(BirdService::class, function ($mock) {
-            $mock->shouldReceive('triggerWebHookRequest')
+        $this->mock(WebEngageService::class, function ($mock) {
+            $mock->shouldReceive('sendEvent')
                 ->once()
-                ->with($this->dummyBirdEpWorkflowUrl, Mockery::type('object'))
+                ->with(WorkflowTypeEnum::CAR_EP_RETARGETING_REMINDER, Mockery::type('array'))
                 ->andReturn((object) ['status_code' => Response::HTTP_OK]);
         });
 
@@ -405,6 +407,77 @@ describe('triggerBirdWorkflowRetargetEpReminder (direct via Reflection)', functi
 
         expect($result)->toBeObject();
         expect($result->status_code)->toBe(Response::HTTP_OK);
+    });
+});
+
+describe('sendBikeEpRetargetingEmail (via Reflection)', function () {
+    function invokeSendBikeEpRetargetingEmail(object $service, array $emailData, int $templateId): object
+    {
+        $ref = new ReflectionClass(EmbeddedTransactionService::class);
+        $method = $ref->getMethod('sendBikeEpRetargetingEmail');
+        $method->setAccessible(true);
+
+        return $method->invoke($service, $emailData, $templateId);
+    }
+
+    $emailData = fn () => [
+        'quoteId' => 3,
+        'quoteTypeId' => QuoteTypeId::Bike,
+        'refId' => 'BIK-RETARGET003',
+        'uuid' => 'RETARGET003',
+        'embeddedTransactionCode' => 'MDX-BIK-RETARGET003',
+        'customerEmail' => 'customer@example.com',
+        'customerName' => 'John Doe',
+    ];
+
+    test('returns 200 when Brevo responds with 201', function () use ($emailData) {
+        $sendEmailMock = Mockery::mock(SendEmailCustomerService::class);
+        $sendEmailMock->shouldReceive('sendBikeEpRetargetingEmail')
+            ->once()
+            ->with(999, Mockery::on(function ($data) {
+                return $data['customerEmail'] === 'customer@example.com'
+                    && $data['refId'] === 'BIK-RETARGET003';
+            }), 'bike-ep-retargeting')
+            ->andReturn(Response::HTTP_CREATED);
+
+        $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class), $sendEmailMock);
+
+        $result = invokeSendBikeEpRetargetingEmail($service, $emailData(), 999);
+
+        expect($result->status_code)->toBe(Response::HTTP_OK);
+        expect($result->message)->toBe('Bike EP retargeting email sent');
+    });
+
+    test('returns 500 when Brevo responds with non-201', function () use ($emailData) {
+        $sendEmailMock = Mockery::mock(SendEmailCustomerService::class);
+        $sendEmailMock->shouldReceive('sendBikeEpRetargetingEmail')
+            ->once()
+            ->andReturn(Response::HTTP_INTERNAL_SERVER_ERROR);
+
+        $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class), $sendEmailMock);
+
+        $result = invokeSendBikeEpRetargetingEmail($service, $emailData(), 999);
+
+        expect($result->status_code)->toBe(Response::HTTP_INTERNAL_SERVER_ERROR);
+        expect($result->message)->toBe('Failed to send bike EP retargeting email');
+    });
+});
+
+describe('handleTriggerEpRetargetingEmail', function () {
+    test('returns criteria not met when eligibility check fails', function () {
+        $repoMock = Mockery::mock(EmbeddedTransactionRepository::class);
+        $repoMock->shouldReceive('fetchFindEmbededTransactionWithDetails')
+            ->once()
+            ->andReturn(null);
+
+        $service = new EmbeddedTransactionServiceTestDouble($repoMock, app(EmbeddedProductRepository::class), app(BirdService::class));
+        $result = $service->handleTriggerEpRetargetingEmail($this->quoteId, $this->quoteTypeId, $this->embeddedTransactionCode);
+
+        expect($result)->toBeObject();
+        expect($result->status_code)->toBe(Response::HTTP_OK);
+        expect($result->message)->toBe('Criteria not met for triggering the email.');
     });
 });
 
@@ -428,10 +501,12 @@ class EmbeddedTransactionServiceTestDouble extends EmbeddedTransactionService
     public function __construct(
         EmbeddedTransactionRepository $repo,
         EmbeddedProductRepository $embeddedProductRepo,
-        BirdService $birdService
+        BirdService $birdService,
+        ?SendEmailCustomerService $sendEmailCustomerService = null,
     ) {
         $this->embeddedTransactionRepo = $repo;
         $this->embeddedProductRepo = $embeddedProductRepo;
         $this->birdService = $birdService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService ?? app(SendEmailCustomerService::class);
     }
 }

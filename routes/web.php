@@ -11,6 +11,7 @@ use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationConfigurationController;
 use App\Http\Controllers\Allocations\ClaimAllocationController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
+use App\Http\Controllers\Allocations\PqaLeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\AuditableController;
@@ -30,9 +31,14 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DocsController;
+use App\Http\Controllers\EAApprovalController;
+use App\Http\Controllers\EALeadController;
+use App\Http\Controllers\EAManagerController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
+use App\Http\Controllers\HealthPlanTypeController;
 use App\Http\Controllers\HealthQuoteController;
+use App\Http\Controllers\HealthThirdPartyAdministrator;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
@@ -164,6 +170,16 @@ Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@ha
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/login-as/{id}', [ImpersonateController::class, 'loginAs'])->name('login-as.id.login');
     Route::get('/leave-login-as', [ImpersonateController::class, 'leave'])->name('login-as.leave');
+
+    // Expert Advisory Model
+    Route::post('/ea-leads', [EALeadController::class, 'store'])->name('ea-leads.store');
+    Route::post('/ea-leads/{quoteType}/{quoteId}/approve', [EAApprovalController::class, 'approve'])->name('ea-leads.approve');
+    Route::post('/ea-leads/{quoteType}/{quoteId}/reject', [EAApprovalController::class, 'reject'])->name('ea-leads.reject');
+    Route::get('/reports/ea-manager', [EAManagerController::class, 'index'])->name('ea-manager.index');
+    Route::get('/ea-manager/export', [EAManagerController::class, 'export'])->name('ea-manager.export');
+    Route::get('/ea-manager/pending-rejections', [EAManagerController::class, 'pendingRejectionsCount'])->name('ea-manager.pending-rejections');
+    Route::post('/ea-manager/{quoteType}/{quoteId}/decision', [EAManagerController::class, 'decision'])->name('ea-manager.decision');
+    Route::patch('/ea-manager/{quoteType}/{quoteId}/change-model', [EAManagerController::class, 'changeModel'])->name('ea-manager.change-model');
 
     Route::get('docs', [DocsController::class, 'show'])->name('docs.index');
     Route::get('docs/{path}', [DocsController::class, 'show'])->where('path', '.*')->name('docs.show');
@@ -547,6 +563,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/claim-allocation/toggle-reset-cap', [ClaimAllocationController::class, 'updateResetCapSwitch']);
     });
 
+    // Pre Qualification Advisor (PQA) lead allocation (ILA)
+    Route::get('pqa-lead-allocation-dashboard', [PqaLeadAllocationController::class, 'index'])->name('pqa-lead-allocation-dashboard');
+    Route::post('/pqa-allocation/update-availability', [PqaLeadAllocationController::class, 'updateAvailability'])->name('pqa-allocation.update-availability');
+    Route::post('/pqa-allocation/update-cap', [PqaLeadAllocationController::class, 'updateCaps'])->name('pqa-allocation.update-cap');
+    Route::post('/pqa-allocation/toggle-reset-cap', [PqaLeadAllocationController::class, 'updateResetCapSwitch'])->name('pqa-allocation.toggle-reset-cap');
+
     Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/{quoteUuId}/update-validate-documents', [QuoteDocumentController::class, 'validateDocumentsUpdate']);
@@ -740,6 +762,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
         Route::post('assignSupportUser', [CRUDController::class, 'assignSupportUser'])->name('assign-support-user');
+        Route::post('assignPreQualificationAdvisor', [CRUDController::class, 'assignPreQualificationAdvisor'])->name('assign-pre-qualification-advisor');
         Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
@@ -879,7 +902,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
 
     Route::group(['prefix' => 'medical'], function () {
+        Route::post('amt/{uuid}/ecommerce-copy-link', [V2AmtController::class, 'copyEcommerceJourneyLink'])
+            ->name('amt.ecommerce-copy-link')
+            ->middleware('permission:'.PermissionsEnum::GMQuoteCopyLink);
         Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
+        Route::get('amt/networks', [V2AmtController::class, 'getNetworksByTpa'])->name('amt.networks');
         Route::resource('amt', V2AmtController::class);
     });
 
@@ -1017,8 +1044,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ->name('admin.allocation-configuration.update');
     Route::get('/teams', [AllocationConfigurationController::class, 'getTeams'])
         ->name('admin.allocation-configuration.teams');
-    Route::get('/api/plan-types', [AllocationConfigurationController::class, 'getPlanTypes'])
+    Route::get('/api/plan-types/{quoteType?}', [AllocationConfigurationController::class, 'getPlanTypes'])
         ->name('admin.allocation-configuration.plan-types');
+    Route::get('/plan-types-by-emirates/{emirateId}', [HealthPlanTypeController::class, 'getByEmirate'])->name('planTypesByEmirates');
+    Route::get('/tpa-by-insurance-provider/{insuranceProviderId}', [HealthThirdPartyAdministrator::class, 'getByInsuranceProvider'])->name('tpaByInsuranceProvider');
     Route::get('/api/business-types', [AllocationConfigurationController::class, 'getBusinessTypes'])
         ->name('admin.allocation-configuration.business-types');
     Route::get('/api/sub-areas', [AllocationConfigurationController::class, 'getSubAreas'])

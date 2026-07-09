@@ -43,8 +43,9 @@ class ReAssignLeads implements ShouldQueue
             ->when($this->quoteType->isPersonalQuote(), function ($q) {
                 $q->where('quote_type_id', $this->quoteType->id());
             })
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost, ...QuoteStatusEnum::postTransactionStatuses()])
             ->where('source', '!=', LeadSourceEnum::IMCRM)
+            ->when($this->quoteType->supportsPqaAllocation(), fn ($q) => $q->whereNull('pq_advisor_id'))
             ->when($this->advisorId, function ($q) {
                 $q->where('advisor_id', $this->advisorId);
             }, function ($q) {

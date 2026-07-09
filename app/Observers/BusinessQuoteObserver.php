@@ -11,7 +11,10 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\QuotePolicyBooked;
 use App\Jobs\Audit\LogAllocation;
+use App\Jobs\DispatchIlaAllocationJob;
+use App\Jobs\DispatchPqaAllocationJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\SendGroupHealthPqaIntroEmailJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
 use App\Repositories\PaymentRepository;
@@ -23,6 +26,7 @@ use App\Services\QuoteStatusLogService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -182,7 +186,7 @@ class BusinessQuoteObserver
                 if ($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                     $quoteTypeId = QuoteTypeId::GroupMedical;
                 }
-                QuotePolicyBooked::dispatch($businessQuote->uuid, $quoteTypeId);
+                QuotePolicyBooked::dispatch($businessQuote->uuid, $quoteTypeId, leadSource: $businessQuote->source);
             } catch (Exception $e) {
                 LoggerService::error('BusinessQuoteObserver - dispatch QuotePolicyBooked event failed', [
                     'uuid' => $businessQuote->uuid,
@@ -198,6 +202,58 @@ class BusinessQuoteObserver
             $payment = $businessQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($businessQuote, $payment, QuoteTypes::BUSINESS->value);
 
+        }
+
+        if (
+            isset($dirty['pq_advisor_id']) &&
+            $businessQuote->pq_advisor_id !== null &&
+            $businessQuote->getOriginal('pq_advisor_id') === null &&
+            (int) $businessQuote->business_type_of_insurance_id === BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+        ) {
+            try {
+                SendGroupHealthPqaIntroEmailJob::dispatch($businessQuote)->delay(Carbon::now()->addSeconds(30));
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - dispatch SendGroupHealthPqaIntroEmailJob failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
+            }
+        }
+
+        $isCorpline = (int) $businessQuote->business_type_of_insurance_id !== BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL;
+
+        if (
+            $isCorpline &&
+            isset($dirty['quote_status_id']) &&
+            $businessQuote->quote_status_id === QuoteStatusEnum::QualificationPending &&
+            $businessQuote->pq_advisor_id === null
+        ) {
+            try {
+                DispatchPqaAllocationJob::dispatch($businessQuote->uuid, QuoteTypes::CORPLINE)->afterCommit();
+
+                activity()
+                    ->performedOn($businessQuote)
+                    ->withProperties(['lead_status' => 'Qualification Pending'])
+                    ->log('Lead status set to Qualification Pending. PQA allocation triggered.');
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - PQA allocation dispatch failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
+            }
+        }
+
+        if (
+            $isCorpline &&
+            isset($dirty['quote_status_id']) &&
+            $businessQuote->quote_status_id === QuoteStatusEnum::Qualified &&
+            $businessQuote->advisor_id === null
+        ) {
+            try {
+                DispatchIlaAllocationJob::dispatch($businessQuote->uuid, QuoteTypes::CORPLINE)->afterCommit();
+            } catch (Exception $e) {
+                LoggerService::error('BusinessQuoteObserver - ILA dispatch on Qualified failed', [
+                    'uuid' => $businessQuote->uuid,
+                ], exception: $e);
+            }
         }
     }
 }

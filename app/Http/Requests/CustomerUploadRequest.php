@@ -6,28 +6,18 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class CustomerUploadRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
-            'file_name' => 'required|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
+            'file_name' => ['required', 'mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel', 'max:2048'],
             'cdb_id' => 'required|exists:business_quote_request,code',
-            'myalfred_expiry_date' => 'required',
-            'inviatation_email' => 'boolean',
+            'myalfred_expiry_date' => ['required', 'date'],
+            'invitation_email' => 'boolean',
         ];
     }
 
@@ -37,16 +27,11 @@ class CustomerUploadRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'inviatation_email' => filter_var($this->inviatation_email, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
+            'invitation_email' => filter_var($this->invitation_email, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
         ]);
     }
 
-    /**
-     * Get the validation rule messages that apply to the request.
-     *
-     * @return array
-     */
-    public function messages()
+    public function messages(): array
     {
         return [
             'cdb_id.required' => 'The Ref-ID field is required.',

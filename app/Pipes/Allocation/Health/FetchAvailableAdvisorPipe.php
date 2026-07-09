@@ -2,6 +2,7 @@
 
 namespace App\Pipes\Allocation\Health;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
@@ -172,6 +173,15 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     protected function getAdvisorsByStatus($onlineStatus, $teamId = null)
     {
         LoggerService::info(self::class."::getAdvisorsByStatus - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$onlineStatus}");
+
+        // EA_IMCRM: bypass normal_allocation_enabled constraint — permission gate in getAdvisorBaseQuery handles filtering
+        if ($this->lead?->source === LeadSourceEnum::EA_IMCRM) {
+            LoggerService::info(self::class.'::getAdvisorsByStatus - EA_IMCRM lead detected, bypassing normal_allocation_enabled constraint and using permission gate');
+
+            return $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
+                ->logRawSql()
+                ->get();
+        }
 
         $advisors = $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
             ->where('la.normal_allocation_enabled', true)

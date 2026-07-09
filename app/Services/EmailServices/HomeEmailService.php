@@ -5,19 +5,17 @@ namespace App\Services\EmailServices;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteFlowType;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\DeleteTempOCBPDFFileJob;
-use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
-use App\Models\QuoteFlowDetails;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\User;
 use App\Services\BaseService;
-use App\Services\BirdService;
 use App\Services\HomeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
@@ -26,6 +24,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class HomeEmailService extends BaseService
 {
@@ -46,7 +45,7 @@ class HomeEmailService extends BaseService
         }
 
         // Fetch the advisor
-        $advisor = User::find($lead->advisor_id);
+        $advisor = User::where('id', $lead->advisor_id)->activeUser()->first();
         if (! $advisor) {
             LoggerService::info('sendHomeOCBIntroEmail - Advisor not found');
         }
@@ -73,29 +72,24 @@ class HomeEmailService extends BaseService
             $homeQuote
         );
 
-        // Fetch the automated workflow configuration
-        $homeAutomatedEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS)->first();
-
-        if (! $homeAutomatedEvent) {
-            LoggerService::info('sendHomeOCBIntroEmail - Workflow configuration not found | Time: '.now());
-
-            return false;
-        }
-
         try {
-            $response = app(BirdService::class)->triggerWebHookRequest($homeAutomatedEvent->value, $emailData);
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HOME_AUTOMATED_FOLLOWUPS, (array) $emailData);
 
+            if (isset($lead->quote_status_id) && $lead->quote_status_id == QuoteStatusEnum::NewLead) {
+                $lead->quote_status_id = QuoteStatusEnum::Quoted;
+                $homeQuote->quote_status_id = QuoteStatusEnum::Quoted;
+                $homeQuote->save();
+                $lead->save();
+                LoggerService::info('sendHomeOCBIntroEmail - quote status updated for HomeQuote');
+            }
             if (empty($homeQuote->automated_flow_executed_at)) {
                 $homeQuote->automated_flow_executed_at = now();
                 $homeQuote->save();
                 LoggerService::info('sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote');
                 LoggerService::info('sendHomeOCBIntroEmail - Successfully triggered event');
-                if ($response && $response->status_code === 200) {
-                    $this->createQuoteFlowDetails($lead, $response);
-                    LoggerService::info('sendHomeOCBIntroEmail - Quote flow details created for HomeQuote');
-                } else {
-                    LoggerService::info("sendHomeOCBIntroEmail - Error triggering event having response status code: {$response?->status_code}");
-                }
+                app(WebEngageService::class)->createQuoteWorkFlowDetails($lead->uuid, QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS, QuoteTypeId::Home);
+
+                LoggerService::info('sendHomeOCBIntroEmail - Quote flow details created for HomeQuote');
             }
 
             return $response ?? null;
@@ -123,23 +117,14 @@ class HomeEmailService extends BaseService
             // Map Data for Home Renewal OCB Email
             $emailData = $this->mapDataForRenewalOCBEmail($homeQuote, $advisor, WorkflowTypeEnum::HOME_RENEWAL_OCB);
 
-            $workflowUrl = ApplicationStorage::where('key_name', WorkflowTypeEnum::HOME_RENEWAL_OCB)->first()?->value;
+            $response = app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HOME_RENEWAL_OCB, (array) $emailData);
 
-            if ($workflowUrl) {
-                app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
+            LoggerService::info('Renewals OCB Email Flow triggered', extra: [
+                'email' => $lead->email,
+            ]);
 
-                LoggerService::info('Renewals OCB Email Flow triggered', extra: [
-                    'email' => $lead->email,
-                ]);
-
-                RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
-                RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-
-            } else {
-                LoggerService::error('Home Renewals OCB Email failed', extra: [
-                    'email' => $lead->email,
-                ]);
-            }
+            RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
+            RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
 
         } catch (\Exception $exception) {
             LoggerService::error('Home Renewals OCB Email failed', exception: $exception);
@@ -158,11 +143,15 @@ class HomeEmailService extends BaseService
             // Lead-related data
             'quoteUID' => $lead->uuid,
             'uuid' => $lead->uuid,
+            'uniqueId' => (string) Str::ulid(),
+            'customerId' => $lead->customer_id ?? '',
+            'customerMobile' => (! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : ''),
+            'firstName' => $lead->first_name ?? '',
+            'lastName' => $lead->last_name ?? '',
             'customerEmail' => $lead->email,
             'customerFullName' => trim("{$lead->first_name} {$lead->last_name}"),
             'customerName' => trim("{$lead->first_name} {$lead->last_name}"),
             'refID' => $lead->code,
-            'customerMobile' => $lead->mobile_no ?? '',
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HOME, $lead->uuid),
             'flowExecutedAt' => $lead->automated_flow_executed_at ?? null,
 
@@ -213,11 +202,16 @@ class HomeEmailService extends BaseService
         $data = (object) [
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
+            'uniqueId' => (string) Str::ulid(),
             'refID' => $lead->code,
             'automatedFlowExecuted' => $automatedFlowExecuted,
             'uuid' => $lead->uuid,
             'customerFullName' => $fullName,
             'customerName' => $fullName,
+            'customerId' => $lead->customer_id ?? '',
+            'customerMobile' => (! empty($lead->mobile_no) ? '+'.formatMobileNoWithoutPlus($lead->mobile_no) : ''),
+            'firstName' => $lead->first_name ?? '',
+            'lastName' => $lead->last_name ?? '',
             'advisorId' => $advisorId,
             'advisorName' => $advisorName,
             'advisorEmail' => $advisorEmail,
@@ -228,8 +222,7 @@ class HomeEmailService extends BaseService
             'whatsAppNumber' => $whatsAppNumber,
             'mobileNoWithoutSpaces' => $mobileNoWithoutSpaces,
             'workflowType' => $workflowType,
-            'customerMobile' => $customerMobile,
-            'triggerDate' => $triggerDate,
+            'triggerDate' => Carbon::createFromTimestamp((int) $triggerDate)->format('Y-m-d'),
             'whatsappConsent' => $whatsappConsent,
             'hasClaimedLosses' => $lead->has_claimed_losses ? 'Yes' : 'No',
         ];
@@ -317,30 +310,6 @@ class HomeEmailService extends BaseService
         DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(120));
     }
 
-    public function createQuoteFlowDetails($lead, $response)
-    {
-        try {
-            $runId = collect($response->headers['Run-Id'])->first();
-            if (! empty($runId)) {
-                QuoteFlowDetails::create([
-                    'quote_uuid' => $lead->uuid,
-                    'quote_type_id' => QuoteTypeId::Home,
-                    'flow_type' => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
-                    'flow_id' => $runId,
-                ]);
-                LoggerService::info(self::class.' HomeAutomated | workflow run id created');
-            } else {
-                LoggerService::info(self::class.' HomeAutomated | workflow run id not found');
-            }
-        } catch (\Throwable $th) {
-            $errorMessage = self::class.' - Error while creating quote flow details';
-            LoggerService::info($errorMessage);
-            LoggerService::info("Error: {$th->getMessage()}");
-            throw $th;
-        }
-
-    }
-
     /**
      * Get timestamp for OCB trigger date based on policy expiry date
      * OCB date is 30 days before expiry, adjusted for weekends
@@ -421,7 +390,6 @@ class HomeEmailService extends BaseService
                 'insuranceCompany' => $insuranceProviderCode,
                 'currentPlanData' => $currentPlan,
             ];
-
         } catch (\Exception $e) {
             LoggerService::error('getCurrentPlanData - Error getting current plan data', exception: $e);
 
@@ -489,7 +457,6 @@ class HomeEmailService extends BaseService
 
                 return [];
             }
-
         } catch (BadResponseException $e) {
             $response = $e->getResponse();
             $responseBody = $response ? $response->getBody()->getContents() : '';
@@ -530,6 +497,7 @@ class HomeEmailService extends BaseService
             'quoteUID' => $personalQuote->uuid,
             'quoteUUID' => $personalQuote->uuid,
             'refID' => $personalQuote->code,
+            'uniqueId' => (string) Str::ulid(),
             'uuid' => $personalQuote->uuid,
             'customerEmail' => $personalQuote->email,
             'customerFullName' => trim("{$personalQuote->first_name} {$personalQuote->last_name}"),
@@ -564,34 +532,24 @@ class HomeEmailService extends BaseService
 
     public function sendAutomatedHomeRenewalFollowup(PersonalQuote $personalQuote)
     {
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_RENEWAL_AUTOMATED_FOLLOWUPS)->first();
-
         LoggerService::info('| sendAutomatedHomeRenewalFollowup - Initiating process for Home renewal quote');
 
-        if ($workflowUrl && ! empty($workflowUrl->value)) {
-            // Fetch the advisor
-            $advisor = User::find($personalQuote->advisor_id);
-            if (! $advisor) {
-                LoggerService::info("sendAutomatedHomeRenewalFollowup - Advisor not found for renewal quote: {$personalQuote->uuid}");
-            }
-            // ✅ Use NEW renewal-specific data builder
-            $emailData = $this->buildRenewalEmailData(
-                $personalQuote,
-                $advisor,
-                WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS,
-                $personalQuote->homeQuote
-            );
-
-            $response = app(BirdService::class)->triggerWebHookRequest($workflowUrl->value, $emailData);
-
-            if ($response && $response->status_code === 200) {
-                LoggerService::info("sendAutomatedHomeRenewalFollowup - Successfully triggered event for Home renewal quote: {$personalQuote->uuid}");
-                app(BirdService::class)->createQuoteWorkFlowDetails($personalQuote, $response, QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::HOME->id());
-            } else {
-                LoggerService::info("sendAutomatedHomeRenewalFollowup - Error triggering event having response status code: {$response?->status_code}");
-            }
-        } else {
-            LoggerService::info(self::class." - Automated Home Renewal Followup is not set workflow url not found for quote: {$personalQuote->uuid}");
+        $advisor = User::find($personalQuote->advisor_id);
+        if (! $advisor) {
+            LoggerService::info("sendAutomatedHomeRenewalFollowup - Advisor not found for renewal quote: {$personalQuote->uuid}");
         }
+
+        $emailData = $this->buildRenewalEmailData(
+            $personalQuote,
+            $advisor,
+            WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS,
+            $personalQuote->homeQuote
+        );
+
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::HOME_RENEWAL_AUTOMATED_FOLLOWUPS, (array) $emailData);
+
+        LoggerService::info("sendAutomatedHomeRenewalFollowup - Successfully triggered event for Home renewal quote: {$personalQuote->uuid}");
+
+        app(WebEngageService::class)->createQuoteWorkFlowDetails($personalQuote->uuid, QuoteFlowType::HOME_RENEWAL_AUTOMATED_FOLLOWUPS->value, QuoteTypes::HOME->id());
     }
 }

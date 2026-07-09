@@ -64,7 +64,10 @@ abstract class BaseQuoteService extends BaseService
 
         return $model
             ->when($this->quoteType->isPersonalQuote(), fn ($query) => $query->where("{$tableName}.quote_type_id", $this->quoteType->id()))
-            ->when($this->isAdvisor(), fn ($query) => $query->where("{$tableName}.advisor_id", Auth::id()))
+            ->when($this->isAdvisor(), fn ($query) => $query->where(function ($q) use ($tableName) {
+                $q->where("{$tableName}.advisor_id", Auth::id())
+                    ->orWhere("{$tableName}.expert_advisor_id", Auth::id());
+            }))
             ->filterByAdvisors(request('advisors'))
             ->orderBy($sortBy, request()->sortType ?? 'desc');
     }

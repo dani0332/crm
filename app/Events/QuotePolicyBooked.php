@@ -18,10 +18,12 @@ class QuotePolicyBooked
      * @param  string  $quoteUID  Quote UUID
      * @param  int  $quoteTypeId  Quote Type ID
      * @param  string  $eventType  Event type (default: Purchase)
+     * @param  ?string  $leadSource  Lead source of the quote
      */
     public function __construct(
         public readonly string $quoteUID,
         public readonly int $quoteTypeId,
-        public readonly string $eventType = 'Purchase'
+        public readonly string $eventType = 'Purchase',
+        public readonly ?string $leadSource = null
     ) {}
 }
