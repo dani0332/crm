@@ -84,7 +84,7 @@ class BridgerInsightService
         return $_return;
     }
 
-    public function searchAMLResult($bridgerAPIToken, $memberUboDetails, $quoteDetails, $quoteTypeId, $customerType, $loginCustomerEmail, $isAutomation = false)
+    public function searchAMLResult($bridgerAPIToken, $memberUboDetails, $quoteDetails, $quoteTypeId, $customerType, $loginCustomerEmail, $isAutomation = false, $isFromAPI = false)
     {
         if ($bridgerAPIToken['status']) {
             $quoteId = $quoteDetails->id;
@@ -194,7 +194,7 @@ class BridgerInsightService
                             ])->update(['is_executed' => 1]);
 
                             if (isset($getDecodeContents->Records)) {
-                                AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail, isAutomation: $isAutomation);
+                                AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail, isAutomation: $isAutomation, isFromAPI: $isFromAPI);
                                 LoggerService::info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
                             }
 

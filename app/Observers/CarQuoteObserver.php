@@ -255,7 +255,7 @@ class CarQuoteObserver
             $lead->quote_status_id === QuoteStatusEnum::PolicyBooked
         ) {
             try {
-                QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car);
+                QuotePolicyBooked::dispatch($lead->uuid, QuoteTypeId::Car, leadSource: $lead->source);
             } catch (Exception $e) {
                 LoggerService::error('CarQuoteObserver - dispatch QuotePolicyBooked event failed', [
                     'uuid' => $lead->uuid,

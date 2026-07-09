@@ -57,6 +57,7 @@ const props = defineProps({
   websiteURL: String,
   lookUpData: Object,
   localLookups: Object,
+  investmentFrequency: String,
 });
 
 const page = usePage();
@@ -1120,6 +1121,8 @@ const handlePlanSelected = plan => {
       :ea-model="quote.ea_model"
       :lead-generator="quote.lead_generator"
       :expert-advisor="quote.expert_advisor"
+      :ea-manager-approved-at="quote.ea_manager_approved_at"
+      :ea-manager-rejected-at="quote.ea_manager_rejected_at"
     />
 
     <EAApprovalActions
@@ -1275,6 +1278,7 @@ const handlePlanSelected = plan => {
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :investmentFrequency="investmentFrequency"
     />
 
     <QuotePayments

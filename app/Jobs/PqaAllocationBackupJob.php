@@ -2,10 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
@@ -23,12 +25,12 @@ class PqaAllocationBackupJob implements ShouldQueue
         LoggerService::info(self::class."::handle - PQA backup job started for {$this->quoteType->value}");
 
         $eligibleStatus = $this->quoteType === QuoteTypes::HEALTH
-            ? QuoteStatusEnum::NewLead
-            : QuoteStatusEnum::QualificationPending;
+            ? [QuoteStatusEnum::NewLead]
+            : [QuoteStatusEnum::QualificationPending, QuoteStatusEnum::NewLead];
 
         $leads = $this->quoteType->model()::query()
             ->whereNull('pq_advisor_id')
-            ->where('quote_status_id', $eligibleStatus)
+            ->whereIn('quote_status_id', $eligibleStatus)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [
                 LeadSourceEnum::IMCRM,
@@ -41,6 +43,18 @@ class PqaAllocationBackupJob implements ShouldQueue
                 LeadSourceEnum::REVIVAL_ANNUAL,
             ])
             ->whereDate('created_at', '>', '2026-07-01')
+            ->when($this->quoteType === QuoteTypes::HEALTH, function ($query) {
+                $query->where('created_at', '<=', Carbon::now()->subMinutes(10));
+            })
+            ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, function ($query) {
+                $query->where('created_at', '<=', Carbon::now()->subMinutes(15));
+            })
+            ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, function($q) {
+                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
+            ->when($this->quoteType === QuoteTypes::CORPLINE, function($q) {
+                $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
             ->limit(self::BATCH_LIMIT)
             ->get();
 

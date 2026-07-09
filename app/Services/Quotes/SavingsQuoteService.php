@@ -369,6 +369,7 @@ class SavingsQuoteService extends BaseQuoteService
             'ecomSavingsInsuranceQuoteUrl' => config('constants.ECOM_SAVINGS_INSURANCE_QUOTE_URL'),
             'lookUpData' => $lookUpData,
             'localLookups' => $localLookups,
+            'investmentFrequency' => $quote->quoteCustomerPlan?->plan['investmentFrequency'] ?? null,
             ...$data,
         ];
     }

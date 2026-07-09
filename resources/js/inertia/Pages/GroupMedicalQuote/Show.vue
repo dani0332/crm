@@ -54,6 +54,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  pqaQualified: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
@@ -82,6 +86,10 @@ const modelClass = 'App\\Models\\BusinessQuote';
 const isDuplicateAllowed = computed(() => {
   return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
 });
+
+const pqaQualifiedText = computed(() =>
+  props.pqaQualified === 1 ? 'Yes' : 'No',
+);
 
 const genderText = gender =>
   computed(() => {
@@ -1120,6 +1128,10 @@ function handleOcrNotification(event) {
                   <dt class="font-medium">UTM TERM</dt>
                   <dd>{{ quote.quote_detail?.utm_term }}</dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PQA Qualified</dt>
+                  <dd>{{ pqaQualifiedText }}</dd>
+                </div>
               </template>
             </dl>
 
@@ -1901,6 +1913,8 @@ function handleOcrNotification(event) {
         :ea-model="quote.ea_model"
         :lead-generator="quote.lead_generator"
         :expert-advisor="quote.expert_advisor"
+        :ea-manager-approved-at="quote.ea_manager_approved_at"
+        :ea-manager-rejected-at="quote.ea_manager_rejected_at"
       />
 
       <EAApprovalActions

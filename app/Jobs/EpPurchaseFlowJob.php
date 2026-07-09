@@ -16,7 +16,7 @@ class EpPurchaseFlowJob implements ShouldQueue
 {
     use Queueable, SendsEpFailureEmail;
 
-    public $tries = 3;
+    public $tries = 5;
     public $timeout = 180;
     public $backoff = 180;
     private string $logPrefix = 'EpPurchaseFlow - Job:';

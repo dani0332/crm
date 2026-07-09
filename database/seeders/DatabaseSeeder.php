@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
             // TravelRenewalTeamSeeder::class,
             // QuoteTypeTableSeeder::class,
             DocumentTypesSeeder::class,
-            GroupMedicalLeadDocumentTypesSeeder::class,
+            // GroupMedicalLeadDocumentTypesSeeder::class,
             // CommercialCarPlanSeeder::class,
             // RuleNameSeeder::class,
             // BusinessActivitiesSeeder::class,
@@ -70,10 +70,6 @@ class DatabaseSeeder extends Seeder
             HealthNationalityGroupSeeder::class,
             CanonicalNationalitySeeder::class,
             HealthGroupNationalitySeeder::class,*/
-            HealthPlanRatesStatusVersionSeeder::class,
-            SplitHealthRatesGenderMaritalStatusSeeder::class,
-            MakeGenderMaritalStatusUppercase::class,
-            // ReverseSplitHealthRatesGenderMaritalStatusSeeder::class, This is for reversal of SplitHealthRatesGenderMaritalStatusSeeder
             ClaimFormsGenericDocumentSeeder::class,
             AwnicNationalitySeeder::class,
             PartnerSeeder::class,

@@ -815,7 +815,7 @@ if (! function_exists('getIMLogo')) {
         }
 
         // For PDF: use local file path, For web: use new GPTW certified CDN logo
-        return $isPDF ? public_path($imLogo) : 'https://cdn.alfred.ae/media/assets/im-logo-gptw-1.png';
+        return $isPDF ? public_path($imLogo) : 'https://cdn-prod.myalfred.me/media/assets/im-logo-gptw-1.png';
     }
 }
 

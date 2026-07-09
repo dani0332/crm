@@ -3,9 +3,6 @@
 use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\EpCancellationCallbackController;
-use App\Http\Controllers\API\HealthPlanController;
-use App\Http\Controllers\API\HealthRateControlController;
-use App\Http\Controllers\API\HealthRateController;
 use App\Http\Controllers\API\V1\BorController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
@@ -33,6 +30,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
     Route::post('/imcrm/re-trigger-life-revival', [ApiController::class, 'reTriggerLifeRevival'])->name('reTriggerLifeRevival');
+    Route::post('/imcrm/re-trigger-home-revival', [ApiController::class, 'reTriggerHomeRevival'])->name('reTriggerHomeRevival');
+    Route::post('/imcrm/re-trigger-car-revival', [ApiController::class, 'reTriggerCarRevival'])->name('reTriggerCarRevival');
 });
 
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
@@ -143,6 +142,7 @@ Route::post('/imcrm/eligible-for-revival-followups', [ApiController::class, 'eli
 
 Route::prefix('v1')->group(function () {
     Route::post('/log-ep-email-statuses', [ApiController::class, 'logEpEmailStatuses'])->name('logEpEmailStatuses');
+    Route::post('/postmark/emails-inbound-hook', [ApiController::class, 'handlePostMarkEmailInteractionWebhook'])->name('postmark.email-interaction-webhook');
 
     Route::post('quotes/car/followup-started', [CarQuoteController::class, 'followupStarted']);
     Route::post('quotes/car/pause-resume-followup', [CarQuoteController::class, 'updatePauseAndResumeCounters']);
@@ -190,25 +190,6 @@ Route::prefix('v1')->group(function () {
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
-
-// Cms Api Routes
-Route::prefix('cms')->middleware(['basicAuth'])->group(function () {
-    Route::group(['prefix' => 'health-plans'], function () {
-        Route::post('/', [HealthPlanController::class, 'create']);
-        Route::put('/{id}', [HealthPlanController::class, 'update']);
-        Route::get('/get-status-versions/{parentId}/{status}', [HealthPlanController::class, 'getStatusVersions']);
-        Route::delete('/{id}', [HealthPlanController::class, 'delete']);
-        Route::post('/publish/{id}', [HealthPlanController::class, 'publish']);
-    });
-
-    Route::prefix('health-rates')->group(function () {
-        Route::post('/', [HealthRateController::class, 'create']);
-        Route::put('/{id}', [HealthRateController::class, 'update']);
-        Route::delete('/{id}', [HealthRateController::class, 'delete']);
-        Route::delete('/sheet/{id}', [HealthRateControlController::class, 'delete']);
-        Route::post('/publish/{id}', [HealthRateController::class, 'publish']);
-    });
-});
 
 Route::get('/heath-check', function () {
     return response()->json(['success' => true]);

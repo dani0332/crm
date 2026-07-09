@@ -49,7 +49,6 @@ const healthPolicyHolderEnum = page.props.healthPolicyHolderEnum;
 const healthCoverForEnum = page.props.healthCoverForEnum;
 const memberCategoryEnum = page.props.memberCategoryEnum;
 const visaCategoryEnum = page.props.visaCategoryEnum;
-const salaryBandEnum = page.props.salaryBandEnum;
 const customerType = computed(() => {
   return page.props.quote?.customer_type || customerTypeEnum.Individual;
 });
@@ -438,20 +437,6 @@ watch(
     quoteForm.visa_category_id = null;
   },
 );
-
-watch(showAdditionalFields, isInsured => {
-  if (isInsured) {
-    if (quoteForm.visa_category_id === visaCategoryEnum.DEPENDENT_FAMILY) {
-      quoteForm.visa_category_id = null;
-    }
-    if (
-      quoteForm.salary_band_id ===
-      salaryBandEnum.NO_SALARY_DEPENDENTS_OR_CHILDREN
-    ) {
-      quoteForm.salary_band_id = null;
-    }
-  }
-});
 
 // When include_policyholder is toggled to 1, clear policyholder personal details
 watch(
@@ -1039,11 +1024,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
                       item =>
                         item.health_cover_for_id ===
                           healthCoverForEnum.INDIVIDUAL_AND_FAMILIES &&
-                        item.id !== visaCategoryEnum.NEWBORN_BORN_IN_UAE &&
-                        !(
-                          showAdditionalFields &&
-                          item.id === visaCategoryEnum.DEPENDENT_FAMILY
-                        ),
+                        item.id !== visaCategoryEnum.NEWBORN_BORN_IN_UAE,
                     )
                     .map(item => ({
                       value: item.id,
@@ -1058,16 +1039,7 @@ watch(categoryChangeConfirmOpen, isOpen => {
               <x-select
                 v-if="isCustomerTypeIndividual && !isDomesticHelper"
                 v-model="quoteForm.salary_band_id"
-                :options="
-                  salaryBandsOptions.filter(
-                    item =>
-                      !(
-                        showAdditionalFields &&
-                        item.value ===
-                          salaryBandEnum.NO_SALARY_DEPENDENTS_OR_CHILDREN
-                      ),
-                  )
-                "
+                :options="salaryBandsOptions"
                 class="w-full"
                 label="SALARY"
                 required

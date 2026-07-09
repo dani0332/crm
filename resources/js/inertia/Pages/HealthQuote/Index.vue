@@ -145,6 +145,11 @@ const tableHeader = ref([
     value: 'pre_qualification_advisor',
     is_active: true,
   },
+  {
+    text: 'PQA Qualified',
+    value: 'pqa_qualified',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
   { text: 'UNASSIGNED', value: 'unassigned', is_active: true },
   { text: 'OE/AE', value: 'support_user.name', is_active: true },
@@ -1593,6 +1598,13 @@ const paymentStatusOptions = computed(() => {
         <div class="text-center">
           <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
             {{ sic_advisor_requested ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-pqa_qualified="{ pqa_qualified }">
+        <div class="text-center">
+          <x-tag size="sm" :color="pqa_qualified ? 'success' : 'error'">
+            {{ pqa_qualified ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>

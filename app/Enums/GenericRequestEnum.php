@@ -75,4 +75,5 @@ final class GenericRequestEnum extends Enum
     const QUOTE_FINALIZED = 'Quote Finalized';
     const TRAVEL_SENIOR_MEMBER_AGE = 65;
     const HIGH_RISK_SCORE = 35;
+    const LUMPSUM = 'Lumpsum';
 }

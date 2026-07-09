@@ -85,14 +85,18 @@ const props = defineProps({
   },
   archivedDocuments: Array,
   visaCategoryOptions: Array,
-  allVisaCategoryOptions: Array,
   policyHolderCategoryOptions: Array,
   insureCodeOptions: Array,
   policyHolderOptions: Array,
   maritalStatusOptions: Array,
   emirateEnum: Object,
+  pqaQualified: Number,
 });
 const modelClass = 'App\\Models\\HealthQuote';
+
+const pqaQualifiedFormatted = computed(() =>
+  props.pqaQualified === 0 ? 'No' : 'Yes',
+);
 
 const isManualPlansCount = ref(0);
 
@@ -476,13 +480,6 @@ const visaCategorySelect = computed(() => {
     }));
 });
 
-const allVisaCategorySelect = computed(() => {
-  return (page.props.allVisaCategoryOptions ?? []).map(item => ({
-    value: item.id,
-    label: item.text,
-  }));
-});
-
 const onTeamAssign = () => {
   if (!assignSubteam.value) {
     notification.error({
@@ -504,10 +501,14 @@ const onTeamAssign = () => {
         isDisabled.value = true;
       },
       onSuccess: () => {
-        notification.success({
-          title: 'Team Assigned',
-          position: 'top',
-        });
+        if (page.props.flash?.success) {
+          notification.success({
+            title: 'Team Assigned',
+            position: 'top',
+          });
+        } else {
+          assignSubteam.value = page.props.quote.health_team_type || '';
+        }
       },
       onFinish: () => {
         isDisabled.value = false;
@@ -1621,23 +1622,6 @@ onMounted(() => {
   isMounted.value = true;
 
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
-
-  if (isMigrated.value) {
-    const policyHolder = members.value.find(
-      m => m.is_policy_holder == 1 && m.is_insured == 1,
-    );
-    if (policyHolder) {
-      const quoteSalaryMissing = page.props.quote.salary_band_id === null;
-      const memberSalaryMissing = policyHolder.salary_band_id === null;
-      if (quoteSalaryMissing || memberSalaryMissing) {
-        notification.error({
-          title:
-            'Salary band information is missing for the insured policyholder. Please fill in the missing customer details to recalculate the plans.',
-          position: 'top',
-        });
-      }
-    }
-  }
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -2418,12 +2402,9 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 <dt class="font-medium">ADDITIONAL NOTES</dt>
                 <dd>{{ quote.additional_notes }}</dd>
               </div>
-              <div
-                class="grid sm:grid-cols-2"
-                v-if="can(permissionEnum.VIEW_PCP)"
-              >
-                <dt class="font-medium">PC-Qualified</dt>
-                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PQA Qualified</dt>
+                <dd>{{ pqaQualifiedFormatted }}</dd>
               </div>
             </dl>
           </div>
@@ -2630,7 +2611,7 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                   <dt class="font-medium">VISA CATEGORY</dt>
                   <dd>
                     {{
-                      page.props.allVisaCategoryOptions.find(
+                      page.props.visaCategoryOptions.find(
                         option => option.id === quote.visa_category_id,
                       )?.text ?? '-'
                     }}
@@ -2899,7 +2880,6 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
         }))
       "
       :visaCategoryOptions="visaCategorySelect"
-      :allVisaCategoryOptions="allVisaCategorySelect"
       :includePolicyHolder="isIncludePolicyholder"
       :coverForId="quote.cover_for_id"
       :healthInsureCode="quote.insure_code"
@@ -4259,7 +4239,6 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
     />
 
     <HealthRoutingLogs type="ROUTING" :quoteRequestId="$page.props.quote.id" />
-    <HealthPricingLogs :quoteRequestId="$page.props.quote.id" />
 
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"

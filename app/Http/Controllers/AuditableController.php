@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Http\Requests\HealthPricingLogsRequest;
 use App\Http\Requests\LogsRequest;
 use App\Http\Requests\UaeSigningPassLogsRequest;
 use App\Models\CyberInsurerRequestResponses;
@@ -14,7 +13,6 @@ use App\Models\DeviceInsurerRequestResponses;
 use App\Models\DeviceQuote;
 use App\Models\EpLog;
 use App\Models\HealthInsurerRequestResponse;
-use App\Models\HealthPricingLog;
 use App\Models\HealthQuote;
 use App\Models\HealthRoutingLog;
 use App\Models\HomeInsurerRequestResponses;
@@ -34,7 +32,6 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\UaePass\UaeSigningPassLogsPresenter;
 use App\Traits\GenericQueriesAllLobs;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -346,33 +343,6 @@ class AuditableController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load Health Routing Logs',
-                'error' => $e->getMessage(),
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    public function loadHealthPricingLogs(HealthPricingLogsRequest $request): JsonResponse
-    {
-        try {
-            // First, get logs without 'pricing-lookup'
-            $logs = HealthPricingLog::with('member')
-                ->where('health_quote_request_id', $request->quote_request_id)
-                ->select('id', 'stage', 'criteria', 'result', 'status', 'reason', 'customer_member_id', 'created_at')
-                ->orderByDesc('customer_member_id')
-                ->orderBy('id')
-                ->get()
-                ->values();
-
-            return response()->json([
-                'success' => true,
-                'data' => $logs,
-            ]);
-        } catch (\Exception $e) {
-            LoggerService::error('Failed to load Health Pricing Logs - ', exception: $e);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load Health Pricing Logs',
                 'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }

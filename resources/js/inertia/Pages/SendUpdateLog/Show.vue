@@ -401,6 +401,10 @@ const isLegacyPolicy = computed(() => {
   );
 });
 
+const isCPD = computed(() => {
+  return props.sendUpdateLog.category.code === props.sendUpdateStatusEnum.CPD;
+});
+
 const isBookUpdate = computed(() => {
   return (
     props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED
@@ -817,7 +821,7 @@ const sectionExpanded = computed(() => true);
     </div>
 
     <LazyProviderDetails
-      v-if="isLegacyPolicy"
+      v-if="isLegacyPolicy && !isCPD"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
       :insurance-provider-id="props.insuranceProviderId"

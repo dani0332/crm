@@ -41,6 +41,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentAction;
 use App\Models\QuoteBatches;
+use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\Team;
@@ -482,6 +483,7 @@ class HealthQuoteService extends BaseService
             $quote->is_entity = $quote->isEntity();
             $quote->is_migrated = $quote->isMigrated();
             $quote->is_policyholder_included = $quote->isPolicyholderIncluded();
+            $quote->pqa_qualified = $this->isPQAQualified($quote->id, (int) $quote->pq_advisor_id);
 
             return $quote;
         });
@@ -1104,9 +1106,9 @@ class HealthQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-                LoggerService::warning('Cannot assign WCU as lead is in Transaction Approved state, lead id: '.$leadId);
-                array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
+            if (in_array($lead->quote_status_id, QuoteStatusEnum::postTransactionStatuses()) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
+                LoggerService::warning('Cannot assign WCU as lead is in a post-transaction state, lead id: '.$leadId);
+                array_push($result, ['leadId' => $lead->code, 'msg' => 'One of the selected leads is in a post-transaction state. Please unselect the lead and try again.']);
 
                 continue;
             } elseif ($lead) {
@@ -1125,12 +1127,12 @@ class HealthQuoteService extends BaseService
 
     public function assignHealthTeam($request, $lead): bool
     {
-        if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-            LoggerService::warning('Cannot assign Health Team as lead is in Transaction Approved state');
+        if (in_array($lead->quote_status_id, QuoteStatusEnum::postTransactionStatuses()) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
+            LoggerService::warning('Cannot assign Health Team as lead is in a post-transaction state');
 
             return false;
         }
-        if ($lead->health_team_type != null && $lead->advisor_id != null) {
+        if ($lead->health_team_type != null && $lead->advisor_id != null && ! in_array($lead->quote_status_id, QuoteStatusEnum::postTransactionStatuses())) {
             LoggerService::info('Removing previous advisor as lead already assigned to a health team');
             $this->removePreviousAdvisorAndUpdateStatus($lead, QuoteStatusEnum::Qualified);
         }
@@ -1149,7 +1151,7 @@ class HealthQuoteService extends BaseService
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
         // check if team is assigned and status not qualified yet so mark it qualified.
-        if ($lead && $lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
+        if ($lead && $lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor() && ! in_array($lead->quote_status_id, QuoteStatusEnum::postTransactionStatuses())) {
             HealthQuote::where('id', $lead->id)->update([
                 'quote_status_id' => QuoteStatusEnum::Qualified,
                 'quote_status_date' => now(),
@@ -2136,5 +2138,21 @@ class HealthQuoteService extends BaseService
         $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
 
         return $modelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
+    }
+
+    public function isPQAQualified(int $id, ?int $pqaAdvisorId = null): int
+    {
+        if (! $pqaAdvisorId) {
+            return 0;
+        }
+
+        $statusCount = QuoteStatusLog::where('quote_type_id', QuoteTypes::getId(QuoteTypes::HEALTH))
+            ->where('quote_request_id', $id)
+            ->where('previous_quote_status_id', QuoteStatusEnum::NewLead)
+            ->where('current_quote_status_id', QuoteStatusEnum::Qualified)
+            ->where('created_by', $pqaAdvisorId)
+            ->count();
+
+        return $statusCount > 0 ? 1 : 0;
     }
 }

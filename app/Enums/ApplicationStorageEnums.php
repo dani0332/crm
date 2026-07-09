@@ -263,6 +263,11 @@ final class ApplicationStorageEnums extends Enum
     public const MOTOR_PCP_OCB_SWITCH = 'MOTOR_PCP_OCB_SWITCH';
     public const MOTOR_PCP_FOLLOWUP_SWITCH = 'MOTOR_PCP_FOLLOWUP_SWITCH';
 
+    // Group Medical PQA Introductory Email
+    public const GROUP_HEALTH_REPLY_TO_EMAIL = 'GROUP_HEALTH_REPLY_TO_EMAIL';
+    public const GROUP_HEALTH_BCC = 'GROUP_HEALTH_BCC';
+    public const GROUP_HEALTH_CC = 'GROUP_HEALTH_CC';
+
     /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
     public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
     public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
@@ -517,4 +522,5 @@ final class ApplicationStorageEnums extends Enum
 
     // Alliance → Qatar Insurance brand switch
     public const ALLIANCE_BRAND_SWITCH_DATE = 'ALLIANCE_BRAND_SWITCH_DATE';
+    public const AML_AUTOMATION_RE_TRIGGER_RECIPIENTS = 'AML_AUTOMATION_RE_TRIGGER_RECIPIENTS';
 }

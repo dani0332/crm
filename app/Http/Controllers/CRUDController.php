@@ -1258,7 +1258,6 @@ class CRUDController extends Controller
                 $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
                 $maritalStatusOptions = $this->dropdownSourceService->getDropdownSource('marital_status_id');
                 $visaCategoryOptions = $this->dropdownSourceService->getDropdownSource('visa_category');
-                $allVisaCategoryOptions = app(LookupService::class)->getVisaCategoryAll();
                 $policyHolderCategoryOptions = $this->dropdownSourceService->getDropdownSource(LookupsEnum::POLICY_HOLDER_CATEGORY->value);
                 $insureCodeOptions = $this->dropdownSourceService->getDropdownSource(LookupsEnum::HEALTH_INSURE_OPTIONS->value, leadSource: $record->source);
                 $policyHolderOptions = $this->dropdownSourceService->getDropdownSource(LookupsEnum::POLICY_HOLDER_OPTIONS->value, leadSource: $record->source);
@@ -1360,6 +1359,9 @@ class CRUDController extends Controller
                 } else {
                     $quoteStatuses = array_values($leadStatuses->toArray());
                 }
+                $advisors = $advisors->concat($this->crudService->getPqaAdvisorList(QuoteTypes::HEALTH->id())->get());
+
+                $pqaQualified = $this->healthQuoteService->isPQAQualified($record->id, $record->pq_advisor_id);
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
@@ -1450,12 +1452,12 @@ class CRUDController extends Controller
                     'archivedDocuments' => $archivedDocuments,
                     'maritalStatusOptions' => $maritalStatusOptions,
                     'visaCategoryOptions' => $visaCategoryOptions,
-                    'allVisaCategoryOptions' => $allVisaCategoryOptions,
                     'policyHolderCategoryOptions' => $policyHolderCategoryOptions,
                     'insureCodeOptions' => $insureCodeOptions,
                     'policyHolderOptions' => $policyHolderOptions,
                     'emirateEnum' => EmirateEnum::asArray(),
                     'policyHolderRelationMap' => RelationCodeEnum::policyHolderRelationMap(),
+                    'pqaQualified' => $pqaQualified,
                 ]);
             } else {
                 return view('shared.show', compact([
@@ -2097,6 +2099,8 @@ class CRUDController extends Controller
         if ($selectedTeam != quoteTypeCode::GM && $isAssigned) {
             return redirect()->to('/quotes/health/'.$lead->uuid)->with('success', ' Lead has been Assigned To '.strtoupper($selectedTeam).' Team');
         }
+
+        return redirect()->to('/quotes/health/'.$lead->uuid)->with('error', 'Cannot assign Health Team as lead is in a post-transaction state.');
     }
 
     public function updateLeadStatus(UpdateLeadStatusRequest $request)
