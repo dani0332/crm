@@ -1,4 +1,4 @@
-name: Build & push to ACR and Deploy to AKS
+name: Build & push to ACR and Deploy to AKS - Dev
 
 on:
   #push:
