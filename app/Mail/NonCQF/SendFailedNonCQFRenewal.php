@@ -39,7 +39,7 @@ class SendFailedNonCQFRenewal extends Mailable
 
     public function sendViaBrevo(NonCQFRenewalBrevoMailService $emailService): bool
     {
-        $templateId = (int) ($this->getBrevoTemplateId() ?? 918);
+        $templateId = (int) $this->getBrevoTemplateId();
 
         if (! $templateId) {
             LoggerService::error(self::class.' - Brevo template ID not configured', [
@@ -53,11 +53,7 @@ class SendFailedNonCQFRenewal extends Mailable
             $emailData = $this->buildEmailData();
 
             if (empty($emailData->renewalsManagersEmails)) {
-                LoggerService::error(self::class.' - No RenewalsManager recipients found', [
-                    'renewals_upload_lead_id' => $this->renewalsUploadLeadsId,
-                ]);
-
-                return false;
+                throw new \RuntimeException('No RenewalsManager recipients found');
             }
 
             $body = [
