@@ -459,7 +459,7 @@ class AmtController extends Controller
             $emirateOfRegistrationId = $quote?->emirate_of_registration_id ?? null;
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
             $quote->pqa_qualified = $this->buisnessQuoteService->isPQAQualified($quote->id, (int) $quote->pq_advisor_id);
-            $quote->plan_type_text = $this->healthPlanTypeService->getById($quote->health_plan_type_id);
+            $quote->plan_type_text = $quote->health_plan_type_id ? $this->healthPlanTypeService->getById($quote->health_plan_type_id) : null;
 
             return $quote;
         });
