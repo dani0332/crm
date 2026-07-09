@@ -9,7 +9,6 @@ use App\Models\EmbeddedTransaction;
 use App\Models\Payment;
 use App\Services\SageApiEmbeddedProductService;
 use App\Services\SageApiService;
-use Mockery;
 
 beforeEach(function () {
     $this->sageApiService = Mockery::mock(SageApiService::class)->makePartial();
