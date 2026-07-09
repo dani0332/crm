@@ -50,6 +50,7 @@ use App\Services\DropdownSourceService;
 use App\Services\GroupMedical\GroupMedicalAmtFormDropdownService;
 use App\Services\GroupMedicalEcommerceJourneyLinkService;
 use App\Services\GroupMedicalQuoteCategoryService;
+use App\Services\HealthPlanTypeService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -73,7 +74,7 @@ class AmtController extends Controller
 {
     use GenericQueriesAllLobs, RolePermissionConditions,TeamHierarchyTrait;
 
-    public function __construct(private BusinessQuoteService $buisnessQuoteService) {}
+    public function __construct(private BusinessQuoteService $buisnessQuoteService, private HealthPlanTypeService $healthPlanTypeService) {}
 
     /**
      * Display a listing of the resource.
@@ -165,6 +166,8 @@ class AmtController extends Controller
                 'bqr.pq_advisor_id',
                 'bqr.ea_model',
                 'lg.name as lead_generator_name',
+                'bqr.number_of_employees',
+                'bqr.health_plan_type_id'
             );
         // PQA-only users see leads where they are the assigned pre-qualification advisor.
         // We skip the generic whereBasedOnRole for these users because isAdvisor() would
@@ -456,6 +459,7 @@ class AmtController extends Controller
             $emirateOfRegistrationId = $quote?->emirate_of_registration_id ?? null;
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
             $quote->pqa_qualified = $this->buisnessQuoteService->isPQAQualified($quote->id, (int) $quote->pq_advisor_id);
+            $quote->plan_type_text = $this->healthPlanTypeService->getById($quote->health_plan_type_id);
 
             return $quote;
         });
