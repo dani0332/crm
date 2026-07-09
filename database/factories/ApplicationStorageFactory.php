@@ -63,6 +63,24 @@ class ApplicationStorageFactory extends Factory
         ]);
     }
 
+    public function createEpFailureEmailConfig(): void
+    {
+        $entries = [
+            [ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM, 'alfred@testnotify.alfred.ae'],
+            [ApplicationStorageEnums::EP_FAILURE_EMAIL_TO, 'production.approval.team@yopmail.com'],
+            [ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO, 'test.emails@insurancemarket.ae'],
+            [ApplicationStorageEnums::EP_FAILURE_EMAIL_CC, 'diya.lekhwani@myalfred.com'],
+        ];
+
+        foreach ($entries as [$key, $value]) {
+            ApplicationStorage::forceCreate([
+                'key_name' => $key,
+                'value' => $value,
+                'is_active' => 1,
+            ]);
+        }
+    }
+    
     public function travelAmlRetriggerEnabled(int $value = 1): static
     {
         return $this->state(fn (): array => [
