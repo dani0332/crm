@@ -41,6 +41,7 @@ enum LoggerFeatureEnum: string
     case SAGE_EP_BOOKING_REVERSAL = 'sage-ep-booking-reversal';
     case SEND_FAILED_PAYMENT_EMAIL = 'send-failed-payment-email';
     case CAR_CQF_RENEWALS = 'car-cqf-renewals';
+    case NON_MOTOR_CQF_RENEWALS = 'non-motor-cqf-renewals';
     case SUPPORT_USER_ASSIGNMENT = 'support-user-assignment';
     case CLAIM_ALLOCATION = 'claim-allocation';
     case EP_PROCESS_PURCHASE_FLOW = 'ep-process-purchase-flow';
@@ -62,6 +63,10 @@ enum LoggerFeatureEnum: string
     case INSURER_AML_SCREENING_WITH_KYC_DOCUMENT = 'insurer-aml-screening-with-kyc-document';
     case LEAD_OCR_DATA_COMPARISON = 'lead-ocr-data-comparison';
     case WATERMARK_DOCUMENT = 'watermark-document';
+
+    // renewals features
+    case NON_MOTOR_UPLOAD_AND_UPDATE = 'non-motor-upload-and-update';
+
     case CONVERSION_API = 'conversion-api';
     case DISABLE_POLICY_ISSUANCE_AUTOMATION = 'disable-policy-issuance-automation';
     case PAYMENT_STATUS_UPDATE = 'payment-status-update';

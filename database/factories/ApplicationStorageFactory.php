@@ -80,7 +80,7 @@ class ApplicationStorageFactory extends Factory
             ]);
         }
     }
-    
+
     public function travelAmlRetriggerEnabled(int $value = 1): static
     {
         return $this->state(fn (): array => [

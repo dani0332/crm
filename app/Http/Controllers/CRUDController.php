@@ -69,6 +69,7 @@ use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
+use App\Models\HealthQuote;
 use App\Models\HealthUMAFResponse;
 use App\Models\Nationality;
 use App\Models\Payment;
@@ -1345,6 +1346,10 @@ class CRUDController extends Controller
                 $record->api_issuance_status = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
                 $record->insurer_api_status = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
 
+                // $record is a DB::table() stdClass — Eloquent relations can't be used; manual lookup is intentional.
+                $record->previous_quote = $record->previous_quote_id
+                    ? HealthQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
+                    : null;
                 $archivedDocuments = $this->quoteDocumentService->getArchivedDocuments($quoteType, $record->id);
 
                 // Health show uses DB::table() entity (not Eloquent), so model appends are not applied; set label here.

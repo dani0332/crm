@@ -145,6 +145,7 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
             DB::raw('DATE_FORMAT(hqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
             'hqr.previous_quote_policy_premium',
+            'hqr.previous_quote_policy_commission',
             'hqr.renewal_upload_plan_code',
             'hqr.renewal_upload_copay_code',
             'hqr.renewal_upload_payment_link',

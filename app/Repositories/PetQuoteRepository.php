@@ -166,6 +166,7 @@ class PetQuoteRepository extends BaseRepository
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
             'paymentStatus',
             'payments',
+            'nationality',
             'renewalBatchModel',
             'subSource',
             'latestInsured' => function ($q) {
@@ -250,7 +251,7 @@ class PetQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->paginate()->withQueryString();
         if (! $forTotalLeadsCount && ! $forExport) {
             $this->postProcessPetQuote($result);
         }
@@ -303,6 +304,7 @@ class PetQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
+                'previousQuote:id,uuid,code',
                 'petQuote.accomodationType:id,text',
                 'petQuote.possessionType:id,text',
                 'petQuote.petAge:id,text',
@@ -312,7 +314,7 @@ class PetQuoteRepository extends BaseRepository
                 'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'transactionType',
                 'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
@@ -341,6 +343,7 @@ class PetQuoteRepository extends BaseRepository
                 'updatedBy',
                 'customer.additionalContactInfo',
                 'insuranceProvider',
+                'currentlyInsuredWith:id,text',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
@@ -349,6 +352,7 @@ class PetQuoteRepository extends BaseRepository
                 },
                 'quoteDetail',
                 'subSource', 'subSourceOption',
+                'renewalBatchModel',
                 'branch:id,name',
             ])
             ->select([
@@ -365,7 +369,7 @@ class PetQuoteRepository extends BaseRepository
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latest_insured'])) {
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
@@ -400,8 +404,9 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'quoteDetail', 'customer']
-        )->orderBy('created_at', 'desc');
+        return $this->byQuoteTypeCode(QuoteTypes::PET)
+            ->filter(paginate: false)
+            ->with(['advisor', 'nationality', 'currentlyInsuredWith', 'insuranceProvider', 'quoteDetail', 'customer'])
+            ->orderBy('created_at', 'desc');
     }
 }

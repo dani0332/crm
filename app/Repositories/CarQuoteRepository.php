@@ -73,7 +73,7 @@ class CarQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->filter()->with(
+        return $this->filter(paginate: false)->with(
             ['advisor', 'nationality', 'carMake', 'carModel', 'insuranceProvider', 'carQuoteRequestDetail', 'car_type_insurance_id'])->orderBy('created_at', 'desc');
     }
 
@@ -152,6 +152,7 @@ class CarQuoteRepository extends BaseRepository
                 'carQuoteRequestDetail',
                 'car_type_insurance_id',
                 'customer',
+                'previousAdvisor',
             ])
             ->orderBy('created_at', 'desc');
     }

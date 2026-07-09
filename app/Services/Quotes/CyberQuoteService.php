@@ -138,6 +138,7 @@ class CyberQuoteService extends BaseQuoteService
             ->with('cyberQuote')
             ->when($allDetails, function ($q) {
                 $q->with([
+                    'previousQuote:id,uuid,code',
                     'quoteStatus',
                     'currentlyInsuredWith',
                     'advisor',
@@ -146,6 +147,7 @@ class CyberQuoteService extends BaseQuoteService
                     'paymentStatus',
                     'quoteDetail',
                     'quoteDetail.lostReason',
+                    'previousAdvisor',
                     'renewalBatchModel',
                     'nationality',
                     'customer',
@@ -194,7 +196,7 @@ class CyberQuoteService extends BaseQuoteService
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $allDetails ? $quote->previousAdvisor?->name : null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;

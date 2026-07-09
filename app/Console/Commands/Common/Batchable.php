@@ -2,12 +2,15 @@
 
 namespace App\Console\Commands\Common;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Models\RenewalBatch;
 use Carbon\Carbon;
 use Exception;
 
 trait Batchable
 {
+    private const DEFAULT_RENEWAL_BATCH_DAYS = 120;
+
     protected function logTodayDate($type = '')
     {
         info('today date for '.$type.' batch job is : '.json_encode(now()->toDateString()));
@@ -59,9 +62,9 @@ trait Batchable
     protected function generateBatchNumbers($startDate = null)
     {
         $batchArray = [];
-
+        $batchDays = (int) (getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_RENEWAL_BATCH_DAYS) ?: self::DEFAULT_RENEWAL_BATCH_DAYS);
         $today = $startDate ? Carbon::parse($startDate) : now()->startOfWeek();
-        $endDate = $today->copy()->addDays(90);
+        $endDate = $today->copy()->addDays($batchDays);
 
         $currentDate = $today;
 

@@ -180,6 +180,7 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedHealthTeamRoutingEnabled();
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
+        $this->seedNonMotorCQFRenewals();
         $this->seedPartnerAutomation();
         $this->seedDisableClaimsModule();
         $this->seedDicTravelPolicyIssuance();
@@ -2081,6 +2082,50 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::MOTOR_REVIVAL_WORKFLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/c01d3d9c-e111-45ae-a40e-ff51ac6a7294/invoke-sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_RENEWAL_BATCH_DAYS],
+            [
+                'value' => 120,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedNonMotorCQFRenewals(): void
+    {
+        // Intentionally seeded as enabled (value=1) so the pipeline is active on fresh environments by default.
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH],
+            [
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD],
+            [
+                'value' => 120,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_FAILED_RENEWAL_BREVO_TEMPLATE],
+            [
+                'value' => 918,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

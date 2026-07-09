@@ -19,6 +19,17 @@ function handleFileUpload(event) {
   file = event[0].file;
   uploadForm.csvFile = event[0];
 }
+
+function onRetriggerNonCQF() {
+  router.post(
+    route('renewals-non-motor-retrigger'),
+    {},
+    {
+      preserveScroll: true,
+    },
+  );
+}
+
 function onSubmit(isValid) {
   if (isValid) {
     let formData = new FormData();
@@ -62,6 +73,7 @@ function onSubmit(isValid) {
 }
 
 const can = permission => useCan(permission);
+const permissionsEnum = { RenewalsRetrigger: 'renewals-retrigger' };
 </script>
 
 <template>
@@ -131,6 +143,15 @@ const can = permission => useCan(permission);
         </ul>
       </x-alert>
       <div class="flex justify-end gap-3 my-4">
+        <x-button
+          v-if="can(permissionsEnum.RenewalsRetrigger)"
+          size="sm"
+          color="secondary"
+          type="button"
+          @click="onRetriggerNonCQF"
+        >
+          Retrigger Non-Motor CQF Process
+        </x-button>
         <x-button size="sm" color="#ff5e00" type="submit">Upload</x-button>
       </div>
       <div class="flex items-center my-4">
@@ -286,20 +307,34 @@ const can = permission => useCan(permission);
               </tr>
               <tr>
                 <td>18</td>
+                <td>Previous Commission</td>
+                <td>Previous Commission amount</td>
+                <td>No</td>
+                <td>25</td>
+              </tr>
+              <tr>
+                <td>19</td>
+                <td>Previous Ref-ID</td>
+                <td>Previous Reference ID</td>
+                <td>No</td>
+                <td>100</td>
+              </tr>
+              <tr>
+                <td>20</td>
                 <td>Sales Channel</td>
                 <td>Source of the quotation</td>
                 <td>No</td>
                 <td>100</td>
               </tr>
               <tr>
-                <td>19</td>
+                <td>21</td>
                 <td>Notes</td>
                 <td>Any other Information</td>
                 <td>No</td>
                 <td>200</td>
               </tr>
               <tr>
-                <td>20</td>
+                <td>22</td>
                 <td>Plan Name</td>
                 <td>Plan Name - Effective for Health Only</td>
                 <td>No</td>
