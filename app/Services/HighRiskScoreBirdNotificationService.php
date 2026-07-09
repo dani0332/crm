@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Jobs\NotifyHighRiskScoreBirdJob;
 use App\Models\QuoteDocument;
+use App\Services\Logger\LoggerService;
 
 /**
  * Dispatches Bird compliance notifications when a quote's AML risk score first enters the High Risk band.
@@ -33,17 +35,30 @@ class HighRiskScoreBirdNotificationService
         mixed $uploadResult,
         int $riskScore,
     ): void {
-        $riskScorePdfUrl = $this->resolveRiskScoreDocumentTemporaryUrl($uploadResult);
+        $toRecipient = getAppStorageValueByKey(ApplicationStorageEnums::HIGH_RISK_SCORE_NOTIFICATION_TO_RECIPIENT);
+        if (! $toRecipient) {
+            LoggerService::warning('HighRiskScoreBirdNotificationService: To recipient not configured — skipping', context: [
+                'quote_code' => $quote->code ?? null,
+                'risk_score' => $riskScore,
+            ]);
 
-        $customerName = trim((string) (($quote->first_name ?? '').' '.($quote->last_name ?? '')));
+            return;
+        }
+
+        $ccRecipient = getAppStorageValueByKey(ApplicationStorageEnums::HIGH_RISK_SCORE_NOTIFICATION_CC_RECIPIENT);
+        $riskScorePdfUrl = $this->resolveRiskScoreDocumentTemporaryUrl($uploadResult);
 
         NotifyHighRiskScoreBirdJob::dispatch([
             'refId' => $quote->code ?? '',
             'scoreProfile' => strtolower($type) === 'business' ? 'entity' : 'individual',
-            'customerEmail' => $quote->email ?? null,
-            'customerName' => $customerName !== '' ? $customerName : null,
+            'customerId' => $toRecipient,
+            'customerEmail' => $toRecipient,
+            'firstName' => $quote->first_name,
+            'lastName' => $quote->last_name,
+            'customerMobile' => $quote->phone,
             'riskScoreDoc' => $riskScorePdfUrl,
             'riskScore' => $riskScore,
+            'ccRecipient' => $ccRecipient,
         ]);
     }
 
