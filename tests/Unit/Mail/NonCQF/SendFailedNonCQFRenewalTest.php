@@ -44,19 +44,16 @@ test('getBrevoTemplateId returns the configured template ID string', function ()
 
 // ─── sendViaBrevo ─────────────────────────────────────────────────────────────
 
-test('sendViaBrevo uses fallback template 918 when key is absent from DB', function () {
+test('sendViaBrevo returns false and does not send when template ID is absent from DB', function () {
     makeRenewalsManagerUser();
     $lead = RenewalsUploadLeads::factory()->create(['quote_type' => 'HEA']);
 
     $emailService = Mockery::mock(NonCQFRenewalBrevoMailService::class);
-    $emailService->shouldReceive('send')
-        ->once()
-        ->withArgs(fn (array $body) => $body['templateId'] === 918)
-        ->andReturn(['sent' => 1, 'code' => 201, 'response' => '201 OK']);
+    $emailService->shouldNotReceive('send');
 
     $mail = new SendFailedNonCQFRenewal(renewalsUploadLeadsId: $lead->id);
 
-    expect($mail->sendViaBrevo($emailService))->toBeTrue();
+    expect($mail->sendViaBrevo($emailService))->toBeFalse();
 });
 
 test('sendViaBrevo returns false when no RenewalsManager recipients found', function () {

@@ -879,14 +879,6 @@ class CoreSchema
             },
         ]);
 
-        SchemaUtils::ensureTables([
-            'business_quote_request_detail' => function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('business_quote_request_id')->nullable();
-                $table->timestamps();
-            },
-        ]);
-
         SchemaUtils::addColumnIfMissing('business_quote_request', 'renewal_batch_id', function (Blueprint $table) {
             $table->unsignedBigInteger('renewal_batch_id')->nullable();
         });
