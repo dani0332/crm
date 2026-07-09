@@ -266,7 +266,7 @@ class CustomerController extends Controller
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         if ($quoteObject) {
             $user = auth()->user();
-            if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable($user, $quoteObject)) {
+            if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable($user, $quoteObject, forAdditionalContact: true)) {
                 $authorizationMessage = 'You are not authorized to add additional contact for this quote.';
                 if ($request->isInertia) {
                     vAbort($authorizationMessage);

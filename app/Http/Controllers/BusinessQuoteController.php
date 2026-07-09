@@ -43,6 +43,7 @@ use App\Services\AMLService;
 use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
+use App\Services\CorpLineQuoteService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -79,7 +80,8 @@ class BusinessQuoteController extends Controller
         BusinessQuoteService $businessQuoteService,
         CRUDService $crudService,
         LookupService $lookupService,
-        DropdownSourceService $dropdownSourceService
+        DropdownSourceService $dropdownSourceService,
+        protected CorpLineQuoteService $corplineQuoteService
     ) {
         $this->businessQuoteService = $businessQuoteService;
         $this->genericModel = $this->businessQuoteService->getGenericModel(self::TYPE);
@@ -467,9 +469,7 @@ class BusinessQuoteController extends Controller
     public function update(UpdateBusinessQuoteRequest $request, $id)
     {
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-
-        $this->crudService->updateModelByType('business', $request, $id);
-        $this->businessQuoteService->updateBusinessQuote($request, $id);
+        $this->corplineQuoteService->updateQuote($request->all(), $id);
 
         return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
     }

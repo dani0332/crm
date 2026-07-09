@@ -46,6 +46,7 @@ enum LoggerFeatureEnum: string
     case CLAIM_ALLOCATION = 'claim-allocation';
     case EP_PROCESS_PURCHASE_FLOW = 'ep-process-purchase-flow';
     case EP_PROCESS_SYNC_DOCUMENT = 'ep-process-sync-document';
+    case EP_PROCESS_SYNC_EP_BOOKING = 'ep-process-sync-ep-booking';
     case EP_PROCESS_WATERMARK_DOCUMENT = 'ep-process-watermark-document';
     case EP_PROCESS_SEND_DOCUMENT = 'ep-process-send-document';
     case EP_RETARGET_REMINDER = 'ep-retarget-reminder';

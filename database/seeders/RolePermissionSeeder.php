@@ -21,6 +21,7 @@ class RolePermissionSeeder extends Seeder
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
         $this->addRetryPrePaymentPermission();
         $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
+        $this->addEmbeddedProductSyncEpBookingPermission();
         // $this->paymentsVoid();
         // $this->addBridgerSkipPermission();
         $this->addBridgerSkipPermission();
@@ -144,6 +145,24 @@ class RolePermissionSeeder extends Seeder
         $roles = Role::whereIn('name', [RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])->get();
         $permission = Permission::firstOrCreate([
             'name' => PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_VOID,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
+        }
+    }
+
+    private function addEmbeddedProductSyncEpBookingPermission(): void
+    {
+        $roles = Role::whereIn('name', [RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])->get();
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EMBEDDED_PRODUCT_SYNC_EP_BOOKING,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

@@ -6,11 +6,50 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\MotorRevivalEnum;
+use App\Enums\QuoteFlowType;
+use App\Enums\QuoteTypes;
+use App\Enums\WorkflowTypeEnum;
 use App\Models\CarQuote;
+use App\Services\EmailServices\CarEmailService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 
 class CarRevivalService
 {
+    public function sendCarRevivalEmail(string $quoteUuid): ?object
+    {
+        $carQuote = CarQuote::query()
+            ->where('uuid', $quoteUuid)
+            ->where('source', LeadSourceEnum::REVIVAL)
+            ->first();
+
+        if (! $carQuote) {
+            LoggerService::info(self::class." - Car revival email not sent since lead not found for Quote UUID: {$quoteUuid}");
+
+            return null;
+        }
+
+        $previousAdvisor = null;
+        if (! empty($carQuote->previous_advisor_id)) {
+            $previousAdvisor = app(UserService::class)->getUserById($carQuote->previous_advisor_id);
+        }
+
+        $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildDttRevivalBirdEmailPayload($carQuote, $previousAdvisor);
+        $emailData->workflowType = WorkflowTypeEnum::MOTOR_REVIVAL_OCB;
+
+        app(WebEngageService::class)->sendEvent(WorkflowTypeEnum::MOTOR_REVIVAL_OCB, (array) $emailData);
+
+        LoggerService::info(self::class." - Car revival WebEngage event triggered for Quote UUID: {$quoteUuid}");
+
+        $this->markRevivalCommsTriggered($quoteUuid);
+
+        app(WebEngageService::class)->createQuoteWorkFlowDetails($carQuote->uuid, QuoteFlowType::MOTOR_REVIVAL_OCB->value, (int) QuoteTypes::CAR->id());
+
+        LoggerService::info(self::class." - Car revival email sent for Quote UUID: {$quoteUuid}");
+
+        return $emailData;
+    }
+
     public function markRevivalCommsTriggered(string $quoteUuid): void
     {
         $carQuote = CarQuote::query()->where('uuid', $quoteUuid)

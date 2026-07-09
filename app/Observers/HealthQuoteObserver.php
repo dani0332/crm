@@ -16,6 +16,7 @@ use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\DispatchPqaAllocationJob;
 use App\Jobs\ExtendCustomerSubscriptionViaSQS;
+use App\Jobs\Health\ProcessHealthSicWorkflowJob;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\OCAHealthFollowupEmailJob;
@@ -78,6 +79,16 @@ class HealthQuoteObserver
                 ], exception: $e);
             }
             $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at, 'is_quote_locked' => true];
+        }
+
+        if (isset($dirty['pq_advisor_id']) && $healthQuote->pq_advisor_id !== null && $healthQuote->getOriginal('pq_advisor_id') === null) {
+            try {
+                ProcessHealthSicWorkflowJob::dispatch($healthQuote)->delay(Carbon::now()->addSeconds(30));
+            } catch (Exception $e) {
+                LoggerService::error('HealthQuoteObserver - dispatch ProcessHealthSicWorkflowJob failed', [
+                    'uuid' => $healthQuote->uuid,
+                ], exception: $e);
+            }
         }
 
         if (isset($dirty['advisor_id'])) {
@@ -197,7 +208,7 @@ class HealthQuoteObserver
             $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
         ) {
             try {
-                QuotePolicyBooked::dispatch($healthQuote->uuid, QuoteTypeId::Health);
+                QuotePolicyBooked::dispatch($healthQuote->uuid, QuoteTypeId::Health, leadSource: $healthQuote->source);
             } catch (Exception $e) {
                 LoggerService::error('HealthQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $healthQuote->uuid]);
             }

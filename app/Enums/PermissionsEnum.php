@@ -262,6 +262,7 @@ final class PermissionsEnum extends Enum
     public const EMBEDDED_PRODUCT_PAYMENT_VOID = 'embedded-product-payment-void';
     public const EMBEDDED_PRODUCT_MANUAL_OVERRIDE = 'embedded-product-manual-override';
     public const EP_DOCUMENT_MANUAL_OVERRIDE = 'update-ep-document-manual-override';
+    public const EMBEDDED_PRODUCT_SYNC_EP_BOOKING = 'embedded-product-sync-ep-booking';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
@@ -491,6 +492,7 @@ final class PermissionsEnum extends Enum
     public const BRANCH_ASSIGNMENTS = 'branch-assignments';
     public const CAR_LEGACY_KYC_SKIP_INSURER_API = 'car-legacy-kyc-skip-insurer-api';
     public const DELETE_ADDITIONAL_CONTACT = 'delete-additional-contact';
+    public const ADD_ADDITIONAL_CONTACT = 'add-additional-contact';
     public const COMPANY_PRIVATE_CAR_DRIVER_UPDATES = 'company-private-car-driver-updates';
 
     // Smart Phone Permissions

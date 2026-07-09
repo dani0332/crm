@@ -143,12 +143,12 @@ class PersonalQuote extends Model implements AuditableContract
 
     public function leadGenerator()
     {
-        return $this->belongsTo(User::class, 'lead_generator_id')->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class, 'lead_generator_id');
     }
 
     public function expertAdvisor()
     {
-        return $this->belongsTo(User::class, 'expert_advisor_id')->select(['id', 'email', 'name', 'mobile_no']);
+        return $this->belongsTo(User::class, 'expert_advisor_id');
     }
 
     /**

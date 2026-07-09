@@ -232,7 +232,7 @@ class TravelQuoteObserver
 
         if ($hasPolicyBookedStatusChange) {
             try {
-                QuotePolicyBooked::dispatch($travelQuote->uuid, QuoteTypeId::Travel);
+                QuotePolicyBooked::dispatch($travelQuote->uuid, QuoteTypeId::Travel, leadSource: $travelQuote->source);
             } catch (Exception $e) {
                 LoggerService::error('TravelQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $travelQuote->uuid]);
             }

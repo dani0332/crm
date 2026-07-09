@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -337,7 +338,7 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false, $isAutomation = false)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false, $isAutomation = false, $isFromAPI = false)
     {
         $emailRecipients = [];
         $emailSystem = config('constants.APP_ENV');
@@ -348,8 +349,15 @@ class AMLService
             ->where('users.is_active', 1)
             ->whereIn('roles.name', $complianceRole)->get();
 
-        foreach ($recipients as $recipient) {
-            $emailRecipients[] = $recipient->user_email;
+        if ($isFromAPI) {
+            $reTriggerRecipients = getAppStorageValueByKey(ApplicationStorageEnums::AML_AUTOMATION_RE_TRIGGER_RECIPIENTS);
+            if ($reTriggerRecipients) {
+                $emailRecipients = explode(',', $reTriggerRecipients);
+            }
+        } else {
+            foreach ($recipients as $recipient) {
+                $emailRecipients[] = $recipient->user_email;
+            }
         }
 
         if (strtolower($emailSystem) == EnvEnum::PRODUCTION) {
@@ -480,12 +488,12 @@ class AMLService
      *
      * Need to refactor this code to not call controller from here
      */
-    public function quoteAmlProcessCall(array $amlRequestData, int $quoteTypeId, int $quoteRequestId): object
+    public function quoteAmlProcessCall(array $amlRequestData, int $quoteTypeId, int $quoteRequestId, bool $isFromAPI = false): object
     {
         $amlCheckRequest = new AMLCheckRequest($amlRequestData);
         $amlCheckRequest->attributes->set(AMLCheckRequest::INTERNAL_AUTOMATION_ATTRIBUTE, true);
 
-        return app(AMLController::class)->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId)->getData();
+        return app(AMLController::class)->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId, $isFromAPI)->getData();
     }
 
     public function saveManualAuditLog($quoteDetails, User $processByUser): bool

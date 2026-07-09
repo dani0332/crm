@@ -97,6 +97,7 @@ const viewDocumentLoader = ref(false);
 const downloadDocumentLoader = ref(false);
 const addDocumentLoader = ref(false);
 const bookEPOnSageLoader = ref(false);
+const syncingEpBookingEpId = ref(null);
 const sendDocumentForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
@@ -272,6 +273,53 @@ const rescheduleEPBooking = async item => {
       title: 'Embedded Product Booking Failed',
       position: 'top',
     });
+  }
+};
+
+const syncEpBooking = async item => {
+  const epTransactionId = getFirstPriceWithTransaction(item.prices)
+    ?.transactions[0]?.id;
+  if (!epTransactionId) {
+    notification.error({
+      title: 'System failed to start Sage booking for Embedded Product',
+      position: 'top',
+    });
+    return;
+  }
+  try {
+    syncingEpBookingEpId.value = item.id;
+    const response = await axios.post(
+      route('embedded-products.sync-ep-booking'),
+      {
+        quoteId: props.quote.id,
+        modelType: props.modelType,
+        epTransactionId,
+        insuranceProviderId: item.insurance_provider_id,
+      },
+    );
+    if (response.data.success) {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+      router.visit(location.href);
+    } else {
+      notification.error({
+        title: response.data.message,
+        position: 'top',
+      });
+      router.visit(location.href);
+    }
+  } catch (err) {
+    const msg =
+      err.response?.data?.message ??
+      'Embedded Product Sage booking retry failed.';
+    notification.error({
+      title: msg,
+      position: 'top',
+    });
+  } finally {
+    syncingEpBookingEpId.value = null;
   }
 };
 
@@ -816,11 +864,22 @@ const onAddDocumentSubmit = event => {
                 size="xs"
                 color="emerald"
                 v-if="item.sync_document_button"
-                :disabled="!item.sync_document_button"
+                :disabled="
+                  !item.sync_document_button || item.can_book_embedded_product
+                "
                 :loading="syncDocumentLoader"
                 @click.prevent="syncDocument(item.id)"
               >
                 Sync Documents from Provider
+              </x-button>
+              <x-button
+                v-if="item.can_book_embedded_product"
+                size="xs"
+                color="amber"
+                :loading="syncingEpBookingEpId === item.id"
+                @click.prevent="syncEpBooking(item)"
+              >
+                Sync EP Booking
               </x-button>
               <x-button
                 size="xs"

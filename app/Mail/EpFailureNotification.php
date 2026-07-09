@@ -21,17 +21,19 @@ class EpFailureNotification extends Mailable
     private int $quoteTypeId;
     private int $etId;
     private mixed $quoteObject = null;
+    private bool $isSageBooking = false;
     private string $logPrefix = 'EpFailureNotification - Mail:';
     private array $epFailureEmailConfigs = [];
 
     /**
      * Create a new message instance.
      */
-    public function __construct($quoteId, $quoteTypeId, $etId)
+    public function __construct($quoteId, $quoteTypeId, $etId, $isSageBooking = false)
     {
         $this->quoteId = (int) $quoteId;
         $this->quoteTypeId = (int) $quoteTypeId;
         $this->etId = (int) $etId;
+        $this->isSageBooking = $isSageBooking;
     }
 
     /**
@@ -65,7 +67,7 @@ class EpFailureNotification extends Mailable
     {
         $ep = EmbeddedProduct::whereHas('prices.transactions', fn ($q) => $q->where('id', $this->etId))->first();
 
-        return $ep->product_name ?? 'Unknown';
+        return $ep?->product_name ?? 'Unknown';
     }
 
     private function initializeQuoteData(): string
@@ -78,7 +80,13 @@ class EpFailureNotification extends Mailable
 
     private function getEmailSubject(string $epProductName, string $refId): string
     {
-        return "❗Action Required: Embedded Product for {$epProductName} has failed for REF-ID: {$refId} – Immediate Attention Needed";
+        $refSuffix = " for REF-ID: {$refId} – Immediate Attention Needed";
+
+        if ($this->isSageBooking) {
+            return "❗Action Required: Embedded Product for {$epProductName}: Sage booking failed{$refSuffix}";
+        }
+
+        return "❗Action Required: Embedded Product for {$epProductName} has failed{$refSuffix}";
     }
 
     private function buildCcEmails(): array
@@ -115,6 +123,7 @@ class EpFailureNotification extends Mailable
             'refId' => $refId,
             'imcrmLink' => $this->generateImcrmLink(),
             'epProductName' => $epProductName,
+            'isSageBooking' => $this->isSageBooking,
         ];
     }
 

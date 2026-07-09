@@ -987,6 +987,8 @@ class CoreSchema
                 $table->unsignedBigInteger('payment_status_id')->nullable();
                 $table->unsignedTinyInteger('sage_status_id')->nullable();
                 $table->string('policy_status')->nullable();
+                $table->timestamp('failure_email_sent_at')->nullable();
+                $table->timestamp('sage_booking_failure_email_sent_at')->nullable();
                 $table->boolean('is_active')->default(1);
                 $table->timestamps();
                 $table->softDeletes();

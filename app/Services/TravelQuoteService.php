@@ -602,7 +602,11 @@ class TravelQuoteService extends BaseService
         ) {
             $travelQuote->quote_updated_at = Carbon::now();
         }
-        $travelQuote->days_cover_for = $request->days_cover_for;
+        $isAnnualCoverage = in_array($request->coverage_code, [
+            TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP,
+            TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP,
+        ], true);
+        $travelQuote->days_cover_for = $isAnnualCoverage ? 365 : $request->days_cover_for;
 
         // Handle multiple destinations using the existing TravelDestinations relation
         if (is_array($request->destination_ids) && ! empty($request->destination_ids)) {
@@ -626,7 +630,7 @@ class TravelQuoteService extends BaseService
         (isset($request->region_cover_for_id) && $request->region_cover_for_id != 'undefined') && $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->policy_start_date = $request->policy_start_date;
         $travelQuote->start_date = $request->start_date ?? null;
-        $travelQuote->end_date = $request->end_date ?? null;
+        $travelQuote->end_date = $isAnnualCoverage ? null : ($request->end_date ?? null);
         $travelQuote->direction_code = $request->direction_code ?? null;
         $travelQuote->coverage_code = $request->coverage_code ?? null;
         $travelQuote->departure_country_id = $request->departure_country_id ?? null;
