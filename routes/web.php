@@ -453,6 +453,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
     Route::post('embedded-products/sync-document', [EmbeddedProductController::class, 'syncDocument'])->name('embedded-products.sync-document');
+    Route::post('embedded-products/sync-ep-booking', [EmbeddedProductController::class, 'syncEpBooking'])->name('embedded-products.sync-ep-booking');
     Route::post('embedded-products/reschedule-sage-booking', [EmbeddedProductController::class, 'scheduleEPSageBooking'])->name('embedded-products.reschedule-sage-booking');
     Route::get('embedded-products/download/force', [EmbeddedProductController::class, 'force'])->name('force-download');
 
