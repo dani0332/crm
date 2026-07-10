@@ -211,7 +211,6 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('personal_quotes as pq_ciw', 'pq_ciw.id', '=', 'bqr.personal_quote_id')
             ->leftJoin('insurance_provider as ciw', 'ciw.id', '=', 'pq_ciw.currently_insured_with_id')
             ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id')
-            ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id')
             ->leftJoin('users as lg', 'lg.id', '=', 'bqr.lead_generator_id')
             ->leftJoin('users as ea', 'ea.id', '=', 'bqr.expert_advisor_id');
     }
