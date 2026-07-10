@@ -31,3 +31,5 @@ boost-mcp.sh
 gwt.md
 .agents
 .codex
+.codegraph
+.github/copilot-instructions.md
