@@ -45,7 +45,7 @@ class UpdatePolicyDetailRequest extends FormRequest
         } else {
 
             $rules = [
-                'quote_policy_number' => 'required|max:75',
+                'quote_policy_number' => 'required|max:120',
                 'quote_policy_issuance_date' => 'required',
                 'quote_policy_start_date' => 'required|date',
                 'quote_policy_expiry_date' => 'required|date|after:quote_policy_start_date',
