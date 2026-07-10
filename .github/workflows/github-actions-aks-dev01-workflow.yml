@@ -58,16 +58,8 @@ jobs:
           ref: dev
           token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Install Doppler CLI
-        run: curl -Ls https://cli.doppler.com/install.sh | sh
 
       - name: Run DB migrations
         run: doppler run -- php artisan migrate --force
