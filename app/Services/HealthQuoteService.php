@@ -1186,7 +1186,7 @@ class HealthQuoteService extends BaseService
 
         foreach ($leadsIds as $leadId) {
             $currentJobChains = [];
-            $lead = $this->getEntityPlain($leadId);
+            $lead = HealthQuote::find($leadId);
 
             if (isset($request->assign_team) && $request->assign_team !== '') {
                 $lead->health_team_type = $request->assign_team;
