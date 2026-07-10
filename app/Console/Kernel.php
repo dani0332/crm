@@ -138,8 +138,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('send-failed-ila-leads --quoteType=Yacht')->name('send-failed-ila-leads:cron:yacht')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
         $schedule->command('send-failed-ila-leads --quoteType=Jetski')->name('send-failed-ila-leads:cron:jetski')->timezone('Asia/Dubai')->everyFifteenMinutes()->between('10:00', '23:00')->onOneServer()->withoutOverlapping();
 
-        $schedule->job(new PqaAllocationBackupJob(QuoteTypes::CORPLINE))->name('pqa-backup:corpline')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(8);
-        $schedule->job(new PqaAllocationBackupJob(QuoteTypes::HEALTH))->name('pqa-backup:health')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(8);
+        // $schedule->job(new PqaAllocationBackupJob(QuoteTypes::CORPLINE))->name('pqa-backup:corpline')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->job(new PqaAllocationBackupJob(QuoteTypes::GROUP_MEDICAL))->name('pqa-backup:group_medical')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
+        $schedule->job(new PqaAllocationBackupJob(QuoteTypes::HEALTH))->name('pqa-backup:health')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->job(new ResetPqaAllocationCountJob)->timezone('Asia/Dubai')->dailyAt('00:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('QuoteSyncUpdate:cron')
@@ -183,6 +184,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
         $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->dailyAt('00:50')->onOneServer()->withoutOverlapping();
         $schedule->command('leads:process-car-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('03:00')->onOneServer()->withoutOverlapping();
+        // 60-minute overlap lock (vs. default 24h) — the orchestrator dispatches async jobs and exits quickly, so a short lock is sufficient and avoids blocking a missed next-day run.
+        $schedule->command('leads:process-non-motor-cqf-renewals')->timezone('Asia/Dubai')->dailyAt('04:00')->onOneServer()->withoutOverlapping(60);
         $this->scheduleWithEnvironment(
             $schedule,
             'policy-issuance-automation:run',

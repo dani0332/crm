@@ -41,6 +41,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentAction;
 use App\Models\QuoteBatches;
+use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\Team;
@@ -144,6 +145,7 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
             DB::raw('DATE_FORMAT(hqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
             'hqr.previous_quote_policy_premium',
+            'hqr.previous_quote_policy_commission',
             'hqr.renewal_upload_plan_code',
             'hqr.renewal_upload_copay_code',
             'hqr.renewal_upload_payment_link',
@@ -482,6 +484,7 @@ class HealthQuoteService extends BaseService
             $quote->is_entity = $quote->isEntity();
             $quote->is_migrated = $quote->isMigrated();
             $quote->is_policyholder_included = $quote->isPolicyholderIncluded();
+            $quote->pqa_qualified = $this->isPQAQualified($quote->id, (int) $quote->pq_advisor_id);
 
             return $quote;
         });
@@ -2136,5 +2139,21 @@ class HealthQuoteService extends BaseService
         $assigneeName = User::query()->find($preQualificationAdvisorUserId)?->name ?? 'Advisor';
 
         return $modelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
+    }
+
+    public function isPQAQualified(int $id, ?int $pqaAdvisorId = null): int
+    {
+        if (! $pqaAdvisorId) {
+            return 0;
+        }
+
+        $statusCount = QuoteStatusLog::where('quote_type_id', QuoteTypes::getId(QuoteTypes::HEALTH))
+            ->where('quote_request_id', $id)
+            ->where('previous_quote_status_id', QuoteStatusEnum::NewLead)
+            ->where('current_quote_status_id', QuoteStatusEnum::Qualified)
+            ->where('created_by', $pqaAdvisorId)
+            ->count();
+
+        return $statusCount > 0 ? 1 : 0;
     }
 }

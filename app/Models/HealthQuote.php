@@ -148,6 +148,11 @@ class HealthQuote extends Model implements AuditableContract
             ],
         ];
     }
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
     public function emirate()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_your_visa_id');
@@ -384,12 +389,12 @@ class HealthQuote extends Model implements AuditableContract
 
     public function leadGenerator()
     {
-        return $this->hasOne(User::class, 'id', 'lead_generator_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'lead_generator_id');
     }
 
     public function expertAdvisor()
     {
-        return $this->hasOne(User::class, 'id', 'expert_advisor_id')->select(['id', 'email', 'name', 'mobile_no']);
+        return $this->hasOne(User::class, 'id', 'expert_advisor_id');
     }
 
     public function dependentMembers()

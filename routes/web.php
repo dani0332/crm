@@ -420,6 +420,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'renewals'], function () {
         Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update')->middleware('permission:'.PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR);
         Route::post('non-motor/upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate'])->name('upload-update-non-motor')->middleware('permission:'.PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR);
+        Route::post('non-motor/retrigger', [RenewalsUploadController::class, 'retriggerNonMotorCQFProcess'])->name('renewals-non-motor-retrigger')->middleware('permission:'.PermissionsEnum::RENEWALS_RETRIGGER);
         Route::get('non-motor-batches', [RenewalsUploadController::class, 'listRenewalBatchesNonMotor'])->name('renewals-batches-nonmotor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);
 
         // plan processes page non motor
@@ -453,6 +454,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
     Route::post('embedded-products/sync-document', [EmbeddedProductController::class, 'syncDocument'])->name('embedded-products.sync-document');
+    Route::post('embedded-products/sync-ep-booking', [EmbeddedProductController::class, 'syncEpBooking'])->name('embedded-products.sync-ep-booking');
     Route::post('embedded-products/reschedule-sage-booking', [EmbeddedProductController::class, 'scheduleEPSageBooking'])->name('embedded-products.reschedule-sage-booking');
     Route::get('embedded-products/download/force', [EmbeddedProductController::class, 'force'])->name('force-download');
 

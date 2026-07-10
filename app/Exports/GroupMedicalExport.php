@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Repositories\BusinessQuoteRepository;
 use App\Services\BranchAssignmentService;
+use App\Services\BusinessQuoteService;
 use App\Services\HealthPlanTypeService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,6 +17,8 @@ use Illuminate\Support\Collection;
 class GroupMedicalExport implements CsvExportableInterface
 {
     use ModernCsvExportable;
+
+    public function __construct(protected BusinessQuoteService $businessQuoteService) {}
 
     public function collection(array $requestParams = []): Collection
     {
@@ -40,6 +43,7 @@ class GroupMedicalExport implements CsvExportableInterface
             'LAST NAME',
             'LEAD STATUS',
             'PRE-QUALIFICATION ADVISOR',
+            'PQA QUALIFIED',
             'ADVISOR',
             'OE / AE',
             'BRANCH',
@@ -80,6 +84,7 @@ class GroupMedicalExport implements CsvExportableInterface
             $quote->last_name,
             optional($quote->quoteStatus)->text,
             optional($quote->preQualificationAdvisor)->name ?? '',
+            $this->businessQuoteService->isPQAQualified($quote->id, $quote->pq_advisor_id) === 1 ? 'Yes' : 'No',
             optional($quote->advisor)->name,
             optional($quote->supportUser)->name,
             $branch,

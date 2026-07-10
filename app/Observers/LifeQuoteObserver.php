@@ -81,7 +81,7 @@ class LifeQuoteObserver
             $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
         ) {
             try {
-                QuotePolicyBooked::dispatch($lifeQuote->uuid, QuoteTypeId::Life);
+                QuotePolicyBooked::dispatch($lifeQuote->uuid, QuoteTypeId::Life, leadSource: $lifeQuote->source);
             } catch (Exception $e) {
                 LoggerService::error('LifeQuoteObserver - dispatch QuotePolicyBooked event failed', [], $e, ['ref_id' => $lifeQuote->uuid]);
             }

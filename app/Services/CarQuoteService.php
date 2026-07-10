@@ -517,6 +517,7 @@ class CarQuoteService extends BaseService
                 DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
                 DB::raw('DATE_FORMAT(cqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
                 'cqr.previous_quote_policy_premium',
+                'cqr.previous_quote_policy_commission',
                 'cqr.car_model_detail_id',
                 'cmd.text as car_model_detail_id_text',
                 'cqr.is_modified',
@@ -1230,6 +1231,8 @@ class CarQuoteService extends BaseService
                 'policy_expiry_date',
                 'previous_quote_policy_number',
                 'previous_policy_expiry_date',
+                'previous_quote_policy_premium',
+                'previous_quote_policy_commission',
             ]
         )->with(['advisor', 'carMake', 'carModel', 'latestUpdateRenewalQuoteProcess', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name', 'pcp_tag')->with(['additionalContacts' => function ($q) {

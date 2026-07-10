@@ -263,6 +263,11 @@ final class ApplicationStorageEnums extends Enum
     public const MOTOR_PCP_OCB_SWITCH = 'MOTOR_PCP_OCB_SWITCH';
     public const MOTOR_PCP_FOLLOWUP_SWITCH = 'MOTOR_PCP_FOLLOWUP_SWITCH';
 
+    // Group Medical PQA Introductory Email
+    public const GROUP_HEALTH_REPLY_TO_EMAIL = 'GROUP_HEALTH_REPLY_TO_EMAIL';
+    public const GROUP_HEALTH_BCC = 'GROUP_HEALTH_BCC';
+    public const GROUP_HEALTH_CC = 'GROUP_HEALTH_CC';
+
     /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
     public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
     public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
@@ -310,6 +315,10 @@ final class ApplicationStorageEnums extends Enum
     public const OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED = 'OCR_CUSTOMER_JOURNEY_HEALTH_ENABLED';
     public const CAR_CQF_RENEWALS_DAYS_THRESHOLD = 'CAR_CQF_RENEWALS_DAYS_THRESHOLD';
     public const CAR_CQF_RENEWALS_SWITCH = 'CAR_CQF_RENEWALS_SWITCH';
+    public const NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD = 'NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD';
+    public const NON_MOTOR_CQF_RENEWALS_SWITCH = 'NON_MOTOR_CQF_RENEWALS_SWITCH';
+    public const NON_MOTOR_CQF_FAILED_RENEWAL_BREVO_TEMPLATE = 'NON_MOTOR_CQF_FAILED_RENEWAL_BREVO_TEMPLATE';
+    public const NON_MOTOR_RENEWAL_BATCH_DAYS = 'NON_MOTOR_RENEWAL_BATCH_DAYS';
 
     /* Cut Off Dates */
     public const HOME_CUT_OFF_DATE = 'HOME_CUT_OFF_DATE';
@@ -517,4 +526,5 @@ final class ApplicationStorageEnums extends Enum
 
     // Alliance → Qatar Insurance brand switch
     public const ALLIANCE_BRAND_SWITCH_DATE = 'ALLIANCE_BRAND_SWITCH_DATE';
+    public const AML_AUTOMATION_RE_TRIGGER_RECIPIENTS = 'AML_AUTOMATION_RE_TRIGGER_RECIPIENTS';
 }

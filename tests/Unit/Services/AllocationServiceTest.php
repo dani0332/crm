@@ -6,7 +6,6 @@ use App\Models\PersonalQuoteDetail;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Database\QueryException;
-use PDOException;
 use Tests\Helpers\TestDataSeeder;
 use Tests\Helpers\TestSchemaCreator;
 

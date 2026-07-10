@@ -74,7 +74,7 @@ class AmtController extends Controller
 {
     use GenericQueriesAllLobs, RolePermissionConditions,TeamHierarchyTrait;
 
-    public function __construct(private HealthPlanTypeService $healthPlanTypeService) {}
+    public function __construct(private HealthPlanTypeService $healthPlanTypeService, private BusinessQuoteService $buisnessQuoteService) {}
 
     /**
      * Display a listing of the resource.
@@ -459,6 +459,7 @@ class AmtController extends Controller
             $emirateOfRegistrationId = $quote?->emirate_of_registration_id ?? null;
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
             $quote->plan_type_text = $quote->health_plan_type_id ? $this->healthPlanTypeService->getById($quote->health_plan_type_id) : null;
+            $quote->pqa_qualified = $this->buisnessQuoteService->isPQAQualified($quote->id, (int) $quote->pq_advisor_id);
 
             return $quote;
         });
@@ -563,6 +564,7 @@ class AmtController extends Controller
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
         $record->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        $record->currently_insured_with = $record->personalQuote?->currentlyInsuredWith;
         $record->health_plan_type_text = ! empty($record->health_plan_type_id)
             ? (HealthPlanType::find($record->health_plan_type_id)?->text ?? null)
             : null;
@@ -647,13 +649,17 @@ class AmtController extends Controller
         ])
             ->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
+        $pqaData = app(CRUDService::class)->getPqaAdvisorList(QuoteTypes::GROUP_MEDICAL->id())->get();
         $advisors = User::role(RolesEnum::GMAdvisor)
             ->select('users.id', DB::raw("CONCAT(users.name, ' - ', '".RolesEnum::GMAdvisor."') AS name"))
-            ->get();
+            ->get()
+            ->concat($pqaData);
 
         if (auth()->user()->hasRole(RolesEnum::PreQualificationAdvisor)) {
             $quoteStatuses = array_values(QuoteStatus::whereIn('id', [QuoteStatusEnum::FollowedUp, QuoteStatusEnum::MissingDocumentsRequested, $record->quote_status_id])->get()->toArray());
         }
+
+        $pqaQualified = $this->buisnessQuoteService->isPQAQualified($record->id, $record->pq_advisor_id);
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -710,6 +716,7 @@ class AmtController extends Controller
                 'enabled' => app(GroupMedicalEcommerceJourneyLinkService::class)->isAdvisorCopyEnabled($record),
             ],
             'gmCategoryIntakeDisplay' => $gmCategoryIntakeDisplay,
+            'pqaQualified' => $pqaQualified,
         ]);
     }
 

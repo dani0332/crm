@@ -4,6 +4,7 @@ namespace App\Jobs\Renewals;
 
 use App\Enums\ProcessStatusCode;
 use App\Models\RenewalsUploadLeads;
+use App\Services\OtherNonMotorRenewalsUploadService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,9 +39,17 @@ class ProcessRenewalsUploadUpdate implements ShouldQueue
      *
      * @return void
      */
-    public function handle(RenewalsUploadService $renewalsUploadService)
+    public function handle(RenewalsUploadService $renewalsUploadService, OtherNonMotorRenewalsUploadService $otherNonMotorRenewalsUploadService)
     {
         $renewalsUploadLead = RenewalsUploadLeads::find($this->renewalsUploadLeadId);
+
+        if (! $renewalsUploadLead) {
+            return false;
+        }
+
+        if ($renewalsUploadLead->quote_type === OtherNonMotorRenewalsUploadService::QUOTE_TYPE) {
+            return $otherNonMotorRenewalsUploadService->processUploadUpdate($renewalsUploadLead->id);
+        }
 
         return $renewalsUploadService->processUploadUpdate($renewalsUploadLead->id);
     }
@@ -50,7 +59,7 @@ class ProcessRenewalsUploadUpdate implements ShouldQueue
      */
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->renewalsUploadLeadId))->dontRelease()];
+        return [(new WithoutOverlapping($this->renewalsUploadLeadId))->dontRelease()->expireAfter($this->timeout)];
     }
 
     /**

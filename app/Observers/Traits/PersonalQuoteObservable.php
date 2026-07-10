@@ -276,7 +276,7 @@ trait PersonalQuoteObservable
             }
 
             try {
-                QuotePolicyBooked::dispatch($personalQuote->uuid, $personalQuote->quote_type_id);
+                QuotePolicyBooked::dispatch($personalQuote->uuid, $personalQuote->quote_type_id, leadSource: $personalQuote->source);
             } catch (Exception $e) {
                 LoggerService::error('PersonalQuoteObserver - dispatch QuotePolicyBooked event failed', [
                     'uuid' => $personalQuote->uuid,

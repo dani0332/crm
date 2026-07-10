@@ -43,6 +43,7 @@ use App\Services\AMLService;
 use App\Services\BranchAssignmentService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
+use App\Services\CorpLineQuoteService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -79,7 +80,8 @@ class BusinessQuoteController extends Controller
         BusinessQuoteService $businessQuoteService,
         CRUDService $crudService,
         LookupService $lookupService,
-        DropdownSourceService $dropdownSourceService
+        DropdownSourceService $dropdownSourceService,
+        protected CorpLineQuoteService $corplineQuoteService
     ) {
         $this->businessQuoteService = $businessQuoteService;
         $this->genericModel = $this->businessQuoteService->getGenericModel(self::TYPE);
@@ -353,6 +355,11 @@ class BusinessQuoteController extends Controller
             ? ['id' => $record->expert_advisor_id, 'name' => $record->expert_advisor_name]
             : null;
 
+        // $record is a DB::table() stdClass — Eloquent relations can't be used; manual lookup is intentional.
+        $record->previous_quote = $record->previous_quote_id
+            ? BusinessQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
+            : null;
+
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
             'quoteType' => quoteTypeCode::Business,
@@ -462,9 +469,7 @@ class BusinessQuoteController extends Controller
     public function update(UpdateBusinessQuoteRequest $request, $id)
     {
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-
-        $this->crudService->updateModelByType('business', $request, $id);
-        $this->businessQuoteService->updateBusinessQuote($request, $id);
+        $this->corplineQuoteService->updateQuote($request->all(), $id);
 
         return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
     }

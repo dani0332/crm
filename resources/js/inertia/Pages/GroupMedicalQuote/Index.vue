@@ -195,6 +195,10 @@ const tableHeader = [
     text: 'PRE-QUALIFICATION ADVISOR',
     value: 'pre_qualification_advisor_name',
   },
+  {
+    text: 'PQA Qualified',
+    value: 'pqa_qualified',
+  },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'OE / AE', value: 'support_user_name' },
   { text: 'BRANCH', value: 'branch_name' },
@@ -1086,6 +1090,9 @@ const insurerAMLStatusOption = computed(() => {
       </template>
       <template #item-lead_generator_name="item">
         {{ item.lead_generator_name }}
+      </template>
+      <template #item-pqa_qualified="{ pqa_qualified }">
+        {{ pqa_qualified === 1 ? 'Yes' : 'No' }}
       </template>
     </DataTable>
 

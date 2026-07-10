@@ -487,6 +487,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SOURCE</dt>
+                <dd>{{ quote.source }}</dd>
+              </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
@@ -614,6 +618,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CURRENTLY INSURED WITH</dt>
+                <dd>{{ quote?.currently_insured_with?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
@@ -1215,7 +1223,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         firstName: quote.first_name,
         lastName: quote.last_name,
         companyName: quote.company_name,
-        currentlyInsuredWith: null,
+        currentlyInsuredWith: quote.currently_insured_with,
       }"
       :hasPolicyIssuedStatus="hasPolicyIssuedStatus"
       :insuranceProviders="insuranceProviders"
