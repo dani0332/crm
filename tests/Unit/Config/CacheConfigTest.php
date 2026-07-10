@@ -6,6 +6,7 @@ namespace Tests\Unit\Config;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -90,13 +91,25 @@ class CacheConfigTest extends TestCase
 
         // Expected format: slugified_app_name_cache_environment
         $sluggedName = Str::slug($appName, '_');
-        $expectedPrefix = "{$sluggedName}_cache_{$environment}";
+        $expectedPrefix = "{$sluggedName}_cache_{$environment}".$this->parallelTestingSuffix();
 
         $this->assertEquals(
             $expectedPrefix,
             $prefix,
             'Cache prefix should match format: {app_name}_cache_{environment}'
         );
+    }
+
+    /**
+     * Get the suffix Laravel's parallel testing support appends to the cache
+     * prefix (e.g. "test_1_") when tests run via `--parallel`, so assertions
+     * remain accurate whether or not a TEST_TOKEN is present.
+     */
+    private function parallelTestingSuffix(): string
+    {
+        $token = ParallelTesting::token();
+
+        return $token ? "test_{$token}_" : '';
     }
 
     /**
@@ -237,7 +250,7 @@ class CacheConfigTest extends TestCase
 
         $prefix = Config::get('cache.prefix');
         $this->assertStringEndsWith(
-            '_cache_testing',
+            '_cache_testing'.$this->parallelTestingSuffix(),
             $prefix,
             'Testing environment should have cache prefix ending with _cache_testing'
         );
