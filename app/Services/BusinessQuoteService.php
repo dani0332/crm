@@ -601,7 +601,7 @@ class BusinessQuoteService extends BaseService
                 } elseif ($item == 'business_type_of_insurance_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('bqr.business_type_of_insurance_id', $request[$item]);
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->whereIn('quote_status_id', $request[$item]);
+                    $this->query->whereIn('bqr.quote_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_renewal', 'previous_policy_expiry_date'];
                     if (in_array($item, $skipped)) {
