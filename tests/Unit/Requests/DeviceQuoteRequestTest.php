@@ -6,7 +6,6 @@
 
 use App\Http\Requests\DeviceQuoteRequest;
 use Illuminate\Support\Facades\Validator;
-use Mockery;
 
 beforeEach(function () {
     $this->rules = (new DeviceQuoteRequest)->rules();
