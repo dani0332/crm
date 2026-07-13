@@ -205,6 +205,6 @@ Renewals
 renewals/renewals_upload_create_m3.xlsx
 renewals/renewals_home_upload_update_m4.xlsx
 renewals/renewals_health_upload_update_m4.xlsx
-renewals_other_non_motor_upload_update.xlsx
+renewals/renewals_other_non_motor_upload_update.xlsx
 
 Policy wording ka folder need to verify on storage.
