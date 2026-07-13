@@ -1026,9 +1026,9 @@ class SukoonMedexService
     {
         // Check if this should use the bike/sports MC plan
         $bikeVehicleTypes = [
-            VehicleTypeEnum::MOTOR_CYCLE->value,
-            VehicleTypeEnum::BIKE->value,
-            VehicleTypeEnum::MOTOR_CYCLES->value,
+            VehicleTypeEnum::MOTOR_CYCLE->id(),
+            VehicleTypeEnum::BIKE->id(),
+            VehicleTypeEnum::MOTORCYCLES->id(),
         ];
         $useBikePlan = $this->quoteTypeId === QuoteTypeId::Bike ||
                         ($this->quoteTypeId === QuoteTypeId::Car && in_array($this->currentQuote?->vehicle_type_id, $bikeVehicleTypes));

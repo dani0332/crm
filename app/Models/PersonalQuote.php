@@ -131,6 +131,16 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
+    public function previousAdvisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'previous_advisor_id');
+    }
+
     public function leadGenerator()
     {
         return $this->belongsTo(User::class, 'lead_generator_id');
@@ -176,7 +186,6 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(JetskiQuote::class);
     }
-
     /**
      * @return HasOne
      */
@@ -409,6 +418,11 @@ class PersonalQuote extends Model implements AuditableContract
     public function savingsQuote()
     {
         return $this->hasOne(SavingsQuote::class);
+    }
+
+    public function businessQuote(): BelongsTo
+    {
+        return $this->belongsTo(BusinessQuote::class, 'quote_id', 'id');
     }
 
     public function age(): Attribute
@@ -704,6 +718,13 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->morphOne(BranchOverride::class, 'quote_request');
     }
 
+    /**
+     * Get the ECOM URL for the quote for all the lobs like car-insurance, home-insurance, etc.
+     */
+    public function bringEcomUrl(): string
+    {
+        return config('constants.AFIA_WEBSITE_DOMAIN').'/'.strtolower(QuoteTypes::getName($this->quote_type_id)->value).'-insurance/quote/'.$this->uuid;
+    }
     public function amlAutomation()
     {
         return $this->hasOne(AmlAutomation::class, 'code', 'code');

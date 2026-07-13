@@ -82,9 +82,9 @@ describe('prepareAdditionalData', function () {
 
         expect($result['plan_option'])->toBe('sukoon-personal_sports_mc');
     })->with([
-        'MOTOR_CYCLE' => VehicleTypeEnum::MOTOR_CYCLE->value,
-        'BIKE' => VehicleTypeEnum::BIKE->value,
-        'MOTOR_CYCLES' => VehicleTypeEnum::MOTOR_CYCLES->value,
+        'MOTOR_CYCLE' => VehicleTypeEnum::MOTOR_CYCLE->id(),
+        'BIKE' => VehicleTypeEnum::BIKE->id(),
+        'MOTORCYCLES' => VehicleTypeEnum::MOTORCYCLES->id(),
     ]);
 
     test('returns null plan_option for unsupported quote types', function () {

@@ -295,6 +295,8 @@ class TravelController extends Controller
         $record->lead_generator = $record->leadGenerator?->only(['id', 'name', 'email']);
         $record->expert_advisor = $record->expertAdvisor?->only(['id', 'name']);
 
+        $record->load('previousQuote:id,uuid,code');
+
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'isAmlClearedForQuote' => $isAmlClearedForQuote,

@@ -39,7 +39,9 @@ class CarCQFRenewalExecutionService
 
         LoggerService::info(self::class." - Car CQF Renewal Leads processing started with Start Date: {$startDate}");
 
-        $isQuoteExists = CarQuote::whereDate('policy_expiry_date', $startDate)
+        $expiryRange = [$startDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
+
+        $isQuoteExists = CarQuote::whereBetween('policy_expiry_date', $expiryRange)
             ->whereNotIn('quote_status_id', [
                 QuoteStatusEnum::PolicyCancelled,
                 QuoteStatusEnum::PolicyCancelledReissued,
@@ -61,7 +63,7 @@ class CarCQFRenewalExecutionService
 
         $renewalsUploadLeads = $this->createRenewalsUploadLeads();
 
-        CarQuote::whereDate('policy_expiry_date', $startDate)
+        CarQuote::whereBetween('policy_expiry_date', $expiryRange)
             ->whereNotIn('quote_status_id', [
                 QuoteStatusEnum::PolicyCancelled,
                 QuoteStatusEnum::PolicyCancelledReissued,

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
@@ -13,16 +15,19 @@ use App\Enums\SkipPlansEnum;
 use App\Exports\RenewalFailedValidationExport;
 use App\Exports\RenewalHealthUpdateFailedValidationExport;
 use App\Exports\RenewalHomeFailedValidationExport;
+use App\Exports\RenewalOtherNonMotorFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
+use App\Jobs\CQF\ProcessNonMotorCQFOrchestratorJob;
 use App\Jobs\Renewals\FetchHomeRenewalsPlansJob;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
@@ -31,6 +36,7 @@ use App\Models\RenewalsUploadLeads;
 use App\Models\User;
 use App\Repositories\CarQuoteRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\OtherNonMotorRenewalsUploadService;
 use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -499,16 +505,21 @@ class RenewalsUploadController extends Controller
 
     public function downloadValidationFailed($id)
     {
-        $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
+        $renewalUploadLead = RenewalsUploadLeads::findOrFail($id);
 
-        if ($renewaUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
-            return Excel::download(new RenewalHealthUpdateFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
-        }
-        if ($renewaUploadLead->quote_type == QuoteTypeShortCode::HOM) {
-            return Excel::download(new RenewalHomeFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        $export = null;
+
+        if ($renewalUploadLead->quote_type == OtherNonMotorRenewalsUploadService::QUOTE_TYPE) {
+            $export = new RenewalOtherNonMotorFailedValidationExport($renewalUploadLead);
+        } elseif ($renewalUploadLead->quote_type == QuoteTypeShortCode::HEA && $renewalUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+            $export = new RenewalHealthUpdateFailedValidationExport($renewalUploadLead);
+        } elseif ($renewalUploadLead->quote_type == QuoteTypeShortCode::HOM && $renewalUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
+            $export = new RenewalHomeFailedValidationExport($renewalUploadLead);
+        } else {
+            $export = new RenewalFailedValidationExport($renewalUploadLead);
         }
 
-        return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        return Excel::download($export, 'failed_'.$renewalUploadLead->file_name);
     }
 
     public function validationPassed($id)
@@ -555,6 +566,15 @@ class RenewalsUploadController extends Controller
                 }
 
                 return redirect(config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$homeQuote->uuid);
+                break;
+
+            case OtherNonMotorRenewalsUploadService::QUOTE_TYPE:
+                $otherNonMotorQuote = PersonalQuote::find($renewalLead->quote_id);
+                if (! $otherNonMotorQuote) {
+                    return abort(404);
+                }
+
+                return redirect($otherNonMotorQuote->bringEcomUrl());
                 break;
             default:
                 return abort(404);
@@ -626,5 +646,21 @@ class RenewalsUploadController extends Controller
         }
 
         return redirect()->route('renewals-uploaded-leads-list')->with('error', 'Failed to retry renewal processes');
+    }
+
+    /**
+     * Manually trigger the non-motor CQF renewal process (orchestrator job).
+     */
+    public function retriggerNonMotorCQFProcess(): RedirectResponse
+    {
+        $this->authorize(PermissionsEnum::RENEWALS_RETRIGGER);
+
+        if (! getAppStorageValueByKey(ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH)) {
+            return redirect()->route('renewals-upload-create')->with('error', 'Non-motor CQF renewals feature is currently disabled.');
+        }
+
+        ProcessNonMotorCQFOrchestratorJob::dispatch();
+
+        return redirect()->route('renewals-upload-create')->with('success', 'Non-motor CQF renewal process has been queued.');
     }
 }

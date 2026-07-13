@@ -405,7 +405,7 @@ class LifeQuoteService extends BaseService
                     ]);
                 },
                 'quoteDetail.lostReason:id,text',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'paymentStatus',
                 'customer.additionalContactInfo',
                 'transactionType',
@@ -457,7 +457,7 @@ class LifeQuoteService extends BaseService
 
         $data = ! empty($lifeQuote) ? $lifeQuote->toArray() : [];
         $lifeQuote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $lifeQuote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $lifeQuote->previous_advisor_id_text = $lifeQuote->previousAdvisor?->name;
         $lifeQuote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         $lifeQuote->branch_name = ! $lifeQuote->is_branch_applicable ? 'N/A' : ($lifeQuote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($lifeQuote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life));
 

@@ -17,6 +17,7 @@ use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
+use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
 use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
 use App\Services\RuleService;
@@ -82,44 +83,50 @@ abstract class BaseAllocation extends AllocationService implements Allocation
 
             if (! $this->lead) {
                 LoggerService::info(self::class.' - execute: Lead not found');
-                $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+
+                return $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+            }
+            if (! $this->verifyLeadPreChecks()) {
+                LoggerService::info(self::class.' - execute: Lead not found - excluded from non motor renewal leads');
+
+                return $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+            }
+
+            if ($this->quoteType == QuoteTypes::GROUP_MEDICAL && ! $this->hasDuplicateLead && $this->lead->quote_status_id == QuoteStatusEnum::Duplicate) {
+
+                LoggerService::info(self::class.' - groupMedicalDuplicateLeadStatus: Resolved from database', extra: [
+                    'quote_type' => $this->quoteType->value,
+                    'quote_uuid' => $this->uuid,
+                    'has_duplicate_lead' => $this->hasDuplicateLead,
+                ]);
+
+                return $this->createResponse(0, 'Lead Status is Duplicate', Response::HTTP_NOT_FOUND);
+            }
+
+            $advisor = null;
+            if ($this->hasDuplicateLead) {
+                $advisor = $this->getAdvisorForDuplicateLeadAssignment();
+                LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
+                    'found_advisor' => $advisor ? true : false,
+                    'advisor_id' => $advisor?->id,
+                ]);
+            }
+
+            if (! $advisor) {
+                $advisor = $this->fetchAvailableAdvisor();
+            }
+
+            // if advisor still not found, then we need to fail the lead allocation
+            if (! $advisor) {
+                $this->leadAllocationFailed($this->uuid, $this->quoteType);
+                $this->sendNonAdvisorEmail();
+
+                LoggerService::info(self::class.' - execute: No advisor found');
+
+                $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
             } else {
-                $advisor = null;
-                if ($this->quoteType == QuoteTypes::GROUP_MEDICAL && ! $this->hasDuplicateLead && $this->lead->quote_status_id == QuoteStatusEnum::Duplicate) {
-
-                    LoggerService::info(self::class.' - groupMedicalDuplicateLeadStatus: Resolved from database', extra: [
-                        'quote_type' => $this->quoteType->value,
-                        'quote_uuid' => $this->uuid,
-                        'has_duplicate_lead' => $this->hasDuplicateLead,
-                    ]);
-
-                    return $this->createResponse(0, 'Lead Status is Duplicate', Response::HTTP_NOT_FOUND);
-                }
-
-                if ($this->hasDuplicateLead) {
-                    $advisor = $this->getAdvisorForDuplicateLeadAssignment();
-                    LoggerService::info(self::class.' - execute: Duplicate lead handling result', extra: [
-                        'found_advisor' => $advisor ? true : false,
-                        'advisor_id' => $advisor?->id,
-                    ]);
-                }
-
-                if (! $advisor) {
-                    $advisor = $this->fetchAvailableAdvisor();
-                }
-
-                // if advisor still not found, then we need to fail the lead allocation
-                if (! $advisor) {
-                    $this->leadAllocationFailed($this->uuid, $this->quoteType);
-                    $this->sendNonAdvisorEmail();
-
-                    LoggerService::info(self::class.' - execute: No advisor found');
-
-                    $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
-                } else {
-                    $this->assignLead($advisor);
-                    $response = $this->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
-                }
+                $this->assignLead($advisor);
+                $response = $this->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
             }
         } catch (\Throwable $th) {
             $this->leadAllocationFailed($this->uuid, $this->quoteType);
@@ -455,5 +462,18 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         $excludedAdvisorIds = array_values($excludedAdvisorIds);
 
         return $excludedAdvisorIds;
+    }
+
+    protected function verifyLeadPreChecks(): bool
+    {
+        // Block CQF-generated renewal leads from normal advisor allocation — the CQF pipeline manages their assignment.
+        // CORPLINE and GROUP_MEDICAL are not in NonMotorCQFRegistry::supportedLOBs() (they're registered as BUSINESS),
+        // but the BusinessCQF creates new quotes that carry business_type_of_insurance_id, causing allocation to
+        // resolve them as CORPLINE/GROUP_MEDICAL and route here — so they must be explicitly covered.
+        if ((in_array($this->quoteType, NonMotorCQFRegistry::supportedLOBs()) || in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL])) && $this->lead->source === LeadSourceEnum::RENEWAL_UPLOAD) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -355,6 +355,11 @@ class BusinessQuoteController extends Controller
             ? ['id' => $record->expert_advisor_id, 'name' => $record->expert_advisor_name]
             : null;
 
+        // $record is a DB::table() stdClass — Eloquent relations can't be used; manual lookup is intentional.
+        $record->previous_quote = $record->previous_quote_id
+            ? BusinessQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
+            : null;
+
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
             'quoteType' => quoteTypeCode::Business,

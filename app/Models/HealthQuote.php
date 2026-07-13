@@ -148,6 +148,11 @@ class HealthQuote extends Model implements AuditableContract
             ],
         ];
     }
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
     public function emirate()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_your_visa_id');

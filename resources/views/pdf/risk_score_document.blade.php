@@ -231,8 +231,8 @@
 
                     @foreach($data['score_list'] as $index => $score)
                             <?php
-                            $color = $index >= 0 && $index <= 7? 'customer_color' : ($index >= 8 && $index <= 12 ? 'geographic_color' : ($index <= 13 ? 'product_color':($index >= 14 && $index <= 17 ? 'transaction_color':($index <= 17 ? 'delivery_color': ($index <= 18 ? 'delivery_color': 'delivery_color')))));
-                            $cc = $index >= 0 && $index <= 7? 'customer_color' : ($index >= 8 && $index <= 11 ? 'geographic_color' : ($index <= 12 ? 'product_color':($index >= 13 && $index < 16 ? 'transaction_color':($index >= 17 ? 'delivery_color':'delivery_color'))))
+                            $color = $index >= 0 && $index <= 7 ? 'customer_color' : ($index >= 8 && $index <= 12 ? 'geographic_color' : ($index <= 13 ? 'product_color' : ($index >= 14 && $index <= 17 ? 'transaction_color' : ($index <= 17 ? 'delivery_color' : ($index <= 18 ? 'delivery_color' : 'delivery_color')))));
+                            $cc = $index >= 0 && $index <= 7 ? 'customer_color' : ($index >= 8 && $index <= 11 ? 'geographic_color' : ($index <= 12 ? 'product_color' : ($index >= 13 && $index < 16 ? 'transaction_color' : ($index >= 17 ? 'delivery_color' : 'delivery_color'))))
                             ?>
                         @if($quoteType != 'business')
                             <tr class={{$cc}}>

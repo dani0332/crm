@@ -35,4 +35,12 @@ class InsuredFactory extends Factory
             'id_number' => 'E-'.fake()->unique()->numerify('########'),
         ]);
     }
+
+    public function tradeLicense(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'id_type' => 'tradeLicense',
+            'id_number' => 'TL-'.fake()->unique()->numerify('########'),
+        ]);
+    }
 }

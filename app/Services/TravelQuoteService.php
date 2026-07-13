@@ -133,6 +133,7 @@ class TravelQuoteService extends BaseService
             DB::raw('DATE_FORMAT(tqr.policy_expiry_date, "%d-%m-%Y") as policy_expiry_date'),
             'tqr.device',
             'tqr.previous_quote_policy_premium',
+            'tqr.previous_quote_policy_commission',
             'tqr.policy_issuance_date',
             'tqr.policy_start_date',
             'tqr.customer_id',

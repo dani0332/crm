@@ -16,6 +16,7 @@ use App\Traits\SpatieActivityLog;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
@@ -144,6 +145,11 @@ class TravelQuote extends Model implements AuditableContract
         return $this->belongsTo(self::class, 'parent_id');
     }
 
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
     public function child()
     {
         return $this->hasOne(self::class, 'parent_id');
@@ -182,6 +188,11 @@ class TravelQuote extends Model implements AuditableContract
     public function advisor()
     {
         return $this->belongsTo(User::class, 'advisor_id');
+    }
+
+    public function previousAdvisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'previous_advisor_id');
     }
 
     public function paymentStatus()
