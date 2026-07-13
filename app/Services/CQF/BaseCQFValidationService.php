@@ -82,8 +82,7 @@ class BaseCQFValidationService implements CQFValidationInterface
             return false;
         }
 
-        return PersonalQuote::where('previous_quote_id', $quote->id)
-            ->where('previous_quote_policy_number', $quote->policy_number)
+        return PersonalQuote::where('previous_quote_policy_number', $quote->policy_number)
             ->where('previous_policy_expiry_date', $quote->policy_expiry_date)
             ->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->exists();
