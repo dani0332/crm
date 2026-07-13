@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\InstantChatReportsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\TransactionTypeEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
-use App\Models\ApplicationStorage;
 use App\Models\Lookup;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
 use App\Models\RenewalBatch;
-use App\Services\BirdService;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\InstantAlfredExportService;
 use App\Services\InstantAlfredService;
 use Illuminate\Http\Request;
@@ -136,29 +135,26 @@ class AlfredChatController extends Controller
             'recipientEmail' => 'sometimes|email',
         ]);
 
-        $workflowUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_INSTANT_ALFRED_EXPORT_WORKFLOW)->first();
-
-        if (! $workflowUrl || empty($workflowUrl->value)) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Export workflow URL not configured.',
-                'message' => 'Please contact administrator to configure the export workflow URL.',
-            ], 500);
-        }
-
         try {
+            $recipientEmail = $request->recipientEmail ?? Auth::user()?->email;
+            $recipientName = $request->recipientName ?? Auth::user()?->name ?? 'User';
 
-            $birdPayload = [
+            $eventData = [
+                'workflowType' => WorkflowTypeEnum::INSTANT_CHAT_EXPORT,
+                'customerId' => $recipientEmail,
+                'firstName' => $recipientName,
+                'lastName' => '',
+                'customerEmail' => $recipientEmail,
+                'customerMobile' => '',
+                'quoteUID' => '',
                 'report' => $request->report,
-                'recipientEmail' => $request->recipientEmail ?? Auth::user()?->email,
-                'recipientName' => Auth::user()?->name ?? 'User',
                 'filters' => $request->except(['report', 'recipientEmail']),
                 'user_id' => Auth::id(),
                 'exportApiUrl' => route('api.instant-alfred.generate-url'),
             ];
 
-            $birdService = app(BirdService::class);
-            $response = $birdService->triggerWebHookRequest($workflowUrl->value, $birdPayload, 'post', false);
+            $webEngageService = app(WebEngageService::class);
+            $response = $webEngageService->sendEvent(WorkflowTypeEnum::INSTANT_CHAT_EXPORT, $eventData);
 
             if (in_array($response->status_code, [200, 201])) {
                 return response()->json([
@@ -170,7 +166,7 @@ class AlfredChatController extends Controller
 
             Log::error('Export workflow failed for instant alfred export', [
                 'report' => $request->report,
-                'recipient' => $birdPayload['recipientEmail'],
+                'recipient' => $recipientEmail,
                 'status' => $response->status_code,
                 'response' => $response->body,
             ]);
