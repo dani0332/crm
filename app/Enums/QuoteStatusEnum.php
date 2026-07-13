@@ -94,4 +94,20 @@ final class QuoteStatusEnum extends Enum
             self::PolicySentToCustomer,
         ];
     }
+
+    public static function postTransactionStatuses(): array
+    {
+        return [
+            self::TransactionApproved,
+            self::PolicyIssued,
+            self::PolicyInvoiced,
+            self::PolicySentToCustomer,
+            self::PolicyBooked,
+            self::POLICY_BOOKING_QUEUED,
+            self::POLICY_BOOKING_FAILED,
+            self::CancellationPending,
+            self::PolicyCancelled,
+            self::PolicyCancelledReissued,
+        ];
+    }
 }

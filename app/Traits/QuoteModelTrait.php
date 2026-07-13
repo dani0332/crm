@@ -491,6 +491,10 @@ trait QuoteModelTrait
 
     public function isLeadSourceCar24(): bool
     {
-        return in_array($this->source, [LeadSourceEnum::CAR_24, LeadSourceEnum::CARS24]);
+        if (empty($this->source)) {
+            return false;
+        }
+
+        return strtolower($this->source) === strtolower(LeadSourceEnum::CAR_24) || strtolower($this->source) === strtolower(LeadSourceEnum::CARS24);
     }
 }

@@ -238,7 +238,7 @@ class LeadAllocationService extends BaseService
             LoggerService::info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
             try {
                 DB::beginTransaction();
-                if ($isManualAssignment && $lead->advisor_id != null && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
+                if ($isManualAssignment && $lead->advisor_id != null && ! in_array($lead->quote_status_id, QuoteStatusEnum::postTransactionStatuses())) {
                     LoggerService::info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
@@ -297,7 +297,7 @@ class LeadAllocationService extends BaseService
             if ($lead->advisor_id != null) {
                 $this->removeLeadAllocationForOldAdvisor($lead);
             }
-            if ($lead->advisor_id != null) {
+            if ($lead->advisor_id != null && ! in_array($lead->quote_status_id, QuoteStatusEnum::postTransactionStatuses())) {
                 $lead->quote_status_id = QuoteStatusEnum::Qualified;
             }
             $lead->advisor_id = $advisorId;

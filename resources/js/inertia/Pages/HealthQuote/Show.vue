@@ -501,10 +501,14 @@ const onTeamAssign = () => {
         isDisabled.value = true;
       },
       onSuccess: () => {
-        notification.success({
-          title: 'Team Assigned',
-          position: 'top',
-        });
+        if (page.props.flash?.success) {
+          notification.success({
+            title: 'Team Assigned',
+            position: 'top',
+          });
+        } else {
+          assignSubteam.value = page.props.quote.health_team_type || '';
+        }
       },
       onFinish: () => {
         isDisabled.value = false;
