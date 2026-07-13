@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Jobs\NotifyHighRiskScoreBirdJob;
 use App\Models\ApplicationStorage;
+use App\Services\HighRiskScoreBirdNotificationService;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -34,13 +34,25 @@ class ApplicationStorageFactory extends Factory
     }
 
     /**
-     * Bird AML high-risk notification workflow URL (see {@see NotifyHighRiskScoreBirdJob}).
+     * High-risk AML score notification "to" recipient (see {@see HighRiskScoreBirdNotificationService}).
      */
-    public function birdHighRiskAmlScoreNotificationWorkflow(string $workflowUrl = 'https://bird.example/flow'): static
+    public function highRiskScoreNotificationToRecipient(?string $value = null): static
     {
         return $this->state(fn (): array => [
-            'key_name' => ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL,
-            'value' => $workflowUrl,
+            'key_name' => ApplicationStorageEnums::HIGH_RISK_SCORE_NOTIFICATION_TO_RECIPIENT,
+            'value' => $value ?? $this->faker->unique()->safeEmail(),
+            'is_active' => 1,
+        ]);
+    }
+
+    /**
+     * High-risk AML score notification "cc" recipient (see {@see HighRiskScoreBirdNotificationService}).
+     */
+    public function highRiskScoreNotificationCcRecipient(?string $value = null): static
+    {
+        return $this->state(fn (): array => [
+            'key_name' => ApplicationStorageEnums::HIGH_RISK_SCORE_NOTIFICATION_CC_RECIPIENT,
+            'value' => $value ?? $this->faker->unique()->safeEmail(),
             'is_active' => 1,
         ]);
     }
@@ -61,6 +73,24 @@ class ApplicationStorageFactory extends Factory
             'value' => $value,
             'is_active' => 1,
         ]);
+    }
+
+    public function createEpFailureEmailConfig(): void
+    {
+        $entries = [
+            [ApplicationStorageEnums::EP_FAILURE_EMAIL_FROM, 'alfred@testnotify.alfred.ae'],
+            [ApplicationStorageEnums::EP_FAILURE_EMAIL_TO, 'production.approval.team@yopmail.com'],
+            [ApplicationStorageEnums::EP_FAILURE_EMAIL_REPLY_TO, 'test.emails@insurancemarket.ae'],
+            [ApplicationStorageEnums::EP_FAILURE_EMAIL_CC, 'diya.lekhwani@myalfred.com'],
+        ];
+
+        foreach ($entries as [$key, $value]) {
+            ApplicationStorage::forceCreate([
+                'key_name' => $key,
+                'value' => $value,
+                'is_active' => 1,
+            ]);
+        }
     }
 
     public function travelAmlRetriggerEnabled(int $value = 1): static

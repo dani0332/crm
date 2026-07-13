@@ -117,4 +117,5 @@ final class WorkflowTypeEnum extends Enum
     public const HOME_REVIVAL_FOLLOWUP = 'home_revival_followup';
     public const ADVISOR_PAYMENT_NOTIFICATION = 'advisor_payment_notification';
     public const INSTANT_CHAT_EXPORT = 'instant_chat_export';
+    public const HIGH_RISK_NOTIFICATION = 'high-risk-notification';
 }

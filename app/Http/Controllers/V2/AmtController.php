@@ -73,6 +73,8 @@ class AmtController extends Controller
 {
     use GenericQueriesAllLobs, RolePermissionConditions,TeamHierarchyTrait;
 
+    public function __construct(private BusinessQuoteService $buisnessQuoteService) {}
+
     /**
      * Display a listing of the resource.
      *
@@ -453,6 +455,7 @@ class AmtController extends Controller
         return $quotes->map(function ($quote) {
             $emirateOfRegistrationId = $quote?->emirate_of_registration_id ?? null;
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
+            $quote->pqa_qualified = $this->buisnessQuoteService->isPQAQualified($quote->id, (int) $quote->pq_advisor_id);
 
             return $quote;
         });
@@ -651,6 +654,8 @@ class AmtController extends Controller
             $quoteStatuses = array_values(QuoteStatus::whereIn('id', [QuoteStatusEnum::FollowedUp, QuoteStatusEnum::MissingDocumentsRequested, $record->quote_status_id])->get()->toArray());
         }
 
+        $pqaQualified = $this->buisnessQuoteService->isPQAQualified($record->id, $record->pq_advisor_id);
+
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'amlQuoteStatus' => $amlQuoteStatus,
@@ -706,6 +711,7 @@ class AmtController extends Controller
                 'enabled' => app(GroupMedicalEcommerceJourneyLinkService::class)->isAdvisorCopyEnabled($record),
             ],
             'gmCategoryIntakeDisplay' => $gmCategoryIntakeDisplay,
+            'pqaQualified' => $pqaQualified,
         ]);
     }
 

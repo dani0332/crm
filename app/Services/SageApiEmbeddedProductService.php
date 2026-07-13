@@ -20,6 +20,7 @@ use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
+use App\Traits\SendsEpFailureEmail;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use stdClass;
@@ -28,6 +29,7 @@ class SageApiEmbeddedProductService
 {
     use GenericQueriesAllLobs;
     use SageLoggable;
+    use SendsEpFailureEmail;
     use TeamHierarchyTrait;
 
     const CLASSNAME = 'sageApiEmbeddedProductService';
@@ -2043,8 +2045,8 @@ class SageApiEmbeddedProductService
 
         $originalInsurerTaxInvoiceNumber = $embeddedProductTransaction->tax_invoice_no;
         $originalCommissionTaxInvoiceNumber = $embeddedProductTransaction->tax_invoice_buyer_no;
-        $insurerTaxInvoiceNumber = self::formatDocNumber($originalInsurerTaxInvoiceNumber);
-        $commissionTaxInvoiceNumber = self::formatDocNumber($originalCommissionTaxInvoiceNumber);
+        $insurerTaxInvoiceNumber = $originalInsurerTaxInvoiceNumber;
+        $commissionTaxInvoiceNumber = $originalCommissionTaxInvoiceNumber;
 
         $sageRequestEmbeddedProduct = new stdClass;
         $sageRequestEmbeddedProduct->tapChargeId = $embeddedProductTransaction?->payment->paymentSplits->first()?->paymentCharges?->transaction_id;
@@ -2690,6 +2692,9 @@ class SageApiEmbeddedProductService
         ]);
         if ($embeddedTransaction->sage_status_id != $status) {
             $embeddedTransaction->update(['sage_status_id' => $status]);
+            if ($status === SageEmbeddedProductEnum::BOOKING_FAILED->id()) {
+                $this->sendEpFailureEmail((int) $embeddedTransaction->quote_request_id, (int) $embeddedTransaction->quote_type_id, (int) $embeddedTransaction->id, $logFor, true);
+            }
             LoggerService::info($logFor.' Embedded Product Sage Booking Status Updated to : '.$status);
         }
     }
@@ -2978,15 +2983,5 @@ class SageApiEmbeddedProductService
             'sage_request_type' => $sageRequestType ?? null,
             'entry_type' => $entryType,
         ];
-    }
-
-    /*
-     * We are having duplicate insurer tax and commission tax invoice number which are causing issue with sage booking, as same invoice numbers were being issued for
-     * other Leads in the past, so we are adding asterisk for uniqueness, there have been some db changes for this already so I am  adding asterisk conditionally so
-     * it would not mess with reversal of those entries
-     * */
-    private static function formatDocNumber($docNumber)
-    {
-        return substr($docNumber, -1) === '*' ? $docNumber : $docNumber.'*';
     }
 }
