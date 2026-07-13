@@ -140,6 +140,7 @@ class CyberQuoteService extends BaseQuoteService
                 $q->with([
                     'quoteStatus',
                     'currentlyInsuredWith',
+                    'transactionType',
                     'advisor',
                     'advisor.primaryBranch',
                     'branch:id,name',
