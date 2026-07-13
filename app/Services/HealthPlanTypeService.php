@@ -15,4 +15,9 @@ class HealthPlanTypeService
             ->select('health_plan_type.id', 'health_plan_type.text')
             ->get();
     }
+
+    public function getById(int $id): ?string
+    {
+        return HealthPlanType::find($id)?->text;
+    }
 }
