@@ -329,7 +329,11 @@ class DropdownSourceService extends BaseService
                 // =========== end =================
                 break;
             case 'plan_type_id':
-                $data = HealthPlanType::where('is_active', 1)->select('id', 'text')->orderBy('id')->get();
+                $data = HealthPlanType::where('is_active', 1)
+                    ->when($quoteTypeId, fn ($query) => $query->where('quote_type_id', $quoteTypeId))
+                    ->select('id', 'text')
+                    ->orderBy('sort_order')
+                    ->get();
                 break;
             case 'bike_make_id':
                 $distinctCarMakeCodes = CarModel::where('quote_type_id', QuoteTypeId::Bike)

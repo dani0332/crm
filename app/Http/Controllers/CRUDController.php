@@ -503,12 +503,14 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         $customTitles = $dropdownSource = [];
+
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
             if (str_contains($value, 'select')) {
-                $data = $this->dropdownSourceService->getDropdownSource($property, leadSource: LeadSourceEnum::IMCRM);
+                $data = $this->dropdownSourceService->getDropdownSource($property, quoteTypeId: $quoteTypeId, leadSource: LeadSourceEnum::IMCRM);
                 $dropdownSource[$property] = $data;
             }
         }
@@ -1519,12 +1521,13 @@ class CRUDController extends Controller
         $dropdownSource = [];
         $customTitles = [];
         $customLists = [];
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
         foreach ($model->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
             if (str_contains($value, 'select')) {
-                $data = $this->dropdownSourceService->getDropdownSource($property, leadSource: $record->source);
+                $data = $this->dropdownSourceService->getDropdownSource($property, quoteTypeId: $quoteTypeId, leadSource: $record->source);
                 $dropdownSource[$property] = $data;
             }
             if (str_contains($value, 'customTable')) {
