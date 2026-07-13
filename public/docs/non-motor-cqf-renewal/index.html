@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-Motor CQF Renewal - Technical Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #4258a8 0%, #5e3675 100%);
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .breadcrumb {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .breadcrumb a { color: #fff; text-decoration: none; opacity: 0.8; }
+        .breadcrumb a:hover { opacity: 1; }
+        .breadcrumb span { color: #fff; margin: 0 10px; }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .header h1 { color: #2c3e50; font-size: 2.5em; margin-bottom: 10px; font-weight: 700; }
+        .header p { color: #7f8c8d; font-size: 1.2em; margin-bottom: 20px; }
+        .status-badge {
+            display: inline-block;
+            background: #27ae60;
+            color: #fffbe6;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        .overview-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .overview-section h2 { color: #2c3e50; font-size: 2em; margin-bottom: 20px; }
+        .overview-section h3 { color: #2c3e50; font-size: 1.4em; margin: 25px 0 15px; }
+        .process-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .process-step {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 140px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .tech-specs { background: #f8f9fa; border-radius: 10px; padding: 25px; margin-top: 25px; }
+        .tech-specs h3 { color: #2c3e50; margin-bottom: 15px; }
+        .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
+        .tech-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .tech-item strong { color: #2c3e50; display: block; margin-bottom: 5px; }
+        .tech-item code { font-size: 0.9em; background: #eee; padding: 2px 6px; border-radius: 4px; }
+        .highlight {
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            color: white;
+        }
+        ul.features { list-style: none; margin: 15px 0; }
+        ul.features li { padding: 6px 0 6px 22px; position: relative; color: #555; }
+        ul.features li:before { content: "▶"; position: absolute; left: 0; color: #3498db; font-weight: bold; }
+        .doc-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+        .doc-link:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+        pre { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 0.9em; margin: 15px 0; }
+        @media (max-width: 768px) {
+            .process-flow { flex-direction: column; }
+            .container { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/docs/index.html">📚 Documentation Home</a>
+            <span>></span>
+            <span>Non-Motor CQF Renewal</span>
+        </div>
+
+        <div class="header">
+            <h1>🔄 Non-Motor CQF Renewal</h1>
+            <p>Queue-based processing of CQF renewal leads for Bike, Home, Pet, Travel, Life, Savings, Yacht, Jetski, Cycle</p>
+            <span class="status-badge">Active Documentation</span>
+        </div>
+
+        <!-- What is This -->
+        <div class="overview-section">
+            <h2>❓ What is This?</h2>
+            <p style="color: #7f8c8d; font-size: 1.1em; line-height: 1.8;">
+                The <strong>Non-Motor CQF Renewal</strong> feature finds eligible non-motor quotes (PersonalQuote and, for Bike, CarQuote)
+                whose policies expire on a given date, runs them through a validation and storage pipeline, and creates
+                <strong>RenewalsUploadLeads</strong> and <strong>RenewalQuoteProcess</strong> records so renewal leads can be
+                worked by the business. Processing runs entirely in <strong>queue jobs and Laravel Batches</strong>, so the
+                scheduler command exits quickly and workers do the work.
+            </p>
+            <div class="highlight" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+                <h4 style="margin-bottom: 10px;">💡 Why queue-based?</h4>
+                <p style="margin: 0; line-height: 1.7;">
+                    ✓ Command returns immediately; no long-running process<br>
+                    ✓ Work is distributed across queue workers (e.g. Supervisor)<br>
+                    ✓ One quote per job: better parallelism and failure isolation<br>
+                    ✓ Batch progress and completion are visible (e.g. Horizon)<br>
+                    ✓ Failed policies are reported via <code>SendFailedNonCQFRenewal</code> (Mail) from <code>FinalizeNonMotorCQFLOBJob</code>
+                </p>
+            </div>
+        </div>
+
+        <!-- High-level flow -->
+        <div class="overview-section">
+            <h2>📋 End-to-End Flow</h2>
+            <p style="color: #7f8c8d; margin-bottom: 20px;">
+                Triggered by the scheduler (or manually). The command dispatches a single orchestrator job; everything else
+                runs in batches and jobs.
+            </p>
+            <div class="process-flow">
+                <div class="process-step"><strong>1. Command</strong><br><small>leads:process-non-motor-cqf-renewals</small></div>
+                <div class="process-step"><strong>2. Orchestrator Job</strong><br><small>Per LOB: eligible? → create lead → dispatch LOB job</small></div>
+                <div class="process-step"><strong>3. LOB Batch</strong><br><small>One batch per LOB: many Quote jobs</small></div>
+                <div class="process-step"><strong>4. Quote Jobs</strong><br><small>One job per quote: pipeline → good/cannot_upload</small></div>
+                <div class="process-step"><strong>5. Finalize Job</strong><br><small>Update lead; send failed report if any</small></div>
+            </div>
+
+            <h3>🔑 Key terms</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <strong>CQF</strong>
+                    Central Quotation Framework – renewal lead creation from existing quotes.
+                </div>
+                <div class="tech-item">
+                    <strong>LOB</strong>
+                    Line of Business (Bike, Home, Pet, Travel, Life, Savings, Yacht, Jetski, Cycle).
+                </div>
+                <div class="tech-item">
+                    <strong>RenewalsUploadLeads</strong>
+                    One record per LOB run: total_records, good, cannot_upload, status.
+                </div>
+                <div class="tech-item">
+                    <strong>RenewalQuoteProcess</strong>
+                    One per quote processed; status PROCESSED or BAD_DATA, used for failed list.
+                </div>
+            </div>
+        </div>
+
+        <!-- Trigger & configuration -->
+        <div class="overview-section">
+            <h2>⚙️ Trigger & Configuration</h2>
+            <ul class="features">
+                <li><strong>Command:</strong> <code>php artisan leads:process-non-motor-cqf-renewals</code> (or via scheduler).</li>
+                <li><strong>Feature switch:</strong> <code>ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH</code> – when off, command only logs and exits.</li>
+                <li><strong>Start date:</strong> <code>Carbon::now()->addDays($renewalDaysThreshold)</code> – only quotes with <code>policy_expiry_date</code> on this date are considered.</li>
+                <li><strong>Threshold:</strong> <code>ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD</code> – number of days from today to the expiry date (e.g. 30 = process quotes expiring in 30 days).</li>
+            </ul>
+        </div>
+
+        <!-- Job architecture -->
+        <div class="overview-section">
+            <h2>🏗️ Job Architecture</h2>
+            <h3>1. ProcessNonMotorCQFOrchestratorJob</h3>
+            <p>Runs once per run. Reads threshold and start date; for each LOB in <code>NonMotorCQFRegistry::supportedLOBs()</code>,
+                checks <code>hasEligibleQuotesForLOB()</code>. If eligible: gets <code>getEligibleQuoteCountForLOB()</code>, creates
+                <code>RenewalsUploadLeads</code> with <code>total_records</code> set, dispatches <strong>ProcessNonMotorCQFLOBJob</strong>.
+                Dispatches all LOB jobs as a single batch named <code>Non Motor CQF Renewal Batch</code>.</p>
+            <p><strong>Files:</strong> <code>app/Jobs/CQF/ProcessNonMotorCQFOrchestratorJob.php</code></p>
+
+            <h3>2. ProcessNonMotorCQFLOBJob</h3>
+            <p>One per LOB that had eligible quotes. Builds the list of eligible quote IDs (PersonalQuote for that LOB; for Bike only, also CarQuote with bike vehicle types). Creates <strong>one ProcessNonMotorCQFQuoteJob per quote ID</strong>, then dispatches them as a batch with <code>->then(FinalizeNonMotorCQFLOBJob::dispatch($renewalsUploadLeadsId))</code>. Batch name: <code>Non Motor CQF Renewal - {LOB}</code> (e.g. "Non Motor CQF Renewal - Bike").</p>
+            <p><strong>Files:</strong> <code>app/Jobs/CQF/ProcessNonMotorCQFLOBJob.php</code></p>
+
+            <h3>3. ProcessNonMotorCQFQuoteJob</h3>
+            <p>One per quote. Receives <code>quoteId</code>, <code>source</code> (Personal / Car for Bike), <code>quoteType</code>, <code>renewalsUploadLeadsId</code>, <code>renewalDaysThreshold</code>. Calls <code>NonMotorCQFRenewalExecutionService::processQuoteForJob()</code>, which loads the quote and runs the pipeline (validation → duplicate check → storage). On success: <code>markQuoteAsCompleted</code> (increments <code>good</code>, creates RenewalQuoteProcess PROCESSED). On failure: <code>markQuoteAsFailed</code> (increments <code>cannot_upload</code>, creates RenewalQuoteProcess BAD_DATA).</p>
+            <p><strong>Files:</strong> <code>app/Jobs/CQF/ProcessNonMotorCQFQuoteJob.php</code></p>
+
+            <h3>4. FinalizeNonMotorCQFLOBJob</h3>
+            <p>Runs when the LOB’s quote batch completes. Loads the lead; sets <code>total_records = good + cannot_upload</code> and <code>status = COMPLETED</code> (or <code>is_deleted = 1</code> if none processed). If <code>cannot_upload</code> &gt; 0, sends the failed notification via <strong>SendFailedNonCQFRenewal</strong> (Mailable) which builds the Bird payload (with LOB in validationErrors and fileName) and triggers the Bird workflow.</p>
+            <p><strong>Files:</strong> <code>app/Jobs/CQF/FinalizeNonMotorCQFLOBJob.php</code></p>
+        </div>
+
+        <!-- Pipeline -->
+        <div class="overview-section">
+            <h2>🔀 Quote Processing Pipeline</h2>
+            <p>Each quote is passed through three pipes in order. Context is <strong>CQFRenewalContext</strong> (quote, lead, quoteType, threshold, validator, mapper, storage).</p>
+            <div class="process-flow">
+                <div class="process-step"><strong>LOBValidationPipe</strong><br><small>LOB-specific validation</small></div>
+                <div class="process-step"><strong>DuplicateCheckPipe</strong><br><small>Duplicate / already processed check</small></div>
+                <div class="process-step"><strong>StoragePipe</strong><br><small>Create renewal quote / storage</small></div>
+            </div>
+            <ul class="features">
+                <li><strong>Pipes:</strong> <code>app/Services/CQF/NonMotor/Pipes/LOBValidationPipe.php</code>, <code>DuplicateCheckPipe.php</code>, <code>StoragePipe.php</code></li>
+                <li><strong>Context:</strong> <code>app/Services/CQF/NonMotor/CQFRenewalContext.php</code></li>
+                <li>If any pipe fails (adds errors to context), the quote is marked failed (cannot_upload, RenewalQuoteProcess BAD_DATA).</li>
+            </ul>
+        </div>
+
+        <!-- Registry & LOBs -->
+        <div class="overview-section">
+            <h2>📁 Registry & LOB Implementations</h2>
+            <p><strong>NonMotorCQFRegistry</strong> defines which LOBs are supported and their validator, mapper, and storage classes. Supported LOBs: Bike, Yacht, Jetski, Cycle, Pet, Home, Life, Savings.</p>
+            <div class="tech-specs">
+                <h3>Registry & LOB files</h3>
+                <div class="tech-grid">
+                    <div class="tech-item"><strong>Registry</strong><code>app/Services/CQF/NonMotor/NonMotorCQFRegistry.php</code></div>
+                    <div class="tech-item"><strong>Execution service</strong><code>app/Services/CQF/NonMotor/NonMotorCQFRenewalExecutionService.php</code></div>
+                    <div class="tech-item"><strong>Base mapping</strong><code>app/Services/CQF/NonMotor/BaseCQFQuoteMappingService.php</code></div>
+                    <div class="tech-item"><strong>LOB implementations</strong><code>app/Services/CQF/NonMotor/LOBs/</code> (e.g. BikeCQFValidationService, BikeCQFQuoteMappingService, BikeCQFQuoteStorageService, and same for Home, Pet, Travel, Life, Savings, Yacht, Jetski, Cycle)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Eligibility -->
+        <div class="overview-section">
+            <h2>✅ Eligibility Rules</h2>
+            <p>Quotes are eligible if they match the following (same for PersonalQuote and, for Bike, CarQuote):</p>
+            <ul class="features">
+                <li><strong>policy_expiry_date</strong> = start date (today + threshold days).</li>
+                <li><strong>quote_status_id</strong> NOT IN (PolicyCancelled, PolicyCancelledReissued, CancellationPending).</li>
+                <li><strong>payment_status_id</strong> IN (PAID, PARTIALLY_PAID, CAPTURED, PARTIAL_CAPTURED, CREDIT_APPROVED).</li>
+                <li>Personal: <code>quote_type_id</code> = LOB’s quote type id.</li>
+                <li>Bike from Car: <code>vehicle_type_id</code> IN <code>VehicleTypeEnum::ids()</code> (bike-related vehicle types).</li>
+            </ul>
+        </div>
+
+        <!-- Database -->
+        <div class="overview-section">
+            <h2>🗄️ Database & Models</h2>
+            <div class="tech-specs">
+                <div class="tech-grid">
+                    <div class="tech-item"><strong>renewals_upload_leads</strong> total_records (set at creation + at finalize), good, cannot_upload, status, quote_type, renewal_import_code, etc.</div>
+                    <div class="tech-item"><strong>renewal_quote_process</strong> renewals_upload_lead_id, quote_id, policy_number, status (NEW → PROCESSED or BAD_DATA), validation_errors, data.</div>
+                    <div class="tech-item"><strong>Models</strong> RenewalsUploadLeads, RenewalQuoteProcess. Failed policies are read from RenewalQuoteProcess (status BAD_DATA) for the lead.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick reference -->
+        <div class="overview-section">
+            <h2>📚 Quick Reference</h2>
+            <div class="tech-specs">
+                <h3>Entry points</h3>
+                <div class="tech-grid">
+                    <div class="tech-item"><strong>Command</strong><code>app/Console/Commands/ProcessNonMotorCQFRenewalLeads.php</code></div>
+                    <div class="tech-item"><strong>Orchestrator</strong><code>app/Jobs/CQF/ProcessNonMotorCQFOrchestratorJob.php</code></div>
+                </div>
+                <h3>Supporting jobs</h3>
+                <div class="tech-grid">
+                    <div class="tech-item"><strong>LOB job</strong> ProcessNonMotorCQFLOBJob</div>
+                    <div class="tech-item"><strong>Quote job</strong> ProcessNonMotorCQFQuoteJob</div>
+                    <div class="tech-item"><strong>Finalize</strong> FinalizeNonMotorCQFLOBJob</div>
+                    <div class="tech-item"><strong>Failed report</strong> SendFailedNonCQFRenewal (Mail)</div>
+                </div>
+                <h3>Queues & batches</h3>
+                <div class="tech-grid">
+                    <div class="tech-item"><strong>Top-level batch</strong> "Non Motor CQF Renewal Batch" (LOB jobs)</div>
+                    <div class="tech-item"><strong>Per-LOB batch</strong> "Non Motor CQF Renewal - {LOB}" (quote jobs), then callback runs FinalizeNonMotorCQFLOBJob</div>
+                    <div class="tech-item"><strong>Queue</strong> default (configurable in Bus::batch)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Non-Motor CQF Renewal Documentation</strong></p>
+            <p>Part of the Afia Brokerage LLC Technical Documentation</p>
+        </div>
+    </div>
+</body>
+</html>

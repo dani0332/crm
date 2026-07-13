@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalsUploadType;
 use App\Models\RenewalsUploadLeads;
@@ -45,5 +46,15 @@ class RenewalsUploadLeadsFactory extends Factory
             'created_at' => now(),
             'updated_at' => now(),
         ];
+    }
+
+    public function forQuoteType(string $quoteType): self
+    {
+        return $this->state(fn () => ['quote_type' => $quoteType]);
+    }
+
+    public function completed(): self
+    {
+        return $this->state(fn () => ['status' => ProcessStatusCode::COMPLETED]);
     }
 }

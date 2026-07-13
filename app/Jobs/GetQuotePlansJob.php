@@ -12,10 +12,11 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
 
 class GetQuotePlansJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable;
+    use Batchable, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
     public $timeout = 30;

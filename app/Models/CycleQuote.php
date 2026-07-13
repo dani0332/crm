@@ -12,7 +12,17 @@ class CycleQuote extends Model
     use HasFactory, SpatieActivityLog;
 
     protected $table = 'cycle_quote_request';
-    protected $fillable = ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition'];
+    protected $fillable = [
+        'personal_quote_id',
+        'quote_status_id',
+        'transaction_approved_at',
+        'cycle_make',
+        'cycle_model',
+        'year_of_manufacture_id',
+        'accessories',
+        'has_accident',
+        'has_good_condition',
+    ];
     public $allowedColumns = ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition'];
 
     /**

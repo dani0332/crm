@@ -85,6 +85,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.previous_policy_expiry_date',
                 'bqr.previous_policy_start_date',
                 'bqr.previous_quote_policy_premium',
+                'bqr.previous_quote_policy_commission',
                 'bqr.gender',
                 'bqr.device',
                 'bqr.customer_id',
@@ -156,6 +157,8 @@ class BusinessQuoteService extends BaseService
                 'b.name as lead_branch_name',
                 'b.id as lead_branch_id',
                 'bqr.is_branch_applicable',
+                'ciw.id as currently_insured_with_id',
+                'ciw.text as currently_insured_with_text',
                 'bqr.pq_advisor_id',
                 'pqa_u.name as pre_qualification_advisor_name',
                 'bqr.ea_model',
@@ -205,6 +208,8 @@ class BusinessQuoteService extends BaseService
                     ->where('ub.status', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
+            ->leftJoin('personal_quotes as pq_ciw', 'pq_ciw.id', '=', 'bqr.personal_quote_id')
+            ->leftJoin('insurance_provider as ciw', 'ciw.id', '=', 'pq_ciw.currently_insured_with_id')
             ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id')
             ->leftJoin('users as lg', 'lg.id', '=', 'bqr.lead_generator_id')
             ->leftJoin('users as ea', 'ea.id', '=', 'bqr.expert_advisor_id');
@@ -596,7 +601,7 @@ class BusinessQuoteService extends BaseService
                 } elseif ($item == 'business_type_of_insurance_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('bqr.business_type_of_insurance_id', $request[$item]);
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->whereIn('quote_status_id', $request[$item]);
+                    $this->query->whereIn('bqr.quote_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_renewal', 'previous_policy_expiry_date'];
                     if (in_array($item, $skipped)) {

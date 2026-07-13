@@ -1012,6 +1012,11 @@ const onLeadTypeUpdate = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CURRENTLY INSURED WITH</dt>
+                <dd>{{ quote?.currently_insured_with_text }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRE-QUALIFICATION ADVISOR</dt>
                 <dd>{{ quote.pre_qualification_advisor_name ?? '—' }}</dd>
               </div>

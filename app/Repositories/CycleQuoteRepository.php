@@ -135,6 +135,7 @@ class CycleQuoteRepository extends BaseRepository
                 $q->where('customer_insured.quote_type_id', QuoteTypes::CYCLE->id());
             },
             'customer',
+            'nationality',
             'branch:id,name',
             'leadGenerator:id,name',
             'expertAdvisor:id,name',
@@ -207,7 +208,7 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->paginate()->withQueryString();
         if (! $forTotalLeadsCount && ! $forExport) {
             $this->postProcessCycleQuote($result);
         }
@@ -256,13 +257,13 @@ class CycleQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'customer'])
+        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'previousAdvisor', 'nationality', 'customer'])
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where(function ($query) {
                     $query->where('advisor_id', \auth()->user()->id);
                 });
             })
-            ->filter()
+            ->filter(paginate: false)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
     }
@@ -329,13 +330,15 @@ class CycleQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
+                'previousQuote:id,uuid,code',
+                'renewalBatchModel',
                 'cycleQuote',
                 'cycleQuote.yearOfManufacture',
                 'advisor',
                 'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'transactionType',
                 'insuranceProvider',
                 'latestInsured' => function ($q) use ($quoteTypeId) {
@@ -360,6 +363,7 @@ class CycleQuoteRepository extends BaseRepository
                 'createdBy',
                 'updatedBy',
                 'customer.additionalContactInfo',
+                'currentlyInsuredWith:id,text',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
@@ -381,7 +385,7 @@ class CycleQuoteRepository extends BaseRepository
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;

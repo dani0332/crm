@@ -50,4 +50,39 @@ class RenewalQuoteProcessFactory extends Factory
             'updated_at' => now(),
         ];
     }
+
+    public function forLead(int $leadId): self
+    {
+        return $this->state(fn () => ['renewals_upload_lead_id' => $leadId]);
+    }
+
+    public function forQuote(?int $quoteId): self
+    {
+        return $this->state(fn () => ['quote_id' => $quoteId]);
+    }
+
+    public function withQuoteType(string $quoteType): self
+    {
+        return $this->state(fn () => ['quote_type' => $quoteType]);
+    }
+
+    public function processed(): self
+    {
+        return $this->state(fn () => ['status' => RenewalProcessStatuses::PROCESSED]);
+    }
+
+    public function badData(): self
+    {
+        return $this->state(fn () => ['status' => RenewalProcessStatuses::BAD_DATA]);
+    }
+
+    public function withFetchStatus(string $status): self
+    {
+        return $this->state(fn () => ['fetch_plans_status' => $status]);
+    }
+
+    public function withData(array $data): self
+    {
+        return $this->state(fn () => ['data' => $data]);
+    }
 }

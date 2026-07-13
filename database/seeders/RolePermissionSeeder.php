@@ -30,6 +30,7 @@ class RolePermissionSeeder extends Seeder
         $this->addInsurerPaymentLinkPermission();
         $this->sendUpdateCancelPermission();
         $this->addRenewalsUploadPermission();
+        $this->addRenewalsRetriggerPermission();
         // $this->addPolicyDetailsAddVatPermission();
         $this->addNationalityAllocationConfigPermission();
         $this->addBorDocumentUploadPermission();
@@ -286,6 +287,22 @@ class RolePermissionSeeder extends Seeder
             'name' => PermissionsEnum::RENEWALS_BATCHES_NONMOTOR,
             'guard_name' => 'web',
         ]);
+    }
+
+    private function addRenewalsRetriggerPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::RENEWALS_RETRIGGER,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
+            $adminRole->givePermissionTo($permission);
+        }
     }
 
     private function addNationalityAllocationConfigPermission(): void

@@ -67,9 +67,10 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'customer']
-        )->orderBy('created_at', 'desc');
+        return $this->byQuoteTypeCode(QuoteTypes::HOME)
+            ->filter(paginate: false)
+            ->with(['advisor', 'nationality', 'currentlyInsuredWith', 'insuranceProvider', 'customer', 'previousAdvisor'])
+            ->orderBy('created_at', 'desc');
     }
 
     public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false, $requestParams = [])
@@ -82,6 +83,7 @@ class HomeQuoteRepository extends BaseRepository
             'previous_quote_policy_number',
             'payment_due_date',
             'booking_date',
+            'previous_policy_expiry_date_start',
         ];
 
         if (! Auth::check()) {
@@ -156,7 +158,7 @@ class HomeQuoteRepository extends BaseRepository
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
                 fn ($query) => $query->when($forExport, fn ($query) => $query, function ($query) {
-                    return $query->simplePaginate()->withQueryString();
+                    return $query->paginate()->withQueryString();
                 })
             );
 
@@ -240,6 +242,7 @@ class HomeQuoteRepository extends BaseRepository
             'advisor',
             'advisor.primaryBranch.branch:id,name',
             'nationality',
+            'currentlyInsuredWith',
             'insuranceProviderPlan',
             'homeQuote',
             'homeQuote.homeQuoteRequestDetail',
@@ -864,10 +867,11 @@ class HomeQuoteRepository extends BaseRepository
         $response = $this->byQuoteTypeId(QuoteTypes::HOME->id())
             ->where($columnUUID, $uuid)
             ->with([
+                'previousQuote:id,uuid,code',
                 'insuranceProvider',
                 'insuranceProviderPlan',
                 'quoteDetail.lostReason',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'quoteStatus',
                 'advisor',
                 'advisor.primaryBranch.branch:id,name',
@@ -916,6 +920,7 @@ class HomeQuoteRepository extends BaseRepository
                 'subSource',
                 'subSourceOption',
                 'branch:id,name',
+                'currentlyInsuredWith:id,text',
                 'leadGenerator:id,name,email',
                 'expertAdvisor:id,name',
             ])
@@ -948,13 +953,14 @@ class HomeQuoteRepository extends BaseRepository
 
         // Use null coalescing for safely accessing possibly undefined array keys
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         // Check if payments property exists before using it
         if ($quote->payments && $quote->payments->isNotEmpty()) {
             $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
         }
+
     }
 
     private function appendExternalData($quote)
