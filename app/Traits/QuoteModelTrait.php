@@ -491,7 +491,7 @@ trait QuoteModelTrait
 
     public function isLeadSourceCar24(): bool
     {
-        if ($this->source === null) {
+        if (empty($this->source)) {
             return false;
         }
 
