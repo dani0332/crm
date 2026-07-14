@@ -14,6 +14,7 @@ use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Services\BranchAssignmentService;
 use App\Services\DropdownSourceService;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -83,7 +84,38 @@ class BikeQuoteRepository extends BaseRepository
             'additionalNotes' => $data['notes'] ?? null,
         ];
 
-        return Capi::request('/api/v1-save-bike-quote', 'post', $quoteData);
+        EACollaborateHelper::applyEAIMCRMSource($quoteData);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('BikeQuoteRepository: CAPI payload for EA lead', [
+                'ea_model' => $quoteData['eaModel'] ?? request()->input('ea_model'),
+                'source' => $quoteData['source'] ?? null,
+                'email' => $quoteData['email'] ?? null,
+                'lead_generator_id' => $quoteData['leadGeneratorId'] ?? null,
+                'advisor_id' => $quoteData['advisorId'] ?? null,
+                'quote_type_id' => $quoteData['quoteTypeId'] ?? null,
+            ]);
+        }
+
+        $response = Capi::request('/api/v1-save-bike-quote', 'post', $quoteData);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('BikeQuoteRepository: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $quote = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                if ($quote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($quote, 'bike');
+                }
+            }
+        }
+
+        return $response;
     }
 
     /**
@@ -157,6 +189,8 @@ class BikeQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
+                'previousQuote:id,uuid,code',
+                'renewalBatchModel',
                 'bikeQuote' => function ($q) {
                     $q->with(['uaeLicenseHeldFor', 'bikeQuoteRequestDetail', 'backHomeLicenseHeldFor', 'bikeMake', 'bikeModel', 'carTypeInsurance', 'claimHistory', 'emirates']);
                 },
@@ -164,7 +198,7 @@ class BikeQuoteRepository extends BaseRepository
                 'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'currentlyInsuredWith',
                 'transactionType',
                 'insuranceProvider',
@@ -217,7 +251,7 @@ class BikeQuoteRepository extends BaseRepository
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
@@ -248,6 +282,7 @@ class BikeQuoteRepository extends BaseRepository
             'advisor.primaryBranch',
             'paymentStatus',
             'payments',
+            'nationality',
             'renewalBatchModel',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypes::BIKE->id());
@@ -255,6 +290,8 @@ class BikeQuoteRepository extends BaseRepository
             'customer',
             'subSource',
             'branch:id,name',
+            'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -262,6 +299,8 @@ class BikeQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->select([
                 '*',
                 DB::raw('
@@ -348,8 +387,8 @@ class BikeQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'customer'])
-            ->filter()
+        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor', 'previousAdvisor', 'nationality', 'customer'])
+            ->filter(paginate: false)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
     }

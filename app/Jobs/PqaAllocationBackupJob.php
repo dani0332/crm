@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -47,6 +48,12 @@ class PqaAllocationBackupJob implements ShouldQueue
             })
             ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, function ($query) {
                 $query->where('created_at', '<=', Carbon::now()->subMinutes(15));
+            })
+            ->when($this->quoteType === QuoteTypes::GROUP_MEDICAL, function ($q) {
+                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            })
+            ->when($this->quoteType === QuoteTypes::CORPLINE, function ($q) {
+                $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
             ->limit(self::BATCH_LIMIT)
             ->get();

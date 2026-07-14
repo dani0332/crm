@@ -17,6 +17,7 @@ use App\Jobs\SendSupportUserAssignmentEmailJob;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
+use App\Models\QuoteStatusLog;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\PqaAllocation\PqaLeadAllocationService;
@@ -84,6 +85,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.previous_policy_expiry_date',
                 'bqr.previous_policy_start_date',
                 'bqr.previous_quote_policy_premium',
+                'bqr.previous_quote_policy_commission',
                 'bqr.gender',
                 'bqr.device',
                 'bqr.customer_id',
@@ -155,8 +157,22 @@ class BusinessQuoteService extends BaseService
                 'b.name as lead_branch_name',
                 'b.id as lead_branch_id',
                 'bqr.is_branch_applicable',
+                'ciw.id as currently_insured_with_id',
+                'ciw.text as currently_insured_with_text',
                 'bqr.pq_advisor_id',
                 'pqa_u.name as pre_qualification_advisor_name',
+                'bqr.ea_model',
+                'bqr.lead_generator_id',
+                'lg.name as lead_generator_name',
+                'lg.email as lead_generator_email',
+                'bqr.expert_advisor_id',
+                'ea.name as expert_advisor_name',
+                'bqr.ea_assigned_advisor_approved_at',
+                'bqr.ea_assigned_advisor_rejected_at',
+                'bqr.ea_expert_advisor_approved_at',
+                'bqr.ea_expert_advisor_rejected_at',
+                'bqr.ea_manager_approved_at',
+                'bqr.ea_manager_rejected_at',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'bqr.nationality_id')
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
@@ -192,7 +208,11 @@ class BusinessQuoteService extends BaseService
                     ->where('ub.status', '=', 1);
             })
             ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
-            ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id');
+            ->leftJoin('personal_quotes as pq_ciw', 'pq_ciw.id', '=', 'bqr.personal_quote_id')
+            ->leftJoin('insurance_provider as ciw', 'ciw.id', '=', 'pq_ciw.currently_insured_with_id')
+            ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id')
+            ->leftJoin('users as lg', 'lg.id', '=', 'bqr.lead_generator_id')
+            ->leftJoin('users as ea', 'ea.id', '=', 'bqr.expert_advisor_id');
     }
 
     private function applyUtmJoin(): void
@@ -325,6 +345,7 @@ class BusinessQuoteService extends BaseService
             'briefDetails' => $request->brief_details,
             'premium' => $request->premium,
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
+            'quoteTypeId' => QuoteTypeId::Business,
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             // Sub-source fields (CAPI will ignore if unsupported)
@@ -333,7 +354,10 @@ class BusinessQuoteService extends BaseService
             'additionalNotes' => $request->additional_notes ?? null,
             'emirateOfRegistrationId' => $request->emirate_of_registration_id ?? null,
             'businessActivityId' => $request->nature_of_company_activity_id,
+            'userId' => auth()->id(),
         ];
+        EACollaborateHelper::applyEAIMCRMSource($dataArr);
+
         if (! Auth::user()->hasRole('ADMIN')) {
 
             if (Auth::user()->hasRole([RolesEnum::CLIENTSUPPORTLEAD, RolesEnum::CLIENTSUPPORT])) {
@@ -348,7 +372,34 @@ class BusinessQuoteService extends BaseService
             fn (mixed $value): bool => $value !== null && $value !== '',
         );
 
+        if (request()->input('ea_model')) {
+            LoggerService::info('BusinessQuoteService: CAPI payload for EA lead', [
+                'ea_model' => $dataArr['eaModel'] ?? request()->input('ea_model'),
+                'source' => $dataArr['source'] ?? null,
+                'email' => $dataArr['email'] ?? null,
+                'lead_generator_id' => $dataArr['leadGeneratorId'] ?? null,
+                'advisor_id' => $dataArr['advisorId'] ?? null,
+                'quote_type_id' => $dataArr['quoteTypeId'] ?? null,
+            ]);
+        }
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('BusinessQuoteService: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $eaQuote = BusinessQuote::where('uuid', $response->quoteUID)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'business');
+                }
+            }
+        }
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::BusinessQuote, $request, $response);
@@ -523,6 +574,14 @@ class BusinessQuoteService extends BaseService
             $this->query->whereIn('bqr.insurer_aml_status', $request->insurer_aml_status);
         }
 
+        if ($request->filled('ea_model')) {
+            $this->query->where('bqr.ea_model', $request->ea_model);
+        }
+
+        if ($request->filled('lead_generator')) {
+            $this->query->where('lg.name', 'like', '%'.$request->lead_generator.'%');
+        }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at' && $item != 'company_name') {
                 if ($request[$item] == 'null') {
@@ -542,7 +601,7 @@ class BusinessQuoteService extends BaseService
                 } elseif ($item == 'business_type_of_insurance_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('bqr.business_type_of_insurance_id', $request[$item]);
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->whereIn('quote_status_id', $request[$item]);
+                    $this->query->whereIn('bqr.quote_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_renewal', 'previous_policy_expiry_date'];
                     if (in_array($item, $skipped)) {
@@ -569,6 +628,14 @@ class BusinessQuoteService extends BaseService
 
         if (! empty($request->lead_type) && is_array($request->lead_type)) {
             $this->query->whereIn('bqr.lead_type', $request->lead_type);
+        }
+
+        if (! empty($request->ea_model)) {
+            $this->query->where('bqr.ea_model', $request->ea_model);
+        }
+
+        if (! empty($request->lead_generator)) {
+            $this->query->where('lg.name', 'like', '%'.$request->lead_generator.'%');
         }
 
         $this->adjustQueryByDateFilters($this->query, 'bqr');
@@ -741,6 +808,7 @@ class BusinessQuoteService extends BaseService
                     'businessActivityId' => $request->nature_of_company_activity_id,
                     'briefDetails' => $request->brief_details,
                     'premium' => $request->premium ?? 0,
+                    'userId' => auth()->id(),
                 ],
                 fn (mixed $value): bool => $value !== null && $value !== '',
             ),
@@ -749,6 +817,13 @@ class BusinessQuoteService extends BaseService
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-revise-group-medical-quote', $capiPayload);
         LoggerService::info('Capi revise-group-medical-quote response', ['response' => $response]);
+
+        // Update emirates regiration in insured
+        $entity = $businessQuote->quoteRequestEntityMapping?->entity;
+        if ($entity && $entity->emirate_of_registration_id !== $request->emirate_of_registration_id) {
+            $entity->emirate_of_registration_id = $request->emirate_of_registration_id;
+            $entity->save();
+        }
 
         if (isset($request->return_to_view)) {
             return redirect('quote/business/'.$businessQuote->id)->with('success', 'Business Quote has been updated');
@@ -1107,5 +1182,21 @@ class BusinessQuoteService extends BaseService
 
         // return $displayModelType.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
         return $messageModel.' leads have been assigned to Pre‑Qualification Advisor '.$assigneeName;
+    }
+
+    public function isPQAQualified(int $id, ?int $pqaAdvisorId = null): int
+    {
+        if (! $pqaAdvisorId) {
+            return 0;
+        }
+
+        $statusCount = QuoteStatusLog::where('quote_type_id', QuoteTypes::getId(QuoteTypes::BUSINESS))
+            ->where('quote_request_id', $id)
+            ->whereIn('previous_quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::QualificationPending])
+            ->where('current_quote_status_id', QuoteStatusEnum::Qualified)
+            ->where('created_by', $pqaAdvisorId)
+            ->count();
+
+        return $statusCount > 0 ? 1 : 0;
     }
 }

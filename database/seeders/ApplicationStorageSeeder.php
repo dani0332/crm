@@ -180,11 +180,11 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedHealthTeamRoutingEnabled();
         $this->seedOCRCustomerJourneyHealthEnabled();
         $this->seedAdvisorPaymentNotificationWorkflowUrl();
+        $this->seedNonMotorCQFRenewals();
         $this->seedPartnerAutomation();
         $this->seedDisableClaimsModule();
         $this->seedDicTravelPolicyIssuance();
         $this->seedMotorRevivalWorkflow();
-        $this->seedHighRiskScoreBirdNotificationWorkflowUrl();
         $this->seedAmlAutomationOutcomeWorkflowUrl();
         $this->seedTravelAmlRetrigger();
         $this->seedDttLifeEnabled();
@@ -192,6 +192,8 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedDttHomeEnabled();
         $this->seedAllianceBrandSwitchDate();
         $this->seedAmlAutomationReTriggerRecipients();
+        $this->seedEAEmailTemplates();
+        $this->seedHighRiskScoreNotificationRecipients();
     }
 
     private function livaCarAutomationSeed()
@@ -2085,14 +2087,45 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_RENEWAL_BATCH_DAYS],
+            [
+                'value' => 120,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
-    private function seedHighRiskScoreBirdNotificationWorkflowUrl()
+    private function seedNonMotorCQFRenewals(): void
     {
+        // Intentionally seeded as enabled (value=1) so the pipeline is active on fresh environments by default.
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL],
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_SWITCH],
             [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/dd811e82-a945-4ed1-a1bb-2e1be15fda12/invoke-sync',
+                'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_RENEWALS_DAYS_THRESHOLD],
+            [
+                'value' => 120,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NON_MOTOR_CQF_FAILED_RENEWAL_BREVO_TEMPLATE],
+            [
+                'value' => 918,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -2146,6 +2179,50 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::DTT_HOME_ENABLED],
             [
                 'value' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
+            ],
+        );
+    }
+
+    private function seedEAEmailTemplates(): void
+    {
+        $templates = [
+            ApplicationStorageEnums::EA_LEAD_SUBMITTED_TEMPLATE_ID => 887,
+            ApplicationStorageEnums::EA_COLLABORATE_REJECTED_TEMPLATE_ID => 889,
+            ApplicationStorageEnums::EA_MANAGER_DECISION_TEMPLATE_ID => 888,
+        ];
+
+        foreach ($templates as $key => $value) {
+            ApplicationStorage::firstOrCreate(
+                ['key_name' => $key],
+                [
+                    'value' => $value,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'is_active' => ApplicationStorageEnums::ACTIVE,
+                ],
+            );
+        }
+    }
+
+    private function seedHighRiskScoreNotificationRecipients()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HIGH_RISK_SCORE_NOTIFICATION_TO_RECIPIENT],
+            [
+                'value' => 'geetika.anand@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => ApplicationStorageEnums::ACTIVE,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HIGH_RISK_SCORE_NOTIFICATION_CC_RECIPIENT],
+            [
+                'value' => 'mohamed.faisal@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => ApplicationStorageEnums::ACTIVE,

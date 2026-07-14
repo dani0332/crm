@@ -2,84 +2,72 @@
 
 declare(strict_types=1);
 
-use App\Exceptions\HighRiskBirdNotificationFailedException;
+use App\Enums\WorkflowTypeEnum;
 use App\Jobs\NotifyHighRiskScoreBirdJob;
-use App\Models\ApplicationStorage;
-use App\Services\BirdService;
-use Tests\Helpers\TestSchemaCreator;
+use App\Services\EmailServices\WebEngageService;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
 
-beforeEach(function () {
-    TestSchemaCreator::createMinimalSchema();
-    ApplicationStorage::withTrashed()->chunkById(100, function ($rows): void {
-        foreach ($rows as $row) {
-            $row->forceDelete();
-        }
-    });
-});
+test('sends WebEngage event with the payload and logs success when workflow responds 201', function () {
+    Log::spy();
 
-test('invokes bird webhook when workflow url is stored', function () {
-    ApplicationStorage::factory()
-        ->birdHighRiskAmlScoreNotificationWorkflow()
-        ->createOne();
+    $toRecipient = fake()->unique()->safeEmail();
 
     $payload = [
         'refId' => 'HEA-1',
         'scoreProfile' => 'individual',
-        'customerEmail' => null,
-        'customerName' => null,
+        'customerId' => $toRecipient,
+        'customerEmail' => $toRecipient,
+        'firstName' => fake()->firstName(),
+        'lastName' => fake()->lastName(),
+        'customerMobile' => fake()->e164PhoneNumber(),
         'riskScoreDoc' => null,
         'riskScore' => 40,
+        'ccRecipient' => fake()->unique()->safeEmail(),
     ];
 
-    $bird = $this->mock(BirdService::class, function ($mock) use ($payload) {
-        $mock->shouldReceive('triggerWebHookRequest')
+    $webEngageService = $this->mock(WebEngageService::class, function ($mock) use ($payload) {
+        $mock->shouldReceive('sendEvent')
             ->once()
-            ->with('https://bird.example/flow', $payload)
-            ->andReturn((object) ['status_code' => 200, 'body' => '', 'headers' => []]);
+            ->with(WorkflowTypeEnum::HIGH_RISK_NOTIFICATION, $payload)
+            ->andReturn((object) ['status_code' => Response::HTTP_CREATED, 'body' => [], 'headers' => []]);
     });
 
     $job = new NotifyHighRiskScoreBirdJob($payload);
-    $job->handle($bird);
+    $job->handle($webEngageService);
+
+    Log::shouldHaveReceived('info')->once();
+    Log::shouldNotHaveReceived('warning');
 });
 
-test('throws when bird returns non-200 so the queue can retry', function () {
-    ApplicationStorage::factory()
-        ->birdHighRiskAmlScoreNotificationWorkflow()
-        ->createOne();
+test('logs a warning when WebEngage workflow does not respond 201', function () {
+    Log::spy();
 
     $payload = [
         'refId' => 'C1',
         'scoreProfile' => 'individual',
-        'customerEmail' => null,
-        'customerName' => null,
-        'riskScoreDoc' => null,
+        'customerId' => fake()->unique()->safeEmail(),
         'riskScore' => 40,
     ];
 
-    $bird = $this->mock(BirdService::class, function ($mock) use ($payload) {
-        $mock->shouldReceive('triggerWebHookRequest')
+    $webEngageService = $this->mock(WebEngageService::class, function ($mock) {
+        $mock->shouldReceive('sendEvent')
             ->once()
-            ->with('https://bird.example/flow', $payload)
-            ->andReturn((object) ['status_code' => 503, 'body' => 'upstream', 'headers' => []]);
+            ->andReturn((object) ['status_code' => 500, 'body' => [], 'headers' => []]);
     });
 
     $job = new NotifyHighRiskScoreBirdJob($payload);
+    $job->handle($webEngageService);
 
-    $job->handle($bird);
-})->throws(HighRiskBirdNotificationFailedException::class);
+    Log::shouldHaveReceived('warning')->once();
+});
 
-test('skips bird when workflow url missing', function () {
-    $bird = $this->mock(BirdService::class, function ($mock) {
-        $mock->shouldNotReceive('triggerWebHookRequest');
-    });
+test('logs a warning with exception context when the job fails after retries', function () {
+    Log::spy();
 
-    $job = new NotifyHighRiskScoreBirdJob([
-        'refId' => 'x',
-        'scoreProfile' => 'individual',
-        'customerEmail' => null,
-        'customerName' => null,
-        'riskScoreDoc' => null,
-        'riskScore' => 40,
-    ]);
-    $job->handle($bird);
+    $job = new NotifyHighRiskScoreBirdJob(['refId' => 'C1', 'riskScore' => 40]);
+
+    $job->failed(new Exception('boom'));
+
+    Log::shouldHaveReceived('warning')->once();
 });

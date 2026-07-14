@@ -31,7 +31,7 @@ class RenewalsUploadRequest extends FormRequest
             'lob' => 'nullable',
         ];
 
-        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && ! in_array(request()->lob, [QuoteTypeShortCode::HEA, QuoteTypeShortCode::HOM])) {
+        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && ! in_array(request()->lob, [QuoteTypeShortCode::HEA, QuoteTypeShortCode::HOM, QuoteTypeShortCode::OTH_NON_MOTOR])) {
             $rules['skip_plans'] = 'required';
             $rules['is_sic'] = 'required';
         }

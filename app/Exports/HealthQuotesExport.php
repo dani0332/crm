@@ -54,6 +54,7 @@ class HealthQuotesExport implements CsvExportableInterface
             'IS AGE 60 AND ABOVE',
             'LEAD STATUS',
             'PRE-QUALIFICATION ADVISOR',
+            'PQA QUALIFIED',
             'ADVISOR',
             'UNASSIGNED',
             'OE/AE',
@@ -98,6 +99,8 @@ class HealthQuotesExport implements CsvExportableInterface
             'IMCRM SUB-SOURCE',
             'Signatory',
             'UAE PASS API Status',
+            'EA MODEL',
+            'LEAD GENERATOR',
         ];
     }
 
@@ -114,6 +117,7 @@ class HealthQuotesExport implements CsvExportableInterface
             $this->hasMemberAgeSixtyOrAbove($quote) ? 'Yes' : 'No',
             $quote->quoteStatus?->text,
             $quote->preQualificationAdvisor?->name,
+            $this->healthQuoteService->isPQAQualified($quote->id, $quote->pq_advisor_id) === 1 ? 'Yes' : 'No',
             $quote->advisor?->name,
             $quote->advisor_id ? 'No' : 'Yes',
             $quote->supportUser?->name ?? '',
@@ -158,6 +162,8 @@ class HealthQuotesExport implements CsvExportableInterface
             $quote->subSource?->text,
             HealthQuoteDigitalSignatory::displayLabel($quote->digital_signatory),
             HealthQuoteUaePassApiStatus::displayLabel($quote->uae_pass_api_status),
+            $quote->ea_model?->value ?? '',
+            $quote->leadGenerator?->name ?? '',
         ];
     }
 

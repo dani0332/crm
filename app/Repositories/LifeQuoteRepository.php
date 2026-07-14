@@ -168,7 +168,9 @@ class LifeQuoteRepository extends BaseRepository
             'customer',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
-            }])
+            },
+            'leadGenerator:id,name',
+        ])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
@@ -184,6 +186,8 @@ class LifeQuoteRepository extends BaseRepository
             ->filterBySegment('life_quote_request')
             ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->select([
                 '*',
                 DB::raw('
@@ -210,14 +214,14 @@ class LifeQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->with(['advisor', 'quoteStatus', 'nationality', 'customer'])
-            ->filter()
+            ->filter(paginate: false)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
     }
 
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuote.previousAdvisor', 'lifeQuote.lifeQuoteRequestDetail.lostReason',
+        $quote = $this->where($column, $value)->with(['previousQuote:id,uuid,code', 'advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuote.lifeQuoteRequestDetail.lostReason',
             'lifeQuote.purposeOfInsurance', 'lifeQuote.children', 'lifeQuote.currency', 'lifeQuote.insuranceTenure', 'lifeQuote.numberOfYears', 'lifeQuote.maritalStatus',
             'lifeQuote.paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
             'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod',
@@ -241,7 +245,6 @@ class LifeQuoteRepository extends BaseRepository
                     'purposeOfInsurance',
                     'insuranceTenure',
                     'numberOfYears',
-                    'previousAdvisor',
                 ]);
             },
             'quoteDetail.lostReason:id,text',
@@ -281,7 +284,7 @@ class LifeQuoteRepository extends BaseRepository
         $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;

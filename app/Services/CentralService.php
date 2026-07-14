@@ -67,7 +67,6 @@ use App\Models\QuoteExportLog;
 use App\Models\QuoteFlowDetails;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
-use App\Models\RenewalBatch;
 use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
@@ -76,6 +75,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\CQF\NonMotor\BaseCQFQuoteMappingService;
 use App\Services\EmailServices\WebEngageService;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
@@ -1353,8 +1353,10 @@ class CentralService extends BaseService
         // Update status qualified or business and coument type census list
         if ($type === QuoteTypes::BUSINESS->value && $documentTypeCode === 'GM_CL') {
             LoggerService::info("Quote Code: {$quoteCode} - Sending qualify group medical request to CAPI");
+
             $response = Capi::request('/api/v1-qualify-group-medical-quote?lang=en', 'post', [
                 'quoteUID' => $quote->uuid,
+                'userId' => auth()->id(),
             ]);
             LoggerService::info("Quote Code: {$quoteCode} - CAPI qualify group medical response: ".json_encode($response));
         }
@@ -2711,6 +2713,7 @@ class CentralService extends BaseService
             'previous_policy_start_date' => 'previous_policy_start_date',
             'previous_quote_policy_number' => 'previous_quote_policy_number',
             'previous_quote_policy_premium' => 'previous_quote_policy_premium',
+            'previous_quote_policy_commission' => 'previous_quote_policy_commission',
             'previous_advisor_id' => 'previous_advisor_id',
         ];
 
@@ -2720,13 +2723,13 @@ class CentralService extends BaseService
             ->mapWithKeys(fn ($column, $field) => [$column => $request->input($field)])
             ->toArray();
 
-        // Auto-update renewal batch for non-motor LOBs based on expiry date
+        // Auto-update renewal batch for non-motor LOBs based on expiry date using the same
+        // ISO-week name lookup used at CQF creation time (BaseCQFQuoteMappingService::getRenewalBatchIdForDate).
+        // Always write the result (including null) so a stale batch is cleared when no batch
+        // exists for the new expiry date yet.
         if ($request->filled('previous_policy_expiry_date') && $this->isNonMotorQuoteType($request->model_type)) {
-            $renewalBatch = $this->findRenewalBatchByExpiryDate($request->previous_policy_expiry_date);
-            if ($renewalBatch) {
-                $updateData['renewal_batch_id'] = $renewalBatch->id;
-                $updateData['renewal_batch'] = $renewalBatch->name;
-            }
+            $updateData['renewal_batch_id'] = BaseCQFQuoteMappingService::getRenewalBatchIdForDate($request->previous_policy_expiry_date);
+            $updateData['renewal_batch'] = null; // non-motor displays via renewalBatchModel relation; clear legacy text value
         }
 
         // Update the quote with all provided fields
@@ -2745,19 +2748,6 @@ class CentralService extends BaseService
         $nonMotorTypes = ['health', 'travel', 'life', 'home', 'pet', 'bike', 'yacht', 'cycle', 'jetski', 'business', 'savings'];
 
         return in_array(strtolower($quoteType), $nonMotorTypes);
-    }
-
-    /**
-     * Find renewal batch by expiry date for non-motor LOBs
-     */
-    private function findRenewalBatchByExpiryDate(string $expiryDate): ?RenewalBatch
-    {
-        $expiryDate = Carbon::parse($expiryDate);
-
-        return RenewalBatch::whereNull('quote_type_id') // Non-motor batches
-            ->where('start_date', '<=', $expiryDate)
-            ->where('end_date', '>=', $expiryDate)
-            ->first();
     }
 
     private function prepareLifeQuoteDuplicateData($parentRecord): array

@@ -41,8 +41,8 @@ class BusinessQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance', 'subSource']
+        return $this->filter(paginate: false)->with(
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance', 'subSource', 'previousAdvisor', 'personalQuote.currentlyInsuredWith']
         )->orderBy('created_at', 'desc');
     }
 
@@ -68,6 +68,7 @@ class BusinessQuoteRepository extends BaseRepository
             'businessTypeOfInsurance',
             'subSource',
             'branch:id,name',
+            'leadGenerator:id,name',
         ];
         if ($quoteType == quoteTypeCode::GroupMedical) {
             $with[] = 'emirate';
@@ -155,6 +156,8 @@ class BusinessQuoteRepository extends BaseRepository
     {
         $quote = $this->where($queryWhere)
             ->with([
+                'previousQuote:id,uuid,code',
+                'renewalBatchModel',
                 'advisor',
                 'preQualificationAdvisor',
                 'advisor.primaryBranch',
@@ -185,6 +188,7 @@ class BusinessQuoteRepository extends BaseRepository
                 'nationality',
                 'branch:id,name',
                 'emirate:id,text',
+                'personalQuote.currentlyInsuredWith:id,text',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -210,7 +214,7 @@ class BusinessQuoteRepository extends BaseRepository
     public function fetchGetDataOfBusiness()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance', 'customer'])->orderBy('created_at', 'desc')->Paginate();
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance', 'customer', 'personalQuote.currentlyInsuredWith'])->orderBy('created_at', 'desc')->Paginate();
     }
 
 }

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Enums\EnvEnum;
 use App\Http\Middleware\ActivityLogBatchMiddleware;
 use App\Http\Middleware\LogMiddleware;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -48,6 +49,12 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware(['web', LogMiddleware::class, ActivityLogBatchMiddleware::class])
                 ->namespace($this->namespace)
                 ->group(base_path('routes/web.php'));
+
+            if (! in_array(app()->environment(), [EnvEnum::PRODUCTION, EnvEnum::STAGING])) {
+                Route::middleware(['web', LogMiddleware::class, ActivityLogBatchMiddleware::class])
+                    ->namespace($this->namespace)
+                    ->group(base_path('routes/dev-v2.php'));
+            }
         });
     }
 

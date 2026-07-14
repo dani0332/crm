@@ -21,6 +21,7 @@ class RolePermissionSeeder extends Seeder
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
         $this->addRetryPrePaymentPermission();
         $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
+        $this->addEmbeddedProductSyncEpBookingPermission();
         // $this->paymentsVoid();
         // $this->addBridgerSkipPermission();
         $this->addBridgerSkipPermission();
@@ -29,6 +30,7 @@ class RolePermissionSeeder extends Seeder
         $this->addInsurerPaymentLinkPermission();
         $this->sendUpdateCancelPermission();
         $this->addRenewalsUploadPermission();
+        $this->addRenewalsRetriggerPermission();
         // $this->addPolicyDetailsAddVatPermission();
         $this->addNationalityAllocationConfigPermission();
         $this->addBorDocumentUploadPermission();
@@ -156,6 +158,24 @@ class RolePermissionSeeder extends Seeder
         }
     }
 
+    private function addEmbeddedProductSyncEpBookingPermission(): void
+    {
+        $roles = Role::whereIn('name', [RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])->get();
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::EMBEDDED_PRODUCT_SYNC_EP_BOOKING,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
+        }
+    }
+
     private function paymentsVoid(): void
     {
         $permission = Permission::findOrCreate(PermissionsEnum::PAYMENTS_VOID, 'web');
@@ -267,6 +287,22 @@ class RolePermissionSeeder extends Seeder
             'name' => PermissionsEnum::RENEWALS_BATCHES_NONMOTOR,
             'guard_name' => 'web',
         ]);
+    }
+
+    private function addRenewalsRetriggerPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::RENEWALS_RETRIGGER,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $adminRole = Role::where('name', RolesEnum::Admin)->first();
+        if ($adminRole && ! $adminRole->hasPermissionTo($permission)) {
+            $adminRole->givePermissionTo($permission);
+        }
     }
 
     private function addNationalityAllocationConfigPermission(): void

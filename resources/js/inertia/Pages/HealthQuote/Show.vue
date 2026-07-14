@@ -90,8 +90,13 @@ const props = defineProps({
   policyHolderOptions: Array,
   maritalStatusOptions: Array,
   emirateEnum: Object,
+  pqaQualified: Number,
 });
 const modelClass = 'App\\Models\\HealthQuote';
+
+const pqaQualifiedFormatted = computed(() =>
+  props.pqaQualified === 0 ? 'No' : 'Yes',
+);
 
 const isManualPlansCount = ref(0);
 
@@ -496,10 +501,14 @@ const onTeamAssign = () => {
         isDisabled.value = true;
       },
       onSuccess: () => {
-        notification.success({
-          title: 'Team Assigned',
-          position: 'top',
-        });
+        if (page.props.flash?.success) {
+          notification.success({
+            title: 'Team Assigned',
+            position: 'top',
+          });
+        } else {
+          assignSubteam.value = page.props.quote.health_team_type || '';
+        }
       },
       onFinish: () => {
         isDisabled.value = false;
@@ -2393,12 +2402,9 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
                 <dt class="font-medium">ADDITIONAL NOTES</dt>
                 <dd>{{ quote.additional_notes }}</dd>
               </div>
-              <div
-                class="grid sm:grid-cols-2"
-                v-if="can(permissionEnum.VIEW_PCP)"
-              >
-                <dt class="font-medium">PC-Qualified</dt>
-                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PQA Qualified</dt>
+                <dd>{{ pqaQualifiedFormatted }}</dd>
               </div>
             </dl>
           </div>
@@ -3239,6 +3245,30 @@ const isRevival = page.props.quote.source == leadSource.REVIVAL;
           </div>
         </template>
       </Collapsible>
+
+      <EALeadInfo
+        :source="quote.source"
+        :ea-model="quote.ea_model"
+        :lead-generator="quote.lead_generator"
+        :expert-advisor="quote.expert_advisor"
+      />
+
+      <EAApprovalActions
+        quote-type="health"
+        :quote-id="quote.id"
+        :source="quote.source"
+        :ea-model="quote.ea_model"
+        :quote-status-id="quote.quote_status_id"
+        :advisor-id="quote.advisor_id"
+        :expert-advisor-id="quote.expert_advisor_id"
+        :ea-assigned-advisor-approved-at="quote.ea_assigned_advisor_approved_at"
+        :ea-expert-advisor-approved-at="quote.ea_expert_advisor_approved_at"
+        :ea-assigned-advisor-rejected-at="quote.ea_assigned_advisor_rejected_at"
+        :ea-expert-advisor-rejected-at="quote.ea_expert_advisor_rejected_at"
+        :ea-manager-approved-at="quote.ea_manager_approved_at"
+        :ea-manager-rejected-at="quote.ea_manager_rejected_at"
+        @updated="$inertia.reload({ only: ['quote'] })"
+      />
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">

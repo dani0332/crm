@@ -561,6 +561,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
 
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CURRENTLY INSURED WITH</dt>
+                <dd>{{ quote?.currently_insured_with?.text }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
               </div>
@@ -1069,6 +1074,32 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
       :expanded="sectionExpanded"
+    />
+
+    <EALeadInfo
+      :source="quote.source"
+      :ea-model="quote.ea_model"
+      :lead-generator="quote.lead_generator"
+      :expert-advisor="quote.expert_advisor"
+      :ea-manager-approved-at="quote.ea_manager_approved_at"
+      :ea-manager-rejected-at="quote.ea_manager_rejected_at"
+    />
+
+    <EAApprovalActions
+      quote-type="cycle"
+      :quote-id="quote.id"
+      :source="quote.source"
+      :ea-model="quote.ea_model"
+      :quote-status-id="quote.quote_status_id"
+      :advisor-id="quote.advisor_id"
+      :expert-advisor-id="quote.expert_advisor_id"
+      :ea-assigned-advisor-approved-at="quote.ea_assigned_advisor_approved_at"
+      :ea-expert-advisor-approved-at="quote.ea_expert_advisor_approved_at"
+      :ea-assigned-advisor-rejected-at="quote.ea_assigned_advisor_rejected_at"
+      :ea-expert-advisor-rejected-at="quote.ea_expert_advisor_rejected_at"
+      :ea-manager-approved-at="quote.ea_manager_approved_at"
+      :ea-manager-rejected-at="quote.ea_manager_rejected_at"
+      @updated="$inertia.reload({ only: ['quote'] })"
     />
 
     <PlanDetails

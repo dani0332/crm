@@ -1,0 +1,73 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Enums\QuoteTypes;
+use App\Jobs\CQF\ProcessNonMotorCQFLOBJob;
+use App\Services\CQF\NonMotor\NonMotorCQFRegistry;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Log;
+
+test('has correct job configuration', function () {
+    $job = new ProcessNonMotorCQFLOBJob(
+        renewalsUploadLeadsId: 10,
+        quoteType: QuoteTypes::BIKE,
+        startDate: '2026-05-20',
+        renewalDaysThreshold: 30,
+    );
+
+    expect($job->tries)->toBe(3)
+        ->and($job->timeout)->toBe(60)
+        ->and($job->uniqueFor)->toBe(600)
+        ->and($job->queue)->toBe('default'); // set via onQueue('default') in constructor
+});
+
+test('implements ShouldBeUnique with correct uniqueId', function () {
+    $job = new ProcessNonMotorCQFLOBJob(
+        renewalsUploadLeadsId: 42,
+        quoteType: QuoteTypes::BIKE,
+        startDate: '2026-05-20',
+        renewalDaysThreshold: 30,
+    );
+
+    expect($job)->toBeInstanceOf(ShouldBeUnique::class)
+        ->and($job->uniqueId())->toBe('42-Bike');
+});
+
+test('failed() logs error with expected context', function () {
+    Log::spy();
+
+    $job = new ProcessNonMotorCQFLOBJob(
+        renewalsUploadLeadsId: 99,
+        quoteType: QuoteTypes::PET,
+        startDate: '2026-05-20',
+        renewalDaysThreshold: 30,
+    );
+
+    $job->failed(new RuntimeException('test error'));
+
+    Log::shouldHaveReceived('error')
+        ->once()
+        ->withArgs(fn (string $message): bool => str_contains($message, 'Job failed'));
+});
+
+test('handle() dispatches nothing when LOB is not registered', function () {
+    Bus::fake();
+
+    $registry = Mockery::mock(NonMotorCQFRegistry::class);
+    $registry->shouldReceive('hasLOB')
+        ->with(QuoteTypes::BIKE)
+        ->andReturn(false);
+
+    $job = new ProcessNonMotorCQFLOBJob(
+        renewalsUploadLeadsId: 1,
+        quoteType: QuoteTypes::BIKE,
+        startDate: '2026-01-01',
+        renewalDaysThreshold: 30,
+    );
+
+    $job->handle($registry);
+
+    Bus::assertNothingDispatched();
+});

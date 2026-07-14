@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Models\DocumentType;
+use App\Models\EmbeddedProduct;
+use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\QuoteDocument;
 use App\Services\EpBookingService;
@@ -127,6 +129,63 @@ test('duplicate invoice handling returns false when invoice number already has p
 
     $transaction->refresh();
     expect($transaction->tax_invoice_no)->toBe('INV-001/1'); // unchanged
+});
+
+test('endsWith match updates invoice number for MDX product', function () {
+    $embeddedProduct = EmbeddedProduct::factory()->mdx()->create();
+    $productOption = EmbeddedProductOption::factory()->forEmbeddedProduct($embeddedProduct->id)->create();
+
+    $transaction = EmbeddedTransaction::factory()->forProduct($productOption->id)->createOneQuietly([
+        'code' => 'ET-MDXTEST01',
+        'tax_invoice_no' => 'INV-001',
+        'tax_invoice_buyer_no' => 'INV-002',
+    ]);
+
+    $result = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($transaction, '001');
+
+    expect($result)->toBeTrue();
+
+    $transaction->refresh();
+    expect($transaction->tax_invoice_no)->toBe('INV-001/1');
+    expect($transaction->tax_invoice_buyer_no)->toBe('INV-002');
+});
+
+test('endsWith match updates buyer invoice number for RDX product', function () {
+    $embeddedProduct = EmbeddedProduct::factory()->rdx()->create();
+    $productOption = EmbeddedProductOption::factory()->forEmbeddedProduct($embeddedProduct->id)->create();
+
+    $transaction = EmbeddedTransaction::factory()->forProduct($productOption->id)->createOneQuietly([
+        'code' => 'ET-RDXTEST01',
+        'tax_invoice_no' => 'INV-001',
+        'tax_invoice_buyer_no' => 'INV-002',
+    ]);
+
+    $result = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($transaction, '002');
+
+    expect($result)->toBeTrue();
+
+    $transaction->refresh();
+    expect($transaction->tax_invoice_no)->toBe('INV-001');
+    expect($transaction->tax_invoice_buyer_no)->toBe('INV-002/1');
+});
+
+test('endsWith match is skipped for non-MDX non-RDX products', function () {
+    $embeddedProduct = EmbeddedProduct::factory()->ecb()->create();
+    $productOption = EmbeddedProductOption::factory()->forEmbeddedProduct($embeddedProduct->id)->create();
+
+    $transaction = EmbeddedTransaction::factory()->forProduct($productOption->id)->createOneQuietly([
+        'code' => 'ET-ECBTEST01',
+        'tax_invoice_no' => 'INV-001',
+        'tax_invoice_buyer_no' => 'INV-002',
+    ]);
+
+    $result = EpBookingService::updateInsurerRequestResponseDocumentNumberForSageBooking($transaction, '001');
+
+    expect($result)->toBeFalse();
+
+    $transaction->refresh();
+    expect($transaction->tax_invoice_no)->toBe('INV-001');
+    expect($transaction->tax_invoice_buyer_no)->toBe('INV-002');
 });
 
 test('sage document number postfix increments between duplicate retries', function (mixed $documentNumber, mixed $expected): void {

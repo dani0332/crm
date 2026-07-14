@@ -41,6 +41,7 @@ use App\Services\BranchAssignmentService;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\EACollaborateHelper;
 use App\Services\KenService;
 use App\Services\LifeRevivalService;
 use App\Services\Logger\LoggerService;
@@ -122,6 +123,7 @@ class LifeQuoteService extends BaseService
             'paymentStatus',
             'payments',
             'subSource:id,text',
+            'leadGenerator:id,name',
             'lifeQuote' => function ($q) {
                 $q->with([
                     'insuranceTenure',
@@ -222,6 +224,7 @@ class LifeQuoteService extends BaseService
             )
             ->filterBySegment(request()->input('segment_filter'), QuoteTypeId::Life)
             ->filter(! $isExportRequest, $isTotalLeadCountRequest)
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->withFakeLeadCriteria($isTotalLeadCountRequest);
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
@@ -344,7 +347,36 @@ class LifeQuoteService extends BaseService
             'notes' => $data['notes'] ?? null,
         ]);
 
-        return CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
+        EACollaborateHelper::applyEAIMCRMSource($lifeQuote);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('LifeQuoteService: CAPI payload for EA lead', [
+                'ea_model' => $lifeQuote['eaModel'] ?? request()->input('ea_model'),
+                'source' => $lifeQuote['source'] ?? null,
+                'email' => $lifeQuote['email'] ?? null,
+                'lead_generator_id' => $lifeQuote['leadGeneratorId'] ?? null,
+                'advisor_id' => $lifeQuote['advisorId'] ?? null,
+            ]);
+        }
+
+        $response = CapiRequestService::sendCAPIRequest('/api/v2-save-life-quote', $lifeQuote);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('LifeQuoteService: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $eaQuote = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'life');
+                }
+            }
+        }
+
+        return $response;
     }
 
     public function getPlainQuoteBy($column, $value)
@@ -373,7 +405,7 @@ class LifeQuoteService extends BaseService
                     ]);
                 },
                 'quoteDetail.lostReason:id,text',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'paymentStatus',
                 'customer.additionalContactInfo',
                 'transactionType',
@@ -406,6 +438,8 @@ class LifeQuoteService extends BaseService
                 'subSource',
                 'subSourceOption',
                 'branch:id,name',
+                'leadGenerator',
+                'expertAdvisor:id,name',
             ])
             ->select([
                 'personal_quotes.*',
@@ -423,7 +457,7 @@ class LifeQuoteService extends BaseService
 
         $data = ! empty($lifeQuote) ? $lifeQuote->toArray() : [];
         $lifeQuote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $lifeQuote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $lifeQuote->previous_advisor_id_text = $lifeQuote->previousAdvisor?->name;
         $lifeQuote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         $lifeQuote->branch_name = ! $lifeQuote->is_branch_applicable ? 'N/A' : ($lifeQuote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($lifeQuote->advisor?->primaryBranch?->branch_id, QuoteTypeId::Life));
 
@@ -881,7 +915,7 @@ class LifeQuoteService extends BaseService
     {
         return LifeRiderOption::active()
             ->where('plan_id', $planId)
-            ->select('id', 'rider_id', 'plan_id')
+            ->select('id', 'rider_id', 'plan_id', 'code')
             ->with(['currencyCoverages' => function ($query) {
                 $query->select('life_rider_option_id', 'min_cover', 'max_cover', 'currency_id');
             }])

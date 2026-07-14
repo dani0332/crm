@@ -169,9 +169,23 @@ function onSubmit(isValid) {
       ? route('life-quotes-update', props.quote.uuid)
       : route('life-quotes-store');
 
+    if (
+      !editMode.value &&
+      new URLSearchParams(window.location.search).get('ea_model') ===
+        'collaborate'
+    ) {
+      url += '?ea_model=collaborate';
+    }
+
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
       },
     });
   }

@@ -347,6 +347,18 @@ class BusinessQuoteController extends Controller
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Business));
+        // $record is a DB::table() stdClass — build relation-shaped arrays from the pre-joined columns.
+        $record->lead_generator = $record->lead_generator_id
+            ? ['id' => $record->lead_generator_id, 'name' => $record->lead_generator_name, 'email' => $record->lead_generator_email]
+            : null;
+        $record->expert_advisor = $record->expert_advisor_id
+            ? ['id' => $record->expert_advisor_id, 'name' => $record->expert_advisor_name]
+            : null;
+
+        // $record is a DB::table() stdClass — Eloquent relations can't be used; manual lookup is intentional.
+        $record->previous_quote = $record->previous_quote_id
+            ? BusinessQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
+            : null;
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),

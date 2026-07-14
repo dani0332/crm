@@ -34,6 +34,7 @@ use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\EACollaborateHelper;
 use App\Services\EmailStatusService;
 use App\Services\HomeQuoteService;
 use App\Services\HomeRevivalService;
@@ -66,9 +67,10 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'customer']
-        )->orderBy('created_at', 'desc');
+        return $this->byQuoteTypeCode(QuoteTypes::HOME)
+            ->filter(paginate: false)
+            ->with(['advisor', 'nationality', 'currentlyInsuredWith', 'insuranceProvider', 'customer', 'previousAdvisor'])
+            ->orderBy('created_at', 'desc');
     }
 
     public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false, $requestParams = [])
@@ -81,6 +83,7 @@ class HomeQuoteRepository extends BaseRepository
             'previous_quote_policy_number',
             'payment_due_date',
             'booking_date',
+            'previous_policy_expiry_date_start',
         ];
 
         if (! Auth::check()) {
@@ -147,13 +150,15 @@ class HomeQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->filterByPrivateClient(request('private_client'))
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('personal_quotes.created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
                 fn ($query) => $query->when($forExport, fn ($query) => $query, function ($query) {
-                    return $query->simplePaginate()->withQueryString();
+                    return $query->paginate()->withQueryString();
                 })
             );
 
@@ -237,6 +242,7 @@ class HomeQuoteRepository extends BaseRepository
             'advisor',
             'advisor.primaryBranch.branch:id,name',
             'nationality',
+            'currentlyInsuredWith',
             'insuranceProviderPlan',
             'homeQuote',
             'homeQuote.homeQuoteRequestDetail',
@@ -264,6 +270,8 @@ class HomeQuoteRepository extends BaseRepository
             'customer',
             'renewalBatchModel',
             'branch:id,name',
+            'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ];
     }
 
@@ -339,7 +347,36 @@ class HomeQuoteRepository extends BaseRepository
 
         $quoteData = $baseQuoteData;
 
+        EACollaborateHelper::applyEAIMCRMSource($quoteData);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('HomeQuoteRepository: CAPI payload for EA lead', [
+                'ea_model' => $quoteData['eaModel'] ?? request()->input('ea_model'),
+                'source' => $quoteData['source'] ?? null,
+                'email' => $quoteData['email'] ?? null,
+                'lead_generator_id' => $quoteData['leadGeneratorId'] ?? null,
+                'advisor_id' => $quoteData['advisorId'] ?? null,
+                'quote_type_id' => $quoteData['quoteTypeId'] ?? null,
+            ]);
+        }
+
         $response = Capi::request('/api/v2-save-home-quote', 'post', $quoteData);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('HomeQuoteRepository: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $eaQuote = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'home');
+                }
+            }
+        }
 
         try {
             if (isset($response->quoteUID)) {
@@ -830,10 +867,11 @@ class HomeQuoteRepository extends BaseRepository
         $response = $this->byQuoteTypeId(QuoteTypes::HOME->id())
             ->where($columnUUID, $uuid)
             ->with([
+                'previousQuote:id,uuid,code',
                 'insuranceProvider',
                 'insuranceProviderPlan',
                 'quoteDetail.lostReason',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'quoteStatus',
                 'advisor',
                 'advisor.primaryBranch.branch:id,name',
@@ -882,6 +920,9 @@ class HomeQuoteRepository extends BaseRepository
                 'subSource',
                 'subSourceOption',
                 'branch:id,name',
+                'currentlyInsuredWith:id,text',
+                'leadGenerator:id,name,email',
+                'expertAdvisor:id,name',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -912,13 +953,14 @@ class HomeQuoteRepository extends BaseRepository
 
         // Use null coalescing for safely accessing possibly undefined array keys
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         // Check if payments property exists before using it
         if ($quote->payments && $quote->payments->isNotEmpty()) {
             $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
         }
+
     }
 
     private function appendExternalData($quote)

@@ -253,6 +253,7 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
     public const RENEWAL_UPLOAD_NONMOTOR = 'renewal-upload-nonmotor';
     public const RENEWALS_BATCHES_NONMOTOR = 'renewals-batches-nonmotor';
+    public const RENEWALS_RETRIGGER = 'renewals-retrigger';
     public const REVIVAL_CONVERSION_REPORT_VIEW = 'revival-conversion-report-view';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
     public const EMBEDDED_PRODUCT_VIEW = 'embedded-product-view';
@@ -261,6 +262,7 @@ final class PermissionsEnum extends Enum
     public const EMBEDDED_PRODUCT_PAYMENT_VOID = 'embedded-product-payment-void';
     public const EMBEDDED_PRODUCT_MANUAL_OVERRIDE = 'embedded-product-manual-override';
     public const EP_DOCUMENT_MANUAL_OVERRIDE = 'update-ep-document-manual-override';
+    public const EMBEDDED_PRODUCT_SYNC_EP_BOOKING = 'embedded-product-sync-ep-booking';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
@@ -568,6 +570,7 @@ final class PermissionsEnum extends Enum
     // Expert Advisory Model Permissions
     public const EaCollaborate = 'ea-collaborate';
     public const AssignedExpertAdvisor = 'assigned-expert-advisor';
+    public const AssignedReferralAdvisor = 'assigned-referral-advisor';
     public const VIEW_UTM_SECTION = 'view-utm-section';
 
     // Home Revivals Permissions

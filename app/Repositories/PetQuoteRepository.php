@@ -15,6 +15,7 @@ use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Services\BranchAssignmentService;
+use App\Services\EACollaborateHelper;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -75,10 +76,33 @@ class PetQuoteRepository extends BaseRepository
             'additionalNotes' => $request['notes'] ?? null,
         ];
 
+        EACollaborateHelper::applyEAIMCRMSource($dataArr);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('PetQuoteRepository: CAPI payload for EA lead', [
+                'ea_model' => $dataArr['eaModel'] ?? request()->input('ea_model'),
+                'source' => $dataArr['source'] ?? null,
+                'email' => $dataArr['email'] ?? null,
+                'lead_generator_id' => $dataArr['leadGeneratorId'] ?? null,
+                'advisor_id' => $dataArr['advisorId'] ?? null,
+                'quote_type_id' => $dataArr['quoteTypeId'] ?? null,
+            ]);
+        }
+
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('PetQuoteRepository: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+        }
 
         if (isset($response->quoteUID)) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $response->quoteUID)->firstOrFail();
+            EACollaborateHelper::dispatchLeadSubmittedEmail($quote, 'pet');
         }
 
         return $response;
@@ -142,6 +166,7 @@ class PetQuoteRepository extends BaseRepository
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
             'paymentStatus',
             'payments',
+            'nationality',
             'renewalBatchModel',
             'subSource',
             'latestInsured' => function ($q) {
@@ -150,6 +175,8 @@ class PetQuoteRepository extends BaseRepository
             'quoteDetail',
             'customer',
             'branch:id,name',
+            'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
@@ -173,6 +200,8 @@ class PetQuoteRepository extends BaseRepository
             ->filter(! $forExport, $forTotalLeadsCount)
             ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->select([
                 '*',
                 DB::raw('
@@ -222,7 +251,7 @@ class PetQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        $result = ($forExport) ? $query : $query->simplePaginate()->withQueryString();
+        $result = ($forExport) ? $query : $query->paginate()->withQueryString();
         if (! $forTotalLeadsCount && ! $forExport) {
             $this->postProcessPetQuote($result);
         }
@@ -275,6 +304,7 @@ class PetQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
             ->with([
+                'previousQuote:id,uuid,code',
                 'petQuote.accomodationType:id,text',
                 'petQuote.possessionType:id,text',
                 'petQuote.petAge:id,text',
@@ -284,7 +314,7 @@ class PetQuoteRepository extends BaseRepository
                 'advisor.primaryBranch',
                 'nationality',
                 'quoteDetail.lostReason',
-                'quoteDetail.previousAdvisor',
+                'previousAdvisor',
                 'transactionType',
                 'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
@@ -313,6 +343,7 @@ class PetQuoteRepository extends BaseRepository
                 'updatedBy',
                 'customer.additionalContactInfo',
                 'insuranceProvider',
+                'currentlyInsuredWith:id,text',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
@@ -321,6 +352,7 @@ class PetQuoteRepository extends BaseRepository
                 },
                 'quoteDetail',
                 'subSource', 'subSourceOption',
+                'renewalBatchModel',
                 'branch:id,name',
             ])
             ->select([
@@ -337,7 +369,7 @@ class PetQuoteRepository extends BaseRepository
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $quote->previousAdvisor?->name;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latest_insured'])) {
             $quote->emirates_id_number = $data['latest_insured']['id_type'] == 'emiratesId' ? $data['latest_insured']['id_number'] : null;
@@ -372,8 +404,9 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchExport()
     {
-        return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider', 'quoteDetail', 'customer']
-        )->orderBy('created_at', 'desc');
+        return $this->byQuoteTypeCode(QuoteTypes::PET)
+            ->filter(paginate: false)
+            ->with(['advisor', 'nationality', 'currentlyInsuredWith', 'insuranceProvider', 'quoteDetail', 'customer'])
+            ->orderBy('created_at', 'desc');
     }
 }

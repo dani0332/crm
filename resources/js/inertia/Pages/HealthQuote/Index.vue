@@ -145,6 +145,11 @@ const tableHeader = ref([
     value: 'pre_qualification_advisor',
     is_active: true,
   },
+  {
+    text: 'PQA Qualified',
+    value: 'pqa_qualified',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor.name', is_active: true },
   { text: 'UNASSIGNED', value: 'unassigned', is_active: true },
   { text: 'OE/AE', value: 'support_user.name', is_active: true },
@@ -242,6 +247,8 @@ const tableHeader = ref([
     value: 'uae_pass_api_status_text',
     is_active: true,
   },
+  { text: 'EA MODEL', value: 'ea_model', is_active: true },
+  { text: 'LEAD GENERATOR', value: 'lead_generator', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -300,7 +307,14 @@ const filters = reactive({
   authorize_date: '',
   captured_date: '',
   payment_status_id: [],
+  ea_model: null,
+  lead_generator: '',
 });
+
+const eaModelOptions = [
+  { value: 'referral', label: 'Referral' },
+  { value: 'collaborate', label: 'Collaborative' },
+];
 
 const canExport = ref(false);
 watch(
@@ -1404,6 +1418,21 @@ const paymentStatusOptions = computed(() => {
           class="w-full"
           :single="false"
         />
+        <x-select
+          v-model="filters.ea_model"
+          label="EA Model"
+          placeholder="All Models"
+          :options="eaModelOptions"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.lead_generator"
+          type="search"
+          name="lead_generator"
+          label="Lead Generator"
+          class="w-full"
+          placeholder="Search by lead generator name"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div>
@@ -1572,6 +1601,13 @@ const paymentStatusOptions = computed(() => {
           </x-tag>
         </div>
       </template>
+      <template #item-pqa_qualified="{ pqa_qualified }">
+        <div class="text-center">
+          <x-tag size="sm" :color="pqa_qualified ? 'success' : 'error'">
+            {{ pqa_qualified ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
       <template
         #item-previous_policy_expiry_date="{
           previous_policy_expiry_date,
@@ -1664,6 +1700,14 @@ const paymentStatusOptions = computed(() => {
       </template>
       <template #item-pre_qualification_advisor="{ pre_qualification_advisor }">
         <span>{{ pre_qualification_advisor?.name ?? '—' }}</span>
+      </template>
+
+      <template #item-ea_model="item">
+        <span class="capitalize">{{ item.ea_model }}</span>
+      </template>
+
+      <template #item-lead_generator="item">
+        {{ item.lead_generator?.name }}
       </template>
     </DataTable>
 

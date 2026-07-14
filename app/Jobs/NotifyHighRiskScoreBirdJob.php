@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Exceptions\HighRiskBirdNotificationFailedException;
-use App\Services\BirdService;
+use App\Enums\WorkflowTypeEnum;
+use App\Services\EmailServices\WebEngageService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,39 +31,18 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
      */
     public function __construct(private readonly array $payload) {}
 
-    public function handle(BirdService $birdService): void
+    public function handle(WebEngageService $webEngageService): void
     {
-        $birdUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_HIGH_RISK_AML_SCORE_NOTIFICATION_WORKFLOW_URL, false, true);
-        if ($birdUrl === false || $birdUrl === null || $birdUrl === '') {
-            LoggerService::warning('NotifyHighRiskScoreBirdJob: Bird workflow URL not configured — skipping', context: [
+        $response = $webEngageService->sendEvent(WorkflowTypeEnum::HIGH_RISK_NOTIFICATION, (array) $this->payload);
+
+        if ($response?->status_code !== Response::HTTP_CREATED) {
+            LoggerService::warning('NotifyHighRiskScoreBirdJob: WebEngage workflow failed', [
                 'quote_code' => $this->payload['refId'] ?? null,
                 'risk_score' => $this->payload['riskScore'] ?? null,
             ]);
-
-            return;
         }
 
-        $response = $birdService->triggerWebHookRequest($birdUrl, $this->payload);
-
-        if ($response?->status_code !== Response::HTTP_OK) {
-            $statusCode = $response?->status_code ?? 0;
-
-            LoggerService::error('NotifyHighRiskScoreBirdJob: Bird request did not return 200', context: [
-                'quote_code' => $this->payload['refId'] ?? null,
-                'risk_score' => $this->payload['riskScore'] ?? null,
-                'status_code' => $statusCode,
-                'body' => isset($response->body) ? (string) $response->body : null,
-            ]);
-
-            $exceptionCode = is_numeric($statusCode) ? (int) $statusCode : 0;
-
-            throw new HighRiskBirdNotificationFailedException(
-                'Bird high-risk AML workflow request did not return 200',
-                $exceptionCode
-            );
-        }
-
-        LoggerService::info('NotifyHighRiskScoreBirdJob: Bird workflow triggered', context: [
+        LoggerService::info('NotifyHighRiskScoreBirdJob: WebEngage workflow triggered', [
             'quote_code' => $this->payload['refId'] ?? null,
             'risk_score' => $this->payload['riskScore'] ?? null,
         ]);
@@ -72,7 +50,7 @@ class NotifyHighRiskScoreBirdJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        LoggerService::error(
+        LoggerService::warning(
             'NotifyHighRiskScoreBirdJob: job failed after retries',
             exception: $exception,
             context: [

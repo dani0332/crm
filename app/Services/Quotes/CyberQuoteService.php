@@ -20,6 +20,8 @@ use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\BranchAssignmentService;
 use App\Services\CustomerInsuredService;
+use App\Services\EACollaborateHelper;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
 use Illuminate\Http\Client\ConnectionException;
@@ -51,6 +53,8 @@ class CyberQuoteService extends BaseQuoteService
             'cyberQuote',
             'cyberQuote.coverage',
             'branch:id,name',
+            'leadGenerator:id,name',
+            'expertAdvisor:id,name',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
             ->withFakeLeadCriteria($getTotalCount)
@@ -66,6 +70,9 @@ class CyberQuoteService extends BaseQuoteService
             ->filterIn('insurer_aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->filterBy('source')
+            ->filterBy('ea_model')
+            ->filterByLeadGeneratorName(request('lead_generator'))
             ->when(request()->filled('api_issuance_status_id'), function ($q) {
                 $values = is_array(request('api_issuance_status_id'))
                     ? request('api_issuance_status_id')
@@ -131,14 +138,17 @@ class CyberQuoteService extends BaseQuoteService
             ->with('cyberQuote')
             ->when($allDetails, function ($q) {
                 $q->with([
+                    'previousQuote:id,uuid,code',
                     'quoteStatus',
                     'currentlyInsuredWith',
+                    'transactionType',
                     'advisor',
                     'advisor.primaryBranch',
                     'branch:id,name',
                     'paymentStatus',
                     'quoteDetail',
                     'quoteDetail.lostReason',
+                    'previousAdvisor',
                     'renewalBatchModel',
                     'nationality',
                     'customer',
@@ -174,6 +184,8 @@ class CyberQuoteService extends BaseQuoteService
                     'documents' => function ($q) {
                         $q->with('createdBy')->orderBy('created_at', 'desc');
                     },
+                    'leadGenerator',
+                    'expertAdvisor',
                 ]);
             })
             ->where('uuid', $uuid)->firstOrFail();
@@ -185,7 +197,7 @@ class CyberQuoteService extends BaseQuoteService
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->previous_advisor_id_text = $allDetails ? $quote->previousAdvisor?->name : null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
         if (isset($data['latestInsured'])) {
             $quote->emirates_id_number = $data['latestInsured']['id_type'] == 'emiratesId' ? $data['latestInsured']['id_number'] : null;
@@ -318,8 +330,36 @@ class CyberQuoteService extends BaseQuoteService
             'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
-        // Make API request to save the savings quote
+        EACollaborateHelper::applyEAIMCRMSource($data);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('CyberQuoteService: CAPI payload for EA lead', [
+                'ea_model' => $data['eaModel'] ?? request()->input('ea_model'),
+                'source' => $data['source'] ?? null,
+                'email' => $data['email'] ?? null,
+                'lead_generator_id' => $data['leadGeneratorId'] ?? null,
+                'advisor_id' => $data['advisorId'] ?? null,
+                'quote_type_id' => $data['quoteTypeId'] ?? null,
+            ]);
+        }
+
         $response = Capi::request('/api/cyber/create', 'post', $data);
+
+        if (request()->input('ea_model')) {
+            LoggerService::info('CyberQuoteService: CAPI response for EA lead', [
+                'ea_model' => request()->input('ea_model'),
+                'quote_uid' => $response->quoteUID ?? null,
+                'message' => $response->message ?? null,
+                'has_errors' => ! empty($response->errors),
+            ]);
+
+            if (isset($response->quoteUID)) {
+                $eaQuote = PersonalQuote::where('uuid', $response->quoteUID)->first();
+                if ($eaQuote) {
+                    EACollaborateHelper::dispatchLeadSubmittedEmail($eaQuote, 'cyber');
+                }
+            }
+        }
 
         if (isset($response->quoteUID)) {
             $this->selfAssign(QuoteTypes::CYBER, $response->quoteUID, true);

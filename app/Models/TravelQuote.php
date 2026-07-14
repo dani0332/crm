@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EaModelCast;
 use App\Enums\FilterTypes;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
@@ -15,6 +16,7 @@ use App\Traits\SpatieActivityLog;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
@@ -27,6 +29,9 @@ class TravelQuote extends Model implements AuditableContract
 
     protected $table = 'travel_quote_request';
     protected $guarded = [];
+    protected $casts = [
+        'ea_model' => EaModelCast::class,
+    ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::FREE,
@@ -140,6 +145,11 @@ class TravelQuote extends Model implements AuditableContract
         return $this->belongsTo(self::class, 'parent_id');
     }
 
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
     public function child()
     {
         return $this->hasOne(self::class, 'parent_id');
@@ -178,6 +188,11 @@ class TravelQuote extends Model implements AuditableContract
     public function advisor()
     {
         return $this->belongsTo(User::class, 'advisor_id');
+    }
+
+    public function previousAdvisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'previous_advisor_id');
     }
 
     public function paymentStatus()
@@ -440,5 +455,15 @@ class TravelQuote extends Model implements AuditableContract
     public function branchOverride()
     {
         return $this->morphOne(BranchOverride::class, 'quote_request');
+    }
+
+    public function leadGenerator()
+    {
+        return $this->hasOne(User::class, 'id', 'lead_generator_id');
+    }
+
+    public function expertAdvisor()
+    {
+        return $this->hasOne(User::class, 'id', 'expert_advisor_id');
     }
 }

@@ -8,6 +8,8 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Repositories\BusinessQuoteRepository;
 use App\Services\BranchAssignmentService;
+use App\Services\BusinessQuoteService;
+use App\Services\HealthPlanTypeService;
 use App\Traits\ModernCsvExportable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -15,6 +17,8 @@ use Illuminate\Support\Collection;
 class GroupMedicalExport implements CsvExportableInterface
 {
     use ModernCsvExportable;
+
+    public function __construct(protected BusinessQuoteService $businessQuoteService) {}
 
     public function collection(array $requestParams = []): Collection
     {
@@ -39,6 +43,7 @@ class GroupMedicalExport implements CsvExportableInterface
             'LAST NAME',
             'LEAD STATUS',
             'PRE-QUALIFICATION ADVISOR',
+            'PQA QUALIFIED',
             'ADVISOR',
             'OE / AE',
             'BRANCH',
@@ -47,6 +52,8 @@ class GroupMedicalExport implements CsvExportableInterface
             'PREMIUM',
             'COMPANY NAME',
             'EMIRATE OF REGISTRATION',
+            'PLAN TYPE',
+            'NO OF PEOPLE TO BE INSURED',
             'POLICY NUMBER',
             'LOST REASON',
             'SOURCE',
@@ -59,6 +66,8 @@ class GroupMedicalExport implements CsvExportableInterface
             'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'EA MODEL',
+            'LEAD GENERATOR',
         ];
     }
 
@@ -67,6 +76,7 @@ class GroupMedicalExport implements CsvExportableInterface
         $emirateOfRegistrationId = $quote->emirate_of_registration_id ?? null;
         $branch = ! $quote->is_branch_applicable ? 'N/A' : ($quote->branch?->name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor?->primaryBranch?->branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
         $assignmentTypeText = $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '';
+        $planTypeText = $quote->health_plan_type_id ? app(HealthPlanTypeService::class)->getById($quote->health_plan_type_id) : '';
 
         return [
             $quote->code,
@@ -74,6 +84,7 @@ class GroupMedicalExport implements CsvExportableInterface
             $quote->last_name,
             optional($quote->quoteStatus)->text,
             optional($quote->preQualificationAdvisor)->name ?? '',
+            $this->businessQuoteService->isPQAQualified($quote->id, $quote->pq_advisor_id) === 1 ? 'Yes' : 'No',
             optional($quote->advisor)->name,
             optional($quote->supportUser)->name,
             $branch,
@@ -82,6 +93,8 @@ class GroupMedicalExport implements CsvExportableInterface
             $quote->premium ? $quote->premium : $quote->price_with_vat,
             $quote->company_name,
             $quote?->emirate?->text ?? '',
+            $planTypeText,
+            $quote->number_of_employees,
             $quote->policy_number,
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             $quote->source,
@@ -94,6 +107,8 @@ class GroupMedicalExport implements CsvExportableInterface
             $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            $quote->ea_model?->value ?? '',
+            $quote->leadGenerator?->name ?? '',
         ];
     }
 

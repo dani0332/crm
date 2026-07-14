@@ -13,4 +13,5 @@ final class carTypeInsuranceCode extends Enum
 {
     public const Comprehensive = 'Comprehensive';
     public const ThirdPartyOnly = 'Third Party Only';
+    public const TPL = 'TPL';
 }

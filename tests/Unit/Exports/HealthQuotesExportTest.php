@@ -11,6 +11,7 @@ it('includes unassigned and age sixty columns in export and maps values correctl
     $healthQuoteService = Mockery::mock(HealthQuoteService::class);
     $lookupService = Mockery::mock(LookupService::class);
     $lookupService->shouldReceive('getHealthGenderDisplayMap')->andReturn([]);
+    $healthQuoteService->shouldReceive('isPQAQualified')->andReturn(0);
 
     $export = new HealthQuotesExport($healthQuoteService, $lookupService);
     $headings = $export->headings();
@@ -20,6 +21,7 @@ it('includes unassigned and age sixty columns in export and maps values correctl
 
     $quote = new HealthQuote;
     $quote->setRawAttributes([
+        'id' => 1,
         'code' => 'H-001',
         'first_name' => 'Test',
         'last_name' => 'Lead',

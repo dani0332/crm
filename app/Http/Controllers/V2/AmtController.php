@@ -50,6 +50,7 @@ use App\Services\DropdownSourceService;
 use App\Services\GroupMedical\GroupMedicalAmtFormDropdownService;
 use App\Services\GroupMedicalEcommerceJourneyLinkService;
 use App\Services\GroupMedicalQuoteCategoryService;
+use App\Services\HealthPlanTypeService;
 use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -72,6 +73,8 @@ use Inertia\ResponseFactory;
 class AmtController extends Controller
 {
     use GenericQueriesAllLobs, RolePermissionConditions,TeamHierarchyTrait;
+
+    public function __construct(private BusinessQuoteService $buisnessQuoteService, private HealthPlanTypeService $healthPlanTypeService) {}
 
     /**
      * Display a listing of the resource.
@@ -98,6 +101,7 @@ class AmtController extends Controller
             ->leftJoin('branches as b', 'b.id', '=', 'bqr.branch_id')
             ->leftJoin('emirates as e', 'bqr.emirate_of_registration_id', '=', 'e.id')
             ->leftJoin('users as pqa_u', 'pqa_u.id', '=', 'bqr.pq_advisor_id')
+            ->leftJoin('users as lg', 'lg.id', '=', 'bqr.lead_generator_id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
             ->select(
                 'bqr.id',
@@ -160,6 +164,10 @@ class AmtController extends Controller
                     WHEN bqr.assignment_type = '.AssignmentTypeEnum::SELF_ASSIGNED.' THEN "Self Assigned"
                     ELSE "" END) as assignment_type_text'),
                 'bqr.pq_advisor_id',
+                'bqr.ea_model',
+                'lg.name as lead_generator_name',
+                'bqr.number_of_employees',
+                'bqr.health_plan_type_id'
             );
         // PQA-only users see leads where they are the assigned pre-qualification advisor.
         // We skip the generic whereBasedOnRole for these users because isAdvisor() would
@@ -317,6 +325,12 @@ class AmtController extends Controller
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $data->where('rb.name', $request->renewal_batch);
         }
+        if ($request->filled('ea_model')) {
+            $data->where('bqr.ea_model', $request->ea_model);
+        }
+        if ($request->filled('lead_generator')) {
+            $data->where('lg.name', 'like', '%'.$request->lead_generator.'%');
+        }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
             $data->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
@@ -444,6 +458,9 @@ class AmtController extends Controller
         return $quotes->map(function ($quote) {
             $emirateOfRegistrationId = $quote?->emirate_of_registration_id ?? null;
             $quote->branch_name = ! $quote->is_branch_applicable ? 'N/A' : ($quote->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($quote->advisor_primary_branch_id, QuoteTypeId::GroupMedical, $emirateOfRegistrationId));
+            $quote->plan_type_text = $quote->health_plan_type_id ? $this->healthPlanTypeService->getById($quote->health_plan_type_id) : null;
+            $quote->pqa_qualified = $this->buisnessQuoteService->isPQAQualified($quote->id, (int) $quote->pq_advisor_id);
+            $quote->plan_type_text = $quote->health_plan_type_id ? $this->healthPlanTypeService->getById($quote->health_plan_type_id) : null;
 
             return $quote;
         });
@@ -534,6 +551,8 @@ class AmtController extends Controller
             'natureOfCompanyActivity:id,text',
             'groupMedicalCategories',
             'businessActivity:id,name',
+            'leadGenerator',
+            'expertAdvisor',
         ]);
         abort_if(! $record, 404);
         /* Start - Temporarily adding for correcting historic data */
@@ -546,6 +565,7 @@ class AmtController extends Controller
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
         $record->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        $record->currently_insured_with = $record->personalQuote?->currentlyInsuredWith;
         $record->health_plan_type_text = ! empty($record->health_plan_type_id)
             ? (HealthPlanType::find($record->health_plan_type_id)?->text ?? null)
             : null;
@@ -640,6 +660,8 @@ class AmtController extends Controller
             $quoteStatuses = array_values(QuoteStatus::whereIn('id', [QuoteStatusEnum::FollowedUp, QuoteStatusEnum::MissingDocumentsRequested, $record->quote_status_id])->get()->toArray());
         }
 
+        $pqaQualified = $this->buisnessQuoteService->isPQAQualified($record->id, $record->pq_advisor_id);
+
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'amlQuoteStatus' => $amlQuoteStatus,
@@ -695,6 +717,7 @@ class AmtController extends Controller
                 'enabled' => app(GroupMedicalEcommerceJourneyLinkService::class)->isAdvisorCopyEnabled($record),
             ],
             'gmCategoryIntakeDisplay' => $gmCategoryIntakeDisplay,
+            'pqaQualified' => $pqaQualified,
         ]);
     }
 

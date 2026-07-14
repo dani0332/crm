@@ -1,0 +1,308 @@
+name: Build & push to ACR and Deploy to AKS - Dev02
+
+on:
+  # push:
+  #   branches:
+  #     #- dev-testing
+  #     - k8-dev
+  # #pull_request:
+  # #  branches:
+  # #    - dev-testing
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'run branch from postman'
+        required: false
+        default: 'dev02'
+env:
+  ACR_REPOSITORY: azacrimstg
+  IMAGE_NAME: imcrmdev02
+  ACR_REGISTRY: $(ACR_REPOSITORY).azurecr.io/$(IMAGE_NAME)
+  DEPLOYMENT_NAME: imcrm-dev02
+  NAMESPACE: imcrm
+  PROJECT: blanka
+  ENVIRONMENT: dev02
+  EKS_CLUSTER_NAME: az-aks-insurancemarket-apps-staging
+  AZURE_RESOURCE_GROUP: az-rg-insurancemarket-staging # TODO: replace with actual resource group
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Start Notification
+        if: always() # Always runs at the start
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+                "text": "🚀 Pipeline started\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\nAuthor: ${{ github.event.head_commit.author.name }}\nMessage: ${{ github.event.head_commit.message }}\nURL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              }' \
+          "${{ secrets.IM_NONPROD_DEPLOYMENT_WEBHOOK_URL }}"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+  run-migration:
+    needs: detect-changes
+    runs-on: az-im-git-runner-staging
+
+    steps:
+      - name: Checkout migration repo (dhalsim)
+        uses: actions/checkout@v4
+        with:
+          repository: InsuranceMarket-ae/dhalsim
+          ref: dev
+          token: ${{ secrets.SERVICE_ACCOUNT_PAT }}
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Run DB migrations
+        run: doppler run -- php artisan migrate --force
+        env:
+          DOPPLER_TOKEN: ${{ secrets.IMCRM_DOPPLER_TOKEN_DEV02_EKS }}
+
+  build-push:
+    needs: [detect-changes, run-migration]
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.tag.outputs.image_tag }}
+      build_number: ${{ steps.tag.outputs.build_number }}
+
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Set short git commit SHA
+        id: commit
+        uses: prompt/actions-commit-hash@v3
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # using applicaiton: az-oidc-github-im-iac-tfstate
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Extract branch name
+        run: |
+          BRANCH_NAME=$(echo ${{ github.ref }} | sed 's/refs\/heads\///')
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+
+      - name: Login to Azure Container Registry
+        id: login-acr
+        run: az acr login --name ${{ env.ACR_REPOSITORY }}
+
+      - name: Generate Build Number and Image Tag
+        id: tag
+        run: |
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          BUILD_NUMBER=$(date +%s)
+          echo "image_tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "build_number=${BUILD_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Build, tag, and push images to Azure ACR
+        id: build
+        run: |
+          ACR_IMAGE=${ACR_REPOSITORY}.azurecr.io/${IMAGE_NAME}
+
+          echo "Building Docker image"
+          docker build --build-arg IMCRM_TOKEN=${{secrets.IMCRM_DOPPLER_TOKEN_DEV02_EKS}} -t ${ACR_IMAGE}:${{ steps.tag.outputs.image_tag }} -f Dockerfile_MS .
+          echo "Pushing Docker image"
+          docker push ${ACR_IMAGE}:${{ steps.tag.outputs.image_tag }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.EKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Register ArgoCD Application
+        run: kubectl apply -f k8s/$ENVIRONMENT/argocd-application.yaml
+
+      - name: Rename Branch and Deploy Latest Application
+        run: |
+          # Disable branch protection
+          curl -X DELETE \
+            -H "Authorization: token ${{ secrets.SERVICE_ACCOUNT_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/InsuranceMarket-ae/$PROJECT/branches/${{ env.BRANCH_NAME }}/protection"
+
+          yq e ".spec.source.targetRevision = \"${{ github.ref_name }}\"" -i k8s/$ENVIRONMENT/argocd-application.yaml
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add k8s/$ENVIRONMENT/argocd-application.yaml
+          if ! git diff --staged --quiet; then
+            git commit -m "Update branch to ${{ github.ref_name }}"
+            git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/InsuranceMarket-ae/$PROJECT.git HEAD:${{ env.BRANCH_NAME }}
+          else
+            echo "No changes to commit for argocd-application.yaml"
+          fi
+          # Re-enable branch protection
+          curl -X PUT \
+            -H "Authorization: token ${{ secrets.SERVICE_ACCOUNT_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/InsuranceMarket-ae/$PROJECT/branches/${{ env.BRANCH_NAME }}/protection" \
+            -d '{
+              "required_status_checks": {
+                "strict": true,
+                "contexts": []
+              },
+              "enforce_admins": false,
+              "required_pull_request_reviews": {
+                "dismissal_restrictions": {},
+                "dismiss_stale_reviews": true,
+                "require_code_owner_reviews": true,
+                "required_approving_review_count": 1,
+                "bypass_pull_request_allowances": {
+                  "users": ["afiadeploy"],
+                  "apps": []
+                }
+              },
+              "restrictions": null,
+              "required_linear_history": false,
+              "allow_force_pushes": false,
+              "allow_deletions": false,
+              "required_conversation_resolution": false,
+              "lock_branch": false,
+              "allow_fork_syncing": false
+            }'
+
+      - name: Apply ArgoCD Application
+        run: |
+          kubectl apply -f k8s/$ENVIRONMENT/argocd-application.yaml -n argocd
+          echo "ArgoCD application updated successfully"
+
+      - name: Update Kubernetes manifest with new SHA tag
+        run: |
+          # Disable branch protection
+          curl -X DELETE \
+            -H "Authorization: token ${{ secrets.SERVICE_ACCOUNT_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/InsuranceMarket-ae/$PROJECT/branches/${{ env.BRANCH_NAME }}/protection"
+
+          # Update manifest and push changes          
+          ACR_IMAGE=${ACR_REPOSITORY}.azurecr.io/${IMAGE_NAME}
+          yq e ".spec.template.spec.containers[0].image = \"${ACR_IMAGE}:${{ steps.tag.outputs.image_tag }}\"" -i k8s/$ENVIRONMENT/$PROJECT-deployment.yaml
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add k8s/$ENVIRONMENT/$PROJECT-deployment.yaml
+          git commit -m "Update image tag to ${{ steps.tag.outputs.image_tag }}"
+          git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/InsuranceMarket-ae/$PROJECT.git HEAD:${{ env.BRANCH_NAME }}
+
+          # Re-enable branch protection
+          curl -X PUT \
+            -H "Authorization: token ${{ secrets.SERVICE_ACCOUNT_PAT }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/InsuranceMarket-ae/$PROJECT/branches/${{ env.BRANCH_NAME }}/protection" \
+            -d '{
+              "required_status_checks": {
+                "strict": true,
+                "contexts": []
+              },
+              "enforce_admins": false,
+              "required_pull_request_reviews": {
+                "dismissal_restrictions": {},
+                "dismiss_stale_reviews": true,
+                "require_code_owner_reviews": true,
+                "required_approving_review_count": 1,
+                "bypass_pull_request_allowances": {
+                  "users": ["afiadeploy"],
+                  "apps": []
+                }
+              },
+              "restrictions": null,
+              "required_linear_history": false,
+              "allow_force_pushes": false,
+              "allow_deletions": false,
+              "required_conversation_resolution": false,
+              "lock_branch": false,
+              "allow_fork_syncing": false
+            }'
+          # kubectl apply -f k8s/$ENVIRONMENT/
+          # kubectl rollout restart deployment $DEPLOYMENT_NAME --namespace=$NAMESPACE
+
+      - name: Success Notification
+        if: success() # Runs only if the job is successful
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+                "text": "✅ Pipeline completed successfully\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\nAuthor: ${{ github.event.head_commit.author.name }}\nMessage: ${{ github.event.head_commit.message }}\nURL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              }' \
+          "${{ secrets.IM_NONPROD_DEPLOYMENT_WEBHOOK_URL }}"
+
+      - name: Failure Notification
+        if: failure() # Runs only if the job fails
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+                "text": "❌ Pipeline failed\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\nAuthor: ${{ github.event.head_commit.author.name }}\nMessage: ${{ github.event.head_commit.message }}\nURL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              }' \
+          "${{ secrets.IM_NONPROD_DEPLOYMENT_WEBHOOK_URL }}"
+
+#  deploy:
+#    needs: [detect-changes, build-push]
+#    runs-on: ubuntu-latest
+#    permissions:
+#      id-token: write
+#      contents: read
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v2
+#
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: "${{ secrets.AWS_ROLE_ARN }}"
+#          role-session-name: "${{secrets.AWS_ROLE_NAME}}"
+#          aws-region: me-central-1
+## Installation Required Packages
+#      - name: Install AWS CLI
+#        run: |
+#          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+#          unzip awscliv2.zip
+#          sudo ./aws/install --update
+#          aws --version
+#      - name: Install kubectl
+#        run: |
+#          curl -LO "https://dl.k8s.io/release/v1.31.1/bin/linux/amd64/kubectl"
+#          chmod +x ./kubectl
+#          sudo mv ./kubectl /usr/local/bin/kubectl
+#          kubectl version --client
+#      - name: Update kubeconfig
+#        run: |
+#          aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region me-central-1
+#      - name: Deploy to Kubernetes
+#        run: |
+#          # Run any Kubernetes deployment commands here, with environment variables loaded from Doppler
+#
+#          IMAGE_TAG=${{ needs.build-push.outputs.image_tag }}
+#          BUILD_NUMBER=${{ needs.build-push.outputs.build_number }}
+#          echo "Deploying image with tag: $IMAGE_TAG and build number: $BUILD_NUMBER"
+#
+#          sed -i.bak "s|DOCKER_IMAGE|$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/$ENVIRONMENT/$PROJECT-deployment.yaml
+#
+#          kubectl apply -f k8s/$ENVIRONMENT/ --namespace=$NAMESPACE
+#          #kubectl apply -f k8s/ingress/ --namespace=$NAMESPACE
+#          kubectl rollout restart deployment $DEPLOYMENT_NAME  --namespace=$NAMESPACE
+#
+#      # Verify Deployment and Rollback in Case of Failure
+#      #- name: Verify deployment
+#      #  run: |
+#      #    kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} -n default
+#      #    if [ $? -ne 0 ]; then
+#      #      kubectl rollout undo deployment/${{ env.DEPLOYMENT_NAME }} -n default
+#      #      exit 1
+#      #    fi

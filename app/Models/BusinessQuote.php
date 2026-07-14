@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Casts\EaModelCast;
 use App\Enums\FilterTypes;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use App\Traits\SpatieActivityLog;
@@ -15,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Context;
@@ -33,6 +36,7 @@ class BusinessQuote extends Model implements AuditableContract
         return [
             'gm_category_intake' => 'array',
             'has_existing_group_health_insurance' => 'boolean',
+            'ea_model' => EaModelCast::class,
         ];
     }
 
@@ -160,6 +164,11 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(User::class, 'advisor_id');
     }
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
     public function previousAdvisor()
     {
         return $this->belongsTo(User::class, 'previous_advisor_id', 'id');
@@ -379,9 +388,9 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->morphMany(FtcEmailLog::class, 'quote_trackable');
     }
 
-    public function personalQuote()
+    public function personalQuote(): HasOne
     {
-        return $this->belongsTo(PersonalQuote::class, 'id', 'quote_id')->where('quote_type_id', QuoteTypeId::Business);
+        return $this->hasOne(PersonalQuote::class, 'quote_id', 'id')->where('quote_type_id', QuoteTypes::BUSINESS->id());
     }
 
     public function renewalBatchModel()
@@ -413,5 +422,15 @@ class BusinessQuote extends Model implements AuditableContract
 
         return $this->hasMany(GroupMedicalQuoteCategory::class, 'business_quote_request_id', 'id')
             ->orderBy('sort_order');
+    }
+
+    public function leadGenerator()
+    {
+        return $this->belongsTo(User::class, 'lead_generator_id');
+    }
+
+    public function expertAdvisor()
+    {
+        return $this->belongsTo(User::class, 'expert_advisor_id');
     }
 }

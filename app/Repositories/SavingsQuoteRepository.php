@@ -16,6 +16,8 @@ class SavingsQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        return $this->where($column, $value)->first();
+        $quote = $this->where($column, $value)->with('previousQuote:id,uuid,code')->first();
+
+        return $quote;
     }
 }

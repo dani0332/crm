@@ -127,7 +127,7 @@ class CarQuoteService extends BaseService
             'carMakeId' => $request->car_make_id,
             'carModelId' => $request->car_model_id, // ID
             'currentlyInsuredWith' => $request->currently_insured_with,
-            'source' => config('constants.SOURCE_NAME'),
+            'source' => $request->lead_type === 'expert_advisor_model' ? LeadSourceEnum::EA_IMCRM : config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
             'gender' => $request->gender ?? null,
             'chassisNumber' => $request->chassis_number,
@@ -517,6 +517,7 @@ class CarQuoteService extends BaseService
                 DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
                 DB::raw('DATE_FORMAT(cqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
                 'cqr.previous_quote_policy_premium',
+                'cqr.previous_quote_policy_commission',
                 'cqr.car_model_detail_id',
                 'cmd.text as car_model_detail_id_text',
                 'cqr.is_modified',
@@ -1230,6 +1231,8 @@ class CarQuoteService extends BaseService
                 'policy_expiry_date',
                 'previous_quote_policy_number',
                 'previous_policy_expiry_date',
+                'previous_quote_policy_premium',
+                'previous_quote_policy_commission',
             ]
         )->with(['advisor', 'carMake', 'carModel', 'latestUpdateRenewalQuoteProcess', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name', 'pcp_tag')->with(['additionalContacts' => function ($q) {

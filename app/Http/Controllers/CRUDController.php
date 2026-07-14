@@ -69,6 +69,7 @@ use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
+use App\Models\HealthQuote;
 use App\Models\HealthUMAFResponse;
 use App\Models\Nationality;
 use App\Models\Payment;
@@ -503,12 +504,14 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         $customTitles = $dropdownSource = [];
+
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
             if (str_contains($value, 'select')) {
-                $data = $this->dropdownSourceService->getDropdownSource($property, leadSource: LeadSourceEnum::IMCRM);
+                $data = $this->dropdownSourceService->getDropdownSource($property, quoteTypeId: $quoteTypeId, leadSource: LeadSourceEnum::IMCRM);
                 $dropdownSource[$property] = $data;
             }
         }
@@ -881,6 +884,24 @@ class CRUDController extends Controller
                 }
 
                 $paymentEntityModel->load(['plan.insuranceProvider']);
+
+                if ($record->source === LeadSourceEnum::EA_IMCRM) {
+                    $paymentEntityModel->loadMissing(['leadGenerator', 'expertAdvisor']);
+                    $record->ea_model = $paymentEntityModel->ea_model?->value;
+                    $record->lead_generator_id = $paymentEntityModel->lead_generator_id;
+                    $record->lead_generator = $paymentEntityModel->leadGenerator
+                        ? $paymentEntityModel->leadGenerator->only(['id', 'name', 'email'])
+                        : null;
+                    $record->expert_advisor_id = $paymentEntityModel->expert_advisor_id;
+                    $record->expert_advisor = $paymentEntityModel->expertAdvisor
+                        ? $paymentEntityModel->expertAdvisor->only(['id', 'name'])
+                        : null;
+                    $record->ea_assigned_advisor_approved_at = $paymentEntityModel->ea_assigned_advisor_approved_at;
+                    $record->ea_expert_advisor_approved_at = $paymentEntityModel->ea_expert_advisor_approved_at;
+                    $record->ea_assigned_advisor_rejected_at = $paymentEntityModel->ea_assigned_advisor_rejected_at;
+                    $record->ea_expert_advisor_rejected_at = $paymentEntityModel->ea_expert_advisor_rejected_at;
+                }
+
                 $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
 
                 if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager])) {
@@ -1303,6 +1324,23 @@ class CRUDController extends Controller
                 $isAUHLead = $lead->isAUHLead(false);
                 $hasPecTag = $lead->has_pec_tag;
 
+                if ($record->source === LeadSourceEnum::EA_IMCRM) {
+                    $lead->loadMissing(['leadGenerator', 'expertAdvisor']);
+                    $record->ea_model = $lead->ea_model?->value;
+                    $record->lead_generator_id = $lead->lead_generator_id;
+                    $record->lead_generator = $lead->leadGenerator
+                        ? $lead->leadGenerator->only(['id', 'name', 'email'])
+                        : null;
+                    $record->expert_advisor_id = $lead->expert_advisor_id;
+                    $record->expert_advisor = $lead->expertAdvisor
+                        ? $lead->expertAdvisor->only(['id', 'name'])
+                        : null;
+                    $record->ea_assigned_advisor_approved_at = $lead->ea_assigned_advisor_approved_at;
+                    $record->ea_expert_advisor_approved_at = $lead->ea_expert_advisor_approved_at;
+                    $record->ea_assigned_advisor_rejected_at = $lead->ea_assigned_advisor_rejected_at;
+                    $record->ea_expert_advisor_rejected_at = $lead->ea_expert_advisor_rejected_at;
+                }
+
                 $record->branch_name = ! $record->is_branch_applicable ? 'N/A' : ($record->lead_branch_name ?? app(BranchAssignmentService::class)->getBranchName($record->advisor_primary_branch_id, QuoteTypeId::Health, $record->emirate_of_your_visa_id));
 
                 $healthUmafResponse = HealthUMAFResponse::where('quote_uuid', $record->uuid)->first();
@@ -1310,6 +1348,10 @@ class CRUDController extends Controller
                 $record->api_issuance_status = $record->api_issuance_status_id ? PolicyIssuanceEnum::getAPIIssuanceStatuses($record->api_issuance_status_id) : null;
                 $record->insurer_api_status = $record->insurer_api_status_id ? app(PolicyIssuanceService::class)->getInsurerAPIStatuses($record->insurer_api_status_id) : null;
 
+                // $record is a DB::table() stdClass — Eloquent relations can't be used; manual lookup is intentional.
+                $record->previous_quote = $record->previous_quote_id
+                    ? HealthQuote::select('id', 'uuid', 'code')->find($record->previous_quote_id)
+                    : null;
                 $archivedDocuments = $this->quoteDocumentService->getArchivedDocuments($quoteType, $record->id);
 
                 // Health show uses DB::table() entity (not Eloquent), so model appends are not applied; set label here.
@@ -1325,6 +1367,8 @@ class CRUDController extends Controller
                     $quoteStatuses = array_values($leadStatuses->toArray());
                 }
                 $advisors = $advisors->concat($this->crudService->getPqaAdvisorList(QuoteTypes::HEALTH->id())->get());
+
+                $pqaQualified = $this->healthQuoteService->isPQAQualified($record->id, $record->pq_advisor_id);
 
                 return inertia('HealthQuote/Show', [
                     'paymentLink' => $paymentLink,
@@ -1420,6 +1464,7 @@ class CRUDController extends Controller
                     'policyHolderOptions' => $policyHolderOptions,
                     'emirateEnum' => EmirateEnum::asArray(),
                     'policyHolderRelationMap' => RelationCodeEnum::policyHolderRelationMap(),
+                    'pqaQualified' => $pqaQualified,
                 ]);
             } else {
                 return view('shared.show', compact([
@@ -1481,12 +1526,13 @@ class CRUDController extends Controller
         $dropdownSource = [];
         $customTitles = [];
         $customLists = [];
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
         foreach ($model->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
             if (str_contains($value, 'select')) {
-                $data = $this->dropdownSourceService->getDropdownSource($property, leadSource: $record->source);
+                $data = $this->dropdownSourceService->getDropdownSource($property, quoteTypeId: $quoteTypeId, leadSource: $record->source);
                 $dropdownSource[$property] = $data;
             }
             if (str_contains($value, 'customTable')) {
@@ -2061,6 +2107,8 @@ class CRUDController extends Controller
         if ($selectedTeam != quoteTypeCode::GM && $isAssigned) {
             return redirect()->to('/quotes/health/'.$lead->uuid)->with('success', ' Lead has been Assigned To '.strtoupper($selectedTeam).' Team');
         }
+
+        return redirect()->to('/quotes/health/'.$lead->uuid)->with('error', 'Cannot assign Health Team as lead is in a post-transaction state.');
     }
 
     public function updateLeadStatus(UpdateLeadStatusRequest $request)

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EaModelCast;
 use App\Enums\FilterTypes;
 use App\Enums\GenderEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -36,6 +37,9 @@ class PersonalQuote extends Model implements AuditableContract
     use Auditable, Filterable, FilterCriteria, HasFactory, PersonalQuotable, QuoteModelTrait, SpatieActivityLog;
 
     protected $guarded = [];
+    protected $casts = [
+        'ea_model' => EaModelCast::class,
+    ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::EXACT,
@@ -61,6 +65,7 @@ class PersonalQuote extends Model implements AuditableContract
         'enquiry_count' => FilterTypes::EXACT,
         'is_renewal_tier_email_sent' => FilterTypes::EXACT,
         'is_early_renewal' => FilterTypes::EXACT,
+        'ea_model' => FilterTypes::EXACT,
     ];
     protected $appends = ['age', 'gender_label', 'pc_qualified_formatted', 'api_issuance_status', 'insurer_api_status'];
 
@@ -126,6 +131,26 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 
+    public function previousQuote(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_quote_id');
+    }
+
+    public function previousAdvisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'previous_advisor_id');
+    }
+
+    public function leadGenerator()
+    {
+        return $this->belongsTo(User::class, 'lead_generator_id');
+    }
+
+    public function expertAdvisor()
+    {
+        return $this->belongsTo(User::class, 'expert_advisor_id');
+    }
+
     /**
      * @return BelongsTo
      */
@@ -161,7 +186,6 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(JetskiQuote::class);
     }
-
     /**
      * @return HasOne
      */
@@ -394,6 +418,11 @@ class PersonalQuote extends Model implements AuditableContract
     public function savingsQuote()
     {
         return $this->hasOne(SavingsQuote::class);
+    }
+
+    public function businessQuote(): BelongsTo
+    {
+        return $this->belongsTo(BusinessQuote::class, 'quote_id', 'id');
     }
 
     public function age(): Attribute
@@ -689,6 +718,13 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->morphOne(BranchOverride::class, 'quote_request');
     }
 
+    /**
+     * Get the ECOM URL for the quote for all the lobs like car-insurance, home-insurance, etc.
+     */
+    public function bringEcomUrl(): string
+    {
+        return config('constants.AFIA_WEBSITE_DOMAIN').'/'.strtolower(QuoteTypes::getName($this->quote_type_id)->value).'-insurance/quote/'.$this->uuid;
+    }
     public function amlAutomation()
     {
         return $this->hasOne(AmlAutomation::class, 'code', 'code');
