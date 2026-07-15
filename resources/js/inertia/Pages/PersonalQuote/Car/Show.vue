@@ -2604,10 +2604,12 @@ const isCars24 = computed(() => {
           required
           v-model="leadDuplicateForm.lob_team"
           :options="
-            allowedDuplicateLOB.map(lob => ({
-              value: lob,
-              label: lob,
-            }))
+            allowedDuplicateLOB
+              .filter(lob => lob.toLowerCase() !== 'car')
+              .map(lob => ({
+                value: lob,
+                label: lob,
+              }))
           "
           :rules="[rules.isRequired]"
           placeholder="Select LOB For Duplication"
