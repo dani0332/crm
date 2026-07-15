@@ -588,9 +588,9 @@ class BusinessQuoteService extends BaseService
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     if (count($request[$item]) === 1 && $request[$item][0] == '-1') {
-                        $this->query->whereNull('advisor_id');
+                        $this->query->whereNull('bqr.advisor_id');
                     } else {
-                        $this->query->whereIn('advisor_id', $request[$item]);
+                        $this->query->whereIn('bqr.advisor_id', $request[$item]);
                     }
                 } elseif ($item == 'pq_advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     if (count($request[$item]) === 1 && $request[$item][0] == '-1') {
