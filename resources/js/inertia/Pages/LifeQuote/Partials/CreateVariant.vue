@@ -17,6 +17,12 @@ const props = defineProps({
   paymentTermEnum: Object,
 });
 
+const page = usePage();
+// Shared enum of provider codes (e.g. MTL for MetLife) — used below to scope
+// the MetLife-only age-based Sum Assured validation to the correct provider,
+// instead of matching on a raw string or an environment-specific plan id.
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+
 const notification = useNotifications('toast');
 
 const { isRequired } = useRules();
@@ -37,8 +43,30 @@ const getCurrencyId = currencyCode => {
   return props.currencies.find(currency => currency.text === currencyCode)?.id;
 };
 
+// True only for MetLife plans (enum-based, not a hardcoded string/plan id).
+// Used to scope the age-based Sum Assured logic strictly to MetLife, so
+// every other provider keeps its existing static currency-coverage check
+// untouched by this change.
+const isMetLifeProvider = computed(() => {
+  return props.plan?.providerCode === insuranceProviderCodeEnum?.MTL;
+});
+
 const validateSumAssured = value => {
   if (!isApiOrRc.value) return true;
+
+  // MetLife-only bypass: when Ken has already supplied an age-based range
+  // (via ageCoverRange, see validateSumAssuredAgeRange below), that range is
+  // authoritative and this static currency-coverage check should not also
+  // apply. For every other provider, or if Ken hasn't returned a range yet,
+  // this condition is false and the static check below still runs exactly
+  // as it did before this change.
+  if (
+    isMetLifeProvider.value &&
+    ageCoverRange.value.min !== null &&
+    ageCoverRange.value.max !== null
+  ) {
+    return true;
+  }
 
   const currencyRange = currencyRanges.value.find(
     range => range.currency.code === createForm.currency,
@@ -111,6 +139,13 @@ watch(
         props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
       createForm.insurerQuoteNo = null;
       errorMessage.value = null;
+      // Seed ageCoverRange from whatever the plan already has (e.g. if the
+      // plans list was fetched with a fresh rating). prefetchAgeCoverRange()
+      // below will refresh this with an up-to-date value for MetLife.
+      ageCoverRange.value = {
+        min: props.plan?.ageMinCoverValue ?? null,
+        max: props.plan?.ageMaxCoverValue ?? null,
+      };
 
       // Handle rider data initialization
       if (
@@ -135,6 +170,10 @@ watch(
 
       getRiderDetails(props.plan.planId);
       getCurrencyCoverages(props.plan.planId);
+      // Silently fetch Ken's age-based Sum Assured range as soon as the
+      // modal opens (MetLife only — no-op for every other provider), so
+      // the age-based validator has data before the user submits anything.
+      prefetchAgeCoverRange();
       submitType.value = isApiOrRc.value ? 'getQuote' : 'onSubmit';
       exitAge.value = props.plan?.exitAge;
 
@@ -158,6 +197,82 @@ const validatePriceRange = value => {
     return 'Value must be between 1 and 100,000,000';
   }
   return true;
+};
+
+// Populated from Ken's /fetch-life-provider-plan response
+// (ageMinCoverValue/ageMaxCoverValue), which Ken computes per-plan based on
+// the client's age — currently only for MetLife Live Life Now. Stays null
+// for every other plan, since Ken never returns an age-based range for them.
+const ageCoverRange = ref({ min: null, max: null });
+
+// Primary Sum Assured check — MetLife only, enforced explicitly here rather
+// than relying solely on ageCoverRange staying null for other providers.
+// No-ops (returns true) for every other plan, and for MetLife itself until
+// ageCoverRange has been populated.
+const validateSumAssuredAgeRange = value => {
+  if (
+    !isMetLifeProvider.value ||
+    ageCoverRange.value.min === null ||
+    ageCoverRange.value.max === null
+  ) {
+    return true;
+  }
+
+  const sumAssured = cleanFormattedValueToFloat(value);
+  if (
+    sumAssured < ageCoverRange.value.min ||
+    sumAssured > ageCoverRange.value.max
+  ) {
+    return `Sum Assured must be between ${ageCoverRange.value.min} - ${ageCoverRange.value.max} for the client's age.`;
+  }
+
+  return true;
+};
+
+// MetLife-only, silent background prefetch of Ken's age-based Sum Assured
+// range so validateSumAssuredAgeRange has data to check against as soon as
+// the modal opens — without waiting for the user's own "Get Quote" click.
+// Deliberately isolated from getQuote(): it never touches premium, riders,
+// submitType, quoteFetched, or errorMessage, and any failure is swallowed
+// silently (see .catch() below) so it can never disrupt the existing
+// add-variant flow for MetLife or any other provider.
+const prefetchAgeCoverRange = () => {
+  // Guard clause: for every provider except MetLife (or non-API/RC plans),
+  // this returns immediately and no request is ever made.
+  if (!isMetLifeProvider.value || !isApiOrRc.value) return;
+  if (!props.plan?.planId || !props.uuid) return;
+
+  axios
+    .post(`/personal-quotes/get-life-provider-plan`, {
+      data: {
+        quoteUID: props.uuid,
+        planId: props.plan.planId,
+        providerCode: props.plan.providerCode,
+        isIndividualLoading: true,
+        planData: {
+          currency: createForm.currency,
+          sumAssured: parseFloat(createForm.sumAssured || 0).toFixed(2),
+          policyTerm: createForm.policyTerm,
+          paymentTerm: createForm.paymentTerm,
+          riders: [],
+        },
+        lang: 'en',
+      },
+    })
+    .then(res => {
+      const plan = res.data?.providerPlan?.plan;
+      if (!plan) return;
+
+      ageCoverRange.value = {
+        min: plan.ageMinCoverValue ?? null,
+        max: plan.ageMaxCoverValue ?? null,
+      };
+    })
+    .catch(() => {
+      // Silent by design: on failure, ageCoverRange simply stays whatever
+      // it already was (from props.plan), so validation falls back to the
+      // existing static currency-coverage check — same as before this change.
+    });
 };
 
 const validatePolicyTerm = value => {
@@ -184,7 +299,6 @@ const validatePolicyTerm = value => {
 };
 
 const ridersData = ref([]);
-const page = usePage();
 const emit = defineEmits(['success', 'error']);
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
@@ -304,6 +418,12 @@ watch(
       }
       createForm.insurerQuoteNo = null;
       errorMessage.value = null;
+      // Same seeding as the shown-watcher above, for the case where the
+      // plan changes while the modal is already open.
+      ageCoverRange.value = {
+        min: props.plan?.ageMinCoverValue ?? null,
+        max: props.plan?.ageMaxCoverValue ?? null,
+      };
 
       if (props.plan?.riders && props.plan.riders.length > 0) {
         ridersData.value = props.plan.riders.map(rider => ({
@@ -320,6 +440,9 @@ watch(
       createForm.discountPremium = props.plan?.discountPremium ?? 0;
       createForm.isInstantPolicy =
         props.plan?.instantPolicy ?? props.plan?.isInstantPolicy ?? false;
+      // See the shown-watcher above: same MetLife-only silent prefetch,
+      // repeated here for the plan-switch case.
+      prefetchAgeCoverRange();
     }
   },
 );
@@ -377,6 +500,10 @@ const getQuote = () => {
           0,
           Number(res.data.providerPlan.plan.discountPremium),
         );
+        ageCoverRange.value = {
+          min: res.data.providerPlan.plan.ageMinCoverValue ?? null,
+          max: res.data.providerPlan.plan.ageMaxCoverValue ?? null,
+        };
         errorMessage.value = null;
       }
 
@@ -751,6 +878,7 @@ const isMetLife = computed(() => {
                 isNonNegative,
                 val => validatePriceRange(val),
                 validateSumAssured,
+                validateSumAssuredAgeRange,
               ]"
               class="w-full"
               type="text"
