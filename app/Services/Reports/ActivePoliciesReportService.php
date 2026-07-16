@@ -31,7 +31,7 @@ class ActivePoliciesReportService extends ManagementReport
         }
 
         $query = PersonalQuote::query();
-        $this->paymentJoin($query, request: $request);
+        $this->paymentJoin($query);
         $query->select(
             DB::raw('COUNT(personal_quotes.id) as active_policy_count'),
             DB::raw('FORMAT(SUM(personal_quotes.price_vat_applicable), 2) as price_with_vat'),
@@ -50,7 +50,7 @@ class ActivePoliciesReportService extends ManagementReport
             })
             ->groupBy('ip.text', 'personal_quotes.quote_type_id', 'branch_name');
 
-        $this->branchJoin($query, $request);
+        $this->branchJoin($query);
         $this->applyFilters($query, $request, isSSR: true);
 
         return $query;
