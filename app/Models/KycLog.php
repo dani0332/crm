@@ -4,14 +4,28 @@ namespace App\Models;
 
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
+use App\Traits\SpatieActivityLog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Context;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class KycLog extends BaseModel
+class KycLog extends BaseModel implements AuditableContract
 {
-    use HasFactory;
+    use Auditable, HasFactory, SpatieActivityLog;
 
     protected $table = 'kyc_logs';
+
+    /**
+     * Only audit fields that reflect user decisions — avoids storing the large `results` JSON on every change.
+     *
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'decision',
+        'notes',
+    ];
 
     /**
      * Scope to exclude RYU decision records (includes NULL records).
@@ -80,6 +94,20 @@ class KycLog extends BaseModel
         return $query->excludeRyuDecision()
             ->excludeInsurerScreening()
             ->excludeScreenshot();
+    }
+
+    /**
+     * Tag the audit record with the human-readable button label set by AMLService before saving.
+     */
+    public function generateTags(): array
+    {
+        $label = Context::get('aml_decision_label');
+
+        if ($label === null) {
+            return [];
+        }
+
+        return [json_encode(['decision' => $label])];
     }
 
     public $access = [

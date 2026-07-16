@@ -79,6 +79,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -2218,16 +2219,21 @@ class AMLService
     {
         LoggerService::info(self::class.' - '.__FUNCTION__);
 
-        $fetchKycLog = KycLog::where('id', $request['aml_id'])->withTrashed();
-        $fetchKycLog->update([
-            'decision' => $request['aml_decision'] ?? '',
-            'notes' => isset($request['notes']) ? trim($request['notes']) : '',
-            'in_adverse_media' => isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '',
-            'is_owner_pep' => isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '',
-            'is_controlling_pep' => isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '',
-        ]);
+        $decisionLabels = [
+            AMLDecisionStatusEnum::FALSE_POSITIVE => 'False Positive',
+            AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK => 'True Match - Reject Risk',
+            AMLDecisionStatusEnum::TRUE_MATCH_ACCEPT_RISK => 'True Match - Accept Risk',
+        ];
+        $decision = $request['aml_decision'] ?? '';
+        Context::add('aml_decision_label', $decisionLabels[$decision] ?? $decision);
 
-        $kycLog = $fetchKycLog->first();
+        $kycLog = KycLog::withTrashed()->where('id', $request['aml_id'])->first();
+        $kycLog->decision = $decision;
+        $kycLog->notes = isset($request['notes']) ? trim($request['notes']) : '';
+        $kycLog->in_adverse_media = isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '';
+        $kycLog->is_owner_pep = isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '';
+        $kycLog->is_controlling_pep = isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '';
+        $kycLog->save();
         $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? AMLStatusCode::AMLScreeningFailed : AMLStatusCode::AMLScreeningCleared;
         $quoteObject->aml_status = $amlStatus;
         $quoteObject->save();
