@@ -21,11 +21,93 @@ const isScreeningIndividual = computed(() => {
 });
 
 const amlResults = ref(props.amlResults);
+const selectedIds = ref(new Set());
+const currentPage = ref(1);
+const rowsPerPage = 25;
 const loader = reactive({
   table: false,
 });
 
+const currentPageItems = computed(() => {
+  const start = (currentPage.value - 1) * rowsPerPage;
+  return amlResults.value.slice(start, start + rowsPerPage);
+});
+
+const isCurrentPageAllSelected = computed(
+  () =>
+    currentPageItems.value.length > 0 &&
+    currentPageItems.value.every(item => selectedIds.value.has(item.ID)),
+);
+
+const isCurrentPagePartiallySelected = computed(
+  () =>
+    currentPageItems.value.some(item => selectedIds.value.has(item.ID)) &&
+    !isCurrentPageAllSelected.value,
+);
+
+function toggleCurrentPage() {
+  if (checkDecisionLockStatus.value) return;
+
+  const newSet = new Set(selectedIds.value);
+  const isSelecting = !isCurrentPageAllSelected.value;
+  const decisionType = isSelecting
+    ? props.amlDecisionStatusCode.FALSE_POSITIVE
+    : props.amlDecisionStatusCode.UNKNOWN;
+
+  currentPageItems.value.forEach(item => {
+    isSelecting ? newSet.add(item.ID) : newSet.delete(item.ID);
+    const index = amlResults.value.findIndex(
+      x => x.EntityUniqueID == item.EntityUniqueID,
+    );
+    if (index !== -1) {
+      amlResults.value[index].decision = decisionType;
+      decisionSelected.value[item.ID] = decisionType;
+    }
+  });
+
+  selectedIds.value = newSet;
+
+  const matches = currentPageItems.value.map(item => ({
+    bridger_match_id: item.ID,
+    bridger_decision_type: decisionType,
+  }));
+
+  axios
+    .post('/kyc/send-bridger-response-bulk', {
+      aml_id: props.aml.id,
+      aml_quote_url: `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
+      quote_id: props.aml.quote_request_id,
+      quote_ref_id: props.quoteObject.code,
+      customer_entity_name: props.aml.input,
+      quote_type_text: props.aml.quote_type_text,
+      bridger_response: props.aml.results_found,
+      last_updated_at: props.aml.updated_at,
+      matches,
+    })
+    .then(res => {
+      if (res.data.status === 'error') {
+        notification.error({ title: res.data.message, position: 'top' });
+      }
+    })
+    .catch(err => console.log(err));
+}
+
+function toggleItem(item) {
+  if (checkDecisionLockStatus.value) return;
+
+  const newSet = new Set(selectedIds.value);
+  if (newSet.has(item.ID)) {
+    newSet.delete(item.ID);
+    setSelectedOption(props.amlDecisionStatusCode.UNKNOWN, item);
+  } else {
+    newSet.add(item.ID);
+    setSelectedOption(props.amlDecisionStatusCode.FALSE_POSITIVE, item);
+  }
+  selectedIds.value = newSet;
+}
+
 const tableHeader = [
+  { text: '', value: 'checkbox', sortable: false, width: 50 },
   { text: 'Result', value: 'result' },
   { text: 'Score', value: 'EntityScore' },
   { text: 'Name', value: 'full_name' },
@@ -36,6 +118,8 @@ const tableHeader = [
   { text: 'Country', value: 'country' },
   { text: 'Customer Type', value: 'customer_type' },
   { text: 'Citizenship', value: 'citizenship' },
+  { text: 'Adverse Media Description', value: 'adverse_media_description' },
+  { text: 'Adverse Media Subcategory', value: 'adverse_media_subcategory' },
 ];
 const decisionNotes = ref(props.aml.notes);
 const in_adverse_media = ref(props.aml.in_adverse_media);
@@ -198,6 +282,14 @@ const setSelectedOption = (e, item) => {
 
   if (index != -1) amlResults.value[index].decision = e;
 
+  const newSet = new Set(selectedIds.value);
+  if (e === props.amlDecisionStatusCode.FALSE_POSITIVE) {
+    newSet.add(item.ID);
+  } else {
+    newSet.delete(item.ID);
+  }
+  selectedIds.value = newSet;
+
   let data = {
     aml_id: props.aml.id,
     aml_quote_url: `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
@@ -244,7 +336,13 @@ const isTrue = computed(() => {
 });
 
 const falsePositive = computed(() => {
-  return amlResults.value.every(x => x.decision == 'FalsePositive');
+  if (!amlResults.value.length) return false;
+  const allDropdownsFP = amlResults.value.every(
+    x => x.decision == 'FalsePositive',
+  );
+  const allCheckboxesSelected =
+    selectedIds.value.size === amlResults.value.length;
+  return allDropdownsFP || allCheckboxesSelected;
 });
 
 const notesRequired = ref(false);
@@ -367,12 +465,40 @@ function fieldValidationsperson() {
       </div>
 
       <DataTable
+        v-model:current-page="currentPage"
         table-class-name="compact tablefixed"
         :headers="tableHeader"
         :loading="loader.table"
         :items="amlResults || []"
+        :rows-per-page="rowsPerPage"
         border-cell
       >
+        <template #header="header">
+          <div v-if="header.value === 'checkbox'" class="flex justify-center">
+            <input
+              type="checkbox"
+              :checked="isCurrentPageAllSelected"
+              :indeterminate="isCurrentPagePartiallySelected"
+              :disabled="checkDecisionLockStatus"
+              @change="toggleCurrentPage"
+              class="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+          <span v-else>{{ header.text }}</span>
+        </template>
+
+        <template #item-checkbox="item">
+          <div class="flex justify-center">
+            <input
+              type="checkbox"
+              :checked="selectedIds.has(item.ID)"
+              :disabled="checkDecisionLockStatus"
+              @change="toggleItem(item)"
+              class="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+        </template>
+
         <template #item-result="item">
           <div class="relative py-2">
             <x-select
@@ -465,6 +591,24 @@ function fieldValidationsperson() {
               : ''
           }}
         </template>
+
+        <template #item-adverse_media_description="{ AdverseMedias }">
+          {{
+            AdverseMedias?.length
+              ? AdverseMedias.map(m => m.Description)
+                  .filter(Boolean)
+                  .join(', ')
+              : ''
+          }}
+        </template>
+
+        <template #item-adverse_media_subcategory="{ AdverseMedias }">
+          {{
+            AdverseMedias?.length
+              ? AdverseMedias.flatMap(m => m.SubCategories ?? []).join(', ')
+              : ''
+          }}
+        </template>
       </DataTable>
       <div v-if="amlResults.length" class="flex justify-end mb-4">
         <x-button
@@ -501,6 +645,12 @@ function fieldValidationsperson() {
           True Match - Accept Risk
         </x-button>
       </div>
+
+      <AuditLogs
+        :title="'AML Audit Logs'"
+        :type="`App\\Models\\KycLog`"
+        :id="props.aml.id"
+      />
 
       <AuditLogs
         :title="'KYC Audit Logs'"

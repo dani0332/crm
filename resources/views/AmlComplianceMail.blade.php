@@ -10,5 +10,6 @@
             </table>
         </td>
     <tr>
+    <tr><td width="15%" height="30" valign="top">Adverse Media: </td><td width="85%" height="30" valign="top"><a href="{{ $amlUrl }}">{{ $resultsFound }} Records Found</a></td><tr>
     </table>
     </p>

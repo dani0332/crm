@@ -501,25 +501,16 @@ class AMLController extends Controller
         LoggerService::info(self::class.' fn: '.__FUNCTION__, extra: [
             'bridger_response' => $request['bridger_response'],
         ]);
+
+        $kycLogData = $this->loadKycLogForBridger($request);
+        if (! is_array($kycLogData)) {
+            return $kycLogData;
+        }
+
+        ['kycLog' => $kycLog, 'bridgerResponse' => $bridgerResponse, 'manualStatusIM' => $manualStatusIM] = $kycLogData;
+
         $response = [];
-        $kycLog = KycLog::withTrashed()->where('id', $request->aml_id)->first();
-
-        if (! $kycLog) {
-            return response()->json(['status' => 'error', 'message' => 'KYC log not found']);
-        }
-
         $oldDecision = $kycLog->decision;
-
-        if (checkModifiedRecord($kycLog->updated_at, $request->last_updated_at)) {
-            return response()->json(['status' => 'error', 'message' => 'Record already modified please refresh the page']);
-        }
-
-        if (empty($kycLog->results)) {
-            return response()->json(['status' => 'error', 'message' => 'KYC log results are empty']);
-        }
-
-        $bridgerResponse = json_decode($kycLog->results);
-        $manualStatusIM = isset($bridgerResponse[0]->ManualStatusUpdateIM) ? (array) $bridgerResponse[0]->ManualStatusUpdateIM : [];
 
         if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH && auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
             $bridgerResponse[0]->ManualStatusUpdateIM = [$request->bridger_match_id => $request->bridger_decision_type];
@@ -563,6 +554,69 @@ class AMLController extends Controller
         ]);
 
         return response()->json($response);
+    }
+
+    public function sendBridgerResponseBulk(Request $request)
+    {
+        LoggerService::startQuoteLogging($request['quote_ref_id'], LoggerFeatureEnum::AML_SCREENING);
+
+        $kycLogData = $this->loadKycLogForBridger($request);
+        if (! is_array($kycLogData)) {
+            return $kycLogData;
+        }
+
+        ['kycLog' => $kycLog, 'bridgerResponse' => $bridgerResponse, 'manualStatusIM' => $manualStatusIM] = $kycLogData;
+
+        foreach ($request->matches as $match) {
+            $matchId = $match['bridger_match_id'];
+            $decisionType = $match['bridger_decision_type'];
+
+            if (
+                isset($manualStatusIM[$matchId]) &&
+                $manualStatusIM[$matchId] == AMLDecisionStatusEnum::TRUE_MATCH &&
+                $decisionType == AMLDecisionStatusEnum::FALSE_POSITIVE
+            ) {
+                $kycLog->decision = AMLDecisionStatusEnum::ESCALATED;
+            }
+
+            if (isset($bridgerResponse[0]->ManualStatusUpdateIM)) {
+                unset($bridgerResponse[0]->ManualStatusUpdateIM->{$matchId});
+            }
+        }
+
+        $kycLog->results = json_encode($bridgerResponse);
+        $kycLog->save();
+
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Bulk AML decision updated', extra: [
+            'triggeredBy' => auth()->user()->email,
+            'matchCount' => count($request->matches),
+        ]);
+
+        return response()->json(['status' => 'success', 'message' => 'Results updated successfully']);
+    }
+
+    private function loadKycLogForBridger(Request $request): array|JsonResponse
+    {
+        $kycLog = KycLog::withTrashed()->where('id', $request->aml_id)->first();
+
+        if (! $kycLog) {
+            return response()->json(['status' => 'error', 'message' => 'KYC log not found']);
+        }
+
+        if (checkModifiedRecord($kycLog->updated_at, $request->last_updated_at)) {
+            return response()->json(['status' => 'error', 'message' => 'Record already modified please refresh the page']);
+        }
+
+        if (empty($kycLog->results)) {
+            return response()->json(['status' => 'error', 'message' => 'KYC log results are empty']);
+        }
+
+        $bridgerResponse = json_decode($kycLog->results);
+        $manualStatusIM = isset($bridgerResponse[0]->ManualStatusUpdateIM)
+            ? (array) $bridgerResponse[0]->ManualStatusUpdateIM
+            : [];
+
+        return compact('kycLog', 'bridgerResponse', 'manualStatusIM');
     }
 
     public function updateQuoteComment(Request $request)
