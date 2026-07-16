@@ -193,7 +193,8 @@ class EndorsementReportExport implements CsvExportableInterface
 
         LoggerService::info(__CLASS__.' processChunkedQuery Start');
 
-        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
+        foreach ($query->cursor()->chunk($chunkSize) as $chunk) {
+            $chunk = collect($chunk);
             $this->endorsementReportService->formatData($chunk);
 
             // Now process ALL records in the chunk (just like the download path does)
@@ -201,7 +202,7 @@ class EndorsementReportExport implements CsvExportableInterface
                 fputcsv($stream, $this->map($record));
                 $totalRecords++;
             }
-        });
+        }
 
         $this->postDataRows($stream);
 
