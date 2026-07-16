@@ -825,6 +825,26 @@ class SukoonMedexService
             $title = $latestInsuredData?->gender == 'Male' ? 'Mr' : 'Ms';
         }
 
+        if (in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike]) &&
+        $quote->registration_type == CarRegistrationType::COMPANY &&
+        $quote->vehicle_use == CarVehicleUse::PRIVATE) {
+            $firstName = $quote->vehicleDriverDetail?->driver_first_name ?? $firstName ?? '';
+            $lastName = $quote->vehicleDriverDetail?->driver_last_name ?? $lastName ?? '';
+
+            $driverName = trim((string) ($quote->driver_name ?? ''));
+            if ($driverName !== '') {
+                $nameParts = preg_split('/\s+/u', $driverName, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+                if ($nameParts !== []) {
+                    $firstName = $nameParts[0];
+
+                    if (count($nameParts) > 1) {
+                        $lastName = implode(' ', array_slice($nameParts, 1));
+                    }
+                }
+            }
+        }
+
         $emirateIdNumber = str_replace('-', '', $emirateIdNumber);
         if ((! empty($emirateIdNumber)) && strlen($emirateIdNumber) == 15) {
             $emirateIdNumber = substr($emirateIdNumber, 0, 3).'-'.substr($emirateIdNumber, 3, 4)
@@ -832,6 +852,9 @@ class SukoonMedexService
         }
 
         $address = $customerType == CustomerTypeEnum::Individual ? $insuredKyc?->residential_address : $insuredKyc?->registered_address;
+
+        $firstName = sanitizeToLettersAndSpacesOnly((string) $firstName);
+        $lastName = sanitizeToLettersAndSpacesOnly((string) $lastName);
 
         return [
             'form_name' => 'personal_details',
