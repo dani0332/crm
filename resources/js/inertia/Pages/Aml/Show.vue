@@ -473,7 +473,7 @@ function fieldValidationsperson() {
         :rows-per-page="rowsPerPage"
         border-cell
       >
-      <template #header="header">
+        <template #header="header">
           <div v-if="header.value === 'checkbox'" class="flex justify-center">
             <input
               type="checkbox"
