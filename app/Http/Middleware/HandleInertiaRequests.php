@@ -150,6 +150,7 @@ class HandleInertiaRequests extends Middleware
             'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
             'authorisePaymentCount' => fn () => app(PaymentRepository::class)->getAuthorisePaymentCount(),
+            'isEaManager' => fn () => (bool) auth()->user()?->hasRole(RolesEnum::EAManager),
             'eaPendingRejectionsCount' => fn () => auth()->user()?->hasRole(RolesEnum::EAManager)
                 ? app(EAManagerService::class)->pendingRejectionsCount()
                 : 0,

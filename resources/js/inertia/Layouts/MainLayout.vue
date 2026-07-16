@@ -58,6 +58,7 @@ const pendingActivityCount = computed(() => page.props.pendingActivityCount);
 const eaPendingRejectionsCount = computed(
   () => page.props.eaPendingRejectionsCount ?? 0,
 );
+const isEaManager = computed(() => page.props.isEaManager ?? false);
 const authorisePaymentCountProp = computed(
   () => page.props.authorisePaymentCount,
 );
@@ -451,7 +452,7 @@ onUnmounted(() => {
               />
               <STPAdvisorNotification v-if="isReceiveNotificationsEnabled" />
 
-              <x-tooltip>
+              <x-tooltip v-if="isEaManager">
                 <x-button class="w-full" size="sm">
                   <div class="items-center">
                     <Link
