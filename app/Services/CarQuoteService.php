@@ -2410,7 +2410,7 @@ class CarQuoteService extends BaseService
             })
             ->join('car_make as cmk', 'cqr.car_make_id', '=', 'cmk.id')
             ->join('car_model as cmd', 'cqr.car_model_id', '=', 'cmd.id')
-            ->join('nationality as n', 'cqr.nationality_id', '=', 'n.id')
+            ->leftJoin('nationality as n', 'cqr.nationality_id', '=', 'n.id')
             ->join('payment_status as ps', 'cqr.payment_status_id', '=', 'ps.id')
             ->join('quote_status as qs', 'cqr.quote_status_id', '=', 'qs.id')
             ->join('vehicle_type as vt', 'cqr.vehicle_type_id', '=', 'vt.id')
