@@ -187,7 +187,6 @@ class SaleDetailReportExport implements CsvExportableInterface
             $chunk = collect($chunk);
             $this->saleDetailReportService->formatData($chunk);
 
-            // Now process ALL records in the chunk (just like the download path does)
             foreach ($chunk as $record) {
                 fputcsv($stream, $this->map($record));
                 $totalRecords++;

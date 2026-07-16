@@ -145,12 +145,11 @@ class EndingPoliciesReportExport implements CsvExportableInterface
             $chunk = collect($chunk);
             $this->endingPoliciesReportService->formatData($chunk);
 
-            // Now process ALL records in the chunk (just like the download path does)
             foreach ($chunk as $record) {
                 fputcsv($stream, $this->map($record));
                 $totalRecords++;
             }
-    }
+        }
 
         $this->postDataRows($stream);
 

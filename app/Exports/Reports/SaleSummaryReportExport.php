@@ -78,12 +78,10 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
         foreach ($query->cursor()->chunk($chunkSize) as $chunk) {
             $chunk = collect($chunk);
-
             $processedData = $this->saleSummaryReportService->processEndorsementsData($chunk, $endorsementsData, $requestParams);
 
             $this->saleSummaryReportService->formatData($processedData);
 
-            // Now process ALL records in the chunk (just like the download path does)
             foreach ($processedData as $record) {
                 fputcsv($stream, $this->map($record));
                 $totalRecords++;
