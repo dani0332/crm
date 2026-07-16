@@ -108,7 +108,6 @@ class CentralService extends BaseService
             quoteTypeCode::CORPLINE,
             quoteTypeCode::GroupMedical,
             quoteTypeCode::Travel,
-            quoteTypeCode::Car,
             quoteTypeCode::Pet,
             quoteTypeCode::Cycle,
             quoteTypeCode::SAVINGS,
