@@ -616,6 +616,16 @@ if (! function_exists('sanitizeFileName')) {
     }
 }
 
+if (! function_exists('sanitizeToLettersAndSpacesOnly')) {
+    /**
+     * Removes every character except Unicode letters and the ASCII space (0x20).
+     */
+    function sanitizeToLettersAndSpacesOnly(string $value): string
+    {
+        return preg_replace('/[^\p{L} ]/u', '', $value) ?? '';
+    }
+}
+
 if (! function_exists('getQueryForLogWithBindings')) {
     function getQueryForLogWithBindings(Builder $builder)
     {
