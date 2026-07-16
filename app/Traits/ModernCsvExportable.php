@@ -77,9 +77,9 @@ trait ModernCsvExportable
                 LoggerService::info('Using custom processChunkedQuery for export');
                 $totalRecords = $this->processChunkedQuery($query, $requestParams, $stream);
             } else {
-                // Default chunked processing for standard exports
-                $query->chunk($chunkSize, function ($records) use ($stream, &$totalRecords, $flushInterval) {
-                    foreach ($records as $record) {
+                // Default cursor-based processing for standard exports
+                foreach ($query->cursor()->chunk($chunkSize) as $chunk) {
+                    foreach ($chunk as $record) {
                         fputcsv($stream, $this->map($record));
                         $totalRecords++;
                     }
@@ -92,7 +92,7 @@ trait ModernCsvExportable
                         flush();
                         gc_collect_cycles();
                     }
-                });
+                }
             }
         } else {
             // Fallback to collection method (loads all data - use only for small datasets)
