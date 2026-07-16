@@ -20,6 +20,7 @@ use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\BerlinService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -367,16 +368,22 @@ class CustomerRepository extends BaseRepository
      */
     public function fetchStoreAdditionalContact($customerId, $data)
     {
+        LoggerService::info('fetchStoreAdditionalContact called', extra: ['customerId' => $customerId, 'data' => $data]);
+
         if ($data['key'] === GenericRequestEnum::EMAIL) {
             $isExistEmail = CustomerAdditionalContact::where('customer_id', $customerId)
                 ->where('value', $data['value'])->where('key', 'email')->first();
 
             if ($isExistEmail) {
+                LoggerService::info('fetchStoreAdditionalContact email already exists', extra: ['customerId' => $customerId, 'value' => $data['value']]);
+
                 return back()->with('success', 'Email Address already Exist. Please try another.');
             }
 
             $customer = $this->findOrFail($customerId);
-            $customer->additionalContactInfo()->create($data);
+            $additionalContact = $customer->additionalContactInfo()->create($data);
+
+            LoggerService::info('fetchStoreAdditionalContact email created', extra: ['customerId' => $customerId, 'additionalContactId' => $additionalContact->id]);
 
             return $customer;
         } elseif ($data['key'] === GenericRequestEnum::MOBILE_NO) {
@@ -384,15 +391,20 @@ class CustomerRepository extends BaseRepository
                 ->where('value', $data['value'])->where('key', 'mobile_no')->first();
 
             if ($isExistMobile) {
+                LoggerService::info('fetchStoreAdditionalContact mobile number already exists', extra: ['customerId' => $customerId, 'value' => $data['value']]);
+
                 return back()->with('success', 'Mobile Number already Exist. Please try another.');
             }
 
             $customer = $this->findOrFail($customerId);
-            $customer->additionalContactInfo()->create($data);
+            $additionalContact = $customer->additionalContactInfo()->create($data);
+
+            LoggerService::info('fetchStoreAdditionalContact mobile number created', extra: ['customerId' => $customerId, 'additionalContactId' => $additionalContact->id]);
 
             return $customer;
         }
 
+        LoggerService::warning('fetchStoreAdditionalContact received unsupported key', extra: ['customerId' => $customerId, 'data' => $data]);
     }
 
     public function fetchGetAdditionalContacts($customerId, $quoteMobileNo)

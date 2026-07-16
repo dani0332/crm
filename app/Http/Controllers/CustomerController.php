@@ -14,6 +14,7 @@ use App\Models\CustomerAdditionalContact;
 use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentAccessService;
 use App\Services\SLA\SLAService;
@@ -23,7 +24,6 @@ use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
@@ -245,6 +245,8 @@ class CustomerController extends Controller
 
     public function addAdditionalContact(Request $request)
     {
+        LoggerService::info('addAdditionalContact called', extra: ['request' => $request->all()]);
+
         $validator = Validator::make($request->all(), [
             'customer_id' => 'required',
             'additional_contact_type' => 'required',
@@ -252,10 +254,14 @@ class CustomerController extends Controller
         ]);
 
         if ($request->isInertia == true && $validator->fails()) {
+            LoggerService::info('addAdditionalContact validation failed', extra: ['errors' => $validator->errors()]);
+
             return redirect()->back()->withErrors($validator->errors());
         }
 
         if ($validator->fails()) {
+            LoggerService::info('addAdditionalContact validation failed', extra: ['errors' => $validator->errors()]);
+
             return response()->json(['error' => [
                 'message' => $validator->errors(),
             ]]);
@@ -268,6 +274,7 @@ class CustomerController extends Controller
             $user = auth()->user();
             if (! $this->quoteDocumentAccessService->userCanAccessQuoteDocumentable($user, $quoteObject, forAdditionalContact: true)) {
                 $authorizationMessage = 'You are not authorized to add additional contact for this quote.';
+                LoggerService::info('addAdditionalContact authorization failed', extra: ['customerId' => $request->customer_id, 'userId' => $user?->id]);
                 if ($request->isInertia) {
                     vAbort($authorizationMessage);
                 }
@@ -282,6 +289,7 @@ class CustomerController extends Controller
                 ->where('value', $request->additional_contact_val)->where('key', 'email')->first();
 
             if ($isExistEmail) {
+                LoggerService::info('addAdditionalContact email already exists', extra: ['customerId' => $request->customer_id, 'value' => $value]);
                 if ($request->isInertia) {
                     vAbort('Email already Exist. Please try another.');
                 }
@@ -297,6 +305,7 @@ class CustomerController extends Controller
                 ->where('value', $request->additional_contact_val)->where('key', 'mobile_no')->first();
 
             if ($isExistMobile) {
+                LoggerService::info('addAdditionalContact mobile number already exists', extra: ['customerId' => $request->customer_id, 'value' => $value]);
                 if ($request->isInertia) {
                     vAbort('Mobile Number already Exist. Please try another.');
                 }
@@ -307,12 +316,13 @@ class CustomerController extends Controller
             }
         }
 
-        Log::info('Customer additional contact id: '.$request->customer_id.' new: '.$key.' value: '.$value);
-        CustomerAdditionalContact::create([
+        $additionalContact = CustomerAdditionalContact::create([
             'customer_id' => $request->customer_id,
             'key' => $key,
             'value' => trim($value),
         ]);
+
+        LoggerService::info('addAdditionalContact created', extra: ['customerId' => $request->customer_id, 'additionalContactId' => $additionalContact->id, 'key' => $key, 'value' => $value]);
 
         if ($quoteObject) {
             $this->slaService->meetSLAOnEdit($quoteObject, SLAActionTypeEnum::ADDITIONAL_CONTACTS_ADD);
