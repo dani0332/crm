@@ -76,7 +76,8 @@ class SaleSummaryReportExport implements CsvExportableInterface
 
         $endorsementsData = $this->saleSummaryReportService->getEndorsementsData($requestParams);
 
-        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $requestParams, $stream, $endorsementsData) {
+        foreach ($query->cursor()->chunk($chunkSize) as $chunk) {
+            $chunk = collect($chunk);
 
             $processedData = $this->saleSummaryReportService->processEndorsementsData($chunk, $endorsementsData, $requestParams);
 
@@ -87,7 +88,7 @@ class SaleSummaryReportExport implements CsvExportableInterface
                 fputcsv($stream, $this->map($record));
                 $totalRecords++;
             }
-        });
+        }
 
         // Write totals rows to file which were calculated during map()
         $this->postDataRows($stream);
