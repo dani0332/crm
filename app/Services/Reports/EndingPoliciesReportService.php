@@ -33,7 +33,7 @@ class EndingPoliciesReportService extends ManagementReport
         }
 
         $query = PersonalQuote::query();
-        $this->paymentJoin($query, null, 'p', 'leftJoin', request: $request);
+        $this->paymentJoin($query, null, 'p', 'leftJoin');
         $query->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->join('quote_type as qt', 'qt.id', '=', 'quote_type_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'personal_quotes.insurance_provider_id')
@@ -109,7 +109,7 @@ class EndingPoliciesReportService extends ManagementReport
                 DB::raw('IFNULL(COALESCE(pqa_user.name, health_pqa_user.name), "N/A") as pqa'),
             );
 
-        $this->branchJoin($query, $request);
+        $this->branchJoin($query);
         $this->applyFilters($query, $request, isSSR: true);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);

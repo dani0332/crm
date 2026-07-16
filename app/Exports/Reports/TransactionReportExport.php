@@ -183,15 +183,15 @@ class TransactionReportExport implements CsvExportableInterface
 
         $requestParams = request()->merge($requestParams);
 
-        foreach ($query->cursor()->chunk($chunkSize) as $chunk) {
-            $chunk = collect($chunk);
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
             $this->transactionReportService->formatData($chunk);
 
+            // Now process ALL records in the chunk (just like the download path does)
             foreach ($chunk as $record) {
                 fputcsv($stream, $this->map($record));
                 $totalRecords++;
             }
-        }
+        });
 
         $this->postDataRows($stream);
 
