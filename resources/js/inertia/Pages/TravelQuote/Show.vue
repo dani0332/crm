@@ -1648,7 +1648,7 @@ const fullAddress = computed(() => {
 });
 
 const getPromotionalPrice = item => {
-  if (item.providerCode !== page.props.insuranceProviderCodeEnum.OI2) {
+  if (!item.isDiscountApplied) {
     return '';
   }
 
@@ -3329,7 +3329,9 @@ const getPromotionalPrice = item => {
                 }}
               </template>
               <template #item-promotionalPrice="item">
-                {{ getPromotionalPrice(item) }}
+                <span class="text-primary-600" v-if="item.isDiscountApplied">
+                  {{ getPromotionalPrice(item) }}
+                </span>
               </template>
               <template #item-action="item">
                 <div class="flex gap-2">
@@ -3437,7 +3439,9 @@ const getPromotionalPrice = item => {
                   }}
                 </template>
                 <template #item-promotionalPrice="item">
-                  {{ getPromotionalPrice(item) }}
+                  <span class="text-primary-600" v-if="item.isDiscountApplied">
+                    {{ getPromotionalPrice(item) }}
+                  </span>
                 </template>
                 <template #item-action="item">
                   <div class="flex gap-2">
