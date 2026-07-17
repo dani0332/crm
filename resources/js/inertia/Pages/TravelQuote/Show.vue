@@ -984,6 +984,10 @@ const availablePlansTable = reactive({
       value: 'premiumWithVat',
     },
     {
+      text: 'Promotional Price',
+      value: 'promotionalPrice',
+    },
+    {
       text: 'Action',
       value: 'action',
     },
@@ -1017,6 +1021,10 @@ const availableSeniorPlansTable = reactive({
     {
       text: 'Total Price',
       value: 'premiumWithVat',
+    },
+    {
+      text: 'Promotional Price',
+      value: 'promotionalPrice',
     },
     {
       text: 'Action',
@@ -1638,6 +1646,14 @@ const fullAddress = computed(() => {
   // Filter out null or undefined parts and join the rest with comma and space
   return parts.filter(part => part).join(', ');
 });
+
+const getPromotionalPrice = item => {
+  if (item.providerCode !== page.props.insuranceProviderCodeEnum.OI2) {
+    return '';
+  }
+
+  return parseFloat(item.discountPremium).toFixed(2);
+};
 </script>
 
 <template>
@@ -3312,6 +3328,9 @@ const fullAddress = computed(() => {
                   )
                 }}
               </template>
+              <template #item-promotionalPrice="item">
+                {{ getPromotionalPrice(item) }}
+              </template>
               <template #item-action="item">
                 <div class="flex gap-2">
                   <x-button
@@ -3416,6 +3435,9 @@ const fullAddress = computed(() => {
                       item.addons,
                     )
                   }}
+                </template>
+                <template #item-promotionalPrice="item">
+                  {{ getPromotionalPrice(item) }}
                 </template>
                 <template #item-action="item">
                   <div class="flex gap-2">
