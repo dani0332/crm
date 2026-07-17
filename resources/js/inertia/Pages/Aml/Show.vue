@@ -20,7 +20,9 @@ const isScreeningIndividual = computed(() => {
   return props.aml?.search_type == props.customerTypeEnum.Individual;
 });
 
-const amlResults = ref(props.amlResults);
+const amlResults = ref(
+  props.amlResults.map((item, index) => ({ ...item, _rowKey: index })),
+);
 const selectedIds = ref(new Set());
 const currentPage = ref(1);
 const rowsPerPage = 25;
@@ -28,20 +30,21 @@ const loader = reactive({
   table: false,
 });
 
-const currentPageItems = computed(() => {
-  const start = (currentPage.value - 1) * rowsPerPage;
-  return amlResults.value.slice(start, start + rowsPerPage);
-});
+const currentPageItems = ref(amlResults.value.slice(0, rowsPerPage));
+
+function updateCurrentPageItems(items) {
+  currentPageItems.value = items;
+}
 
 const isCurrentPageAllSelected = computed(
   () =>
     currentPageItems.value.length > 0 &&
-    currentPageItems.value.every(item => selectedIds.value.has(item.ID)),
+    currentPageItems.value.every(item => selectedIds.value.has(item._rowKey)),
 );
 
 const isCurrentPagePartiallySelected = computed(
   () =>
-    currentPageItems.value.some(item => selectedIds.value.has(item.ID)) &&
+    currentPageItems.value.some(item => selectedIds.value.has(item._rowKey)) &&
     !isCurrentPageAllSelected.value,
 );
 
@@ -55,14 +58,9 @@ function toggleCurrentPage() {
     : props.amlDecisionStatusCode.UNKNOWN;
 
   currentPageItems.value.forEach(item => {
-    isSelecting ? newSet.add(item.ID) : newSet.delete(item.ID);
-    const index = amlResults.value.findIndex(
-      x => x.EntityUniqueID == item.EntityUniqueID,
-    );
-    if (index !== -1) {
-      amlResults.value[index].decision = decisionType;
-      decisionSelected.value[item.ID] = decisionType;
-    }
+    isSelecting ? newSet.add(item._rowKey) : newSet.delete(item._rowKey);
+    item.decision = decisionType;
+    decisionSelected.value[item.ID] = decisionType;
   });
 
   selectedIds.value = newSet;
@@ -96,11 +94,11 @@ function toggleItem(item) {
   if (checkDecisionLockStatus.value) return;
 
   const newSet = new Set(selectedIds.value);
-  if (newSet.has(item.ID)) {
-    newSet.delete(item.ID);
+  if (newSet.has(item._rowKey)) {
+    newSet.delete(item._rowKey);
     setSelectedOption(props.amlDecisionStatusCode.UNKNOWN, item);
   } else {
-    newSet.add(item.ID);
+    newSet.add(item._rowKey);
     setSelectedOption(props.amlDecisionStatusCode.FALSE_POSITIVE, item);
   }
   selectedIds.value = newSet;
@@ -276,17 +274,13 @@ const setAllDecisionSelected = () => {
 };
 const setSelectedOption = (e, item) => {
   decisionSelected.value[item.ID] = e;
-  let index = amlResults.value.findIndex(
-    x => x.EntityUniqueID == item.EntityUniqueID,
-  );
-
-  if (index != -1) amlResults.value[index].decision = e;
+  item.decision = e;
 
   const newSet = new Set(selectedIds.value);
   if (e === props.amlDecisionStatusCode.FALSE_POSITIVE) {
-    newSet.add(item.ID);
+    newSet.add(item._rowKey);
   } else {
-    newSet.delete(item.ID);
+    newSet.delete(item._rowKey);
   }
   selectedIds.value = newSet;
 
@@ -472,6 +466,7 @@ function fieldValidationsperson() {
         :items="amlResults || []"
         :rows-per-page="rowsPerPage"
         border-cell
+        @update-page-items="updateCurrentPageItems"
       >
         <template #header="header">
           <div v-if="header.value === 'checkbox'" class="flex justify-center">
@@ -491,7 +486,7 @@ function fieldValidationsperson() {
           <div class="flex justify-center">
             <input
               type="checkbox"
-              :checked="selectedIds.has(item.ID)"
+              :checked="selectedIds.has(item._rowKey)"
               :disabled="checkDecisionLockStatus"
               @change="toggleItem(item)"
               class="w-4 h-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
