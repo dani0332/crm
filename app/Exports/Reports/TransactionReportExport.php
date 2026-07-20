@@ -183,7 +183,7 @@ class TransactionReportExport implements CsvExportableInterface
 
         $requestParams = request()->merge($requestParams);
 
-        foreach ($query->cursor()->chunk($chunkSize) as $chunk) {
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
             $chunk = collect($chunk);
             $this->transactionReportService->formatData($chunk);
 
@@ -191,7 +191,7 @@ class TransactionReportExport implements CsvExportableInterface
                 fputcsv($stream, $this->map($record));
                 $totalRecords++;
             }
-        }
+        });
 
         $this->postDataRows($stream);
 
