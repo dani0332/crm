@@ -42,9 +42,7 @@ trait SendsEpFailureEmail
             Mail::send(new SukoonMedexEPFailureNotification($quoteObject, $quoteTypeId));
 
             // Update failure_email_sent_at after successful send
-            DB::table('embedded_transactions')
-                ->where('id', $transactionId)
-                ->update(['failure_email_sent_at' => now()]);
+            EmbeddedTransaction::whereKey($transactionId)->update(['failure_email_sent_at' => now()]);
 
             LoggerService::info("{$logPrefix} Send EP failure notification email successfully", extra: [
                 'transactionId' => $transactionId,
