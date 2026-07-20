@@ -94,12 +94,14 @@ class ActivePoliciesReportExport implements CsvExportableInterface
 
         LoggerService::info(__CLASS__.' processChunkedQuery Start');
 
-        foreach ($query->cursor()->chunk($chunkSize) as $chunk) {
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
+
+            // Now process ALL records in the chunk (just like the download path does)
             foreach ($chunk as $record) {
                 fputcsv($stream, $this->map($record));
                 $totalRecords++;
             }
-        }
+        });
 
         $this->postDataRows($stream);
 
