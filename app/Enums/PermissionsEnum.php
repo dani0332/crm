@@ -262,6 +262,9 @@ final class PermissionsEnum extends Enum
     public const EMBEDDED_PRODUCT_PAYMENT_VOID = 'embedded-product-payment-void';
     public const EMBEDDED_PRODUCT_MANUAL_OVERRIDE = 'embedded-product-manual-override';
     public const EP_DOCUMENT_MANUAL_OVERRIDE = 'update-ep-document-manual-override';
+    public const ADDITIONAL_CONTACT_MANUAL_OVERRIDE = 'additional-contact-manual-override';
+    public const POLICY_SECTION_MANUAL_OVERRIDE = 'policy-section-manual-override';
+    public const BOOKING_SECTION_MANUAL_OVERRIDE = 'booking-section-manual-override';
     public const EMBEDDED_PRODUCT_SYNC_EP_BOOKING = 'embedded-product-sync-ep-booking';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const SEND_UPDATE_CREATE = 'send-update-create';

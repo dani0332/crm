@@ -78,7 +78,11 @@ class UpdatePolicyDetailRequest extends FormRequest
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
 
             $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quoteModel, request()->modelType);
-            if ($lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] && $lockStatusOfPolicyIssuanceSteps['isEditPolicyDetailsDisabled']) {
+            if (
+                $lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] &&
+                $lockStatusOfPolicyIssuanceSteps['isEditPolicyDetailsDisabled'] &&
+                ! auth()->user()->can(PermissionsEnum::POLICY_SECTION_MANUAL_OVERRIDE)
+            ) {
                 $validator->errors()->add('value', 'Policy Booking is scheduled! You are not allowed to edit policy details');
             }
 

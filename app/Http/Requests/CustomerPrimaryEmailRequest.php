@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -47,12 +49,20 @@ class CustomerPrimaryEmailRequest extends FormRequest
                     return;
                 }
 
-                if (
-                    in_array($quote?->quote_status_id, [
-                        QuoteStatusEnum::POLICY_BOOKING_QUEUED,
-                        QuoteStatusEnum::POLICY_BOOKING_FAILED,
-                    ])
-                ) {
+                if (auth()->user()->can(PermissionsEnum::ADDITIONAL_CONTACT_MANUAL_OVERRIDE)) {
+                    return;
+                }
+
+                $isQueuedOrFailed = in_array($quote?->quote_status_id, [
+                    QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+                    QuoteStatusEnum::POLICY_BOOKING_FAILED,
+                ]);
+
+                $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quote, $this->quote_type);
+                $isPolicyIssuanceEditLocked = $lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] &&
+                    $lockStatusOfPolicyIssuanceSteps['isEditPolicyDetailsDisabled'];
+
+                if ($isQueuedOrFailed && $isPolicyIssuanceEditLocked) {
                     $validator->errors()->add('error', 'Primary email ID cannot be changed while the policy booking is in progress.');
                 }
             }

@@ -62,6 +62,7 @@ class PermissionSeeder extends Seeder
         $this->addLifeRevivalPermissions();
         $this->addHomeRevivalPermissions();
         $this->addAdditionalContactPermission();
+        $this->addPolicyIssuanceSectionManualOverridePermissions();
     }
 
     private function addEpDocumentManualOverridePermission(): void
@@ -309,6 +310,30 @@ class PermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    /**
+     * Not granted to any role by default; grant each manually to roles that should
+     * bypass the Policy Issuance automation lock on the corresponding section
+     * (Customer Additional Contacts, Policy Details, Booking Details).
+     */
+    private function addPolicyIssuanceSectionManualOverridePermissions(): void
+    {
+        $permissions = [
+            PermissionsEnum::ADDITIONAL_CONTACT_MANUAL_OVERRIDE,
+            PermissionsEnum::POLICY_SECTION_MANUAL_OVERRIDE,
+            PermissionsEnum::BOOKING_SECTION_MANUAL_OVERRIDE,
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => self::WEB_GUARD,
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     private function addHomeRevivalPermissions(): void
