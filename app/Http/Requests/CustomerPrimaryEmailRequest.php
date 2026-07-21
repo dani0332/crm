@@ -53,20 +53,16 @@ class CustomerPrimaryEmailRequest extends FormRequest
                     return;
                 }
 
-                if (
-                    in_array($quote?->quote_status_id, [
-                        QuoteStatusEnum::POLICY_BOOKING_QUEUED,
-                        QuoteStatusEnum::POLICY_BOOKING_FAILED,
-                    ])
-                ) {
-                    $validator->errors()->add('error', 'Primary email ID cannot be changed while the policy booking is in progress.');
-                }
+                $isQueuedOrFailed = in_array($quote?->quote_status_id, [
+                    QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+                    QuoteStatusEnum::POLICY_BOOKING_FAILED,
+                ]);
 
                 $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quote, $this->quote_type);
-                if (
-                    $lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] &&
-                    $lockStatusOfPolicyIssuanceSteps['isEditPolicyDetailsDisabled']
-                ) {
+                $isPolicyIssuanceEditLocked = $lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] &&
+                    $lockStatusOfPolicyIssuanceSteps['isEditPolicyDetailsDisabled'];
+
+                if ($isQueuedOrFailed && $isPolicyIssuanceEditLocked) {
                     $validator->errors()->add('error', 'Primary email ID cannot be changed while the policy booking is in progress.');
                 }
             }

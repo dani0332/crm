@@ -116,7 +116,7 @@ const isPrimaryEmailLocked = computed(() => {
     [
       quoteStatusEnum.POLICY_BOOKING_QUEUED,
       quoteStatusEnum.POLICY_BOOKING_FAILED,
-    ].includes(props.quoteStatusId) || isPolicyIssuanceEditLocked
+    ].includes(props.quoteStatusId) && isPolicyIssuanceEditLocked
   );
 });
 
