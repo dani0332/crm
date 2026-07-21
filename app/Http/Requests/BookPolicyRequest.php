@@ -67,7 +67,11 @@ class BookPolicyRequest extends FormRequest
                 'through_automation' => request()->has('through_automation'),
             ]);
 
-            if ($lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] && $lockStatusOfPolicyIssuanceSteps['isEditBookingDetailsDisabled']) {
+            if (
+                $lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] &&
+                $lockStatusOfPolicyIssuanceSteps['isEditBookingDetailsDisabled'] &&
+                ! auth()->user()->can(PermissionsEnum::BOOKING_SECTION_MANUAL_OVERRIDE)
+            ) {
                 $validator->errors()->add('value', 'Policy Booking is scheduled! You are not allowed to edit booking details');
             }
 

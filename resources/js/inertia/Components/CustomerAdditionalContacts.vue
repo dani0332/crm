@@ -102,10 +102,22 @@ const onAdditionalContactSubmit = isValid => {
 };
 
 const isPrimaryEmailLocked = computed(() => {
-  return [
-    quoteStatusEnum.POLICY_BOOKING_QUEUED,
-    quoteStatusEnum.POLICY_BOOKING_FAILED,
-  ].includes(props.quoteStatusId);
+  if (can(permissionsEnum.ADDITIONAL_CONTACT_MANUAL_OVERRIDE)) {
+    return false;
+  }
+
+  const policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
+  const isPolicyIssuanceEditLocked = !!(
+    policyIssuanceSteps?.isPolicyAutomationEnabled &&
+    policyIssuanceSteps?.isEditPolicyDetailsDisabled
+  );
+
+  return (
+    [
+      quoteStatusEnum.POLICY_BOOKING_QUEUED,
+      quoteStatusEnum.POLICY_BOOKING_FAILED,
+    ].includes(props.quoteStatusId) || isPolicyIssuanceEditLocked
+  );
 });
 
 const confirmData = reactive({

@@ -526,9 +526,15 @@ const setQuotePlanInsurerNumber = () => {
 };
 const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   let disableEditPolicyDetails = false;
+  const hasAutomationOverridePermission = can(
+    permissionsEnum.POLICY_SECTION_MANUAL_OVERRIDE,
+  );
 
   let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
-  if (policyIssuanceSteps?.isPolicyAutomationEnabled) {
+  if (
+    policyIssuanceSteps?.isPolicyAutomationEnabled &&
+    !hasAutomationOverridePermission
+  ) {
     disableEditPolicyDetails = policyIssuanceSteps?.isEditPolicyDetailsDisabled;
   }
 
