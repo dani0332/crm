@@ -1,20 +1,20 @@
-<p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a></p>.
+<p align="center"><a href="" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a></p>.
  
-Staging Pipeline Status = [![Build Status](https://dev.azure.com/insurancemarketafia/org-afia/_apis/build/status%2Fstaging%2Fimcrm.stg.build?branchName=develop)](https://dev.azure.com/insurancemarketafia/org-afia/_build/latest?definitionId=44&branchName=develop)
+Staging Pipeline Status = [![Build Status](https://dev.azure.com/insurancemarketafia/org-afia/_apis/build/status%2Fstaging%2Fcrm.stg.build?branchName=develop)](https://dev.azure.com/insurancemarketafia/org-afia/_build/latest?definitionId=44&branchName=develop)
 
-## About Blanka - IMCRM
+## About crm - crm
 
-Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
+Insurance Market CRM (crm) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
 
-IMCRM is developed on Laravel using PHP 8.4 or above, and MySQL
+crm is developed on Laravel using PHP 8.4 or above, and MySQL
 
 URLs:
 
-- [Live](https://imcrm.alfred.ae/)
-- [Stage](https://imcrmstage.alfred.ae/)
-- [UAT](https://imcrmuat.alfred.ae)
-- [DEV](https://imcrmdev.alfred.ae) [DEV1](https://imcrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
-- [TEST](https://imcrmtest.alfred.ae)
+- [Live](https://crm.alfred.ae/)
+- [Stage](https://crmstage.alfred.ae/)
+- [UAT](https://crmuat.alfred.ae)
+- [DEV](https://crmdev.alfred.ae) [DEV1](https://crmdev01.alfred.ae) [DEV2](https://crmdev02.alfred.ae)
+- [TEST](https://crmtest.alfred.ae)
 - [Laravel Code Standard Guide Lines](https://xqsit94.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
@@ -83,7 +83,7 @@ If any deployment fails on any environment, make sure to check the deployment lo
 
 This project is not used for running migrations.
 
-This repo is integrated with [dhalsim](https://github.com/InsuranceMarket-ae/dhalsim); on each env deployment, the relelvant branch from dhalsim is triggered to run the migrations from before blanka deployment.
+This repo is integrated with [dhalsim](https://github.com/InsuranceMarket-ae/dhalsim); on each env deployment, the relelvant branch from dhalsim is triggered to run the migrations from before crm deployment.
 
 # Running Project Locally with Docker
 
@@ -111,23 +111,23 @@ APP_URL=http://localhost:8000
 WEB_PORT=8000
 
 # Doppler env token
-DOPPLER_TOKEN_IMCRM=DOPPLER_TOKEN
+DOPPLER_TOKEN_crm=DOPPLER_TOKEN
 
 # Nginx Port
 SSL_PORT=452
 
 # Database Configuration
 DB_CONNECTION=mysql
-DB_HOST=dbblanka:3306
+DB_HOST=dbcrm:3306
 DB_PORT=3306
 DB_MIRROR_PORT=3313
-DB_DATABASE=blanka_db
+DB_DATABASE=crm_db
 DB_USERNAME=root
 DB_PASSWORD=root
 
 # Mailhog Configuration
 MAIL_MAILER=smtp
-MAIL_HOST=mailhogblanka
+MAIL_HOST=mailhogcrm
 MAIL_PORT=1032
 MAIL_UI_PORT=7025
 MAIL_USERNAME=null
@@ -142,11 +142,11 @@ PHPMYADMIN_PORT=2600
 
 ## Container Names
 
-- mailhogblanka
-- dbblanka
-- appblanka
-- phpmyadminblanka
-- mailhogblanka
+- mailhogcrm
+- dbcrm
+- appcrm
+- phpmyadmincrm
+- mailhogcrm
 
 ## Building and Running Containers
 
@@ -169,11 +169,11 @@ This command starts your services. If you add the -d flag, it will run in the ba
 ## Execute Commands Inside Containers:
 
 ```dotenv
-doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) php artisan optimize
-doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) php artisan migrate/make:controller
-doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) php artisan make:controller
-doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) /bin/bash ----------- you can access php container
-doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(dbblanka) /bin/bash ----------- you can access mysql container
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appcrm) php artisan optimize
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appcrm) php artisan migrate/make:controller
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appcrm) php artisan make:controller
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appcrm) /bin/bash ----------- you can access php container
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(dbcrm) /bin/bash ----------- you can access mysql container
 ```
 
 This command allows you to run commands inside your container. You can also enter the container using bin/bash instead of php/mysql command.
@@ -184,9 +184,9 @@ I have created separate Docker files and configurations for local environments. 
 
 ## Access containers application on your local browser according default docker config from doppler
 
-- appblanka --------- you can access application http://127.0.0.1:8000
-- phpmyadminblanka -- you can access phpmyadmin http://127.0.0.1:2600
-- mailhogblanka ----- you can access mailhog http://127.0.0.1:7025
+- appcrm --------- you can access application http://127.0.0.1:8000
+- phpmyadmincrm -- you can access phpmyadmin http://127.0.0.1:2600
+- mailhogcrm ----- you can access mailhog http://127.0.0.1:7025
 
 ## Conclusion
 
@@ -198,8 +198,8 @@ Claims form ka doucment woo public directory ma store ho ga
 documents/claims/1767599725_efbb7bfa-2726-4a76-823a-aa6f616d68d9.pdf
 
 Ratings coverage health
-imcrmdev/ratings/health/sample/sample_upload_coverages.xlsx
-imcrmdev/ratings/health/2026-01-13_13-25-50_2222dsadsa.xlsx
+crmdev/ratings/health/sample/sample_upload_coverages.xlsx
+crmdev/ratings/health/2026-01-13_13-25-50_2222dsadsa.xlsx
 
 Renewals
 renewals/renewals_upload_create_m3.xlsx
